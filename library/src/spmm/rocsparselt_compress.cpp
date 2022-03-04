@@ -24,7 +24,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocsparselt.h"
-#include "utility.h"
+#include "rocsparselt_spmm.hpp"
 
 #include <hip/hip_runtime_api.h>
 
@@ -54,6 +54,29 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
 
     {
         //TODO
+        int64_t                 num_rows_a      = plan->matmul_descr->matrix_A->m;
+        int64_t                 num_cols_a      = plan->matmul_descr->matrix_A->n;
+        int64_t                 lda             = plan->matmul_descr->matrix_A->ld;
+        rocsparse_order         order_a         = plan->matmul_descr->matrix_A->order;
+        rocsparselt_matrix_type matrix_type_a   = plan->matmul_descr->matrix_A->m_type;
+        rocsparselt_datatype    type_a          = plan->matmul_descr->matrix_A->type;
+        int                     num_batches_a   = 1;
+        int64_t                 batch_stride_a  = lda * num_cols_a;
+        size_t                  metadata_size   = num_cols_a / 8;
+        size_t                  metadata_offset = 0;
+        switch(type_a)
+        {
+        case rocsparselt_datatype_f16_r:
+        case rocsparselt_datatype_bf16_r:
+            metadata_offset = getMetadataOffset<_Float16>(num_batches_a, batch_stride_a);
+            break;
+        case rocsparselt_datatype_f8_r:
+        case rocsparselt_datatype_bf8_r:
+        case rocsparselt_datatype_i8_r:
+            metadata_offset = getMetadataOffset<int8_t>(num_batches_a, batch_stride_a);
+            break;
+        }
+        *compressedSize = metadata_size + metadata_offset;
         return rocsparse_status_success;
     }
 }

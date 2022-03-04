@@ -35,8 +35,35 @@
 
 struct _rocsparselt_attribute
 {
-    void*  data      = nullptr;
-    size_t data_size = 0;
+    _rocsparselt_attribute(){};
+
+    ~_rocsparselt_attribute();
+
+    void clear();
+
+    const void* data();
+
+    size_t length();
+
+    size_t get(void* out, size_t size);
+
+    template <typename T>
+    size_t get(T* out)
+    {
+        return get(out, sizeof(T));
+    }
+
+    void set(const void* in, size_t size);
+
+    template <typename T>
+    void set(const T* in)
+    {
+        set(in, sizeof(T));
+    }
+
+private:
+    void*  _data      = nullptr;
+    size_t _data_size = 0;
 };
 
 /********************************************************************************
@@ -75,12 +102,6 @@ struct _rocsparselt_handle
     // device buffer
     size_t buffer_size;
     void*  buffer;
-    // device one
-    float*  sone;
-    double* done;
-    // device complex one
-    rocsparse_float_complex*  cone;
-    rocsparse_double_complex* zone;
 
     // logging streams
     std::ofstream log_trace_ofs;

@@ -28,7 +28,7 @@ set(rocsparselt_source
   src/rocsparselt_auxiliary.cpp
 
 # spmm
-  src/spmm/compress.cpp
-  src/spmm/prune.cpp
-  src/spmm/spmm.cpp
+  src/spmm/rocsparselt_compress.cpp
+  src/spmm/rocsparselt_prune.cpp
+  src/spmm/rocsparselt_spmm.cpp
 )

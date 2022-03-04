@@ -59,37 +59,6 @@ _rocsparselt_handle::_rocsparselt_handle()
         layer_mode = (rocsparse_layer_mode)(atoi(str_layer_mode));
     }
 
-    // Device one
-    THROW_IF_HIP_ERROR(hipMalloc(&sone, sizeof(float)));
-    THROW_IF_HIP_ERROR(hipMalloc(&done, sizeof(double)));
-    THROW_IF_HIP_ERROR(hipMalloc(&cone, sizeof(rocsparse_float_complex)));
-    THROW_IF_HIP_ERROR(hipMalloc(&zone, sizeof(rocsparse_double_complex)));
-
-    // Execute empty kernel for initialization
-    hipLaunchKernelGGL(init_kernel, dim3(1), dim3(1), 0, stream);
-
-    // Execute memset for initialization
-    THROW_IF_HIP_ERROR(hipMemsetAsync(sone, 0, sizeof(float), stream));
-    THROW_IF_HIP_ERROR(hipMemsetAsync(done, 0, sizeof(double), stream));
-    THROW_IF_HIP_ERROR(hipMemsetAsync(cone, 0, sizeof(rocsparse_float_complex), stream));
-    THROW_IF_HIP_ERROR(hipMemsetAsync(zone, 0, sizeof(rocsparse_double_complex), stream));
-
-    float  hsone = 1.0f;
-    double hdone = 1.0;
-
-    rocsparse_float_complex  hcone = rocsparse_float_complex(1.0f, 0.0f);
-    rocsparse_double_complex hzone = rocsparse_double_complex(1.0, 0.0);
-
-    THROW_IF_HIP_ERROR(hipMemcpyAsync(sone, &hsone, sizeof(float), hipMemcpyHostToDevice, stream));
-    THROW_IF_HIP_ERROR(hipMemcpyAsync(done, &hdone, sizeof(double), hipMemcpyHostToDevice, stream));
-    THROW_IF_HIP_ERROR(hipMemcpyAsync(
-        cone, &hcone, sizeof(rocsparse_float_complex), hipMemcpyHostToDevice, stream));
-    THROW_IF_HIP_ERROR(hipMemcpyAsync(
-        zone, &hzone, sizeof(rocsparse_double_complex), hipMemcpyHostToDevice, stream));
-
-    // Wait for device transfer to finish
-    THROW_IF_HIP_ERROR(hipStreamSynchronize(stream));
-
     // Open log file
     if(layer_mode & rocsparse_layer_mode_log_trace)
     {
@@ -108,11 +77,6 @@ _rocsparselt_handle::_rocsparselt_handle()
  ******************************************************************************/
 _rocsparselt_handle::~_rocsparselt_handle()
 {
-    PRINT_IF_HIP_ERROR(hipFree(sone));
-    PRINT_IF_HIP_ERROR(hipFree(done));
-    PRINT_IF_HIP_ERROR(hipFree(cone));
-    PRINT_IF_HIP_ERROR(hipFree(zone));
-
     // Close log files
     if(log_trace_ofs.is_open())
     {
@@ -121,5 +85,51 @@ _rocsparselt_handle::~_rocsparselt_handle()
     if(log_bench_ofs.is_open())
     {
         log_bench_ofs.close();
+    }
+}
+
+_rocsparselt_attribute::~_rocsparselt_attribute()
+{
+    clear();
+}
+
+void _rocsparselt_attribute::clear()
+{
+    set(nullptr, 0);
+}
+
+const void* _rocsparselt_attribute::data()
+{
+    return _data;
+}
+size_t _rocsparselt_attribute::length()
+{
+    return _data_size;
+}
+
+size_t _rocsparselt_attribute::get(void* out, size_t size)
+{
+    if(out != nullptr && _data != nullptr && _data_size >= size)
+    {
+        memcpy(out, _data, size);
+        return size;
+    }
+    return 0;
+}
+
+void _rocsparselt_attribute::set(const void* in, size_t size)
+{
+    if(in == nullptr || (_data != nullptr && _data_size != size))
+    {
+        free(_data);
+        _data      = nullptr;
+        _data_size = 0;
+    }
+    if(in != nullptr)
+    {
+        if(_data == nullptr)
+            _data = malloc(size);
+        memcpy(_data, in, size);
+        _data_size = size;
     }
 }
