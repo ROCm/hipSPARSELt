@@ -24,7 +24,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocsparselt.h"
-#include "utility.h"
+//#include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
 

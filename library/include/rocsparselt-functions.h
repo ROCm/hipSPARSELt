@@ -115,17 +115,17 @@ rocsparse_status
  *  \retval     rocsparse_status_not_implemented
  */
 ROCSPARSELT_EXPORT
-rocsparse_status rocsparse_matmul(rocsparselt_handle      handle,
-                                  rocsparselt_matmul_plan plan,
-                                  const void*             alpha,
-                                  const void*             d_A,
-                                  const void*             d_B,
-                                  const void*             beta,
-                                  const void*             d_C,
-                                  void*                   d_D,
-                                  void*                   workspace,
-                                  hipStream_t*            streams,
-                                  int32_t                 numStreams);
+rocsparse_status rocsparselt_matmul(rocsparselt_handle      handle,
+                                    rocsparselt_matmul_plan plan,
+                                    const void*             alpha,
+                                    const void*             d_A,
+                                    const void*             d_B,
+                                    const void*             beta,
+                                    const void*             d_C,
+                                    void*                   d_D,
+                                    void*                   workspace,
+                                    hipStream_t*            streams,
+                                    int32_t                 numStreams);
 
 /*! \ingroup spmm_module
  *  \brief Sparse matrix dense matrix multiplication

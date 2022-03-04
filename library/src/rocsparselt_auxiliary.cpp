@@ -24,7 +24,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocsparselt.h"
-#include "utility.h"
+#include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
 
@@ -206,8 +206,7 @@ rocsparse_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr matDe
         constexpr size_t attrs = sizeof(matDescr->attributes) / sizeof(matDescr->attributes[0]);
         for(int i = 0; i < attrs; i++)
         {
-            if(matDescr->attributes[i].data_size > 0)
-                free(matDescr->attributes[i].data);
+            matDescr->attributes[i].clear();
         }
         delete matDescr;
     }
@@ -246,16 +245,7 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
         // Allocate
         try
         {
-            if(matDescr->attributes[matAttribute].data != nullptr
-               && matDescr->attributes[matAttribute].data_size > 0)
-            {
-                free(matDescr->attributes[matAttribute].data);
-                matDescr->attributes[matAttribute].data = nullptr;
-            }
-            if(matDescr->attributes[matAttribute].data == nullptr)
-                matDescr->attributes[matAttribute].data = malloc(dataSize);
-            matDescr->attributes[matAttribute].data_size = dataSize;
-            memcpy(matDescr->attributes[matAttribute].data, data, dataSize);
+            matDescr->attributes[matAttribute].set(data, dataSize);
             log_trace(handle, "rocsparselt_mat_descr_set_attribute");
         }
         catch(const rocsparse_status& status)
@@ -293,9 +283,8 @@ rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle   
     {
         try
         {
-            memcpy(data,
-                   matDescr->attributes[matAttribute].data,
-                   std::min(dataSize, matDescr->attributes[matAttribute].data_size));
+            if(matDescr->attributes[matAttribute].get(data, dataSize) == 0)
+                return rocsparse_status_invalid_value;
             log_trace(handle, "rocsparselt_mat_descr_get_attribute");
         }
         catch(const rocsparse_status& status)
@@ -389,8 +378,7 @@ rocsparse_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr
     // Destruct
     try
     {
-        if(matmulDescr->bias_pointer.data_size > 0 && matmulDescr->bias_pointer.data != nullptr)
-            free(matmulDescr->bias_pointer.data);
+        matmulDescr->bias_pointer.clear();
         delete matmulDescr;
     }
     catch(const rocsparse_status& status)
@@ -429,7 +417,6 @@ rocsparse_status
         // Allocate
         try
         {
-
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
@@ -457,25 +444,10 @@ rocsparse_status
                     return rocsparse_status_invalid_value;
                 break;
             case rocsparselt_matmul_bias_pointer:
-                if(matmulDescr->bias_pointer.data != nullptr
-                   && matmulDescr->bias_pointer.data_size != dataSize)
-                {
-                    free(matmulDescr->bias_pointer.data);
-                    matmulDescr->bias_pointer.data = nullptr;
-                }
-
-                if(dataSize <= 0)
-                    return rocsparse_status_invalid_value;
 
                 //TODO Check the bias vector size is equal to the number of rows of the output matrix D.
 
-                if(matmulDescr->bias_pointer.data == nullptr)
-                {
-                    matmulDescr->bias_pointer.data = malloc(dataSize);
-                }
-
-                matmulDescr->bias_pointer.data_size = dataSize;
-                memcpy(matmulDescr->bias_pointer.data, data, dataSize);
+                matmulDescr->bias_pointer.set(data, dataSize);
                 break;
             case rocsparselt_matmul_bias_stride:
                 if(sizeof(int64_t) == dataSize)
@@ -542,9 +514,7 @@ rocsparse_status
                 memcpy(data, &matmulDescr->activation_gelu, sizeof(int));
                 break;
             case rocsparselt_matmul_bias_pointer:
-                if(dataSize < matmulDescr->bias_pointer.data_size)
-                    return rocsparse_status_invalid_value;
-                memcpy(data, matmulDescr->bias_pointer.data, matmulDescr->bias_pointer.data_size);
+                matmulDescr->bias_pointer.get(data, dataSize);
                 break;
             case rocsparselt_matmul_bias_stride:
                 if(dataSize < sizeof(int64_t))
@@ -616,9 +586,7 @@ rocsparse_status
             = sizeof(algSelection->attributes) / sizeof(algSelection->attributes[0]);
         for(int i = 0; i < attrs; i++)
         {
-            if(algSelection->attributes[i].data_size > 0
-               && algSelection->attributes[i].data != nullptr)
-                free(algSelection->attributes[i].data);
+            algSelection->attributes[i].clear();
         }
         delete algSelection;
     }
@@ -656,16 +624,7 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
         // Allocate
         try
         {
-            if(algSelection->attributes[attribute].data != nullptr
-               && algSelection->attributes[attribute].data_size != dataSize)
-            {
-                free(algSelection->attributes[attribute].data);
-                algSelection->attributes[attribute].data = nullptr;
-            }
-            if(algSelection->attributes[attribute].data == nullptr)
-                algSelection->attributes[attribute].data = malloc(dataSize);
-            algSelection->attributes[attribute].data_size = dataSize;
-            memcpy(algSelection->attributes[attribute].data, data, dataSize);
+            algSelection->attributes[attribute].set(data, dataSize);
             log_trace(handle, "rocsparselt_matmul_alg_set_attribute");
         }
         catch(const rocsparse_status& status)
@@ -703,11 +662,8 @@ rocsparse_status rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle  
     {
         try
         {
-            if(algSelection->attributes[attribute].data == nullptr)
+            if(algSelection->attributes[attribute].get(data, dataSize) == 0)
                 return rocsparse_status_invalid_value;
-            memcpy(data,
-                   algSelection->attributes[attribute].data,
-                   std::min(dataSize, algSelection->attributes[attribute].data_size));
             log_trace(handle, "rocsparselt_matmul_alg_get_attribute");
         }
         catch(const rocsparse_status& status)
