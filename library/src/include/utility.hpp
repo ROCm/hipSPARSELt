@@ -23,13 +23,111 @@
  * ************************************************************************ */
 
 #pragma once
-#ifndef UTILITY_H
-#define UTILITY_H
+#ifndef UTILITY_HPP
+#define UTILITY_HPP
 
 #include "handle.h"
 #include "logging.h"
 #include <algorithm>
 #include <exception>
+
+#pragma STDC CX_LIMITED_RANGE ON
+
+inline bool isAligned(const void* pointer, size_t byte_count)
+{
+    return reinterpret_cast<uintptr_t>(pointer) % byte_count == 0;
+}
+
+// return precision string for rocsparselt_datatype
+constexpr const char* rocsparselt_datatype_string(rocsparselt_datatype type)
+{
+    switch(type)
+    {
+    case rocsparselt_datatype_f16_r:
+        return "f16_r";
+    case rocsparselt_datatype_i8_r:
+        return "i8_r";
+    case rocsparselt_datatype_bf16_r:
+        return "bf16_r";
+    case rocsparselt_datatype_f8_r:
+        return "f8_r";
+    case rocsparselt_datatype_bf8_r:
+        return "bf8_r";
+    }
+    return "invalid";
+}
+
+// return precision string for rocsparselt_compute_type
+constexpr const char* rocsparselt_compute_type_string(rocsparselt_compute_type type)
+{
+    switch(type)
+    {
+    case rocsparselt_compute_i32:
+        return "i32";
+    case rocsparselt_compute_f32:
+        return "f32";
+    }
+    return "invalid";
+}
+
+constexpr const char* rocsparselt_transpose_letter(rocsparse_operation op)
+{
+    switch(op)
+    {
+    case rocsparse_operation_none:
+        return "N";
+    case rocsparse_operation_transpose:
+        return "T";
+    case rocsparse_operation_conjugate_transpose:
+        return "C";
+    }
+    return "invalid";
+}
+// Convert rocsparse_status to string
+static const char* rocsparse_status_to_string(rocsparse_status status)
+{
+#define CASE(x) \
+    case x:     \
+        return #x
+    switch(status)
+    {
+        CASE(rocsparse_status_success);
+        CASE(rocsparse_status_invalid_handle);
+        CASE(rocsparse_status_not_implemented);
+        CASE(rocsparse_status_invalid_pointer);
+        CASE(rocsparse_status_invalid_size);
+        CASE(rocsparse_status_memory_error);
+        CASE(rocsparse_status_internal_error);
+        CASE(rocsparse_status_invalid_value);
+        CASE(rocsparse_status_arch_mismatch);
+        CASE(rocsparse_status_zero_pivot);
+        CASE(rocsparse_status_not_initialized);
+        CASE(rocsparse_status_type_mismatch);
+        CASE(rocsparse_status_requires_sorted_storage);
+        CASE(rocsparse_status_continue);
+    }
+#undef CASE
+    // We don't use default: so that the compiler warns us if any valid enums are missing
+    // from our switch. If the value is not a valid rocsparse_status, we return this string.
+    return "<undefined rocsparse_status value>";
+}
+template <typename>
+static constexpr char rocsparselt_precision_string[] = "invalid";
+//template <> constexpr char rocsparselt_precision_string<rocsparselt_bfloat16      >[] = "bf16_r";
+template <>
+static constexpr char rocsparselt_precision_string<rocsparselt_half>[] = "f16_r";
+template <>
+static constexpr char rocsparselt_precision_string<float>[] = "f32_r";
+template <>
+static constexpr char rocsparselt_precision_string<double>[] = "f64_r";
+template <>
+static constexpr char rocsparselt_precision_string<int8_t>[] = "i8_r";
+template <>
+static constexpr char rocsparselt_precision_string<uint8_t>[] = "u8_r";
+template <>
+static constexpr char rocsparselt_precision_string<int32_t>[] = "i32_r";
+template <>
+static constexpr char rocsparselt_precision_string<uint32_t>[] = "u32_r";
 
 // Return the leftmost significant bit position
 #if defined(rocsparse_ILP64)
@@ -43,27 +141,6 @@ static inline rocsparse_int rocsparse_clz(rocsparse_int n)
     return 32 - __builtin_clz(n);
 }
 #endif
-
-// Return one on the device
-static inline void rocsparselt_one(const rocsparselt_handle handle, float** one)
-{
-    *one = handle->sone;
-}
-
-static inline void rocsparselt_one(const rocsparselt_handle handle, double** one)
-{
-    *one = handle->done;
-}
-
-static inline void rocsparselt_one(const rocsparselt_handle handle, rocsparse_float_complex** one)
-{
-    *one = handle->cone;
-}
-
-static inline void rocsparselt_one(const rocsparselt_handle handle, rocsparse_double_complex** one)
-{
-    *one = handle->zone;
-}
 
 // if trace logging is turned on with
 // (handle->layer_mode & rocsparse_layer_mode_log_trace) == true

@@ -31,6 +31,7 @@
 
 #include "rocsparse-types.h"
 
+#include <float.h>
 #include <stddef.h>
 #include <stdint.h>
 
