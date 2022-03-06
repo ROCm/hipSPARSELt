@@ -425,4 +425,7 @@ struct floating_traits<rocsparse_double_complex>
 template <typename T>
 using floating_data_t = typename floating_traits<T>::data_t;
 
+// for internal use during testing, fetch arch name
+std::string rocsparselt_internal_get_arch_name();
+
 #endif // UTILITY_H

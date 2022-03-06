@@ -31,7 +31,7 @@
  * TODO - enumerate library calls to hip runtime, enumerate possible errors from
  * those calls
  ******************************************************************************/
-rocsparse_status get_rocsparse_status_for_hip_status(hipError_t status)
+rocsparse_status get_rocsparselt_status_for_hip_status(hipError_t status)
 {
     switch(status)
     {
