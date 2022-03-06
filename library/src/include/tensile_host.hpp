@@ -308,6 +308,68 @@ struct RocsparseltContractionProblem
         , numStreams(numStreams)
     {
     }
+
+    /***************************************************
+     * Print a RocsparseltContractionProblem for debugging *
+     ***************************************************/
+    friend rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream&        os,
+                                                    const RocsparseltContractionProblem& prob)
+    {
+        return tuple_helper::print_tuple_pairs(
+            os,
+            std::make_tuple("a_type",
+                            rocsparselt_precision_string<Ti>,
+                            "b_type",
+                            rocsparselt_precision_string<Ti>,
+                            "c_type",
+                            rocsparselt_precision_string<To>,
+                            "d_type",
+                            rocsparselt_precision_string<To>,
+                            "compute_type",
+                            rocsparselt_precision_string<Tc>,
+                            "transA",
+                            rocsparselt_transpose_letter(prob.trans_a),
+                            "transB",
+                            rocsparselt_transpose_letter(prob.trans_b),
+                            "M",
+                            prob.m,
+                            "N",
+                            prob.n,
+                            "K",
+                            prob.k,
+                            "alpha",
+                            *prob.alpha,
+                            "row_stride_a",
+                            prob.row_stride_a,
+                            "col_stride_a",
+                            prob.col_stride_a,
+                            "row_stride_b",
+                            prob.row_stride_b,
+                            "col_stride_b",
+                            prob.col_stride_b,
+                            "row_stride_c",
+                            prob.row_stride_c,
+                            "col_stride_c",
+                            prob.col_stride_c,
+                            "row_stride_d",
+                            prob.row_stride_d,
+                            "col_stride_d",
+                            prob.col_stride_d,
+                            "beta",
+                            *prob.beta,
+                            "batch_count",
+                            prob.batch_count,
+                            "strided_batch",
+                            prob.strided_batch,
+                            "stride_a",
+                            prob.batch_stride_a,
+                            "stride_b",
+                            prob.batch_stride_b,
+                            "stride_c",
+                            prob.batch_stride_c,
+                            "stride_d",
+                            prob.batch_stride_d));
+    };
 };
 
 /*******************************************************************************

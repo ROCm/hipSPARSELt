@@ -105,7 +105,7 @@ set(rocsparselt_source
   src/handle.cpp
   src/status.cpp
   src/rocsparselt_auxiliary.cpp
-  #src/rocsparselt_ostream.cpp
+  src/rocsparselt_ostream.cpp
 
 # spmm
   src/spmm/rocsparselt_compress.cpp

@@ -12,6 +12,7 @@
  *****************************************************************************/
 
 #include "rocsparselt-types.h"
+#include "rocsparselt_ostream.hpp"
 #include "tensile_host.hpp"
 //#include "utility.hpp"
 
@@ -404,7 +405,7 @@ namespace
             int count;
             if(hipGetDeviceCount(&count) != hipSuccess)
             {
-                std::cerr
+                rocsparselt_cerr
                     << "\nrocsparselt error: Could not initialize Tensile host: No devices found"
                     << std::endl;
                 //rocsparselt_abort();
@@ -522,16 +523,14 @@ namespace
             }
             else
             {
-#if 0
                 // clang-format off
-                static std::ostream& once = std::cerr
+                static rocsparselt_internal_ostream& once = rocsparselt_cerr
                                     << "\nrocsparselt warning: glob(\"" << dir << "\", ...) returned "
                                     << (g == GLOB_ABORTED ? "GLOB_ABORTED"
                                                           : g == GLOB_NOSPACE ? "GLOB_NOSPACE"
                                                                               : "an unknown error")
                                     << "." << std::endl;
                 // clang-format on
-#endif
             }
             globfree(&glob_result);
 #endif
@@ -556,14 +555,14 @@ namespace
 #endif
                 if(!TestPath(path))
                 {
-                    std::cerr << "\nrocsparselt error: Cannot read " << path << ": "
-                              << strerror(errno) << std::endl;
+                    rocsparselt_cerr << "\nrocsparselt error: Cannot read " << path << ": "
+                                     << strerror(errno) << std::endl;
                     //rocsparselt_abort();
                 }
 
                 auto lib = Tensile::LoadLibraryFile<Tensile::ContractionProblem>(path);
                 if(!lib)
-                    std::cerr << "\nrocsparselt error: Could not load " << path << std::endl;
+                    rocsparselt_cerr << "\nrocsparselt error: Could not load " << path << std::endl;
                 else
                 {
                     using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>;
@@ -574,8 +573,8 @@ namespace
 
             if(!m_library)
             {
-                std::cerr << "\nrocsparselt error: Could not initialize Tensile library"
-                          << std::endl;
+                rocsparselt_cerr << "\nrocsparselt error: Could not initialize Tensile library"
+                                 << std::endl;
                 //rocsparselt_abort();
             }
 
@@ -634,23 +633,22 @@ namespace
     }
     catch(const std::exception& e)
     {
-        std::cerr << "\nrocsparselt error: Could not initialize Tensile host:\n"
-                  << e.what() << std::endl;
+        rocsparselt_cerr << "\nrocsparselt error: Could not initialize Tensile host:\n"
+                         << e.what() << std::endl;
         //rocsparselt_abort();
     }
     catch(...)
     {
-        std::cerr
+        rocsparselt_cerr
             << "\nrocsparselt error: Could not initialize Tensile host:\nUnknown exception thrown"
             << std::endl;
         //rocsparselt_abort();
     }
 
-#if 0
     /**************************************************************************
     * We normally print error messages only once, to avoid excessive logging *
     **************************************************************************/
-    void print_once(const std::ostream& msg)
+    void print_once(const rocsparselt_internal_ostream& msg)
     {
         if(rocsparselt_suppress_tensile_error_messages())
             return;
@@ -658,15 +656,14 @@ namespace
         static const char*    verbose   = getenv(varname);
         if(!verbose)
         {
-            static auto& once = std::cerr
+            static auto& once = rocsparselt_cerr
                                 << msg
                                 << "\nThis message will be only be displayed once, unless the "
                                 << varname << " environment variable is set." << std::endl;
         }
         else
-            std::cerr << msg << std::endl;
+            rocsparselt_cerr << msg << std::endl;
     }
-#endif
 
 } // namespace
 
@@ -696,10 +693,8 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
 
         if(!solution)
         {
-#if 0
-            std::ostream msg;
+            rocsparselt_internal_ostream msg;
             print_once(msg << "\nrocsparselt error: No Tensile solution found for " << prob);
-#endif
             status = rocsparse_status_not_implemented;
         }
         else
@@ -713,19 +708,15 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
     }
     catch(const std::exception& e)
     {
-#if 0
-        std::ostream msg;
+        rocsparselt_internal_ostream msg;
         print_once(msg << "\nrocsparselt error: " << (solution ? "" : "No ")
                        << "Tensile solution found, but exception thrown for " << prob << e.what());
-#endif
     }
     catch(...)
     {
-#if 0
-        std::ostream msg;
+        rocsparselt_internal_ostream msg;
         print_once(msg << "\nrocsparselt error: " << (solution ? "" : "No ")
                        << "Tensile solution found, but unknown exception thrown for " << prob);
-#endif
     }
 
     return status;
