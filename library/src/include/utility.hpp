@@ -425,4 +425,11 @@ struct floating_traits<rocsparse_double_complex>
 template <typename T>
 using floating_data_t = typename floating_traits<T>::data_t;
 
+// Internal use, whether Tensile supports ldc != ldd
+// We assume true if the value is greater than or equal to 906
+bool rocsparselt_internal_tensile_supports_ldc_ne_ldd(rocsparselt_handle handle);
+
+// for internal use during testing, fetch arch name
+std::string rocsparselt_internal_get_arch_name();
+
 #endif // UTILITY_H
