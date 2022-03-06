@@ -27,7 +27,7 @@
 #define HANDLE_H
 
 #include "rocsparselt.h"
-
+//#include "rocsparselt_ostream.hpp"
 #include <fstream>
 #include <hip/hip_runtime_api.h>
 #include <iostream>
@@ -80,11 +80,6 @@ struct _rocsparselt_handle
     // destructor
     ~_rocsparselt_handle();
 
-    // set stream
-    rocsparse_status set_stream(hipStream_t user_stream);
-    // get stream
-    rocsparse_status get_stream(hipStream_t* user_stream) const;
-
     // device id
     int device;
     // device properties
@@ -93,8 +88,7 @@ struct _rocsparselt_handle
     int wavefront_size;
     // asic revision
     int asic_rev;
-    // stream ; default stream is system stream NULL
-    hipStream_t stream = 0;
+
     // pointer mode ; default mode is host
     rocsparse_pointer_mode pointer_mode = rocsparse_pointer_mode_host;
     // logging mode

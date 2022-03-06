@@ -783,3 +783,44 @@ rocsparse_status rocsparselt_get_git_rev(rocsparselt_handle handle, char* rev)
 #ifdef __cplusplus
 }
 #endif
+
+/*******************************************************************************
+ * GPU architecture-related functions
+ ******************************************************************************/
+
+// Emulate C++17 std::void_t
+template <typename...>
+using void_t = void;
+
+// By default, use gcnArch converted to a string prepended by gfx
+template <typename PROP, typename = void>
+struct ArchName
+{
+    std::string operator()(const PROP& prop) const
+    {
+        return "gfx" + std::to_string(prop.gcnArch);
+    }
+};
+
+// If gcnArchName exists as a member, use it instead
+template <typename PROP>
+struct ArchName<PROP, void_t<decltype(PROP::gcnArchName)>>
+{
+    std::string operator()(const PROP& prop) const
+    {
+        // strip out xnack/ecc from name
+        std::string gcnArchName(prop.gcnArchName);
+        std::string gcnArch = gcnArchName.substr(0, gcnArchName.find(":"));
+        return gcnArch;
+    }
+};
+
+// exported. Get architecture name
+std::string rocsparselt_internal_get_arch_name()
+{
+    int deviceId;
+    hipGetDevice(&deviceId);
+    hipDeviceProp_t deviceProperties;
+    hipGetDeviceProperties(&deviceProperties, deviceId);
+    return ArchName<hipDeviceProp_t>{}(deviceProperties);
+}

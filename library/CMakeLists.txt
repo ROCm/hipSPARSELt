@@ -116,12 +116,12 @@ set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PR
 # Package name
 set(package_name rocsparselt)
 
-set(ROCSPARSE_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
+set(ROCSPARSELT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
 
 rocm_create_package(
   NAME ${package_name}
   DESCRIPTION "Radeon Open Compute SPARSE library with xDL supported"
   MAINTAINER "rocSPARSElt Maintainer <vihuan@amd.com>"
   LDCONFIG
-  LDCONFIG_DIR ${ROCSPARSE_CONFIG_DIR}
+  LDCONFIG_DIR ${ROCSPARSELT_CONFIG_DIR}
 )
