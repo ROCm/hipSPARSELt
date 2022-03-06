@@ -27,6 +27,7 @@
 
 #include "handle.h"
 #include "utility.hpp"
+#include "tensile_host.hpp"
 
 inline rocsparse_status getOriginalSizes(rocsparse_operation opA,
                                          rocsparse_operation opB,
@@ -241,7 +242,46 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
                                        hipStream_t*         streams,
                                        int32_t              numStreams)
 {
+#if BUILD_WITH_TENSILE
+    RocsparseltContractionProblem<Ti, To, Tc> problem{handle,
+                                                      trans_a,
+                                                      trans_b,
+                                                      m,
+                                                      n,
+                                                      k,
+                                                      alpha,
+                                                      a,
+                                                      nullptr,
+                                                      ld_a,
+                                                      batch_stride_a,
+                                                      offset_a,
+                                                      b,
+                                                      nullptr,
+                                                      ld_b,
+                                                      batch_stride_b,
+                                                      offset_b,
+                                                      beta,
+                                                      c,
+                                                      nullptr,
+                                                      ld_c,
+                                                      batch_stride_c,
+                                                      offset_c,
+                                                      d,
+                                                      nullptr,
+                                                      ld_d,
+                                                      batch_stride_d,
+                                                      offset_d,
+                                                      batch_count,
+                                                      strided_batch,
+                                                      sparseA,
+                                                      metadata,
+                                                      streams,
+                                                      numStreams};
+
+    return runContractionProblem(problem);
+#else
     return rocsparse_status_not_implemented;
+#endif
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>

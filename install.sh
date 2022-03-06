@@ -23,8 +23,6 @@ function display_help()
   echo "    [--static] build static library"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
-  echo "    [--matrices-dir] existing client matrices directory"
-  echo "    [--matrices-dir-install] install client matrices directory"
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
@@ -211,6 +209,28 @@ install_packages( )
       exit 2
       ;;
   esac
+
+  # wget is needed for msgpack in this case
+  if [[ ("${ID}" == "ubuntu") && ("${VERSION_ID}" == "16.04") && "${tensile_msgpack_backend}" == true ]]; then
+    if ! $(dpkg -s "libmsgpackc2" &> /dev/null) || $(dpkg --compare-versions $(dpkg-query -f='${Version}' --show libmsgpackc2) lt 2.1.5-1); then
+      library_dependencies_ubuntu+=("wget")
+    fi
+  fi
+}
+
+install_msgpack_from_source( )
+{
+    if [[ ! -d "${build_dir}/deps/msgpack-c" ]]; then
+      pushd .
+      mkdir -p ${build_dir}/deps
+      cd ${build_dir}/deps
+      git clone -b cpp-3.0.1 https://github.com/msgpack/msgpack-c.git
+      cd msgpack-c
+      CXX=${cxx} CC=${cc} ${cmake_executable} -DMSGPACK_BUILD_TESTS=OFF -DMSGPACK_BUILD_EXAMPLES=OFF .
+      make
+      elevate_if_not_root make install
+      popd
+    fi
 }
 
 # #################################################
@@ -257,6 +277,15 @@ matrices_dir=
 matrices_dir_install=
 gpu_architecture=all
 
+tensile_cov=
+tensile_fork=
+tensile_merge_files=
+tensile_tag=
+tensile_test_local_path=
+tensile_version=
+build_tensile=true
+tensile_msgpack_backend=true
+
 # #################################################
 # Parameter parsing
 # #################################################
@@ -264,7 +293,7 @@ gpu_architecture=all
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,matrices-dir:,matrices-dir-install:,architecture: --options hicdgrka: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,use-custom-version:,architecture: --options hicdgrkalfbtnu: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -317,29 +346,56 @@ while true; do
         -a|--architecture)
             gpu_architecture=${2}
             shift 2 ;;
-        --matrices-dir)
-            matrices_dir=${2}
-            if [[ "${matrices_dir}" == "" ]];then
-                echo "Missing argument from command line parameter --matrices-dir; aborting"
-                exit 1
-            fi
-            shift 2 ;;
-        --matrices-dir-install)
-            matrices_dir_install=${2}
-            if [[ "${matrices_dir_install}" == "" ]];then
-                echo "Missing argument from command line parameter --matrices-dir-install; aborting"
-                exit 1
-            fi
-            shift 2 ;;
         --prefix)
             install_prefix=${2}
             shift 2 ;;
+        -l|--logic)
+            tensile_logic=${2}
+            shift 2 ;;
+                -o|--cov)
+            tensile_cov=${2}
+            shift 2 ;;
+        -f|--fork)
+            tensile_fork=${2}
+            shift 2 ;;
+        -b|--branch)
+            tensile_tag=${2}
+            shift 2 ;;
+        -t|--test_local_path)
+            tensile_test_local_path=${2}
+            shift 2 ;;
+        -n|--no_tensile|--no-tensile)
+            build_tensile=false
+            shift ;;
+        --merge-files)
+            tensile_merge_files=true
+            shift ;;
+        -no-merge-files)
+            tensile_merge_files=false
+            shift 2;;
+        -u|--use-custom-version)
+            tensile_version=${2}
+            shift 2;;
+        --msgpack)
+            tensile_msgpack_backend=true
+            shift ;;
+        --no-msgpack)
+            tensile_msgpack_backend=false
+            shift ;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
             exit 1
             ;;
     esac
 done
+
+if [[ -z $tensile_cov ]]; then
+    if [[ $build_hip_clang == true ]]; then
+        tensile_cov=V3
+    else
+        tensile_cov=V2
+    fi
+fi
 
 #
 # If matrices_dir_install has been set up then install matrices dir and exit.
@@ -401,6 +457,15 @@ fi
 if [[ "${install_dependencies}" == true ]]; then
 
   install_packages
+
+  # cmake is needed to install msgpack
+  case "${ID}" in
+    centos|rhel|sles|opensuse-leap)
+      if [[ "${tensile_msgpack_backend}" == true ]]; then
+        install_msgpack_from_source
+      fi
+      ;;
+  esac
 
   # The following builds googletest from source, installs into cmake default /usr/local
   pushd .
@@ -480,6 +545,45 @@ pushd .
           cmake_client_options="${cmake_client_options} -DCMAKE_MATRICES_DIR=${matrices_dir}"
       fi
   fi
+
+ if [[ -n "${tensile_fork}" ]]; then
+    cmake_common_options="${cmake_common_options} -Dtensile_fork=${tensile_fork}"
+  fi
+
+  if [[ -n "${tensile_tag}" ]]; then
+    cmake_common_options="${cmake_common_options} -Dtensile_tag=${tensile_tag}"
+  fi
+
+  if [[ -n "${tensile_test_local_path}" ]]; then
+    cmake_common_options="${cmake_common_options} -DTensile_TEST_LOCAL_PATH=${tensile_test_local_path}"
+  fi
+
+  if [[ -n "${tensile_version}" ]]; then
+    cmake_common_options="${cmake_common_options} -DTENSILE_VERSION=${tensile_version}"
+  fi
+
+  tensile_opt=""
+  if [[ "${build_tensile}" == false ]]; then
+    tensile_opt="${tensile_opt} -DBUILD_WITH_TENSILE=OFF"
+   else
+    tensile_opt="${tensile_opt} -DTensile_LOGIC=${tensile_logic} -DTensile_CODE_OBJECT_VERSION=${tensile_cov}"
+    if [[ ${build_jobs} != $(nproc) ]]; then
+      tensile_opt="${tensile_opt} -DTensile_CPU_THREADS=${build_jobs}"
+    fi
+  fi
+
+  if [[ "${tensile_merge_files}" == false ]]; then
+    tensile_opt="${tensile_opt} -DTensile_MERGE_FILES=OFF"
+  fi
+
+  if [[ "${tensile_msgpack_backend}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=msgpack"
+  else
+    tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=yaml"
+  fi
+
+  echo $cmake_common_options
+  cmake_common_options="${cmake_common_options} ${tensile_opt}"
 
   compiler="hcc"
   if [[ "${build_hip_clang}" == true ]]; then

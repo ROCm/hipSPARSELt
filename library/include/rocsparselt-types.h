@@ -231,6 +231,16 @@ typedef enum rocsparselt_prune_alg_
     = 1, /**< - Zero-out two values in a 1x4 strip to maximize the L1-norm of the resulting strip. */
 } rocsparselt_prune_alg;
 
+/*! \brief Indicates if atomics operations are allowed. Not allowing atomic operations
+*    may generally improve determinism and repeatability of results at a cost of performance */
+typedef enum rocsparselt_atomics_mode_
+{
+    /*! \brief Algorithms will refrain from atomics where applicable */
+    rocsparselt_atomics_not_allowed = 0,
+    /*! \brief Algorithms will take advantage of atomics where applicable */
+    rocsparselt_atomics_allowed = 1,
+} rocsparselt_atomics_mode;
+
 #ifdef __cplusplus
 }
 #endif

@@ -56,6 +56,10 @@ project(rocsparselt LANGUAGES CXX Fortran)
 # Determine if CXX Compiler is hip-clang
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   message(STATUS "Using hip-clang to build for amdgpu backend")
+  set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__HIP_HCC_COMPAT_MODE__=1" )
+  if ( CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
+    set ( CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
+  endif()
 else()
   message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
 endif()
@@ -142,10 +146,74 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
   find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
 endif( )
 
+option( BUILD_WITH_TENSILE "Build full functionality which requires tensile?" ON )
+
+if( BUILD_WITH_TENSILE )
+# we will have expanded "all" for tensile to ensure consistency as we have local rules
+set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
+
+set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
+set( Tensile_CODE_OBJECT_VERSION "V2" CACHE STRING "Tensile code_object_version")
+set( Tensile_COMPILER "hipcc" CACHE STRING "Tensile compiler")
+set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
+set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
+
+option( Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON )
+option( Tensile_SHORT_FILENAMES "Tensile to use short file names? Use if compiler complains they're too long." OFF )
+option( Tensile_PRINT_DEBUG "Tensile to print runtime debug info?" OFF )
+
+set( Tensile_TEST_LOCAL_PATH "" CACHE PATH "Use local Tensile directory instead of fetching a GitHub branch" )
+
+set_property( CACHE Tensile_LOGIC PROPERTY STRINGS aldebaran asm_full asm_lite asm_miopen hip_lite other )
+set_property( CACHE Tensile_CODE_OBJECT_VERSION PROPERTY STRINGS V2 V3 )
+set_property( CACHE Tensile_COMPILER PROPERTY STRINGS hcc hipcc)
+set_property( CACHE Tensile_LIBRARY_FORMAT PROPERTY STRINGS msgpack yaml)
+
+if(Tensile_LIBRARY_FORMAT MATCHES "yaml")
+  option(TENSILE_USE_LLVM      "Use LLVM for parsing config files." ON)
+  option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." OFF)
+else()
+  option(TENSILE_USE_LLVM      "Use LLVM for parsing config files." OFF)
+  option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." ON)
+endif()
+
+if (WIN32)
+  set( Tensile_ROOT "${CMAKE_BINARY_DIR}/virtualenv/Lib/site-packages/Tensile" )
+endif()
+
+include(virtualenv)
+if (Tensile_TEST_LOCAL_PATH)
+  virtualenv_install(${Tensile_TEST_LOCAL_PATH})
+  message (STATUS "using local Tensile from ${Tensile_TEST_LOCAL_PATH}, copied to ${Tensile_ROOT}")
+else()
+  # Use the virtual-env setup and download package from specified repot:
+  set( tensile_fork "ROCmSoftwarePlatform" CACHE STRING "Tensile fork to use" )
+  file (STRINGS "tensile_tag.txt" read_tensile_tag)
+  set( tensile_tag ${read_tensile_tag} CACHE STRING "Tensile tag to download" )
+  virtualenv_install("git+https://0bc76d8e6e65884fc3a460ac56890a96f88006a8@github.amd.com/${tensile_fork}/Tensile.git@${tensile_tag}")
+  message (STATUS "using GIT Tensile fork=${tensile_fork} from branch=${tensile_tag}")
+endif()
+message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
+list(APPEND CMAKE_PREFIX_PATH ${VIRTUALENV_HOME_DIR})
+if (TENSILE_VERSION)
+  find_package(Tensile ${TENSILE_VERSION} EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
+else()
+  find_package(Tensile 4.31.0 EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
+endif()
+endif()
+
 # Setup version
 set(VERSION_STRING "0.0.1")
 rocm_setup_version(VERSION ${VERSION_STRING})
 set(rocsparselt_SOVERSION 0.1)
+
+# setup rocblas defines used for both the library and clients
+if( BUILD_WITH_TENSILE )
+    list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
+else()
+    list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
+endif()
+
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
   set( BUILD_CLIENTS ON )

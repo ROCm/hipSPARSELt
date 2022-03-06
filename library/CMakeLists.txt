@@ -60,13 +60,66 @@ include(src/CMakeLists.txt)
 add_library(rocsparselt ${rocsparselt_source} ${rocsparselt_headers_public})
 add_library(roc::rocsparselt ALIAS rocsparselt)
 
+
+if( BUILD_WITH_TENSILE )
+
+  if( BUILD_SHARED_LIBS )
+    target_link_libraries( rocsparselt PRIVATE TensileHost )
+  else()
+    target_compile_definitions( rocsparselt PRIVATE ROCBLAS_STATIC_LIB )
+
+    # bypassing cmake dependencies chain for static link as it won't allow target from different directory
+
+    # including tensile headers into rocblas tensileHost client so get compile properties
+    get_target_property(TensileHost_INCLUDES TensileHost INCLUDE_DIRECTORIES)
+    target_include_directories( rocsparselt PRIVATE ${TensileHost_INCLUDES} )
+    get_target_property(TensileHost_DEFINES TensileHost COMPILE_DEFINITIONS)
+    target_compile_definitions( rocsparselt PRIVATE ${TensileHost_DEFINES} )
+
+    get_target_property( TensileHost_LIBDIR TensileHost BINARY_DIR )
+
+    message (STATUS "TensileHost_INCLUDES == ${TensileHost_INCLUDES}")
+    message (STATUS "TensileHost_DEFINES == ${TensileHost_DEFINES}")
+    message (STATUS "TensileHost_LIBDIR == ${TensileHost_LIBDIR}")
+
+    # recreate LLVM static dependencies
+    if (${Tensile_LIBRARY_FORMAT} STREQUAL "yaml")
+      find_package(LLVM 6.0 QUIET CONFIG)
+      if(NOT LLVM_FOUND)
+          find_package(LLVM 7.0 QUIET CONFIG)
+          if(NOT LLVM_FOUND)
+              find_package(LLVM 9.0 QUIET CONFIG)
+              if(NOT LLVM_FOUND)
+                  find_package(LLVM REQUIRED CONFIG)
+              endif()
+          endif()
+      endif()
+      find_library(LLVMObjectYAML_LIBRARY
+        NAMES LLVMObjectYAML
+        PATHS ${LLVM_LIBRARY_DIR})
+      message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
+
+      target_link_libraries(rocsparselt PRIVATE LLVMObjectYAML )  # match tensile
+    endif()
+
+    # to get TensileHost built first, not to link target
+    # as dependency chain can not be created
+    add_dependencies(rocsparselt TensileHost)
+
+  endif()
+
+  target_compile_definitions(rocsparselt PRIVATE ${TENSILE_DEFINES} )
+endif()
+
 # Target compile options
 target_compile_options(rocsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
+target_compile_definitions(rocsparselt PRIVATE ROCM_USE_FLOAT16)
 
 # Target include directories
 target_include_directories(rocsparselt
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
                                    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
+                                   $<BUILD_INTERFACE:${Tensile_INC}>
                            PUBLIC  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
                                    $<INSTALL_INTERFACE:include>
 )
