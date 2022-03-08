@@ -158,13 +158,12 @@ endif()
 # rocSPARSELt library
 add_subdirectory(library)
 
-#[[ TODO
-
 # Trigger client builds if selected
 if(BUILD_CLIENTS)
   add_subdirectory(clients)
 endif()
 
+#[[ TODO
 #
 # ADDITIONAL TARGETS FOR CODE COVERAGE
 #
