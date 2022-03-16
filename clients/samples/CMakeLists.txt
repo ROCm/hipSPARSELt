@@ -3,7 +3,9 @@
 # ########################################################################
 
 add_executable( example_spmm_strided_batched example_spmm_strided_batched.cpp)
-set( sample_list_tensile example_spmm_strided_batched)
+add_executable( example_prune_strip example_prune_strip.cpp)
+
+set( sample_list_tensile example_spmm_strided_batched example_prune_strip)
 
 set( sample_list_all ${sample_list_tensile})
 set( sample_list_hip_device ${sample_list_tensile} )
