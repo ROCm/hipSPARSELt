@@ -36,7 +36,7 @@ __global__ void prune_check_kernel(const Ti* in,
                                    int64_t   stride1,
                                    int64_t   stride2,
                                    int       num_batches,
-                                   int64_t   stride_batch,
+                                   int64_t   batch_stride,
                                    int64_t   sizes)
 {
     constexpr unsigned int MT0I = SG0I * TT0I;
@@ -45,24 +45,28 @@ __global__ void prune_check_kernel(const Ti* in,
     unsigned int serial = hc_get_workitem_id(0);
     unsigned int sg0I   = serial % SG0I;
     unsigned int sg1J   = serial / SG0I;
-    unsigned int stride = sg0I * stride1 + sg1J * 4 * stride2;
+
+    unsigned int stride = sg0I * stride1 + sg1J * TT1J * stride2;
 
     unsigned int wg0I    = hc_get_group_id(0);
     unsigned int wg1J    = hc_get_group_id(1);
     unsigned int batchId = hc_get_group_id(2);
 
-    unsigned int wg_stride    = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
-    unsigned int batch_stride = batchId * stride_batch;
-
-    unsigned int globalReadOffset = batch_stride + wg_stride + stride;
-
-    if(*out)
+    if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
         return;
+
+    unsigned int wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    unsigned int b_stride  = batchId * batch_stride;
+
+    unsigned int globalReadOffset = b_stride + wg_stride + stride;
 
     for(int i = 0; i < TT0I; i++)
     {
         for(int j = 0; j < TT1J; j += 4)
         {
+            if(*out)
+                return;
+
             unsigned int offset = i * stride1 + j * stride2;
             int          nz     = 0;
 
@@ -71,10 +75,13 @@ __global__ void prune_check_kernel(const Ti* in,
             {
                 unsigned int pos = globalReadOffset + offset + k * stride2;
                 if(pos < sizes)
+                {
                     if(in[pos] > 0)
+                    {
                         nz++;
+                    }
+                }
             }
-
             if(nz > 2)
             {
                 *out = 1;
@@ -100,7 +107,7 @@ __global__ void prune_strip_kernel(const Ti* in,
                                    int64_t   stride1,
                                    int64_t   stride2,
                                    int       num_batches,
-                                   int64_t   stride_batch,
+                                   int64_t   batch_stride,
                                    int64_t   sizes)
 {
     constexpr unsigned int MT0I = SG0I * TT0I;
@@ -115,10 +122,13 @@ __global__ void prune_strip_kernel(const Ti* in,
     unsigned int wg1J    = hc_get_group_id(1);
     unsigned int batchId = hc_get_group_id(2);
 
-    unsigned int wg_stride    = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
-    unsigned int batch_stride = batchId * stride_batch;
+    if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
+        return;
 
-    unsigned int globalReadOffset = batch_stride + wg_stride + stride;
+    unsigned int wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    unsigned int b_stride  = batchId * batch_stride;
+
+    unsigned int globalReadOffset = b_stride + wg_stride + stride;
 
     for(int i = 0; i < TT0I; i++)
     {
@@ -126,7 +136,6 @@ __global__ void prune_strip_kernel(const Ti* in,
         {
             unsigned int offset = globalReadOffset + i * stride1 + j * stride2;
             Ti           values[4];
-
 #pragma unroll
             for(int k = 0; k < 4; k++)
             {
@@ -159,9 +168,6 @@ __global__ void prune_strip_kernel(const Ti* in,
             for(int k = 0; k < 4; k++)
             {
                 unsigned int pos = offset + k * stride2;
-                if(pos >= sizes)
-                    break;
-
                 if(k != pos_a && k != pos_b)
                     out[pos] = static_cast<Ti>(0.0f);
                 else
@@ -178,7 +184,7 @@ rocsparse_status rocsparselt_smfmac_prune_template(const rocsparselt_handle hand
                                                    int64_t                  stride0,
                                                    int64_t                  stride1,
                                                    int                      num_batches,
-                                                   int64_t                  stride_batch,
+                                                   int64_t                  batch_stride,
                                                    rocsparse_operation      op,
                                                    rocsparse_order          order,
                                                    const Ti*                d_in,
@@ -198,6 +204,15 @@ rocsparse_status rocsparselt_smfmac_prune_template(const rocsparselt_handle hand
 
     if(pruneAlg == rocsparselt_prune_smfmac_strip)
     {
+        void (*func)(const Ti* in,
+                     Ti*       out,
+                     int64_t   m,
+                     int64_t   n,
+                     int64_t   stride1,
+                     int64_t   stride2,
+                     int       num_batches,
+                     int64_t   batch_stride,
+                     int64_t   sizes);
         hipLaunchKernelGGL((prune_strip_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J>), /* compute kernel*/
                            dim3(block_x, block_y, num_batches),
                            dim3(SG0I * SG1J),
@@ -210,8 +225,8 @@ rocsparse_status rocsparselt_smfmac_prune_template(const rocsparselt_handle hand
                            stride0,
                            stride1,
                            num_batches,
-                           stride_batch,
-                           num_batches * stride_batch);
+                           batch_stride,
+                           num_batches * batch_stride);
         return rocsparse_status_success;
     }
     return rocsparse_status_not_implemented;
@@ -224,7 +239,7 @@ rocsparse_status rocsparselt_smfmac_prune_check_template(const rocsparselt_handl
                                                          int64_t                  stride0,
                                                          int64_t                  stride1,
                                                          int                      num_batches,
-                                                         int64_t                  stride_batch,
+                                                         int64_t                  batch_stride,
                                                          rocsparse_operation      op,
                                                          rocsparse_order          order,
                                                          const Ti*                d_in,
@@ -254,8 +269,8 @@ rocsparse_status rocsparselt_smfmac_prune_check_template(const rocsparselt_handl
                        stride0,
                        stride1,
                        num_batches,
-                       stride_batch,
-                       num_batches * stride_batch);
+                       batch_stride,
+                       num_batches * batch_stride);
     return rocsparse_status_success;
 }
 
@@ -269,7 +284,7 @@ rocsparse_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle,
                                                int64_t                  stride0,
                                                int64_t                  stride1,
                                                int                      num_batches,
-                                               int64_t                  stride_batch,
+                                               int64_t                  batch_stride,
                                                rocsparse_operation      op,
                                                rocsparse_order          order,
                                                const void*              d_in,
@@ -290,7 +305,7 @@ rocsparse_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle,
                 stride0,
                 stride1,
                 num_batches,
-                stride_batch,
+                batch_stride,
                 op,
                 order,
                 reinterpret_cast<const rocsparselt_half*>(d_in),
@@ -308,7 +323,7 @@ rocsparse_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle ha
                                                      int64_t                  stride0,
                                                      int64_t                  stride1,
                                                      int                      num_batches,
-                                                     int64_t                  stride_batch,
+                                                     int64_t                  batch_stride,
                                                      rocsparse_operation      op,
                                                      rocsparse_order          order,
                                                      const void*              d_in,
@@ -326,7 +341,7 @@ rocsparse_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle ha
             stride0,
             stride1,
             num_batches,
-            stride_batch,
+            batch_stride,
             op,
             order,
             reinterpret_cast<const rocsparselt_half*>(d_in),
@@ -376,14 +391,14 @@ rocsparse_status rocsparselt_smfmac_prune(const rocsparselt_handle       handle,
     rocsparse_operation      opA          = matmulDescr->op_A;
     rocsparselt_compute_type compute_type = matmulDescr->compute_type;
 
-    int64_t              num_rows = opA == rocsparse_operation_transpose ? matrix->n : matrix->m;
-    int64_t              num_cols = opA == rocsparse_operation_transpose ? matrix->m : matrix->n;
-    int64_t              ld       = matrix->ld;
-    rocsparse_order      order    = matrix->order;
-    rocsparselt_datatype type     = matrix->type;
+    int64_t              o_m   = opA == rocsparse_operation_transpose ? matrix->n : matrix->m;
+    int64_t              o_n   = opA == rocsparse_operation_transpose ? matrix->m : matrix->n;
+    int64_t              ld    = matrix->ld;
+    rocsparse_order      order = matrix->order;
+    rocsparselt_datatype type  = matrix->type;
 
     int     num_batches  = 1;
-    int64_t batch_stride = ld * num_cols;
+    int64_t batch_stride = ld * matrix->n;
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 
@@ -391,8 +406,8 @@ rocsparse_status rocsparselt_smfmac_prune(const rocsparselt_handle       handle,
     int64_t stride1 = (opA == rocsparse_operation_transpose) ? 1 : ld;
 
     return rocsparselt_smfmac_prune_impl(handle,
-                                         num_rows,
-                                         num_cols,
+                                         o_m,
+                                         o_n,
                                          stride0,
                                          stride1,
                                          num_batches,
@@ -437,14 +452,14 @@ rocsparse_status rocsparselt_smfmac_prune_check(const rocsparselt_handle       h
 
     rocsparse_operation opA = matmulDescr->op_A;
 
-    int64_t              num_rows = opA == rocsparse_operation_transpose ? matrix->n : matrix->m;
-    int64_t              num_cols = opA == rocsparse_operation_transpose ? matrix->m : matrix->n;
-    int64_t              ld       = matrix->ld;
-    rocsparse_order      order    = matrix->order;
-    rocsparselt_datatype type     = matrix->type;
+    int64_t              o_m   = opA == rocsparse_operation_transpose ? matrix->n : matrix->m;
+    int64_t              o_n   = opA == rocsparse_operation_transpose ? matrix->m : matrix->n;
+    int64_t              ld    = matrix->ld;
+    rocsparse_order      order = matrix->order;
+    rocsparselt_datatype type  = matrix->type;
 
     int     num_batches  = 1;
-    int64_t batch_stride = ld * num_cols;
+    int64_t batch_stride = ld * matrix->n;
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 
@@ -452,8 +467,8 @@ rocsparse_status rocsparselt_smfmac_prune_check(const rocsparselt_handle       h
     int64_t stride1 = (opA == rocsparse_operation_transpose) ? 1 : ld;
 
     return rocsparselt_smfmac_prune_check_impl(handle,
-                                               num_rows,
-                                               num_cols,
+                                               o_m,
+                                               o_n,
                                                stride0,
                                                stride1,
                                                num_batches,

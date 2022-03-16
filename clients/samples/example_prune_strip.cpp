@@ -138,7 +138,7 @@ void validate(T* A, T* B, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_
                                 static_cast<double>(value_a),
                                 static_cast<double>(value_b));
                     correct = false;
-                    break;
+                    //break;
                 }
             }
         }
@@ -166,7 +166,7 @@ void test_prune_check(rocsparselt_handle       handle,
     if((h_valid == 0) == expected)
         std::printf("expected %s, prune check PASSED\n", s);
     else
-        std::printf("expected %s, rune check FAILED: wrong result\n", s);
+        std::printf("expected %s, prune check FAILED: wrong result\n", s);
     CHECK_HIP_ERROR(hipFree(d_valid));
 }
 
