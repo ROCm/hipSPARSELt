@@ -24,6 +24,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocsparselt.h"
+#include "spmm/rocsparselt_spmm.hpp"
 #include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
@@ -119,6 +120,11 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
         // Allocate
         try
         {
+            auto status = validateArgs(
+                handle, rows, cols, ld, alignment, valueType, order, rocsparselt_matrix_type_dense);
+            if(status != rocsparse_status_success)
+                throw status;
+
             *matDescr              = new _rocsparselt_mat_descr();
             (*matDescr)->m_type    = rocsparselt_matrix_type_dense;
             (*matDescr)->m         = rows;
@@ -164,16 +170,23 @@ rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle hand
     {
         return rocsparse_status_invalid_pointer;
     }
-    else if(order != rocsparse_order_column)
-    {
-        return rocsparse_status_not_implemented;
-    }
     else
     {
         *matDescr = nullptr;
         // Allocate
         try
         {
+            auto status = validateArgs(handle,
+                                       rows,
+                                       cols,
+                                       ld,
+                                       alignment,
+                                       valueType,
+                                       order,
+                                       rocsparselt_matrix_type_structured);
+            if(status != rocsparse_status_success)
+                throw status;
+
             *matDescr              = new _rocsparselt_mat_descr();
             (*matDescr)->m_type    = rocsparselt_matrix_type_structured;
             (*matDescr)->m         = rows;
