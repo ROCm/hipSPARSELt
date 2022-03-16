@@ -26,8 +26,8 @@
 //#include "gemm_tensile.hpp"
 
 #include "handle.h"
-#include "utility.hpp"
 #include "tensile_host.hpp"
+#include "utility.hpp"
 
 inline rocsparse_status getOriginalSizes(rocsparse_operation opA,
                                          rocsparse_operation opB,
@@ -65,6 +65,40 @@ template <typename T>
 inline size_t getMetadataOffset(int num_batches, int64_t batch_stride)
 {
     return num_batches * batch_stride;
+}
+
+/*******************************************************************************
+ * Validate Arguments - matrix init.
+ ******************************************************************************/
+inline rocsparse_status validateArgs(rocsparselt_handle      handle,
+                                     int64_t                 num_rows,
+                                     int64_t                 num_cols,
+                                     int64_t                 ld,
+                                     uint32_t                alignment,
+                                     rocsparselt_datatype    valueType,
+                                     rocsparse_order         order,
+                                     rocsparselt_matrix_type matrixType)
+{
+    if(num_rows < 8 || num_cols < 8)
+        return rocsparse_status_invalid_size;
+
+    if(matrixType == rocsparselt_matrix_type_structured)
+        if(num_cols % 8 != 0)
+            return rocsparse_status_invalid_size;
+
+    if(order == rocsparse_order_row)
+        return rocsparse_status_not_implemented;
+    else // order == rocsparse_order_col
+    {
+        if(num_rows > ld)
+            return rocsparse_status_invalid_size;
+    }
+
+    //TODO should support other datatype in the future.
+    if(valueType != rocsparselt_datatype_f16_r)
+        return rocsparse_status_not_implemented;
+
+    return rocsparse_status_success;
 }
 
 /*******************************************************************************
