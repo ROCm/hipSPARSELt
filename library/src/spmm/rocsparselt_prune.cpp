@@ -28,9 +28,314 @@
 
 #include <hip/hip_runtime_api.h>
 
+template <typename Ti, int SG0I, int SG1J, int TT0I, int TT1J>
+__global__ void prune_check_kernel(const Ti* in,
+                                   int*      out,
+                                   int64_t   m,
+                                   int64_t   n,
+                                   int64_t   stride1,
+                                   int64_t   stride2,
+                                   int       num_batches,
+                                   int64_t   stride_batch,
+                                   int64_t   sizes)
+{
+    constexpr unsigned int MT0I = SG0I * TT0I;
+    constexpr unsigned int MT1J = SG1J * TT1J;
+
+    unsigned int serial = hc_get_workitem_id(0);
+    unsigned int sg0I   = serial % SG0I;
+    unsigned int sg1J   = serial / SG0I;
+    unsigned int stride = sg0I * stride1 + sg1J * 4 * stride2;
+
+    unsigned int wg0I    = hc_get_group_id(0);
+    unsigned int wg1J    = hc_get_group_id(1);
+    unsigned int batchId = hc_get_group_id(2);
+
+    unsigned int wg_stride    = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    unsigned int batch_stride = batchId * stride_batch;
+
+    unsigned int globalReadOffset = batch_stride + wg_stride + stride;
+
+    if(*out)
+        return;
+
+    for(int i = 0; i < TT0I; i++)
+    {
+        for(int j = 0; j < TT1J; j += 4)
+        {
+            unsigned int offset = i * stride1 + j * stride2;
+            int          nz     = 0;
+
+#pragma unroll
+            for(int k = 0; k < 4; k++)
+            {
+                unsigned int pos = globalReadOffset + offset + k * stride2;
+                if(pos < sizes)
+                    if(in[pos] > 0)
+                        nz++;
+            }
+
+            if(nz > 2)
+            {
+                *out = 1;
+                return;
+            }
+        }
+    }
+}
+
+template <typename Ti, typename Tc>
+__host__ __device__ inline Tc norm2(Ti a, Ti b)
+{
+    Tc ac = static_cast<Tc>(a);
+    Tc bc = static_cast<Tc>(b);
+    return static_cast<Tc>(sqrt(ac * ac + bc * bc));
+}
+
+template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J>
+__global__ void prune_strip_kernel(const Ti* in,
+                                   Ti*       out,
+                                   int64_t   m,
+                                   int64_t   n,
+                                   int64_t   stride1,
+                                   int64_t   stride2,
+                                   int       num_batches,
+                                   int64_t   stride_batch,
+                                   int64_t   sizes)
+{
+    constexpr unsigned int MT0I = SG0I * TT0I;
+    constexpr unsigned int MT1J = SG1J * TT1J;
+
+    unsigned int serial = hc_get_workitem_id(0);
+    unsigned int sg0I   = serial % SG0I;
+    unsigned int sg1J   = serial / SG0I;
+    unsigned int stride = sg0I * stride1 + sg1J * 4 * stride2;
+
+    unsigned int wg0I    = hc_get_group_id(0);
+    unsigned int wg1J    = hc_get_group_id(1);
+    unsigned int batchId = hc_get_group_id(2);
+
+    unsigned int wg_stride    = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    unsigned int batch_stride = batchId * stride_batch;
+
+    unsigned int globalReadOffset = batch_stride + wg_stride + stride;
+
+    for(int i = 0; i < TT0I; i++)
+    {
+        for(int j = 0; j < TT1J; j += 4)
+        {
+            unsigned int offset = globalReadOffset + i * stride1 + j * stride2;
+            Ti           values[4];
+
+#pragma unroll
+            for(int k = 0; k < 4; k++)
+            {
+                unsigned int pos = offset + k * stride2;
+                if(pos >= sizes)
+                    values[k] = static_cast<Ti>(0.0f);
+                else
+                    values[k] = in[pos];
+            }
+
+            float        max_norm2 = static_cast<float>(-1.0f);
+            unsigned int pos_a, pos_b;
+
+#pragma unroll
+            for(int a = 0; a < 4; a++)
+            {
+                for(int b = a + 1; b < 4; b++)
+                {
+                    auto norm2_v = norm2<Ti, Tc>(values[a], values[b]);
+                    if(norm2_v > max_norm2)
+                    {
+                        pos_a     = a;
+                        pos_b     = b;
+                        max_norm2 = norm2_v;
+                    }
+                }
+            }
+
+#pragma unroll
+            for(int k = 0; k < 4; k++)
+            {
+                unsigned int pos = offset + k * stride2;
+                if(pos >= sizes)
+                    break;
+
+                if(k != pos_a && k != pos_b)
+                    out[pos] = static_cast<Ti>(0.0f);
+                else
+                    out[pos] = values[k];
+            }
+        }
+    }
+}
+
+template <typename Ti, typename Tc>
+rocsparse_status rocsparselt_smfmac_prune_template(const rocsparselt_handle handle,
+                                                   int64_t                  m,
+                                                   int64_t                  n,
+                                                   int64_t                  stride0,
+                                                   int64_t                  stride1,
+                                                   int                      num_batches,
+                                                   int64_t                  stride_batch,
+                                                   rocsparse_operation      op,
+                                                   rocsparse_order          order,
+                                                   const Ti*                d_in,
+                                                   Ti*                      d_out,
+                                                   rocsparselt_prune_alg    pruneAlg,
+                                                   hipStream_t              stream)
+{
+    constexpr int SG0I = 16;
+    constexpr int SG1J = 4;
+    constexpr int TT0I = 1;
+    constexpr int TT1J = 4;
+    constexpr int MT0I = SG0I * TT0I;
+    constexpr int MT1J = SG1J * TT1J;
+
+    int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
+    int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
+
+    if(pruneAlg == rocsparselt_prune_smfmac_strip)
+    {
+        hipLaunchKernelGGL((prune_strip_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J>), /* compute kernel*/
+                           dim3(block_x, block_y, num_batches),
+                           dim3(SG0I * SG1J),
+                           0 /*dynamic shared*/,
+                           stream,
+                           d_in,
+                           d_out,
+                           m,
+                           n,
+                           stride0,
+                           stride1,
+                           num_batches,
+                           stride_batch,
+                           num_batches * stride_batch);
+        return rocsparse_status_success;
+    }
+    return rocsparse_status_not_implemented;
+}
+
+template <typename Ti>
+rocsparse_status rocsparselt_smfmac_prune_check_template(const rocsparselt_handle handle,
+                                                         int64_t                  m,
+                                                         int64_t                  n,
+                                                         int64_t                  stride0,
+                                                         int64_t                  stride1,
+                                                         int                      num_batches,
+                                                         int64_t                  stride_batch,
+                                                         rocsparse_operation      op,
+                                                         rocsparse_order          order,
+                                                         const Ti*                d_in,
+                                                         int*                     d_out,
+                                                         hipStream_t              stream)
+{
+    constexpr int SG0I = 16;
+    constexpr int SG1J = 4;
+    constexpr int TT0I = 1;
+    constexpr int TT1J = 4;
+    constexpr int MT0I = SG0I * TT0I;
+    constexpr int MT1J = SG1J * TT1J;
+
+    int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
+    int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
+
+    hipMemsetAsync(d_out, 0, sizeof(int), stream);
+    hipLaunchKernelGGL((prune_check_kernel<Ti, SG0I, SG1J, TT0I, TT1J>), /* compute kernel*/
+                       dim3(block_x, block_y, num_batches),
+                       dim3(SG0I * SG1J),
+                       0 /*dynamic shared*/,
+                       stream,
+                       d_in,
+                       d_out,
+                       m,
+                       n,
+                       stride0,
+                       stride1,
+                       num_batches,
+                       stride_batch,
+                       num_batches * stride_batch);
+    return rocsparse_status_success;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+rocsparse_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle,
+                                               int64_t                  m,
+                                               int64_t                  n,
+                                               int64_t                  stride0,
+                                               int64_t                  stride1,
+                                               int                      num_batches,
+                                               int64_t                  stride_batch,
+                                               rocsparse_operation      op,
+                                               rocsparse_order          order,
+                                               const void*              d_in,
+                                               void*                    d_out,
+                                               rocsparselt_datatype     in_type,
+                                               rocsparselt_compute_type compute_type,
+                                               rocsparselt_prune_alg    pruneAlg,
+                                               hipStream_t              stream)
+{
+    switch(in_type)
+    {
+    case rocsparselt_datatype_f16_r:
+        if(compute_type == rocsparselt_compute_f32)
+            return rocsparselt_smfmac_prune_template<rocsparselt_half, float>(
+                handle,
+                m,
+                n,
+                stride0,
+                stride1,
+                num_batches,
+                stride_batch,
+                op,
+                order,
+                reinterpret_cast<const rocsparselt_half*>(d_in),
+                reinterpret_cast<rocsparselt_half*>(d_out),
+                pruneAlg,
+                stream);
+    default:
+        return rocsparse_status_not_implemented;
+    }
+}
+
+rocsparse_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle handle,
+                                                     int64_t                  m,
+                                                     int64_t                  n,
+                                                     int64_t                  stride0,
+                                                     int64_t                  stride1,
+                                                     int                      num_batches,
+                                                     int64_t                  stride_batch,
+                                                     rocsparse_operation      op,
+                                                     rocsparse_order          order,
+                                                     const void*              d_in,
+                                                     int*                     d_out,
+                                                     rocsparselt_datatype     in_type,
+                                                     hipStream_t              stream)
+{
+    switch(in_type)
+    {
+    case rocsparselt_datatype_f16_r:
+        return rocsparselt_smfmac_prune_check_template<rocsparselt_half>(
+            handle,
+            m,
+            n,
+            stride0,
+            stride1,
+            num_batches,
+            stride_batch,
+            op,
+            order,
+            reinterpret_cast<const rocsparselt_half*>(d_in),
+            d_out,
+            stream);
+    default:
+        return rocsparse_status_not_implemented;
+    }
+}
 
 /********************************************************************************
  * \brief prunes a dense matrix according to the specified algorithm.
@@ -60,11 +365,46 @@ rocsparse_status rocsparselt_smfmac_prune(const rocsparselt_handle       handle,
     {
         return rocsparse_status_not_implemented;
     }
+
+    rocsparselt_mat_descr matrix;
+    // Check if matrix A is a structured matrix
+    if(matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
+        matrix = matmulDescr->matrix_A;
     else
-    {
-        //TODO
-        return rocsparse_status_success;
-    }
+        return rocsparse_status_not_implemented;
+
+    rocsparse_operation      opA          = matmulDescr->op_A;
+    rocsparselt_compute_type compute_type = matmulDescr->compute_type;
+
+    int64_t              num_rows = opA == rocsparse_operation_transpose ? matrix->n : matrix->m;
+    int64_t              num_cols = opA == rocsparse_operation_transpose ? matrix->m : matrix->n;
+    int64_t              ld       = matrix->ld;
+    rocsparse_order      order    = matrix->order;
+    rocsparselt_datatype type     = matrix->type;
+
+    int     num_batches  = 1;
+    int64_t batch_stride = ld * num_cols;
+    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
+    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+
+    int64_t stride0 = (opA == rocsparse_operation_transpose) ? ld : 1;
+    int64_t stride1 = (opA == rocsparse_operation_transpose) ? 1 : ld;
+
+    return rocsparselt_smfmac_prune_impl(handle,
+                                         num_rows,
+                                         num_cols,
+                                         stride0,
+                                         stride1,
+                                         num_batches,
+                                         batch_stride,
+                                         opA,
+                                         order,
+                                         d_in,
+                                         d_out,
+                                         type,
+                                         compute_type,
+                                         pruneAlg,
+                                         stream);
 }
 
 /********************************************************************************
@@ -88,11 +428,42 @@ rocsparse_status rocsparselt_smfmac_prune_check(const rocsparselt_handle       h
         return rocsparse_status_invalid_pointer;
     }
 
-    //TODO
-    {
+    rocsparselt_mat_descr matrix;
+    // Check if matrix A is a structured matrix
+    if(matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
+        matrix = matmulDescr->matrix_A;
+    else
+        return rocsparse_status_not_implemented;
 
-        return rocsparse_status_success;
-    }
+    rocsparse_operation opA = matmulDescr->op_A;
+
+    int64_t              num_rows = opA == rocsparse_operation_transpose ? matrix->n : matrix->m;
+    int64_t              num_cols = opA == rocsparse_operation_transpose ? matrix->m : matrix->n;
+    int64_t              ld       = matrix->ld;
+    rocsparse_order      order    = matrix->order;
+    rocsparselt_datatype type     = matrix->type;
+
+    int     num_batches  = 1;
+    int64_t batch_stride = ld * num_cols;
+    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
+    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+
+    int64_t stride0 = (opA == rocsparse_operation_transpose) ? ld : 1;
+    int64_t stride1 = (opA == rocsparse_operation_transpose) ? 1 : ld;
+
+    return rocsparselt_smfmac_prune_check_impl(handle,
+                                               num_rows,
+                                               num_cols,
+                                               stride0,
+                                               stride1,
+                                               num_batches,
+                                               batch_stride,
+                                               opA,
+                                               order,
+                                               d_in,
+                                               d_out,
+                                               type,
+                                               stream);
 }
 
 #ifdef __cplusplus
