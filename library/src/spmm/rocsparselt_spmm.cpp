@@ -81,6 +81,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     int64_t                 num_rows_a     = plan->matmul_descr->matrix_A->m;
     int64_t                 num_cols_a     = plan->matmul_descr->matrix_A->n;
     int64_t                 lda            = plan->matmul_descr->matrix_A->ld;
+    int64_t                 c_lda          = plan->matmul_descr->matrix_A->c_ld;
     rocsparse_order         order_a        = plan->matmul_descr->matrix_A->order;
     rocsparselt_matrix_type matrix_type_a  = plan->matmul_descr->matrix_A->m_type;
     rocsparselt_datatype    type_a         = plan->matmul_descr->matrix_A->type;
@@ -205,26 +206,18 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     float alpha_f = *(reinterpret_cast<const float*>(alpha));
     float beta_f  = *(reinterpret_cast<const float*>(beta));
 
-    size_t metadata_offset = 0;
-    switch(type_a)
-    {
-    case rocsparselt_datatype_f16_r:
-    case rocsparselt_datatype_bf16_r:
-        metadata_offset = getMetadataOffset<_Float16>(num_batches_a, batch_stride_a);
-        break;
-    case rocsparselt_datatype_f8_r:
-    case rocsparselt_datatype_bf8_r:
-    case rocsparselt_datatype_i8_r:
-        metadata_offset = getMetadataOffset<int8_t>(num_batches_a, batch_stride_a);
-        break;
-    }
-    const unsigned char* metadata = reinterpret_cast<const unsigned char*>(d_A) + metadata_offset;
-
     int64_t m, n, k;
     auto    status
         = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
     if(status != rocsparse_status_success)
         return status;
+
+    int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
+        num_cols_a, c_lda, num_batches_a, type_a);
+    if(status != rocsparse_status_success)
+        return status;
+
+    const unsigned char* metadata = reinterpret_cast<const unsigned char*>(d_A) + metadata_offset;
 
     return rocsparselt_spmm_template(handle,
                                      opA,
