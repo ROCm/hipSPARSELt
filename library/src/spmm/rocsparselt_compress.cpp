@@ -28,6 +28,213 @@
 
 #include <hip/hip_runtime_api.h>
 
+template <typename Ti, int SG0I, int SG1J, int TT0I, int TT1J>
+__global__ void compress_kernel(const Ti*      in,
+                                Ti*            out,
+                                unsigned char* metadata,
+                                int64_t        m,
+                                int64_t        n,
+                                int64_t        stride1,
+                                int64_t        stride2,
+                                int64_t        batch_stride,
+                                int64_t        c_stride1,
+                                int64_t        c_stride2,
+                                int64_t        c_batch_stride,
+                                int64_t        m_stride1,
+                                int64_t        m_stride2,
+                                int64_t        m_batch_stride,
+                                int            num_batches,
+                                int64_t        sizes,
+                                int64_t        c_sizes,
+                                int64_t        m_sizes)
+{
+    constexpr int metadata_tiles_y = 8;
+    constexpr int tiles_y          = 4;
+
+    constexpr unsigned int MT0I = SG0I * TT0I;
+    constexpr unsigned int MT1J = SG1J * TT1J;
+
+    unsigned int serial = hc_get_workitem_id(0);
+    unsigned int sg0I   = serial % SG0I;
+    unsigned int sg1J   = serial / SG0I;
+
+    unsigned int wg0I    = hc_get_group_id(0);
+    unsigned int wg1J    = hc_get_group_id(1);
+    unsigned int batchId = hc_get_group_id(2);
+
+    if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
+        return;
+
+    int64_t stride           = sg0I * stride1 + sg1J * TT1J * stride2;
+    int64_t wg_stride        = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    int64_t b_stride         = batchId * batch_stride;
+    int64_t globalReadOffset = b_stride + wg_stride + stride;
+
+    int64_t c_stride          = (sg0I * c_stride1) + (sg1J * TT1J * c_stride2 >> 1);
+    int64_t c_wg_stride       = (MT0I * wg0I * c_stride1) + (MT1J * wg1J * c_stride2 >> 1);
+    int64_t c_b_stride        = batchId * c_batch_stride;
+    int64_t globalWriteOffset = c_b_stride + c_wg_stride + c_stride;
+
+    int64_t m_stride                  = (sg0I * m_stride1) + (sg1J * TT1J * m_stride2 >> 3);
+    int64_t m_wg_stride               = (MT0I * wg0I * m_stride1) + (MT1J * wg1J * c_stride2 >> 3);
+    int64_t m_b_stride                = batchId * m_batch_stride;
+    int64_t globalWriteMetadataOffset = m_b_stride + m_wg_stride + m_stride;
+
+    for(int i = 0; i < TT0I; i++)
+    {
+        for(int j = 0; j < TT1J; j += metadata_tiles_y)
+        {
+            auto offset = globalReadOffset + i * stride1 + j * stride2;
+            Ti   values[4];
+            int  idxs[4];
+            int  m_idx = 0;
+            for(int k = 0; k < metadata_tiles_y; k++)
+            {
+                int64_t pos = offset + k * stride2;
+
+                //TODO pos is always lower than sizes by pre-conditions, maybe can remove this check.
+                if(pos > sizes)
+                    break;
+
+                Ti value = in[pos];
+
+                if((k == 3 && m_idx == 0) || (k == 7 && m_idx == 2))
+                {
+                    values[m_idx] = value;
+                    idxs[m_idx]   = k - 1;
+                    m_idx++;
+                }
+                if((k == 3 && m_idx == 1) || (k == 7 && m_idx == 3) || (value != 0))
+                {
+                    values[m_idx] = value;
+                    idxs[m_idx]   = k;
+                    m_idx++;
+                }
+                if(m_idx > 3)
+                    break;
+            }
+
+            auto c_offset = globalWriteOffset + i * c_stride1 + (j >> 1) * c_stride2;
+            auto m_offset = globalWriteMetadataOffset + i * m_stride1 + (j >> 3) * m_stride2;
+
+#pragma unroll
+            for(int k = 0; k < tiles_y; k++)
+            {
+                auto c_pos = c_offset + k * c_stride2;
+                out[c_pos] = values[k];
+            }
+            unsigned char md = (idxs[3] & 0x03) << 6 | (idxs[2] & 0x03) << 4 | (idxs[1] & 0x03) << 2
+                               | (idxs[0] & 0x03);
+            metadata[m_offset] = md;
+        }
+    }
+}
+
+template <typename Ti>
+rocsparse_status rocsparselt_smfmac_compress_template(const rocsparselt_handle handle,
+                                                      int64_t                  m,
+                                                      int64_t                  n,
+                                                      int64_t                  stride0,
+                                                      int64_t                  stride1,
+                                                      int                      batch_stride,
+                                                      int64_t                  c_stride0,
+                                                      int64_t                  c_stride1,
+                                                      int                      c_batch_stride,
+                                                      int64_t                  m_stride0,
+                                                      int64_t                  m_stride1,
+                                                      int64_t                  m_batch_stride,
+                                                      int                      num_batches,
+                                                      rocsparse_operation      op,
+                                                      rocsparse_order          order,
+                                                      const Ti*                d_in,
+                                                      Ti*                      d_out,
+                                                      unsigned char*           d_metadata,
+                                                      hipStream_t              stream)
+{
+    constexpr int SG0I = 16;
+    constexpr int SG1J = 2;
+    constexpr int TT0I = 1;
+    constexpr int TT1J = 8;
+    constexpr int MT0I = SG0I * TT0I;
+    constexpr int MT1J = SG1J * TT1J;
+
+    int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
+    int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
+    hipLaunchKernelGGL((compress_kernel<Ti, SG0I, SG1J, TT0I, TT1J>), /* compute kernel*/
+                       dim3(block_x, block_y, num_batches),
+                       dim3(SG0I * SG1J),
+                       0 /*dynamic shared*/,
+                       stream,
+                       d_in,
+                       d_out,
+                       d_metadata,
+                       m,
+                       n,
+                       stride0,
+                       stride1,
+                       batch_stride,
+                       c_stride0,
+                       c_stride1,
+                       c_batch_stride,
+                       m_stride0,
+                       m_stride1,
+                       m_batch_stride,
+                       num_batches,
+                       num_batches * batch_stride,
+                       num_batches * c_batch_stride,
+                       num_batches * m_batch_stride);
+    return rocsparse_status_success;
+}
+
+rocsparse_status rocsparselt_smfmac_compress_impl(const rocsparselt_handle handle,
+                                                  int64_t                  m,
+                                                  int64_t                  n,
+                                                  int64_t                  stride0,
+                                                  int64_t                  stride1,
+                                                  int                      batch_stride,
+                                                  int64_t                  c_stride0,
+                                                  int64_t                  c_stride1,
+                                                  int                      c_batch_stride,
+                                                  int64_t                  m_stride0,
+                                                  int64_t                  m_stride1,
+                                                  int64_t                  m_batch_stride,
+                                                  int                      num_batches,
+                                                  rocsparse_operation      op,
+                                                  rocsparse_order          order,
+                                                  const void*              d_in,
+                                                  void*                    d_out,
+                                                  unsigned char*           d_metadata,
+                                                  rocsparselt_datatype     in_type,
+                                                  hipStream_t              stream)
+{
+    switch(in_type)
+    {
+    case rocsparselt_datatype_f16_r:
+        return rocsparselt_smfmac_compress_template<rocsparselt_half>(
+            handle,
+            m,
+            n,
+            stride0,
+            stride1,
+            batch_stride,
+            c_stride0,
+            c_stride1,
+            c_batch_stride,
+            m_stride0,
+            m_stride1,
+            m_batch_stride,
+            num_batches,
+            op,
+            order,
+            reinterpret_cast<const rocsparselt_half*>(d_in),
+            reinterpret_cast<rocsparselt_half*>(d_out),
+            d_metadata,
+            stream);
+    default:
+        return rocsparse_status_not_implemented;
+    }
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,30 +260,31 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
     }
 
     {
-        //TODO
-        int64_t                 num_rows_a      = plan->matmul_descr->matrix_A->m;
-        int64_t                 num_cols_a      = plan->matmul_descr->matrix_A->n;
-        int64_t                 lda             = plan->matmul_descr->matrix_A->ld;
-        rocsparse_order         order_a         = plan->matmul_descr->matrix_A->order;
-        rocsparselt_matrix_type matrix_type_a   = plan->matmul_descr->matrix_A->m_type;
-        rocsparselt_datatype    type_a          = plan->matmul_descr->matrix_A->type;
-        int                     num_batches_a   = 1;
-        int64_t                 batch_stride_a  = lda * num_cols_a;
-        size_t                  metadata_size   = num_cols_a / 8;
-        size_t                  metadata_offset = 0;
-        switch(type_a)
+        // Only support when Matrix A is a structured matrix.
+        rocsparselt_mat_descr matrix;
+        int64_t               num_cols;
+        int64_t               c_ld;
+        rocsparselt_datatype  type;
+        int                   num_batches;
+
+        if(plan->matmul_descr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         {
-        case rocsparselt_datatype_f16_r:
-        case rocsparselt_datatype_bf16_r:
-            metadata_offset = getMetadataOffset<_Float16>(num_batches_a, batch_stride_a);
-            break;
-        case rocsparselt_datatype_f8_r:
-        case rocsparselt_datatype_bf8_r:
-        case rocsparselt_datatype_i8_r:
-            metadata_offset = getMetadataOffset<int8_t>(num_batches_a, batch_stride_a);
-            break;
+            matrix = plan->matmul_descr->matrix_A;
         }
-        *compressedSize = metadata_size + metadata_offset;
+        else
+        {
+            return rocsparse_status_not_implemented;
+        }
+
+        num_cols = matrix->n;
+        c_ld     = matrix->c_ld;
+        type     = matrix->type;
+        matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
+
+        int64_t metadata_offset
+            = rocsparselt_metadata_offset_in_compressed_matrix(num_cols, c_ld, num_batches, type);
+
+        *compressedSize = c_ld * num_cols / 4 * num_batches + metadata_offset;
         return rocsparse_status_success;
     }
 }
@@ -103,10 +311,77 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
         return rocsparse_status_invalid_pointer;
     }
 
+    rocsparselt_mat_descr matrix;
+    // Check if matrix A is a structured matrix
+    if(plan->matmul_descr->matrix_A->m_type == rocsparselt_matrix_type_structured)
+        matrix = plan->matmul_descr->matrix_A;
+    else
+        return rocsparse_status_not_implemented;
+
+    rocsparse_operation opA = plan->matmul_descr->op_A;
+    int64_t             ld  = matrix->ld;
+
+    int64_t o_m, o_n;
+    int64_t stride0, stride1, c_stride0, c_stride1, m_stride0, m_stride1;
+    int64_t c_batch_stride, m_batch_stride;
+    if(opA == rocsparse_operation_transpose)
     {
-        //TODO
-        return rocsparse_status_success;
+        o_m            = matrix->n;
+        o_n            = matrix->m;
+        stride0        = ld;
+        stride1        = 1;
+        c_stride0      = matrix->c_ld;
+        c_stride1      = 1;
+        m_stride0      = matrix->c_k / 4;
+        m_stride1      = 1;
+        c_batch_stride = c_stride0 * matrix->m;
+        m_batch_stride = m_stride0 * matrix->m;
     }
+    else
+    {
+        o_m            = matrix->m;
+        o_n            = matrix->n;
+        stride0        = 1;
+        stride1        = ld;
+        c_stride0      = 1;
+        c_stride1      = matrix->c_ld;
+        m_stride0      = 1;
+        m_stride1      = matrix->c_ld;
+        c_batch_stride = c_stride1 * matrix->c_k;
+        m_batch_stride = m_stride1 * matrix->c_k / 4;
+    }
+
+    rocsparse_order      order = matrix->order;
+    rocsparselt_datatype type  = matrix->type;
+
+    int     num_batches  = 1;
+    int64_t batch_stride = ld * matrix->n;
+    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
+    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+
+    int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
+        matrix->n, matrix->c_ld, num_batches, type);
+    unsigned char* d_metadata = reinterpret_cast<unsigned char*>(d_compressed) + metadata_offset;
+    return rocsparselt_smfmac_compress_impl(handle,
+                                            o_m,
+                                            o_n,
+                                            stride0,
+                                            stride1,
+                                            batch_stride,
+                                            c_stride0,
+                                            c_stride1,
+                                            c_batch_stride,
+                                            m_stride0,
+                                            m_stride1,
+                                            m_batch_stride,
+                                            num_batches,
+                                            opA,
+                                            order,
+                                            d_dense,
+                                            d_compressed,
+                                            d_metadata,
+                                            type,
+                                            stream);
 }
 
 #ifdef __cplusplus

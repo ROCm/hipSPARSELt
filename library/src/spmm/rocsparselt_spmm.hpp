@@ -50,20 +50,32 @@ inline rocsparse_status getOriginalSizes(rocsparse_operation opA,
     {
         n = num_rows_b;
         if(k != num_cols_b)
+        {
+            rocsparselt_cerr << "A, B matrix size are not matched" << std::endl;
             return rocsparse_status_invalid_size;
+        }
     }
     else if(k != num_rows_b)
     {
+        rocsparselt_cerr << "A, B matrix size are not matched" << std::endl;
         return rocsparse_status_invalid_size;
     }
 
     return rocsparse_status_success;
 }
 
-template <typename T>
-inline size_t getMetadataOffset(int num_batches, int64_t batch_stride)
+/*******************************************************************************
+ * Get the offset of the metatdata (in bytes)
+ ******************************************************************************/
+inline int64_t rocsparselt_metadata_offset_in_compressed_matrix(int64_t              num_cols,
+                                                                int64_t              ld,
+                                                                int                  num_batches,
+                                                                rocsparselt_datatype type)
 {
-    return num_batches * batch_stride;
+    int64_t batch_stride = ld * num_cols;
+    auto    bpe          = rocsparselt_datatype_bytes(type);
+    int64_t offset       = num_batches * batch_stride * bpe;
+    return offset;
 }
 
 /*******************************************************************************
@@ -79,19 +91,20 @@ inline rocsparse_status validateArgs(rocsparselt_handle      handle,
                                      rocsparselt_matrix_type matrixType)
 {
     if(num_rows < 8 || num_cols < 8)
+    {
+        rocsparselt_cerr << "row and col must larger than 8" << std::endl;
         return rocsparse_status_invalid_size;
+    }
 
     if(matrixType == rocsparselt_matrix_type_structured)
-        if(num_cols % 8 != 0)
+        if(num_cols % 8 != 0 || num_rows % 8 != 0)
+        {
+            rocsparselt_cerr << "row and col must be the mutliplication of 8" << std::endl;
             return rocsparse_status_invalid_size;
+        }
 
     if(order == rocsparse_order_row)
         return rocsparse_status_not_implemented;
-    else // order == rocsparse_order_col
-    {
-        if(num_rows > ld)
-            return rocsparse_status_invalid_size;
-    }
 
     //TODO should support other datatype in the future.
     if(valueType != rocsparselt_datatype_f16_r)
@@ -160,12 +173,19 @@ inline rocsparse_status validateArgs(rocsparselt_handle       handle,
     if(num_rows_a < 0 || num_cols_a < 0 || num_rows_b < 0 || num_cols_b < 0 || num_rows_c < 0
        || num_cols_c < 0 || num_rows_d < 0 || num_cols_d < 0 || batch_stride_a < 0
        || batch_stride_b < 0 || batch_stride_c < 0 || batch_stride_d < 0)
+    {
+        rocsparselt_cerr << "matrix and stride size must be posstive" << std::endl;
         return rocsparse_status_invalid_size;
+    }
 
     // number of batches of matrics A,B,C,D must be the same and negative
     if(num_batches_a != num_batches_b || num_batches_a != num_batches_c
        || num_batches_a != num_batches_d || num_batches_a < 1)
+    {
+        rocsparselt_cerr << " number of batches of matrics A,B,C,D must be the same and negative"
+                         << std::endl;
         return rocsparse_status_invalid_size;
+    }
 
     // sizes of matrics A,B,C,D must fulfill the matrix multiplication rule.
     // D = A x B + C
@@ -177,11 +197,17 @@ inline rocsparse_status validateArgs(rocsparselt_handle       handle,
         return status;
 
     if(m != num_rows_c || m != num_rows_d || n != num_cols_c || n != num_cols_d)
+    {
+        rocsparselt_cerr << " matrix size is not valid" << std::endl;
         return rocsparse_status_invalid_size;
+    }
 
     // size of k must be a multiplication of 8
     if(k % 8 != 0)
+    {
+        rocsparselt_cerr << "k must be a multiplication of 8" << std::endl;
         return rocsparse_status_invalid_size;
+    }
 
     // order must be column-major
     if((order_a & order_b & order_c & order_d) != rocsparse_order_column)
@@ -189,7 +215,10 @@ inline rocsparse_status validateArgs(rocsparselt_handle       handle,
 
     // leading dimensions must be valid
     if(num_rows_a > lda || num_rows_b > ldb || num_rows_c > ldc || num_rows_d > ldd)
+    {
+        rocsparselt_cerr << "num_rows" << std::endl;
         return rocsparse_status_invalid_size;
+    }
 
     // data type of matrics must be the same
     if(type_a != type_b || type_a != type_c || type_a != type_c)
@@ -319,7 +348,10 @@ rocsparse_status spmm_typecasting(rocsparselt_handle   handle,
     // check alignment of pointers before casting
     if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(Ti))
        || !isAligned(d, sizeof(To)))
+    {
+        rocsparselt_cerr << "memmory is not aligned" << std::endl;
         return rocsparse_status_invalid_size;
+    }
 
     return spmm_batched_template(handle,
                                  trans_a,
