@@ -38,6 +38,21 @@ inline bool isAligned(const void* pointer, size_t byte_count)
     return reinterpret_cast<uintptr_t>(pointer) % byte_count == 0;
 }
 
+constexpr const size_t rocsparselt_datatype_bytes(rocsparselt_datatype type)
+{
+    switch(type)
+    {
+    case rocsparselt_datatype_f16_r:
+    case rocsparselt_datatype_bf16_r:
+        return 2;
+    case rocsparselt_datatype_f8_r:
+    case rocsparselt_datatype_bf8_r:
+    case rocsparselt_datatype_i8_r:
+        return 1;
+    }
+    return 0;
+}
+
 // return precision string for rocsparselt_datatype
 constexpr const char* rocsparselt_datatype_string(rocsparselt_datatype type)
 {
