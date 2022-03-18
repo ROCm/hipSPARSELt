@@ -99,7 +99,7 @@ __host__ __device__ inline Tc norm2(Ti a, Ti b)
     return static_cast<Tc>(sqrt(ac * ac + bc * bc));
 }
 
-template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J>
+template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J, bool InPlace>
 __global__ void prune_strip_kernel(const Ti* in,
                                    Ti*       out,
                                    int64_t   m,
@@ -170,7 +170,7 @@ __global__ void prune_strip_kernel(const Ti* in,
                 unsigned int pos = offset + k * stride2;
                 if(k != pos_a && k != pos_b)
                     out[pos] = static_cast<Ti>(0.0f);
-                else
+                else if constexpr(!InPlace)
                     out[pos] = values[k];
             }
         }
@@ -213,7 +213,11 @@ rocsparse_status rocsparselt_smfmac_prune_template(const rocsparselt_handle hand
                      int       num_batches,
                      int64_t   batch_stride,
                      int64_t   sizes);
-        hipLaunchKernelGGL((prune_strip_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J>), /* compute kernel*/
+        if(d_in == d_out)
+            func = prune_strip_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J, true>;
+        else
+            func = prune_strip_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J, false>;
+        hipLaunchKernelGGL(func, /* compute kernel*/
                            dim3(block_x, block_y, num_batches),
                            dim3(SG0I * SG1J),
                            0 /*dynamic shared*/,
