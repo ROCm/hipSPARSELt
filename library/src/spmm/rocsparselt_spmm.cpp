@@ -81,6 +81,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     int64_t                 num_rows_a     = plan->matmul_descr->matrix_A->m;
     int64_t                 num_cols_a     = plan->matmul_descr->matrix_A->n;
     int64_t                 lda            = plan->matmul_descr->matrix_A->ld;
+    int64_t                 c_k_a          = plan->matmul_descr->matrix_A->c_k;
     int64_t                 c_lda          = plan->matmul_descr->matrix_A->c_ld;
     rocsparse_order         order_a        = plan->matmul_descr->matrix_A->order;
     rocsparselt_matrix_type matrix_type_a  = plan->matmul_descr->matrix_A->m_type;
@@ -212,8 +213,9 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     if(status != rocsparse_status_success)
         return status;
 
+    int64_t c_num_cols_a    = (opA == rocsparse_operation_none ? c_k_a : num_cols_a);
     int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
-        num_cols_a, c_lda, num_batches_a, type_a);
+        c_num_cols_a, c_lda, num_batches_a, type_a);
     if(status != rocsparse_status_success)
         return status;
 
