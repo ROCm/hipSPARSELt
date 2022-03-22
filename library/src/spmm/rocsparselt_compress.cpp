@@ -58,24 +58,29 @@ __global__ void compress_kernel(const Ti*      in,
     unsigned int sg0I   = serial % SG0I;
     unsigned int sg1J   = serial / SG0I;
 
-    unsigned int wg0I    = hc_get_group_id(0);
-    unsigned int wg1J    = hc_get_group_id(1);
+    unsigned int wg0I    = hc_get_group_id(0); // M / MT0I
+    unsigned int wg1J    = hc_get_group_id(1); // N / MT0J
     unsigned int batchId = hc_get_group_id(2);
 
     if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
         return;
 
+    //caculate the tagret address (offset) of the dense matrix.
     int64_t stride           = sg0I * stride1 + sg1J * TT1J * stride2;
     int64_t wg_stride        = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
     int64_t b_stride         = batchId * batch_stride;
     int64_t globalReadOffset = b_stride + wg_stride + stride;
 
-    int64_t c_stride          = (sg0I * c_stride1) + (sg1J * TT1J * c_stride2 >> 1);
+    //caculate the tagret address (offset) of the compresed matrix.
+    int64_t c_stride = (sg0I * c_stride1)
+                       + (sg1J * TT1J * c_stride2 >> 1); // compressed matrix's k is orginla k/2
     int64_t c_wg_stride       = (MT0I * wg0I * c_stride1) + (MT1J * wg1J * c_stride2 >> 1);
     int64_t c_b_stride        = batchId * c_batch_stride;
     int64_t globalWriteOffset = c_b_stride + c_wg_stride + c_stride;
 
-    int64_t m_stride                  = (sg0I * m_stride1) + (sg1J * TT1J * m_stride2 >> 3);
+    //caculate the tagret address (offset) of the metadata
+    int64_t m_stride
+        = (sg0I * m_stride1) + (sg1J * TT1J * m_stride2 >> 3); // metadata's k is orginal k/8
     int64_t m_wg_stride               = (MT0I * wg0I * m_stride1) + (MT1J * wg1J * c_stride2 >> 3);
     int64_t m_b_stride                = batchId * m_batch_stride;
     int64_t globalWriteMetadataOffset = m_b_stride + m_wg_stride + m_stride;
@@ -154,7 +159,7 @@ rocsparse_status rocsparselt_smfmac_compress_template(const rocsparselt_handle h
     constexpr int SG0I = 16;
     constexpr int SG1J = 2;
     constexpr int TT0I = 1;
-    constexpr int TT1J = 8;
+    constexpr int TT1J = 8; //must be the multiplication of 8.
     constexpr int MT0I = SG0I * TT0I;
     constexpr int MT1J = SG1J * TT1J;
 
