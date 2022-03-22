@@ -46,7 +46,7 @@ __global__ void prune_check_kernel(const Ti* in,
     unsigned int sg0I   = serial % SG0I;
     unsigned int sg1J   = serial / SG0I;
 
-    unsigned int stride = sg0I * stride1 + sg1J * TT1J * stride2;
+    int64_t stride = sg0I * stride1 + sg1J * TT1J * stride2;
 
     unsigned int wg0I    = hc_get_group_id(0);
     unsigned int wg1J    = hc_get_group_id(1);
@@ -55,10 +55,10 @@ __global__ void prune_check_kernel(const Ti* in,
     if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
         return;
 
-    unsigned int wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
-    unsigned int b_stride  = batchId * batch_stride;
+    int64_t wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    int64_t b_stride  = batchId * batch_stride;
 
-    unsigned int globalReadOffset = b_stride + wg_stride + stride;
+    int64_t globalReadOffset = b_stride + wg_stride + stride;
 
     for(int i = 0; i < TT0I; i++)
     {
@@ -67,13 +67,13 @@ __global__ void prune_check_kernel(const Ti* in,
             if(*out)
                 return;
 
-            unsigned int offset = i * stride1 + j * stride2;
-            int          nz     = 0;
+            int64_t offset = i * stride1 + j * stride2;
+            int     nz     = 0;
 
 #pragma unroll
             for(int k = 0; k < 4; k++)
             {
-                unsigned int pos = globalReadOffset + offset + k * stride2;
+                int64_t pos = globalReadOffset + offset + k * stride2;
                 if(pos < sizes)
                 {
                     if(in[pos] > 0)
@@ -110,13 +110,14 @@ __global__ void prune_strip_kernel(const Ti* in,
                                    int64_t   batch_stride,
                                    int64_t   sizes)
 {
-    constexpr unsigned int MT0I = SG0I * TT0I;
-    constexpr unsigned int MT1J = SG1J * TT1J;
+    constexpr unsigned int MT0I    = SG0I * TT0I;
+    constexpr unsigned int MT1J    = SG1J * TT1J;
+    constexpr int          tiles_y = 4;
 
     unsigned int serial = hc_get_workitem_id(0);
     unsigned int sg0I   = serial % SG0I;
     unsigned int sg1J   = serial / SG0I;
-    unsigned int stride = sg0I * stride1 + sg1J * 4 * stride2;
+    int64_t      stride = sg0I * stride1 + sg1J * TT1J * stride2;
 
     unsigned int wg0I    = hc_get_group_id(0);
     unsigned int wg1J    = hc_get_group_id(1);
@@ -125,29 +126,29 @@ __global__ void prune_strip_kernel(const Ti* in,
     if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
         return;
 
-    unsigned int wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
-    unsigned int b_stride  = batchId * batch_stride;
+    int64_t wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    int64_t b_stride  = batchId * batch_stride;
 
-    unsigned int globalReadOffset = b_stride + wg_stride + stride;
+    int64_t globalReadOffset = b_stride + wg_stride + stride;
 
     for(int i = 0; i < TT0I; i++)
     {
         for(int j = 0; j < TT1J; j += 4)
         {
-            unsigned int offset = globalReadOffset + i * stride1 + j * stride2;
-            Ti           values[4];
+            int64_t offset = globalReadOffset + i * stride1 + j * stride2;
+            Ti      values[4];
 #pragma unroll
             for(int k = 0; k < 4; k++)
             {
-                unsigned int pos = offset + k * stride2;
+                int64_t pos = offset + k * stride2;
                 if(pos >= sizes)
                     values[k] = static_cast<Ti>(0.0f);
                 else
                     values[k] = in[pos];
             }
 
-            float        max_norm2 = static_cast<float>(-1.0f);
-            unsigned int pos_a, pos_b;
+            float   max_norm2 = static_cast<float>(-1.0f);
+            int64_t pos_a, pos_b;
 
 #pragma unroll
             for(int a = 0; a < 4; a++)
@@ -167,7 +168,7 @@ __global__ void prune_strip_kernel(const Ti* in,
 #pragma unroll
             for(int k = 0; k < 4; k++)
             {
-                unsigned int pos = offset + k * stride2;
+                int64_t pos = offset + k * stride2;
                 if(k != pos_a && k != pos_b)
                     out[pos] = static_cast<Ti>(0.0f);
                 else if constexpr(!InPlace)
