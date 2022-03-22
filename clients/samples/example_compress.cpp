@@ -65,7 +65,7 @@ inline void extract_metadata(unsigned metadata, int& a, int& b, int& c, int& d)
     d = ((metadata >> 6) & 0x03);
 }
 
-template <typename Ti>
+template <typename Ti, typename Tc>
 void compress(const Ti*      in,
               Ti*            out,
               unsigned char* metadata,
@@ -111,10 +111,15 @@ void compress(const Ti*      in,
 
                     if((k == 3 && m_idx == 0) || (k == 7 && m_idx == 2))
                     {
+                        offset = b * stride_b + i * stride1 + (j + k - 1) * stride2;
+                        value  = in[offset];
                         valid_data(m_idx++, k - 1, value);
                     }
-                    if((k == 3 && m_idx == 1) || (k == 7 && m_idx == 3) || value != 0)
+                    if((k == 3 && m_idx == 1) || (k == 7 && m_idx == 3)
+                       || static_cast<Tc>(value) != static_cast<Tc>(0))
                     {
+                        offset = b * stride_b + i * stride1 + (j + k) * stride2;
+                        value  = in[offset];
                         valid_data(m_idx++, k, value);
                     }
                 }
@@ -215,12 +220,13 @@ void validate_gold(T*             A,
                 for(int i = 0; i < 8; i++)
                 {
                     auto a_pos = (i1 * s1) + ((i2 * 8 + i) * s2) + (i3 * s3);
+                    auto c_pos = (i1 * c_s1) + ((i2 * 4 + m_idx) * c_s2) + (i3 * c_s3);
                     T    a     = A[a_pos];
                     T    b     = static_cast<T>(0.0f);
                     if(i == idx[m_idx])
                     {
-                        auto c_pos = (i1 * c_s1) + ((i2 * 4 + m_idx) * c_s2) + (i3 * c_s3);
-                        b          = C[c_pos];
+
+                        b = C[c_pos];
                         m_idx++;
                     }
                     correct &= compare(a, b);
@@ -340,7 +346,9 @@ void print_strided_batched(const char*       name,
         {
             for(int i2 = 0; i2 < n2 && i2 < max_size; i2++)
             {
-                printf("%8.1f\t ", static_cast<float>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]));
+                printf("[%ld]%8.1f\t ",
+                       (i1 * s1) + (i2 * s2) + (i3 * s3),
+                       static_cast<float>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]));
             }
             printf("\n");
         }
@@ -601,7 +609,7 @@ int main(int argc, char* argv[])
 
         c_stride_1 = 1;
         c_stride_2 = m;
-        c_stride_b = n * c_stride_2;
+        c_stride_b = n / 2 * c_stride_2;
 
         m_stride_1 = 1;
         m_stride_2 = m;
@@ -742,21 +750,22 @@ int main(int argc, char* argv[])
     CHECK_HIP_ERROR(
         hipMemcpy(hp_compressed.data(), d_compressed, compressed_size, hipMemcpyDeviceToHost));
 
-    compress(&hp_test[0],
-             &hp_gold[0],
-             reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
-             m,
-             n,
-             stride_1,
-             stride_2,
-             stride,
-             c_stride_1,
-             c_stride_2,
-             c_stride_b,
-             m_stride_1,
-             m_stride_2,
-             m_stride_b,
-             batch_count);
+    compress<rocsparselt_half, float>(
+        &hp_test[0],
+        &hp_gold[0],
+        reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
+        m,
+        n,
+        stride_1,
+        stride_2,
+        stride,
+        c_stride_1,
+        c_stride_2,
+        c_stride_b,
+        m_stride_1,
+        m_stride_2,
+        m_stride_b,
+        batch_count);
 
     if(verbose)
     {
@@ -769,6 +778,7 @@ int main(int argc, char* argv[])
                               c_stride_1,
                               c_stride_2,
                               c_stride_b);
+
         print_strided_batched_meta(
             "host gold metadata calculated",
             reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),

@@ -72,7 +72,7 @@ __global__ void compress_kernel(const Ti*      in,
     int64_t globalReadOffset = b_stride + wg_stride + stride;
 
     //caculate the tagret address (offset) of the compresed matrix.
-    int64_t c_stride = (sg0I * c_stride1)
+    int64_t c_stride = (sg0I * TT0I * c_stride1)
                        + (sg1J * TT1J * c_stride2 >> 1); // compressed matrix's k is orginla k/2
     int64_t c_wg_stride       = (MT0I * wg0I * c_stride1) + (MT1J * wg1J * c_stride2 >> 1);
     int64_t c_b_stride        = batchId * c_batch_stride;
@@ -95,17 +95,17 @@ __global__ void compress_kernel(const Ti*      in,
             int  m_idx = 0;
             for(int k = 0; k < metadata_tiles_y; k++)
             {
-                int64_t pos = offset + k * stride2;
+                int64_t pos = offset + (k)*stride2;
 
                 //TODO pos is always lower than sizes by pre-conditions, maybe can remove this check.
                 if(pos > sizes)
                     break;
 
                 Ti value = in[pos];
-
                 if((k == 3 && m_idx == 0) || (k == 7 && m_idx == 2))
                 {
-                    values[m_idx] = value;
+                    int64_t p_pos = offset + (k - 1) * stride2;
+                    values[m_idx] = in[p_pos];
                     idxs[m_idx]   = k - 1;
                     m_idx++;
                 }
@@ -270,7 +270,7 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
         int64_t               num_cols;
         int64_t               c_ld;
         rocsparselt_datatype  type;
-        int                   num_batches;
+        int                   num_batches = 1;
 
         if(plan->matmul_descr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         {
@@ -281,7 +281,7 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
             return rocsparse_status_not_implemented;
         }
 
-        num_cols = matrix->n;
+        num_cols = plan->matmul_descr->op_A == rocsparse_operation_none ? matrix->c_k : matrix->n;
         c_ld     = matrix->c_ld;
         type     = matrix->type;
         matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
@@ -329,6 +329,7 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
     int64_t o_m, o_n;
     int64_t stride0, stride1, c_stride0, c_stride1, m_stride0, m_stride1;
     int64_t c_batch_stride, m_batch_stride;
+
     if(opA == rocsparse_operation_transpose)
     {
         o_m            = matrix->n;
@@ -339,8 +340,8 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
         c_stride1      = 1;
         m_stride0      = matrix->c_k / 4;
         m_stride1      = 1;
-        c_batch_stride = c_stride0 * matrix->m;
-        m_batch_stride = m_stride0 * matrix->m;
+        c_batch_stride = c_stride0 * matrix->n;
+        m_batch_stride = m_stride0 * matrix->n;
     }
     else
     {
@@ -364,9 +365,9 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 
-    int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
-        matrix->n, matrix->c_ld, num_batches, type);
-    unsigned char* d_metadata = reinterpret_cast<unsigned char*>(d_compressed) + metadata_offset;
+    unsigned char* d_metadata
+        = reinterpret_cast<unsigned char*>(d_compressed)
+          + c_batch_stride * num_batches * rocsparselt_datatype_bytes(type); //metadata_offset;
     return rocsparselt_smfmac_compress_impl(handle,
                                             o_m,
                                             o_n,
