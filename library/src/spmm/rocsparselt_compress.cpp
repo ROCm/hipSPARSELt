@@ -90,46 +90,47 @@ __global__ void compress_kernel(const Ti*      in,
         for(int j = 0; j < TT1J; j += metadata_tiles_y)
         {
             auto offset = globalReadOffset + i * stride1 + j * stride2;
-            Ti   values[4];
-            int  idxs[4];
-            int  m_idx = 0;
-            for(int k = 0; k < metadata_tiles_y; k++)
+
+            Ti            values[] = {static_cast<Ti>(0.0f),
+                           static_cast<Ti>(0.0f),
+                           static_cast<Ti>(0.0f),
+                           static_cast<Ti>(0.0f)};
+            unsigned char md       = 0xEE;
+
+            for(int t = 0; t < metadata_tiles_y / tiles_y; t++)
             {
-                int64_t pos = offset + (k)*stride2;
-
-                //TODO pos is always lower than sizes by pre-conditions, maybe can remove this check.
-                if(pos > sizes)
-                    break;
-
-                Ti value = in[pos];
-                if((k == 3 && m_idx == 0) || (k == 7 && m_idx == 2))
+                int m_idx = 0;
+                for(int k = 0; k < tiles_y; k++)
                 {
-                    int64_t p_pos = offset + (k - 1) * stride2;
-                    values[m_idx] = in[p_pos];
-                    idxs[m_idx]   = k - 1;
-                    m_idx++;
+                    int64_t pos = offset + (k + t * tiles_y) * stride2;
+                    //TODO pos is always lower than sizes by pre-conditions, maybe can remove this check.
+                    if(pos > sizes)
+                        break;
+
+                    Ti value = in[pos];
+                    if(value != 0)
+                    {
+                        if(m_idx == 0 && k == 3)
+                            m_idx++;
+                        auto midx    = m_idx + t * (tiles_y >> 1);
+                        values[midx] = value;
+                        auto shift   = midx << 1;
+                        md           = (md & (~(0x03 << shift))) | ((k & 0x03) << shift);
+                        m_idx++;
+                        if(m_idx > 1)
+                            break;
+                    }
                 }
-                if((k == 3 && m_idx == 1) || (k == 7 && m_idx == 3) || (value != 0))
-                {
-                    values[m_idx] = value;
-                    idxs[m_idx]   = k;
-                    m_idx++;
-                }
-                if(m_idx > 3)
-                    break;
             }
 
             auto c_offset = globalWriteOffset + i * c_stride1 + (j >> 1) * c_stride2;
-            auto m_offset = globalWriteMetadataOffset + i * m_stride1 + (j >> 3) * m_stride2;
-
 #pragma unroll
             for(int k = 0; k < tiles_y; k++)
             {
                 auto c_pos = c_offset + k * c_stride2;
                 out[c_pos] = values[k];
             }
-            unsigned char md = (idxs[3] & 0x03) << 6 | (idxs[2] & 0x03) << 4 | (idxs[1] & 0x03) << 2
-                               | (idxs[0] & 0x03);
+            auto m_offset      = globalWriteMetadataOffset + i * m_stride1 + (j >> 3) * m_stride2;
             metadata[m_offset] = md;
         }
     }
