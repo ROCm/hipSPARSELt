@@ -55,10 +55,37 @@
 #define ALPHA 2
 #define BETA 3
 
+template <typename T>
+inline bool AlmostEqual(T a, T b)
+{
+    return false;
+}
+
+template <>
+inline bool AlmostEqual(rocsparselt_half a, rocsparselt_half b)
+{
+    rocsparselt_half absA = (a > 0) ? a : -a;
+    rocsparselt_half absB = (b > 0) ? b : -b;
+    // this avoids NaN when inf is compared against inf in the alternative code
+    // path
+    if(static_cast<float>(absA) == std::numeric_limits<float>::infinity()
+       || // numeric_limits is yet to
+       // support _Float16 type
+       // properly;
+       static_cast<float>(absB)
+           == std::numeric_limits<float>::infinity()) // however promoting it to
+    // float works just as fine
+    {
+        return a == b;
+    }
+    rocsparselt_half absDiff = (a - b > 0) ? a - b : b - a;
+    return absDiff / (absA + absB + 1) < 0.01;
+}
+
 void printMatrix(const char* name, float* A, int64_t m, int64_t n, int64_t lda)
 {
     printf("---------- %s ----------\n", name);
-    int max_size = 3;
+    int max_size = 128;
     for(int i = 0; i < m && i < max_size; i++)
     {
         for(int j = 0; j < n && j < max_size; j++)
@@ -81,7 +108,7 @@ void print_strided_batched(const char*       name,
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
     printf("---------- %s ----------\n", name);
-    int max_size = 3;
+    int max_size = 128;
 
     for(int i3 = 0; i3 < n3 && i3 < max_size; i3++)
     {
@@ -396,18 +423,15 @@ void initialize_a_b_c(std::vector<rocsparselt_half>& ha,
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<rocsparselt_half>(rand() % 17);
-        //      ha[i] = i;
+        ha[i] = static_cast<rocsparselt_half>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_b; ++i)
     {
-        hb[i] = static_cast<rocsparselt_half>(rand() % 17);
-        //      hb[i] = 1.0;
+        hb[i] = static_cast<rocsparselt_half>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_c; ++i)
     {
-        hc[i] = static_cast<rocsparselt_half>(rand() % 17);
-        //      hc[i] = 1.0;
+        hc[i] = static_cast<rocsparselt_half>((rand() % 7) - 3);
     }
 }
 
@@ -601,8 +625,9 @@ int main(int argc, char* argv[])
     // allocate memory on device
     rocsparselt_half *da, *db, *dc, *dd, *d_compressed;
     void*             d_wworkspace;
-    int               num_streams = 0;
-    hipStream_t       streams     = nullptr;
+    int               num_streams = 1;
+    hipStream_t       stream      = nullptr;
+    hipStream_t       streams[1]  = {stream};
 
     CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(rocsparselt_half)));
     CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(rocsparselt_half)));
@@ -646,6 +671,9 @@ int main(int argc, char* argv[])
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_selection_init(
         handle, &alg_sel, matmul, rocsparselt_matmul_alg_default));
 
+    CHECK_ROCSPARSE_ERROR(
+        rocsparselt_smfmac_prune(handle, matmul, da, da, rocsparselt_prune_smfmac_strip, stream));
+
     size_t workspace_size, compressed_size;
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size));
 
@@ -656,6 +684,8 @@ int main(int argc, char* argv[])
 
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
 
+    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(handle, plan, da, d_compressed, stream));
+
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul(handle,
                                              plan,
                                              &alpha,
@@ -665,20 +695,21 @@ int main(int argc, char* argv[])
                                              dc,
                                              dd,
                                              d_wworkspace,
-                                             &streams,
+                                             &streams[0],
                                              num_streams));
-
+    hipStreamSynchronize(stream);
     // copy output from device to CPU
     CHECK_HIP_ERROR(
         hipMemcpy(hd.data(), dd, sizeof(rocsparselt_half) * size_c, hipMemcpyDeviceToHost));
-
+    CHECK_HIP_ERROR(
+        hipMemcpy(ha.data(), da, sizeof(rocsparselt_half) * size_a, hipMemcpyDeviceToHost));
     // calculate golden or correct result
     for(int i = 0; i < batch_count; i++)
     {
         rocsparselt_half* a_ptr = &ha[i * stride_a];
         rocsparselt_half* b_ptr = &hb[i * stride_b];
         rocsparselt_half* c_ptr = &hc[i * stride_c];
-        rocsparselt_half* d_ptr = &hd[i * stride_d];
+        rocsparselt_half* d_ptr = &hd_gold[i * stride_d];
         mat_mat_mult<rocsparselt_half, rocsparselt_half, float>(alpha,
                                                                 beta,
                                                                 m,
@@ -700,29 +731,28 @@ int main(int argc, char* argv[])
 
     if(verbose)
     {
+        print_strided_batched("ha_prune calculated", &ha[0], m, k, batch_count, 1, lda, stride_a);
         print_strided_batched(
             "hc_gold calculated", &hd_gold[0], m, n, batch_count, 1, ldc, stride_c);
         print_strided_batched("hd calculated", &hd[0], m, n, batch_count, 1, ldc, stride_c);
     }
 
-    float max_relative_error = std::numeric_limits<float>::min();
+    bool passed = true;
     for(int i = 0; i < size_c; i++)
     {
-        float relative_error
-            = hd_gold[i] == 0 ? hd_gold[i] - hd[i] : (hd_gold[i] - hd[i]) / hd_gold[i];
-        relative_error = relative_error >= 0 ? relative_error : -relative_error;
-        max_relative_error
-            = relative_error < max_relative_error ? max_relative_error : relative_error;
+        if(!AlmostEqual(hd_gold[i], hd[i]))
+        {
+            printf("Err: %f vs %f\n", static_cast<float>(hd_gold[i]), static_cast<float>(hd[i]));
+            passed = false;
+        }
     }
-    float eps       = std::numeric_limits<float>::epsilon();
-    float tolerance = 10;
-    if(max_relative_error != max_relative_error || max_relative_error > eps * tolerance)
+    if(passed)
     {
-        std::cout << "FAIL, " << max_relative_error << std::endl;
+        std::cout << "FAIL" << std::endl;
     }
     else
     {
-        std::cout << "PASS, " << max_relative_error << std::endl;
+        std::cout << "PASS" << std::endl;
     }
 
     CHECK_HIP_ERROR(hipFree(da));
