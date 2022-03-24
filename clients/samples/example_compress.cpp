@@ -65,6 +65,16 @@ inline void extract_metadata(unsigned metadata, int& a, int& b, int& c, int& d)
     d = ((metadata >> 6) & 0x03);
 }
 
+std::string metadata_to_bits_str(unsigned char meta)
+{
+    std::string str;
+    for(int b = 0; b < 8; b++)
+    {
+        str.append(std::to_string(meta >> (7 - b) & 0x01));
+    }
+    return str;
+}
+
 template <typename Ti, typename Tc>
 void compress(const Ti*      in,
               Ti*            out,
@@ -302,17 +312,8 @@ void validate_metadata(unsigned char* A,
                 auto b = B[(i1 * s1) + (i2 * s2) + (i3 * s3)];
                 if(a != b)
                 {
-                    // direct floating point comparison is not reliable
-                    auto meta_to_bits_str = [](unsigned char meta) {
-                        std::string str;
-                        for(int b = 0; b < 8; b++)
-                        {
-                            str.append(std::to_string(meta >> (7 - b) & 0x01));
-                        }
-                        return str;
-                    };
-                    auto a_str = meta_to_bits_str(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]);
-                    auto b_str = meta_to_bits_str(B[(i1 * s1) + (i2 * s2) + (i3 * s3)]);
+                    auto a_str = metadata_to_bits_str(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]);
+                    auto b_str = metadata_to_bits_str(B[(i1 * s1) + (i2 * s2) + (i3 * s3)]);
                     std::printf(
                         "(%d, %d, %d):\t%s vs. %s\n", i3, i1, i2, a_str.c_str(), b_str.c_str());
                     correct = false;
@@ -337,7 +338,13 @@ void print_strided_batched(const char*       name,
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-    printf("---------- %s ----------\n", name);
+    printf("---------- %s (MxN=%ldx%ld,batch=%ld,stride0=%ld, stride1=%ld)----------\n",
+           name,
+           n1,
+           n2,
+           n3,
+           s1,
+           s2);
     int max_size = 128;
 
     for(int i3 = 0; i3 < n3 && i3 < max_size; i3++)
@@ -377,13 +384,9 @@ void print_strided_batched_meta(const char*    name,
         {
             for(int i2 = 0; i2 < n2 && i2 < max_size; i2++)
             {
-                auto        meta = A[(i1 * s1) + (i2 * s2) + (i3 * s3)];
-                std::string str;
-                for(int b = 0; b < 8; b++)
-                {
-                    str.append(std::to_string(meta >> (7 - b) & 0x01));
-                }
-                int a, b, c, d;
+                auto meta = A[(i1 * s1) + (i2 * s2) + (i3 * s3)];
+                auto str  = metadata_to_bits_str(meta);
+                int  a, b, c, d;
                 extract_metadata(meta, a, b, c, d);
                 std::printf("[%ld][bits=%s]%02x%02x%02x%02x\t",
                             (i1 * s1) + (i2 * s2) + (i3 * s3),
