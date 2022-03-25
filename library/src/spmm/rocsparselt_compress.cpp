@@ -81,7 +81,7 @@ __global__ void compress_kernel(const Ti*      in,
     //caculate the tagret address (offset) of the metadata
     int64_t m_stride
         = (sg0I * m_stride1) + (sg1J * TT1J * m_stride2 >> 3); // metadata's k is orginal k/8
-    int64_t m_wg_stride               = (MT0I * wg0I * m_stride1) + (MT1J * wg1J * c_stride2 >> 3);
+    int64_t m_wg_stride               = (MT0I * wg0I * m_stride1) + (MT1J * wg1J * m_stride2 >> 3);
     int64_t m_b_stride                = batchId * m_batch_stride;
     int64_t globalWriteMetadataOffset = m_b_stride + m_wg_stride + m_stride;
 
@@ -291,6 +291,7 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
             = rocsparselt_metadata_offset_in_compressed_matrix(num_cols, c_ld, num_batches, type);
 
         *compressedSize = c_ld * num_cols / 4 * num_batches + metadata_offset;
+        log_trace(handle, "rocsparselt_smfmac_compressed_size");
         return rocsparse_status_success;
     }
 }
@@ -324,6 +325,8 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
     else
         return rocsparse_status_not_implemented;
 
+    log_trace(handle, "rocsparselt_smfmac_compress");
+
     rocsparse_operation opA = plan->matmul_descr->op_A;
     int64_t             ld  = matrix->ld;
 
@@ -342,7 +345,7 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
         m_stride0      = matrix->c_k / 4;
         m_stride1      = 1;
         c_batch_stride = c_stride0 * matrix->n;
-        m_batch_stride = m_stride0 * matrix->n;
+        m_batch_stride = m_stride0 * o_m;
     }
     else
     {
@@ -352,10 +355,10 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
         stride1        = ld;
         c_stride0      = 1;
         c_stride1      = matrix->c_ld;
-        m_stride0      = 1;
-        m_stride1      = matrix->c_ld;
+        m_stride0      = matrix->c_k / 4;
+        m_stride1      = 1;
         c_batch_stride = c_stride1 * matrix->c_k;
-        m_batch_stride = m_stride1 * matrix->c_k / 4;
+        m_batch_stride = m_stride0 * o_m;
     }
 
     rocsparse_order      order = matrix->order;
@@ -369,6 +372,7 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
     unsigned char* d_metadata
         = reinterpret_cast<unsigned char*>(d_compressed)
           + c_batch_stride * num_batches * rocsparselt_datatype_bytes(type); //metadata_offset;
+
     return rocsparselt_smfmac_compress_impl(handle,
                                             o_m,
                                             o_n,
