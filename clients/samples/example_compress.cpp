@@ -206,15 +206,18 @@ void validate_gold(T*             A,
         {
             for(int i2 = 0; i2 < m_n2; i2++)
             {
-                auto compare = [&](T a, T b) {
+                auto compare = [&](T a, T b, int x, int64_t apos, int64_t bpos) {
                     if(a != b)
                     {
                         // direct floating point comparison is not reliable
-                        std::printf("(%d, %d, %d):\t%f vs. %f\n",
+                        std::printf("(%d, %d, %d, %d):\t[%lld]%f vs. [%lld]%f\n",
                                     i3,
                                     i1,
                                     i2,
+                                    x,
+                                    apos,
                                     static_cast<double>(a),
+                                    bpos,
                                     static_cast<double>(b));
                         return false;
                     }
@@ -239,7 +242,7 @@ void validate_gold(T*             A,
                         b = C[c_pos];
                         m_idx++;
                     }
-                    correct &= compare(a, b);
+                    correct &= compare(a, b, i, a_pos, c_pos);
                 }
             }
         }
@@ -614,9 +617,9 @@ int main(int argc, char* argv[])
         c_stride_2 = m;
         c_stride_b = n / 2 * c_stride_2;
 
-        m_stride_1 = 1;
-        m_stride_2 = m;
-        m_stride_b = n / 8 * m_stride_2;
+        m_stride_1 = n / 8;
+        m_stride_2 = 1;
+        m_stride_b = m * m_stride_1;
     }
     else
     {
