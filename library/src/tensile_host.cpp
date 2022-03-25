@@ -140,23 +140,6 @@ namespace
         }
     };
 
-    /**************************************************************
-     * Tensile does not support float alpha and beta for HPA half *
-     * We must convert alpha and beta from float to half          *
-     * TODO- Tensile supports HHS HPA now                         *
-     * We could plan to use HHS+HPA instead of this workaround    *
-     **************************************************************/
-    template <>
-    struct AlphaBeta<rocsparselt_half, rocsparselt_half, float>
-    {
-        using tensile_type = Tensile::Half;
-        static void copy(tensile_type* dst, const float* float_src)
-        {
-            rocsparselt_half src(*float_src);
-            AlphaBeta<rocsparselt_half>::copy(dst, &src);
-        }
-    };
-
     /****************************************************************
      * Construct a Tensile Problem from a RocsparseltContractionProblem *
      ****************************************************************/
@@ -271,9 +254,8 @@ namespace
                                                    *prob.beta,
                                                    workspace_size};
 
-        // Open these two when we're ready to migrate from <HHH+HPA> to <HHS+HPA>
-        // tensileProblem.setAlphaType(Tensile_Tc);
-        // tensileProblem.setBetaType(Tensile_Tc);
+        tensileProblem.setAlphaType(Tensile_Tc);
+        tensileProblem.setBetaType(Tensile_Tc);
 
         // HPA is active iff sizeof(compute type) > sizeof(input type)
         tensileProblem.setHighPrecisionAccumulate(sizeof(Tc) > sizeof(Ti));
@@ -472,7 +454,7 @@ namespace
                 // Find the location of librocsparselt.so
                 // Fall back on hard-coded path if static library or not found
 
-#ifndef rocsparselt_STATIC_LIB
+#ifndef ROCSPARSELT_STATIC_LIB
                 dl_iterate_phdr(rocsparselt_dl_iterate_phdr_callback, NULL);
                 if(rocsparselt_so_path.size())
                     path = std::string{dirname(&rocsparselt_so_path[0])};
