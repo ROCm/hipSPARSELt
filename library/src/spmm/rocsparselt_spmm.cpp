@@ -88,6 +88,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     rocsparselt_datatype    type_a         = plan->matmul_descr->matrix_A->type;
     int                     num_batches_a  = 1;
     int64_t                 batch_stride_a = lda * num_cols_a;
+    int64_t c_batch_stride_a = (opA == rocsparse_operation_none) ? lda * c_k_a : c_lda * num_cols_a;
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
 
@@ -230,8 +231,8 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
                                      alpha,
                                      d_A,
                                      type_a,
-                                     lda,
-                                     batch_stride_a,
+                                     c_lda,
+                                     c_batch_stride_a,
                                      0,
                                      d_B,
                                      type_b,
