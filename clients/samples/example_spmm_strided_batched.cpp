@@ -29,7 +29,7 @@
 #define CHECK_ROCSPARSE_ERROR(error)                              \
     if(error != rocsparse_status_success)                         \
     {                                                             \
-        fprintf(stderr, "rocSPARSELt error: ");                   \
+        fprintf(stderr, "rocSPARSELt error(Err=%d) : ", error);   \
         if(error == rocsparse_status_invalid_handle)              \
             fprintf(stderr, "rocsparse_status_invalid_handle");   \
         if(error == rocsparse_status_not_implemented)             \
@@ -82,17 +82,60 @@ inline bool AlmostEqual(rocsparselt_half a, rocsparselt_half b)
     return absDiff / (absA + absB + 1) < 0.01;
 }
 
-void printMatrix(const char* name, float* A, int64_t m, int64_t n, int64_t lda)
+inline void extract_metadata(unsigned metadata, int& a, int& b, int& c, int& d)
 {
+    a = metadata & 0x03;
+    b = (metadata >> 2) & 0x03;
+    c = ((metadata >> 4) & 0x03);
+    d = ((metadata >> 6) & 0x03);
+}
+
+std::string metadata_to_bits_str(unsigned char meta)
+{
+    std::string str;
+    for(int b = 0; b < 8; b++)
+    {
+        str.append(std::to_string(meta >> (7 - b) & 0x01));
+    }
+    return str;
+}
+
+void print_strided_batched_meta(const char*    name,
+                                unsigned char* A,
+                                int64_t        n1,
+                                int64_t        n2,
+                                int64_t        n3,
+                                int64_t        s1,
+                                int64_t        s2,
+                                int64_t        s3)
+{
+    // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
+    // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
     printf("---------- %s ----------\n", name);
     int max_size = 128;
-    for(int i = 0; i < m && i < max_size; i++)
+
+    for(int i3 = 0; i3 < n3 && i3 < max_size; i3++)
     {
-        for(int j = 0; j < n && j < max_size; j++)
+        for(int i1 = 0; i1 < n1 && i1 < max_size; i1++)
         {
-            printf("%f ", A[i + j * lda]);
+            for(int i2 = 0; i2 < n2 && i2 < max_size; i2++)
+            {
+                auto meta = A[(i1 * s1) + (i2 * s2) + (i3 * s3)];
+                auto str  = metadata_to_bits_str(meta);
+                int  a, b, c, d;
+                extract_metadata(meta, a, b, c, d);
+                std::printf("[%ld][bits=%s]%02x%02x%02x%02x\t",
+                            (i1 * s1) + (i2 * s2) + (i3 * s3),
+                            str.c_str(),
+                            a,
+                            b,
+                            c + 4,
+                            d + 4);
+            }
+            printf("\n");
         }
-        printf("\n");
+        if(i3 < (n3 - 1) && i3 < (max_size - 1))
+            printf("\n");
     }
 }
 
@@ -107,7 +150,13 @@ void print_strided_batched(const char*       name,
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-    printf("---------- %s ----------\n", name);
+    printf("---------- %s (MxN=%ldx%ld,batch=%ld,stride0=%ld, stride1=%ld)----------\n",
+           name,
+           n1,
+           n2,
+           n3,
+           s1,
+           s2);
     int max_size = 128;
 
     for(int i3 = 0; i3 < n3 && i3 < max_size; i3++)
@@ -116,7 +165,9 @@ void print_strided_batched(const char*       name,
         {
             for(int i2 = 0; i2 < n2 && i2 < max_size; i2++)
             {
-                printf("%8.1f ", static_cast<float>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]));
+                printf("[%ld]\t%8.1f\t",
+                       (i1 * s1) + (i2 * s2) + (i3 * s3),
+                       static_cast<float>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]));
             }
             printf("\n");
         }
@@ -592,6 +643,7 @@ int main(int argc, char* argv[])
     int size_d = size_c;
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
     std::vector<rocsparselt_half> ha(size_a);
+    std::vector<rocsparselt_half> h_prune(size_a);
     std::vector<rocsparselt_half> hb(size_b);
     std::vector<rocsparselt_half> hc(size_c);
     std::vector<rocsparselt_half> hd(size_c);
@@ -623,13 +675,14 @@ int main(int argc, char* argv[])
     }
 
     // allocate memory on device
-    rocsparselt_half *da, *db, *dc, *dd, *d_compressed;
+    rocsparselt_half *da, *da_p, *db, *dc, *dd, *d_compressed;
     void*             d_wworkspace;
     int               num_streams = 1;
     hipStream_t       stream      = nullptr;
     hipStream_t       streams[1]  = {stream};
 
     CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(rocsparselt_half)));
+    CHECK_HIP_ERROR(hipMalloc(&da_p, size_a * sizeof(rocsparselt_half)));
     CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(rocsparselt_half)));
     CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(rocsparselt_half)));
     CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(rocsparselt_half)));
@@ -665,6 +718,23 @@ int main(int argc, char* argv[])
     CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
         handle, &matD, row_c, col_c, ldd, 16, rocsparselt_datatype_f16_r, rocsparse_order_column));
 
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(stride_a)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(stride_b)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(stride_c)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(stride_d)));
+
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(
         handle, &matmul, trans_a, trans_b, matA, matB, matC, matD, rocsparselt_compute_f32));
 
@@ -672,7 +742,7 @@ int main(int argc, char* argv[])
         handle, &alg_sel, matmul, rocsparselt_matmul_alg_default));
 
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_smfmac_prune(handle, matmul, da, da, rocsparselt_prune_smfmac_strip, stream));
+        rocsparselt_smfmac_prune(handle, matmul, da, da_p, rocsparselt_prune_smfmac_strip, stream));
 
     size_t workspace_size, compressed_size;
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size));
@@ -684,7 +754,7 @@ int main(int argc, char* argv[])
 
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(handle, plan, da, d_compressed, stream));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(handle, plan, da_p, d_compressed, stream));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul(handle,
                                              plan,
@@ -702,7 +772,7 @@ int main(int argc, char* argv[])
     CHECK_HIP_ERROR(
         hipMemcpy(hd.data(), dd, sizeof(rocsparselt_half) * size_c, hipMemcpyDeviceToHost));
     CHECK_HIP_ERROR(
-        hipMemcpy(ha.data(), da, sizeof(rocsparselt_half) * size_a, hipMemcpyDeviceToHost));
+        hipMemcpy(h_prune.data(), da_p, sizeof(rocsparselt_half) * size_a, hipMemcpyDeviceToHost));
     // calculate golden or correct result
     for(int i = 0; i < batch_count; i++)
     {
@@ -728,10 +798,57 @@ int main(int argc, char* argv[])
                                                                 1,
                                                                 ldd);
     }
-
     if(verbose)
     {
-        print_strided_batched("ha_prune calculated", &ha[0], m, k, batch_count, 1, lda, stride_a);
+        std::vector<rocsparselt_half> h_compressed(compressed_size);
+        CHECK_HIP_ERROR(
+            hipMemcpy(&h_compressed[0], d_compressed, compressed_size, hipMemcpyDeviceToHost));
+        printf("ha original sizes %lu -> compressed size %ld\n",
+               size_a * sizeof(rocsparselt_half),
+               compressed_size);
+        if(trans_a == rocsparse_operation_none)
+        {
+            print_strided_batched(
+                "ha_prune calculated, N ", &h_prune[0], m, k, batch_count, 1, lda, stride_a);
+            print_strided_batched("ha_compressed calculated, N ",
+                                  &h_compressed[0],
+                                  m,
+                                  k / 2,
+                                  batch_count,
+                                  1,
+                                  m,
+                                  m * k / 2);
+            print_strided_batched_meta("h_compressed metadata, N",
+                                       reinterpret_cast<unsigned char*>(&h_compressed[m * k / 2]),
+                                       m,
+                                       k / 8,
+                                       batch_count,
+                                       k / 8,
+                                       1,
+                                       m * k / 8);
+        }
+        else
+        {
+            print_strided_batched(
+                "ha_prune calculated, T ", &ha[0], m, k, batch_count, lda, 1, stride_a);
+            print_strided_batched("ha_compressed calculated, T",
+                                  &h_compressed[0],
+                                  m,
+                                  k / 2,
+                                  batch_count,
+                                  k / 2,
+                                  1,
+                                  m * k / 2);
+            print_strided_batched_meta("h_compressed metadata, T",
+                                       reinterpret_cast<unsigned char*>(&h_compressed[m * k / 2]),
+                                       m,
+                                       k / 8,
+                                       batch_count,
+                                       k / 8,
+                                       1,
+                                       m * k / 8);
+        }
+
         print_strided_batched(
             "hc_gold calculated", &hd_gold[0], m, n, batch_count, 1, ldc, stride_c);
         print_strided_batched("hd calculated", &hd[0], m, n, batch_count, 1, ldc, stride_c);
@@ -746,7 +863,7 @@ int main(int argc, char* argv[])
             passed = false;
         }
     }
-    if(passed)
+    if(!passed)
     {
         std::cout << "FAIL" << std::endl;
     }
@@ -756,6 +873,7 @@ int main(int argc, char* argv[])
     }
 
     CHECK_HIP_ERROR(hipFree(da));
+    CHECK_HIP_ERROR(hipFree(da_p));
     CHECK_HIP_ERROR(hipFree(db));
     CHECK_HIP_ERROR(hipFree(dc));
     CHECK_HIP_ERROR(hipFree(dd));
