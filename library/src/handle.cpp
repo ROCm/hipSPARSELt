@@ -50,7 +50,7 @@ _rocsparselt_handle::_rocsparselt_handle()
 
     // Layer mode
     char* str_layer_mode;
-    if((str_layer_mode = getenv("ROCSPARSE_LAYERLT")) == NULL)
+    if((str_layer_mode = getenv("ROCSPARSELT_LAYER")) == NULL)
     {
         layer_mode = rocsparse_layer_mode_none;
     }
@@ -62,13 +62,13 @@ _rocsparselt_handle::_rocsparselt_handle()
     // Open log file
     if(layer_mode & rocsparse_layer_mode_log_trace)
     {
-        open_log_stream(&log_trace_os, &log_trace_ofs, "ROCSPARSE_LOG_TRACE_PATH");
+        open_log_stream(&log_trace_os, &log_trace_ofs, "ROCSPARSELT_LOG_TRACE_PATH");
     }
 
     // Open log_bench file
     if(layer_mode & rocsparse_layer_mode_log_bench)
     {
-        open_log_stream(&log_bench_os, &log_bench_ofs, "ROCSPARSE_LOG_BENCH_PATH");
+        open_log_stream(&log_bench_os, &log_bench_ofs, "ROCSPARSELT_LOG_BENCH_PATH");
     }
 }
 
