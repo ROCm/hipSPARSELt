@@ -24,7 +24,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocsparselt.h"
-#include "spmm/rocsparselt_spmm.hpp"
+#include "rocsparselt_spmm_utils.hpp"
 #include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
