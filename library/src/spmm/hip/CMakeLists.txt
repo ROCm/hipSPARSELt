@@ -21,21 +21,13 @@
 #
 # ########################################################################
 
-include(src/spmm/hip/CMakeLists.txt)
-include(src/spmm/kernels/CMakeLists.txt)
-set(DL_LIB dl)
+set(KERNEL_LAUNCHER_SRC
+   src/spmm/hip/hip_solution_adapter.cpp
+   src/spmm/hip/kernel_arguments.cpp
+   src/spmm/hip/kernel_launcher.cpp
+)
 
-# rocSPARSELt source
-set(rocsparselt_source
-  src/handle.cpp
-  src/status.cpp
-  src/rocsparselt_auxiliary.cpp
-  src/rocsparselt_ostream.cpp
-
-# spmm
-  src/spmm/rocsparselt_compress.cpp
-  src/spmm/rocsparselt_prune.cpp
-  src/spmm/rocsparselt_spmm.cpp
-  ${SPMM_KERNELS_SRC}
-  ${KERNEL_LAUNCHER_SRC}
+set(KERNEL_LAUNCHER_INC
+   src/include/hip_solution_adapter.hpp
+   src/include/kernel_arguments.hpp
 )

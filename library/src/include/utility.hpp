@@ -239,6 +239,23 @@ T log_bench_scalar_value(rocsparselt_handle handle, const T* value)
 
 #define LOG_BENCH_SCALAR_VALUE(handle, name) log_bench_scalar_value(handle, name)
 
+template <typename... Ts>
+inline std::string concatenate(Ts&&... vals)
+{
+    std::ostringstream msg;
+    std::string        none_separator = "";
+    each_args(log_arg{msg, none_separator}, std::forward<Ts>(vals)...);
+    return msg.str();
+}
+
+template <bool T_Enable, typename... Ts>
+inline std::string concatenate_if(Ts&&... vals)
+{
+    if(!T_Enable)
+        return "";
+    return concatenate(std::forward<Ts>(vals)...);
+}
+
 // replaces X in string with s, d, c, z or h depending on typename T
 template <typename T>
 std::string replaceX(std::string input_string)

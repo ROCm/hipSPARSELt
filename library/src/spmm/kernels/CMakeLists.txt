@@ -21,21 +21,29 @@
 #
 # ########################################################################
 
-include(src/spmm/hip/CMakeLists.txt)
-include(src/spmm/kernels/CMakeLists.txt)
-set(DL_LIB dl)
+macro(GENERATE_KERNEL_LIB arch)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${arch})
+  file(GLOB_RECURSE SPMM_KERNELS_O_${arch} ${KERNELS_PATH}/${arch}/*.co)
+  add_custom_target(spmm_kernels_o_${arch} DEPENDS ${SPMM_KERNELS_O_${arch}})
+  add_custom_target(spmm_kernels_cpp_${arch} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernels.cpp)
+  add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernels.cpp
+        COMMAND addKernels ${CMAKE_CURRENT_BINARY_DIR}/${arch} kernels ${SPMM_KERNELS_O_${arch}}
+        DEPENDS spmm_kernels_o_${arch} addKernels)
+  add_library(spmm_kernels_${arch} SHARED ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernels.cpp)
+  add_dependencies(spmm_kernels_${arch} spmm_kernels_cpp_${arch})
+endmacro()
 
-# rocSPARSELt source
-set(rocsparselt_source
-  src/handle.cpp
-  src/status.cpp
-  src/rocsparselt_auxiliary.cpp
-  src/rocsparselt_ostream.cpp
+set(KERNELS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/kernels)
+add_executable(addKernels ${CMAKE_SOURCE_DIR}/utils/addKernels.cpp)
 
-# spmm
-  src/spmm/rocsparselt_compress.cpp
-  src/spmm/rocsparselt_prune.cpp
-  src/spmm/rocsparselt_spmm.cpp
-  ${SPMM_KERNELS_SRC}
-  ${KERNEL_LAUNCHER_SRC}
-)
+FILE(GLOB arch_folders RELATIVE ${KERNELS_PATH} ${KERNELS_PATH}/*)
+FOREACH(f ${arch_folders})
+  IF(IS_DIRECTORY ${KERNELS_PATH}/${f})
+      GENERATE_KERNEL_LIB(${f})
+  ENDIF()
+ENDFOREACH()
+
+set(SPMM_KERNELS_INC ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/kernels)
+set(SPMM_KERNELS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/kernels/spmm_kernels.cpp)
+
