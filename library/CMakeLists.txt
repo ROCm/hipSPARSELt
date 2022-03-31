@@ -68,12 +68,14 @@ target_compile_definitions(rocsparselt PRIVATE ROCM_USE_FLOAT16)
 target_include_directories(rocsparselt
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
                                    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
+                                   $<BUILD_INTERFACE:${SPMM_KERNELS_INC}>
+                                   $<BUILD_INTERFACE:${KERNEL_LAUNCHER_INC}>
                            PUBLIC  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
                                    $<INSTALL_INTERFACE:include>
 )
 
 # Target link libraries
-target_link_libraries(rocsparselt PRIVATE hip::device)
+target_link_libraries(rocsparselt PRIVATE hip::device ${DL_LIB})
 # Target properties
 rocm_set_soversion(rocsparselt ${rocsparselt_SOVERSION})
 set_target_properties(rocsparselt PROPERTIES CXX_VISIBILITY_PRESET "hidden" VISIBILITY_INLINES_HIDDEN ON)

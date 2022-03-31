@@ -31,9 +31,7 @@
 #include "rocsparselt_ostream.hpp"
 #include "utility.hpp"
 
-#if BUILD_WITH_TENSILE
-#include "tensile_host.hpp"
-#endif
+#include "kernel_launcher.hpp"
 
 template <typename Ti, typename To, typename Tc>
 rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
@@ -71,9 +69,68 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
                                        const void*          bias_vector,
                                        int64_t              bias_stride,
                                        hipStream_t*         streams,
-                                       int32_t              numStreams)
+                                       int32_t              numStreams,
+                                       int                  index = 0)
 {
-    return rocsparse_status_not_implemented;
+    RocsparseltContractionProblem<Ti, To, Tc> problem{handle,
+                                                      trans_a,
+                                                      trans_b,
+                                                      m,
+                                                      n,
+                                                      k,
+                                                      alpha,
+                                                      a,
+                                                      nullptr,
+                                                      ld_a,
+                                                      batch_stride_a,
+                                                      offset_a,
+                                                      b,
+                                                      nullptr,
+                                                      ld_b,
+                                                      batch_stride_b,
+                                                      offset_b,
+                                                      beta,
+                                                      c,
+                                                      nullptr,
+                                                      ld_c,
+                                                      batch_stride_c,
+                                                      offset_c,
+                                                      d,
+                                                      nullptr,
+                                                      ld_d,
+                                                      batch_stride_d,
+                                                      offset_d,
+                                                      batch_count,
+                                                      strided_batch,
+                                                      sparseA,
+                                                      metadata,
+                                                      streams,
+                                                      numStreams};
+    if(problem.trans_a == rocsparse_operation_none)
+        if(problem.trans_b == rocsparse_operation_none)
+            return runContractionProblem<Ti,
+                                         To,
+                                         Tc,
+                                         rocsparse_operation_none,
+                                         rocsparse_operation_none>(problem, index);
+        else
+            return runContractionProblem<Ti,
+                                         To,
+                                         Tc,
+                                         rocsparse_operation_none,
+                                         rocsparse_operation_transpose>(problem, index);
+    else if(problem.trans_b == rocsparse_operation_none)
+        return runContractionProblem<Ti,
+                                     To,
+                                     Tc,
+                                     rocsparse_operation_transpose,
+                                     rocsparse_operation_transpose>(problem, index);
+    else
+        return runContractionProblem<Ti,
+                                     To,
+                                     Tc,
+                                     rocsparse_operation_transpose,
+                                     rocsparse_operation_transpose>(problem, index);
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
