@@ -1,25 +1,103 @@
-/* ************************************************************************
- * Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
- * ************************************************************************/
-
-/*********************************************************
- * Declaration of the rocBLAS<->Tensile interface layer. *
- *********************************************************/
+/**
+ * Copyright (c) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #pragma once
-
-/*****************************************************************************
- * WARNING: Tensile-specific data types, functions and macros should only be *
- * referenced from tensile_host.cpp. This header file defines the interface  *
- * that the rest of rocBLAS uses to access Tensile. If another Tensile       *
- * feature needs to be accessed, the API for accessing it should be defined  *
- * in this file, without referencing any Tensile-specific identifiers here.  *
- *****************************************************************************/
 
 #include "handle.h"
 #include "tuple_helper.hpp"
 #include "utility.hpp"
 #include <atomic>
+#include <vector>
+
+/**
+   * Zero-padding description
+   */
+struct ZeroPad
+{
+    ZeroPad(int32_t ai = -1, int32_t bi = -1, int64_t ps = 0, int64_t pe = 0)
+        : anchorIndex(ai)
+        , anchorPos(-1)
+        , boundIndex(bi)
+        , padStart(ps)
+        , padEnd(pe){};
+
+    int32_t anchorIndex;
+    int32_t anchorPos; //! position of anchorIndex in A or B tensor
+    int32_t boundIndex;
+    int32_t boundPos; //! position of anchroIndex in A or B tensor
+    int64_t padStart;
+    int64_t padEnd;
+
+    bool valid() const
+    {
+        return anchorIndex != -1;
+    };
+    std::string description() const;
+};
+using ZeroPads = std::vector<ZeroPad>;
+
+/**
+   * Represents a pair of free indices in a tensor contraction.
+   */
+struct FreeIndex
+{
+    bool   isA; //< True=index is in A; False=index is in B
+    size_t i; //< Dimension in A or B (depending on isA)
+    size_t c; //< Dimension of C which corresponds for this index
+    size_t d; //< Dimension of D which corresponds for this index
+};
+using FreeIndices = std::vector<FreeIndex>;
+
+/**
+   * Represents a batched index in a tensor contraction.
+   */
+struct BatchIndex
+{
+    size_t a, b, c, d;
+};
+using BatchIndices = std::vector<BatchIndex>;
+
+/*
+       * Represents a bound (or summed) index in a tensor contraction.
+   */
+struct BoundIndex
+{
+    BoundIndex(size_t xa = 0, size_t xb = 0, bool aMirror = false, bool bMirror = false)
+        : a(xa)
+        , b(xb)
+        , aMirror(aMirror)
+        , bMirror(bMirror){};
+    size_t  a, b; //! positions in a or b tensor
+    ZeroPad aZeroPad;
+    ZeroPad bZeroPad;
+    bool    aMirror, bMirror;
+};
+using BoundIndices = std::vector<BoundIndex>;
+
+template <typename T>
+T CeilDivide(T num, T den)
+{
+    return (num + (den - 1)) / den;
+}
 
 /********************************************************************
  * RocsparseltContractionProblem captures the arguments for a GEMM-like *
@@ -32,10 +110,6 @@ struct RocsparseltContractionProblem
     rocsparse_operation trans_a;
     rocsparse_operation trans_b;
 
-    // The RocsparseltContractionProblem data members should exactly match
-    // Tensile's parameter types, even if rocBLAS uses differently
-    // sized or signed types. The constructors should convert rocBLAS
-    // types into the corresponding Tensile types stored in this class.
     size_t m;
     size_t n;
     size_t k;
@@ -372,24 +446,19 @@ struct RocsparseltContractionProblem
     };
 };
 
-/*******************************************************************************
- * runContractionProblem() solves a RocsparseltContractionProblem                  *
- *******************************************************************************/
-template <typename Ti, typename To, typename Tc>
-rocsparse_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem);
 template <typename Ti, typename To, typename Tc, rocsparse_operation OpA, rocsparse_operation OpB>
 rocsparse_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem,
                                        int                                              index);
 
 /***********************************************************************************
- * Whether Tensile has been initialized for at least one device (used for testing) *
+ * Whether Kernel Launcher has been initialized for at least one device (used for testing) *
  ***********************************************************************************/
-std::atomic_bool& rocsparselt_internal_tensile_is_initialized();
+std::atomic_bool& rocsparselt_internal_kl_is_initialized();
 
 /**********************************************
  * Whether to suppress Tensile error messages *
  **********************************************/
-inline bool& rocsparselt_suppress_tensile_error_messages()
+inline bool& rocsparselt_suppress_kl_error_messages()
 {
     thread_local bool t_suppress = false;
     return t_suppress;

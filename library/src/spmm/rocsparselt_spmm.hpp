@@ -31,9 +31,7 @@
 #include "rocsparselt_ostream.hpp"
 #include "utility.hpp"
 
-#if BUILD_WITH_TENSILE
 #include "tensile_host.hpp"
-#endif
 
 template <typename Ti, typename To, typename Tc>
 rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
@@ -71,9 +69,10 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
                                        const void*          bias_vector,
                                        int64_t              bias_stride,
                                        hipStream_t*         streams,
-                                       int32_t              numStreams)
+                                       int32_t              numStreams,
+                                       int                  index = 0)
 {
-#if BUILD_WITH_TENSILE
+    //#if BUILD_WITH_TENSILE
     RocsparseltContractionProblem<Ti, To, Tc> problem{handle,
                                                       trans_a,
                                                       trans_b,
@@ -108,10 +107,34 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
                                                       metadata,
                                                       streams,
                                                       numStreams};
-
+#if BUILD_WITH_TENSILE
     return runContractionProblem(problem);
 #else
-    return rocsparse_status_not_implemented;
+    if(problem.trans_a == rocsparse_operation_none)
+        if(problem.trans_b == rocsparse_operation_none)
+            return runContractionProblem<Ti,
+                                         To,
+                                         Tc,
+                                         rocsparse_operation_none,
+                                         rocsparse_operation_none>(problem, index);
+        else
+            return runContractionProblem<Ti,
+                                         To,
+                                         Tc,
+                                         rocsparse_operation_none,
+                                         rocsparse_operation_transpose>(problem, index);
+    else if(problem.trans_b == rocsparse_operation_none)
+        return runContractionProblem<Ti,
+                                     To,
+                                     Tc,
+                                     rocsparse_operation_transpose,
+                                     rocsparse_operation_transpose>(problem, index);
+    else
+        return runContractionProblem<Ti,
+                                     To,
+                                     Tc,
+                                     rocsparse_operation_transpose,
+                                     rocsparse_operation_transpose>(problem, index);
 #endif
 }
 

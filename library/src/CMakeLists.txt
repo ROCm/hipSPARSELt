@@ -97,7 +97,10 @@ if( BUILD_WITH_TENSILE )
   set( Tensile_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/Tensile
   )
-
+else()
+  include(src/spmm/hip/CMakeLists.txt)
+  include(src/spmm/kernels/CMakeLists.txt)
+  set(DL_LIB dl)
 endif( ) # BUILD_WITH_TENSILE
 
 # rocSPARSELt source
@@ -111,6 +114,7 @@ set(rocsparselt_source
   src/spmm/rocsparselt_compress.cpp
   src/spmm/rocsparselt_prune.cpp
   src/spmm/rocsparselt_spmm.cpp
-
   ${Tensile_SRC}
+  ${SPMM_KERNELS_SRC}
+  ${KERNEL_LAUNCHER_SRC}
 )
