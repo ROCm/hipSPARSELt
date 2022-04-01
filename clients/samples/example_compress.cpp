@@ -556,7 +556,7 @@ int main(int argc, char* argv[])
     // initialize parameters with default values
     rocsparse_operation trans = rocsparse_operation_none;
 
-    // invalid int and float for rocblas_sgemm_strided_batched int and float arguments
+    // invalid int and float for rocsparselt spmm int and float arguments
     int64_t invalid_int   = std::numeric_limits<int64_t>::min() + 1;
     float   invalid_float = std::numeric_limits<float>::quiet_NaN();
 

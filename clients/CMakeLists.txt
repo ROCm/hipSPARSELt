@@ -4,7 +4,7 @@
 
 cmake_minimum_required( VERSION 3.16.8 )
 
-add_definitions(-D_ROCBLAS_INTERNAL_BFLOAT16_)
+add_definitions(-D_ROCSPARSELT_INTERNAL_BFLOAT16_)
 
 # This has to be initialized before the project() command appears
 # Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
@@ -12,12 +12,12 @@ if( NOT DEFINED CMAKE_CONFIGURATION_TYPES AND NOT DEFINED CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 endif()
 
-project( rocblas-clients LANGUAGES CXX C  )
+project( rocsparselt-clients LANGUAGES CXX C  )
 
 
 if( SKIP_LIBRARY )
-  include_directories(${ROCBLAS_LIBRARY_DIR}/include)
-  include_directories(${ROCBLAS_LIBRARY_DIR}/include/internal)
+  include_directories(${ROCSPARSELT_LIBRARY_DIR}/include)
+  include_directories(${ROCSPARSELT_LIBRARY_DIR}/include/internal)
 else()
   include_directories(${CMAKE_BINARY_DIR}/include)
   include_directories(${CMAKE_BINARY_DIR}/include/internal)

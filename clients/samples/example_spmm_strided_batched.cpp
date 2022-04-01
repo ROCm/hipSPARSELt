@@ -492,7 +492,7 @@ int main(int argc, char* argv[])
     rocsparse_operation trans_a = rocsparse_operation_none;
     rocsparse_operation trans_b = rocsparse_operation_transpose;
 
-    // invalid int and float for rocblas_sgemm_strided_batched int and float arguments
+    // invalid int and float for rocsparselt spmm int and float arguments
     int64_t invalid_int   = std::numeric_limits<int64_t>::min() + 1;
     float   invalid_float = std::numeric_limits<float>::quiet_NaN();
 
