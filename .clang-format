@@ -1,4 +1,4 @@
-# Style file for MLSE Libraries based on the modified rocBLAS style
+# Style file for MLSE Libraries based on the modified rocSPARSELt style
 
 # Common settings
 BasedOnStyle:  WebKit

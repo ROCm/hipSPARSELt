@@ -116,18 +116,9 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
 endif()
 
 #Set the AMDGPU_TARGETS with backward compatiblity
- if(COMMAND rocm_check_target_ids)
-    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx908:xnack-"
-   )
-else()
-    # Use target ID syntax if supported for AMDGPU_TARGETS
-    if(TARGET_ID_SUPPORT)
-        set(DEFAULT_AMDGPU_TARGETS "gfx908:xnack-")
-    else()
-        set(DEFAULT_AMDGPU_TARGETS "gfx908")
-    endif()
-endif()
+rocm_check_target_ids(target_list
+     TARGETS "gfx908:xnack-"
+)
 
 if (AMDGPU_TARGETS)
   set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
