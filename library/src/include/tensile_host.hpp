@@ -3,7 +3,7 @@
  * ************************************************************************/
 
 /*********************************************************
- * Declaration of the rocBLAS<->Tensile interface layer. *
+ * Declaration of the rocSPARSELt<->Tensile interface layer. *
  *********************************************************/
 
 #pragma once
@@ -11,7 +11,7 @@
 /*****************************************************************************
  * WARNING: Tensile-specific data types, functions and macros should only be *
  * referenced from tensile_host.cpp. This header file defines the interface  *
- * that the rest of rocBLAS uses to access Tensile. If another Tensile       *
+ * that the rest of rocSPARSELt uses to access Tensile. If another Tensile       *
  * feature needs to be accessed, the API for accessing it should be defined  *
  * in this file, without referencing any Tensile-specific identifiers here.  *
  *****************************************************************************/
@@ -33,8 +33,8 @@ struct RocsparseltContractionProblem
     rocsparse_operation trans_b;
 
     // The RocsparseltContractionProblem data members should exactly match
-    // Tensile's parameter types, even if rocBLAS uses differently
-    // sized or signed types. The constructors should convert rocBLAS
+    // Tensile's parameter types, even if rocSPARSELt uses differently
+    // sized or signed types. The constructors should convert rocSPARSELt
     // types into the corresponding Tensile types stored in this class.
     size_t m;
     size_t n;
