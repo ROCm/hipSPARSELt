@@ -116,18 +116,9 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
 endif()
 
 #Set the AMDGPU_TARGETS with backward compatiblity
- if(COMMAND rocm_check_target_ids)
-    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx908:xnack-"
-   )
-else()
-    # Use target ID syntax if supported for AMDGPU_TARGETS
-    if(TARGET_ID_SUPPORT)
-        set(DEFAULT_AMDGPU_TARGETS "gfx908:xnack-")
-    else()
-        set(DEFAULT_AMDGPU_TARGETS "gfx908")
-    endif()
-endif()
+rocm_check_target_ids(target_list
+     TARGETS "gfx908:xnack-"
+)
 
 if (AMDGPU_TARGETS)
   set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
@@ -207,7 +198,7 @@ set(VERSION_STRING "0.0.1")
 rocm_setup_version(VERSION ${VERSION_STRING})
 set(rocsparselt_SOVERSION 0.1)
 
-# setup rocblas defines used for both the library and clients
+# setup rocsparselt defines used for both the library and clients
 if( BUILD_WITH_TENSILE )
     list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
 else()

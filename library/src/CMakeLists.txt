@@ -23,7 +23,7 @@
 
 # Set up Tensile Dependency
 if( BUILD_WITH_TENSILE )
-  # If we want to build a shared rocblas lib, force Tensile to build as a static lib to absorb into rocblas
+  # If we want to build a shared rocsparselt lib, force Tensile to build as a static lib to absorb into rocsparselt
   if( BUILD_SHARED_LIBS )
     set( ROCSPARSELT_SHARED_LIBS ON )
     set( BUILD_SHARED_LIBS OFF )
@@ -79,7 +79,7 @@ if( BUILD_WITH_TENSILE )
     )
   endif()
 
-  # Create a unique name for TensileHost compiled for rocBLAS
+  # Create a unique name for TensileHost compiled for rocsparselt
   set_target_properties( TensileHost PROPERTIES OUTPUT_NAME rocsparselt-tensile CXX_EXTENSIONS NO )
 
   # Tensile host depends on libs build target

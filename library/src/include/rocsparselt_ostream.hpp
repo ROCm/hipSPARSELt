@@ -45,7 +45,7 @@
 extern "C" void rocsparselt_abort();
 
 /*****************************************************************************
- * rocBLAS output streams                                                    *
+ * rocSPARSELt output streams                                                    *
  *****************************************************************************/
 
 #define rocsparselt_cout (rocsparselt_internal_ostream::cout())

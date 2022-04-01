@@ -66,11 +66,11 @@ if( BUILD_WITH_TENSILE )
   if( BUILD_SHARED_LIBS )
     target_link_libraries( rocsparselt PRIVATE TensileHost )
   else()
-    target_compile_definitions( rocsparselt PRIVATE ROCBLAS_STATIC_LIB )
+    target_compile_definitions( rocsparselt PRIVATE ROCSPARSELT_STATIC_LIB )
 
     # bypassing cmake dependencies chain for static link as it won't allow target from different directory
 
-    # including tensile headers into rocblas tensileHost client so get compile properties
+    # including tensile headers into rocsparselt tensileHost client so get compile properties
     get_target_property(TensileHost_INCLUDES TensileHost INCLUDE_DIRECTORIES)
     target_include_directories( rocsparselt PRIVATE ${TensileHost_INCLUDES} )
     get_target_property(TensileHost_DEFINES TensileHost COMPILE_DEFINITIONS)
