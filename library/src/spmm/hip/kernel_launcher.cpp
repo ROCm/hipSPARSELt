@@ -22,26 +22,13 @@
  * ************************************************************************ */
 #include "kernel_launcher.hpp"
 #include "handle.h"
-#include "utility.hpp"
-
-/* ************************************************************************
- * Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
- * ************************************************************************/
-
-// The implementation of the rocsparselt<->Tensile interface layer.
-
-#include "rocsparselt.h"
-
-/*****************************************************************************
- * This is the only file in rocsparselt which should #include Tensile headers    *
- * or reference Tensile identifiers. tensile_host.hpp defines the interface. *
- *****************************************************************************/
-
 #include "hip_solution_adapter.hpp"
 #include "kernel_launcher.hpp"
 #include "rocsparselt-types.h"
+#include "rocsparselt.h"
 #include "rocsparselt_ostream.hpp"
 #include "spmm_kernels.hpp"
+#include "utility.hpp"
 
 #include <atomic>
 #include <complex>
@@ -126,7 +113,7 @@ namespace
         ki.numWorkGroups.x = 1;
         ki.numWorkGroups.y = 1;
 
-        // Tensile Indices for contraction problem
+        // Indices for contraction problem
         FreeIndices  freeIndex(2);
         BoundIndices boundIndex(1);
         BatchIndices batchIndex{{2, 2, 2, 2}};
@@ -402,12 +389,10 @@ namespace
     }
 
     /**************************************************
-     * The KernelLauncher struct interfaces with Tensile *
+     * The KernelLauncher struct interfaces           *
      **************************************************/
     class KernelLauncher
     {
-        // The library object
-        //std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>> m_library;
         std::shared_ptr<hipDeviceProp_t> m_deviceProp;
 
         // The adapter object. mutable is used to allow adapters to be modified
@@ -440,9 +425,9 @@ namespace
             int count;
             if(hipGetDeviceCount(&count) != hipSuccess)
             {
-                rocsparselt_cerr
-                    << "\nrocsparselt error: Could not initialize Tensile host: No devices found"
-                    << std::endl;
+                rocsparselt_cerr << "\nrocsparselt error: Could not initialize Kernel Launcher "
+                                    "host: No devices found"
+                                 << std::endl;
                 rocsparselt_abort();
             }
             return count;
@@ -587,15 +572,16 @@ namespace
         }
         catch(const std::exception& e)
         {
-            rocsparselt_cerr << "\nrocsparselt error: Could not initialize Tensile host:\n"
+            rocsparselt_cerr << "\nrocsparselt error: Could not initialize Kernel Launcher host:\n"
                              << e.what() << std::endl;
             rocsparselt_abort();
         }
         catch(...)
         {
-            rocsparselt_cerr << "\nrocsparselt error: Could not initialize Tensile host:\nUnknown "
-                                "exception thrown"
-                             << std::endl;
+            rocsparselt_cerr
+                << "\nrocsparselt error: Could not initialize Kernel Launcher host:\nUnknown "
+                   "exception thrown"
+                << std::endl;
             rocsparselt_abort();
         }
     }
@@ -623,12 +609,14 @@ namespace
 } // namespace
 
 /******************************************************************************
- * runContractionProblem calls Tensile to run a contraction problem described *
- * by RocsparseltContractionProblem                                               *
+ * runContractionProblem used to run a contraction problem described          *
+ * by RocsparseltContractionProblem                                           *
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc, rocsparse_operation OpA, rocsparse_operation OpB>
 rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                                       int                                              index)
+                                       int*                                             config_id,
+                                       const int config_max_id,
+                                       const int search_iterations)
 {
     rocsparse_status status = rocsparse_status_internal_error;
 
@@ -647,19 +635,50 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
         }
         else
         {
-            if(adapter.loadCodeObject(solution.get(index).name) != hipSuccess)
+            if(adapter.loadCodeObject(solution.get(*config_id).name) != hipSuccess)
             {
                 rocsparselt_internal_ostream msg;
                 print_once(msg << "\nrocsparselt error: failed to load kernel:  "
-                               << solution.get(index).name);
+                               << solution.get(*config_id).name);
             }
             else
             {
-                adapter.launchKernel(ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(index)),
-                                     prob.streams[0],
-                                     nullptr,
-                                     nullptr);
+                if(!search_iterations)
+                {
+                    adapter.launchKernel(
+                        ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(*config_id)),
+                        prob.streams[0],
+                        nullptr,
+                        nullptr);
+                }
+                else
+                {
+                    float      min_ms = std::numeric_limits<float>::max();
+                    hipEvent_t startEvent, stopEvent;
+                    float      ms;
+                    hipEventCreate(&startEvent);
+                    hipEventCreate(&stopEvent);
+                    for(int id = 0; id < config_max_id; id++)
+                    {
+                        auto ki = ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(id));
+                        //warm up
+                        adapter.launchKernel(ki, prob.streams[0], nullptr, nullptr);
 
+                        hipEventRecord(startEvent, prob.streams[0]);
+                        for(int it = 0; it < search_iterations; it++)
+                        {
+                            adapter.launchKernel(ki, prob.streams[0], nullptr, nullptr);
+                        }
+                        hipEventRecord(stopEvent, prob.streams[0]);
+                        hipEventSynchronize(stopEvent);
+
+                        hipEventElapsedTime(&ms, startEvent, stopEvent);
+                        if(ms < min_ms)
+                            *config_id = id;
+                    }
+                    hipEventDestroy(startEvent);
+                    hipEventDestroy(stopEvent);
+                }
                 status = rocsparse_status_success;
             }
         }
@@ -668,13 +687,13 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
     {
         rocsparselt_internal_ostream msg;
         print_once(msg << "\nrocsparselt error: " << (solution.size() ? "" : "No ")
-                       << "Tensile solution found, but exception thrown for " << prob << e.what());
+                       << "Solution found, but exception thrown for " << prob << e.what());
     }
     catch(...)
     {
         rocsparselt_internal_ostream msg;
         print_once(msg << "\nrocsparselt error: " << (solution.size() ? "" : "No ")
-                       << "Tensile solution found, but unknown exception thrown for " << prob);
+                       << "Solution found, but unknown exception thrown for " << prob);
     }
 
     return status;
@@ -689,42 +708,41 @@ extern "C" void rocsparselt_initialize(rocsparselt_handle handle)
     get_adapter(handle);
 }
 
-/******************************************************************************
- * Intantiate the cases of runContractionProblem which are needed to satisfy  *
- * rocsparselt dependencies. This file's template functions are not defined in a  *
- * header file, in order to keep Tensile and rocsparselt separate.                *
- ******************************************************************************/
-
-#define GENERATE_RUN_CONTRACTION_PROBLEM(Ti, To, Tc)                                           \
-    template rocsparse_status                                                                  \
-        runContractionProblem<Ti, To, Tc, rocsparse_operation_none, rocsparse_operation_none>( \
-            const RocsparseltContractionProblem<Ti, To, Tc>&, int);                            \
-    template rocsparse_status runContractionProblem<Ti,                                        \
-                                                    To,                                        \
-                                                    Tc,                                        \
-                                                    rocsparse_operation_none,                  \
-                                                    rocsparse_operation_transpose>(            \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int);                                \
-    template rocsparse_status runContractionProblem<Ti,                                        \
-                                                    To,                                        \
-                                                    Tc,                                        \
-                                                    rocsparse_operation_transpose,             \
-                                                    rocsparse_operation_none>(                 \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int);                                \
-    template rocsparse_status runContractionProblem<Ti,                                        \
-                                                    To,                                        \
-                                                    Tc,                                        \
-                                                    rocsparse_operation_transpose,             \
-                                                    rocsparse_operation_transpose>(            \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int);
-
-GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_half, rocsparselt_half, float)
-
-/***********************************************************************************
- * Whether Tensile has been initialized for at least one device (used for testing) *
- ***********************************************************************************/
+/*******************************************************************************************
+ * Whether Kernel Launcher has been initialized for at least one device (used for testing) *
+ *******************************************************************************************/
 std::atomic_bool& rocsparselt_internal_kl_is_initialized()
 {
     static std::atomic_bool init;
     return init;
 }
+
+/******************************************************************************
+ * Intantiate the cases of runContractionProblem which are needed to satisfy  *
+ * rocsparselt dependencies.                                                  *
+ ******************************************************************************/
+
+#define GENERATE_RUN_CONTRACTION_PROBLEM(Ti, To, Tc)                                           \
+    template rocsparse_status                                                                  \
+        runContractionProblem<Ti, To, Tc, rocsparse_operation_none, rocsparse_operation_none>( \
+            const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);     \
+    template rocsparse_status runContractionProblem<Ti,                                        \
+                                                    To,                                        \
+                                                    Tc,                                        \
+                                                    rocsparse_operation_none,                  \
+                                                    rocsparse_operation_transpose>(            \
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);         \
+    template rocsparse_status runContractionProblem<Ti,                                        \
+                                                    To,                                        \
+                                                    Tc,                                        \
+                                                    rocsparse_operation_transpose,             \
+                                                    rocsparse_operation_none>(                 \
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);         \
+    template rocsparse_status runContractionProblem<Ti,                                        \
+                                                    To,                                        \
+                                                    Tc,                                        \
+                                                    rocsparse_operation_transpose,             \
+                                                    rocsparse_operation_transpose>(            \
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);
+
+GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_half, rocsparselt_half, float)
