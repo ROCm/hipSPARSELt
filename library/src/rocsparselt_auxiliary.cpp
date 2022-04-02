@@ -25,6 +25,7 @@
 #include "handle.h"
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
+#include "spmm_kernels.hpp"
 #include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
@@ -582,6 +583,79 @@ rocsparse_status
         {
             *algSelection        = new _rocsparselt_matmul_alg_selection();
             (*algSelection)->alg = alg;
+
+            auto a_type       = matmulDescr->matrix_A->type;
+            auto b_type       = matmulDescr->matrix_B->type;
+            auto c_type       = matmulDescr->matrix_C->type;
+            auto d_type       = matmulDescr->matrix_D->type;
+            auto compute_type = matmulDescr->compute_type;
+
+            int config_max_id = 0;
+            if(a_type == rocsparselt_datatype_f16_r && b_type == rocsparselt_datatype_f16_r)
+            {
+                if(c_type == rocsparselt_datatype_f16_r && d_type == rocsparselt_datatype_f16_r)
+                {
+                    if(compute_type == rocsparselt_compute_f32)
+                    {
+                        if(matmulDescr->op_A == rocsparse_operation_none)
+                            if(matmulDescr->op_B == rocsparse_operation_none)
+                            {
+                                RocSparseLtKernelSolution<rocsparselt_half,
+                                                          rocsparselt_half,
+                                                          float,
+                                                          rocsparse_operation_none,
+                                                          rocsparse_operation_none>
+                                    rs;
+                                config_max_id = static_cast<int>(rs.size());
+                            }
+                            else
+                            {
+                                RocSparseLtKernelSolution<rocsparselt_half,
+                                                          rocsparselt_half,
+                                                          float,
+                                                          rocsparse_operation_none,
+                                                          rocsparse_operation_transpose>
+                                    rs;
+                                config_max_id = static_cast<int>(rs.size());
+                                ;
+                            }
+                        else if(matmulDescr->op_B == rocsparse_operation_none)
+                        {
+                            RocSparseLtKernelSolution<rocsparselt_half,
+                                                      rocsparselt_half,
+                                                      float,
+                                                      rocsparse_operation_transpose,
+                                                      rocsparse_operation_none>
+                                rs;
+                            config_max_id = static_cast<int>(rs.size());
+                        }
+                        else
+                        {
+                            RocSparseLtKernelSolution<rocsparselt_half,
+                                                      rocsparselt_half,
+                                                      float,
+                                                      rocsparse_operation_transpose,
+                                                      rocsparse_operation_transpose>
+                                rs;
+                            config_max_id = static_cast<int>(rs.size());
+                            ;
+                        }
+                    }
+                }
+            }
+
+            if(!config_max_id)
+            {
+                delete(*algSelection);
+                return rocsparse_status_not_implemented;
+            }
+
+            (*algSelection)->attributes[rocsparselt_matmul_alg_config_max_id].set(&config_max_id);
+
+            const int search_iterations = 10;
+            (*algSelection)
+                ->attributes[rocsparselt_matmul_search_iterations]
+                .set(&search_iterations);
             log_trace(handle, "rocsparselt_matmul_alg_selection_init");
         }
         catch(const rocsparse_status& status)
@@ -648,6 +722,26 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
         // Allocate
         try
         {
+            if(attribute == rocsparselt_matmul_alg_config_id)
+            {
+                int config_max_id;
+                algSelection->attributes[rocsparselt_matmul_alg_config_max_id].get(&config_max_id);
+
+                const int* config_id = reinterpret_cast<const int*>(data);
+                if(*config_id >= config_max_id)
+                {
+                    rocsparselt_cerr << "the value of rocsparselt_matmul_alg_config_id data"
+                                     << config_id << "is out of the range [0, "
+                                     << (config_max_id - 1) << "]" << std::endl;
+                    return rocsparse_status_invalid_value;
+                }
+            }
+            else if(attribute == rocsparselt_matmul_alg_config_max_id)
+            {
+                rocsparselt_cerr << "rocsparselt_matmul_alg_config_max_id is query only."
+                                 << std::endl;
+                return rocsparse_status_invalid_value;
+            }
             algSelection->attributes[attribute].set(data, dataSize);
             log_trace(handle, "rocsparselt_matmul_alg_set_attribute");
         }

@@ -70,7 +70,9 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
                                        int64_t              bias_stride,
                                        hipStream_t*         streams,
                                        int32_t              numStreams,
-                                       int                  index = 0)
+                                       int*                 config_id,
+                                       const int            config_max_id,
+                                       const int            search_iterations)
 {
     RocsparseltContractionProblem<Ti, To, Tc> problem{handle,
                                                       trans_a,
@@ -112,25 +114,29 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
                                          To,
                                          Tc,
                                          rocsparse_operation_none,
-                                         rocsparse_operation_none>(problem, index);
+                                         rocsparse_operation_none>(
+                problem, config_id, config_max_id, search_iterations);
         else
             return runContractionProblem<Ti,
                                          To,
                                          Tc,
                                          rocsparse_operation_none,
-                                         rocsparse_operation_transpose>(problem, index);
+                                         rocsparse_operation_transpose>(
+                problem, config_id, config_max_id, search_iterations);
     else if(problem.trans_b == rocsparse_operation_none)
         return runContractionProblem<Ti,
                                      To,
                                      Tc,
                                      rocsparse_operation_transpose,
-                                     rocsparse_operation_transpose>(problem, index);
+                                     rocsparse_operation_transpose>(
+            problem, config_id, config_max_id, search_iterations);
     else
         return runContractionProblem<Ti,
                                      To,
                                      Tc,
                                      rocsparse_operation_transpose,
-                                     rocsparse_operation_transpose>(problem, index);
+                                     rocsparse_operation_transpose>(
+            problem, config_id, config_max_id, search_iterations);
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
@@ -169,7 +175,10 @@ rocsparse_status spmm_typecasting(rocsparselt_handle   handle,
                                   const void*          bias_vector,
                                   int64_t              bias_stride,
                                   hipStream_t*         streams,
-                                  int32_t              numStreams)
+                                  int32_t              numStreams,
+                                  int*                 config_id,
+                                  const int            config_max_id,
+                                  const int            search_iterations)
 {
     // check alignment of pointers before casting
     if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(Ti))
@@ -213,7 +222,10 @@ rocsparse_status spmm_typecasting(rocsparselt_handle   handle,
                                  bias_vector,
                                  bias_stride,
                                  streams,
-                                 numStreams);
+                                 numStreams,
+                                 config_id,
+                                 config_max_id,
+                                 search_iterations);
 }
 
 inline rocsparse_status rocsparselt_spmm_template(rocsparselt_handle       handle,
@@ -256,7 +268,10 @@ inline rocsparse_status rocsparselt_spmm_template(rocsparselt_handle       handl
                                                   const void*              bias_vector,
                                                   int64_t                  bias_stride,
                                                   hipStream_t*             streams,
-                                                  int32_t                  numStreams)
+                                                  int32_t                  numStreams,
+                                                  int*                     config_id,
+                                                  const int                config_max_id,
+                                                  const int                search_iterations)
 {
     rocsparse_status rs_status = rocsparse_status_not_implemented;
 
@@ -265,7 +280,7 @@ inline rocsparse_status rocsparselt_spmm_template(rocsparselt_handle       handl
         batch_stride_b, offset_b, beta, c, ld_c, batch_stride_c, offset_c, d, ld_d,           \
         batch_stride_d, offset_d, batch_count, strided_batch, sparseA, metadata, act_relu,    \
         act_relu_upperbound, act_relu_threshold, act_gelu, bias_vector, bias_stride, streams, \
-        numStreams
+        numStreams, config_id, config_max_id, search_iterations
 
     if(a_type == rocsparselt_datatype_f16_r && b_type == rocsparselt_datatype_f16_r)
     {
