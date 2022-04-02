@@ -628,7 +628,9 @@ namespace
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc, rocsparse_operation OpA, rocsparse_operation OpB>
 rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                                       int                                              index)
+                                       int*                                             config_id,
+                                       const int config_max_id,
+                                       const int search_iterations)
 {
     rocsparse_status status = rocsparse_status_internal_error;
 
@@ -647,19 +649,50 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
         }
         else
         {
-            if(adapter.loadCodeObject(solution.get(index).name) != hipSuccess)
+            if(adapter.loadCodeObject(solution.get(*config_id).name) != hipSuccess)
             {
                 rocsparselt_internal_ostream msg;
                 print_once(msg << "\nrocsparselt error: failed to load kernel:  "
-                               << solution.get(index).name);
+                               << solution.get(*config_id).name);
             }
             else
             {
-                adapter.launchKernel(ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(index)),
-                                     prob.streams[0],
-                                     nullptr,
-                                     nullptr);
+                if(!search_iterations)
+                {
+                    adapter.launchKernel(
+                        ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(*config_id)),
+                        prob.streams[0],
+                        nullptr,
+                        nullptr);
+                }
+                else
+                {
+                    float      min_ms = std::numeric_limits<float>::max();
+                    hipEvent_t startEvent, stopEvent;
+                    float      ms;
+                    hipEventCreate(&startEvent);
+                    hipEventCreate(&stopEvent);
+                    for(int id = 0; id < config_max_id; id++)
+                    {
+                        auto ki = ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(id));
+                        //warm up
+                        adapter.launchKernel(ki, prob.streams[0], nullptr, nullptr);
 
+                        hipEventRecord(startEvent, prob.streams[0]);
+                        for(int it = 0; it < search_iterations; it++)
+                        {
+                            adapter.launchKernel(ki, prob.streams[0], nullptr, nullptr);
+                        }
+                        hipEventRecord(stopEvent, prob.streams[0]);
+                        hipEventSynchronize(stopEvent);
+
+                        hipEventElapsedTime(&ms, startEvent, stopEvent);
+                        if(ms < min_ms)
+                            *config_id = id;
+                    }
+                    hipEventDestroy(startEvent);
+                    hipEventDestroy(stopEvent);
+                }
                 status = rocsparse_status_success;
             }
         }
@@ -698,25 +731,25 @@ extern "C" void rocsparselt_initialize(rocsparselt_handle handle)
 #define GENERATE_RUN_CONTRACTION_PROBLEM(Ti, To, Tc)                                           \
     template rocsparse_status                                                                  \
         runContractionProblem<Ti, To, Tc, rocsparse_operation_none, rocsparse_operation_none>( \
-            const RocsparseltContractionProblem<Ti, To, Tc>&, int);                            \
+            const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);     \
     template rocsparse_status runContractionProblem<Ti,                                        \
                                                     To,                                        \
                                                     Tc,                                        \
                                                     rocsparse_operation_none,                  \
                                                     rocsparse_operation_transpose>(            \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int);                                \
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);         \
     template rocsparse_status runContractionProblem<Ti,                                        \
                                                     To,                                        \
                                                     Tc,                                        \
                                                     rocsparse_operation_transpose,             \
                                                     rocsparse_operation_none>(                 \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int);                                \
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);         \
     template rocsparse_status runContractionProblem<Ti,                                        \
                                                     To,                                        \
                                                     Tc,                                        \
                                                     rocsparse_operation_transpose,             \
                                                     rocsparse_operation_transpose>(            \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int);
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);
 
 GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_half, rocsparselt_half, float)
 

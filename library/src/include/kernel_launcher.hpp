@@ -448,7 +448,9 @@ struct RocsparseltContractionProblem
 
 template <typename Ti, typename To, typename Tc, rocsparse_operation OpA, rocsparse_operation OpB>
 rocsparse_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem,
-                                       int                                              index);
+                                       int*                                             config_id,
+                                       const int config_max_id,
+                                       const int search_iterations);
 
 /***********************************************************************************
  * Whether Kernel Launcher has been initialized for at least one device (used for testing) *
