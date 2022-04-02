@@ -23,12 +23,9 @@
 
 #pragma once
 
-#include "handle.h"
-#if BUILD_WITH_TENSILE
-#include "tensile_host.hpp"
-#else
-#include "kernel_launcher.hpp"
-#endif
+#include "rocsparselt-types.h"
+#include <vector>
+
 struct RocSparseLtKernel
 {
 

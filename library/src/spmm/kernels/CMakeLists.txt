@@ -45,5 +45,4 @@ FOREACH(f ${arch_folders})
 ENDFOREACH()
 
 set(SPMM_KERNELS_INC ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/kernels)
-set(SPMM_KERNELS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/kernels/spmm_kernels.cpp)
 

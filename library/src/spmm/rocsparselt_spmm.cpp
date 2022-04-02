@@ -222,47 +222,19 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
 
     const unsigned char* metadata = reinterpret_cast<const unsigned char*>(d_A) + metadata_offset;
 
-    return rocsparselt_spmm_template(handle,
-                                     opA,
-                                     opB,
-                                     m,
-                                     n,
-                                     k,
-                                     alpha,
-                                     d_A,
-                                     type_a,
-                                     c_lda,
-                                     c_batch_stride_a,
-                                     0,
-                                     d_B,
-                                     type_b,
-                                     ldb,
-                                     batch_stride_b,
-                                     0,
-                                     beta,
-                                     d_C,
-                                     type_c,
-                                     ldc,
-                                     batch_stride_c,
-                                     0,
-                                     d_D,
-                                     type_d,
-                                     ldd,
-                                     batch_stride_d,
-                                     0,
-                                     num_batches_a,
-                                     true,
-                                     compute_type,
-                                     true,
-                                     metadata,
-                                     act_relu,
-                                     act_relu_upperbound,
-                                     act_relu_threshold,
-                                     act_gelu,
-                                     bias_vector,
-                                     bias_stride,
-                                     streams,
-                                     numStreams);
+#define EX_PARM                                                                                  \
+    handle, opA, opB, m, n, k, alpha, d_A, type_a, c_lda, c_batch_stride_a, 0, d_B, type_b, ldb, \
+        batch_stride_b, 0, beta, d_C, type_c, ldc, batch_stride_c, 0, d_D, type_d, ldd,          \
+        batch_stride_d, 0, num_batches_a, true, compute_type, true, metadata, act_relu,          \
+        act_relu_upperbound, act_relu_threshold, act_gelu, bias_vector, bias_stride, streams,    \
+        numStreams, &config_id, config_max_id, search_iterations
+
+    status = rocsparselt_spmm_template(EX_PARM);
+    if(search && status == rocsparse_status_success)
+    {
+        plan->alg_selection->attributes[rocsparselt_matmul_alg_config_id].set(&config_id);
+    }
+    return status;
 }
 
 /********************************************************************************
