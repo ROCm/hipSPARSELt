@@ -79,20 +79,28 @@ inline int64_t rocsparselt_metadata_offset_in_compressed_matrix(int64_t         
 }
 
 /*******************************************************************************
- * Validate Arguments - matrix init.
+ * Validate Matrix Arguments - matrix init.
  ******************************************************************************/
-inline rocsparse_status validateArgs(rocsparselt_handle      handle,
-                                     int64_t                 num_rows,
-                                     int64_t                 num_cols,
-                                     int64_t                 ld,
-                                     uint32_t                alignment,
-                                     rocsparselt_datatype    valueType,
-                                     rocsparse_order         order,
-                                     rocsparselt_matrix_type matrixType)
+inline rocsparse_status validateMatrixArgs(rocsparselt_handle      handle,
+                                           int64_t                 num_rows,
+                                           int64_t                 num_cols,
+                                           int64_t                 ld,
+                                           uint32_t                alignment,
+                                           rocsparselt_datatype    valueType,
+                                           rocsparse_order         order,
+                                           rocsparselt_matrix_type matrixType)
 {
     if(num_rows < 8 || num_cols < 8)
     {
         rocsparselt_cerr << "row and col must larger than 8" << std::endl;
+        return rocsparse_status_invalid_size;
+    }
+
+    // leading dimensions must be valid
+    if(num_rows > ld)
+    {
+        rocsparselt_cerr << "number of rows(" << num_rows << ") is larger than leading dimension("
+                         << ld << ")" << std::endl;
         return rocsparse_status_invalid_size;
     }
 
@@ -119,78 +127,36 @@ inline rocsparse_status validateArgs(rocsparselt_handle      handle,
 }
 
 /*******************************************************************************
- * Validate Arguments
+ * Validate Matmul Descr. init Arguments - matrix init.
  ******************************************************************************/
-inline rocsparse_status validateArgs(rocsparselt_handle       handle,
-                                     rocsparse_operation      opA,
-                                     rocsparse_operation      opB,
-                                     const void*              alpha,
-                                     const void*              a,
-                                     int64_t                  num_rows_a,
-                                     int64_t                  num_cols_a,
-                                     int64_t                  lda,
-                                     const void*              b,
-                                     int64_t                  num_rows_b,
-                                     int64_t                  num_cols_b,
-                                     int64_t                  ldb,
-                                     const void*              beta,
-                                     const void*              c,
-                                     int64_t                  num_rows_c,
-                                     int64_t                  num_cols_c,
-                                     int64_t                  ldc,
-                                     const void*              d,
-                                     int64_t                  num_rows_d,
-                                     int64_t                  num_cols_d,
-                                     int64_t                  ldd,
-                                     rocsparselt_datatype     type_a,
-                                     rocsparselt_datatype     type_b,
-                                     rocsparselt_datatype     type_c,
-                                     rocsparselt_datatype     type_d,
-                                     rocsparselt_compute_type compute_type,
-                                     rocsparselt_matrix_type  matrix_type_a,
-                                     rocsparselt_matrix_type  matrix_type_b,
-                                     rocsparselt_matrix_type  matrix_type_c,
-                                     rocsparselt_matrix_type  matrix_type_d,
-                                     rocsparse_order          order_a = rocsparse_order_column,
-                                     rocsparse_order          order_b = rocsparse_order_column,
-                                     rocsparse_order          order_c = rocsparse_order_column,
-                                     rocsparse_order          order_d = rocsparse_order_column,
-                                     int                      num_batches_a       = 1,
-                                     int                      num_batches_b       = 1,
-                                     int                      num_batches_c       = 1,
-                                     int                      num_batches_d       = 1,
-                                     int64_t                  batch_stride_a      = 0,
-                                     int64_t                  batch_stride_b      = 0,
-                                     int64_t                  batch_stride_c      = 0,
-                                     int64_t                  batch_stride_d      = 0,
-                                     int                      act_relu            = 0,
-                                     float                    act_relu_upperbound = 0.0f,
-                                     float                    act_relu_threshold  = 0.0f,
-                                     int                      act_gelu            = 0,
-                                     const void*              bias_vector         = nullptr,
-                                     int64_t                  bias_stride         = 0)
+inline rocsparse_status validateMatmulDescrArgs(rocsparselt_handle       handle,
+                                                rocsparse_operation      opA,
+                                                rocsparse_operation      opB,
+                                                int64_t                  num_rows_a,
+                                                int64_t                  num_cols_a,
+                                                int64_t                  lda,
+                                                int64_t                  num_rows_b,
+                                                int64_t                  num_cols_b,
+                                                int64_t                  ldb,
+                                                int64_t                  num_rows_c,
+                                                int64_t                  num_cols_c,
+                                                int64_t                  ldc,
+                                                int64_t                  num_rows_d,
+                                                int64_t                  num_cols_d,
+                                                int64_t                  ldd,
+                                                rocsparselt_datatype     type_a,
+                                                rocsparselt_datatype     type_b,
+                                                rocsparselt_datatype     type_c,
+                                                rocsparselt_datatype     type_d,
+                                                rocsparselt_compute_type compute_type,
+                                                rocsparselt_matrix_type  matrix_type_a,
+                                                rocsparselt_matrix_type  matrix_type_b,
+                                                rocsparselt_matrix_type  matrix_type_c,
+                                                rocsparselt_matrix_type  matrix_type_d)
 {
     // handle must be valid
     if(!handle)
         return rocsparse_status_invalid_handle;
-
-    // sizes must not be negative
-    if(num_rows_a < 0 || num_cols_a < 0 || num_rows_b < 0 || num_cols_b < 0 || num_rows_c < 0
-       || num_cols_c < 0 || num_rows_d < 0 || num_cols_d < 0 || batch_stride_a < 0
-       || batch_stride_b < 0 || batch_stride_c < 0 || batch_stride_d < 0)
-    {
-        rocsparselt_cerr << "matrix and stride size must be posstive" << std::endl;
-        return rocsparse_status_invalid_size;
-    }
-
-    // number of batches of matrics A,B,C,D must be the same and negative
-    if(num_batches_a != num_batches_b || num_batches_a != num_batches_c
-       || num_batches_a != num_batches_d || num_batches_a < 1)
-    {
-        rocsparselt_cerr << " number of batches of matrics A,B,C,D must be the same and negative"
-                         << std::endl;
-        return rocsparse_status_invalid_size;
-    }
 
     // sizes of matrics A,B,C,D must fulfill the matrix multiplication rule.
     // D = A x B + C
@@ -214,17 +180,6 @@ inline rocsparse_status validateArgs(rocsparselt_handle       handle,
         return rocsparse_status_invalid_size;
     }
 
-    // order must be column-major
-    if((order_a & order_b & order_c & order_d) != rocsparse_order_column)
-        return rocsparse_status_not_implemented;
-
-    // leading dimensions must be valid
-    if(num_rows_a > lda || num_rows_b > ldb || num_rows_c > ldc || num_rows_d > ldd)
-    {
-        rocsparselt_cerr << "num_rows" << std::endl;
-        return rocsparse_status_invalid_size;
-    }
-
     // data type of matrics must be the same
     if(type_a != type_b || type_a != type_c || type_a != type_c)
         return rocsparse_status_invalid_value;
@@ -244,6 +199,74 @@ inline rocsparse_status validateArgs(rocsparselt_handle       handle,
         break;
     }
 
+    // Only matrix A can be structured matrix.
+    if(matrix_type_a != rocsparselt_matrix_type_structured)
+    {
+        rocsparselt_cerr << " Matrix A must be structrured matrix." << std::endl;
+        return rocsparse_status_not_implemented;
+    }
+
+    if(matrix_type_b != rocsparselt_matrix_type_dense)
+    {
+        rocsparselt_cerr << " Matrix B cannot be structrured matrix." << std::endl;
+        return rocsparse_status_not_implemented;
+    }
+
+    if(matrix_type_c != rocsparselt_matrix_type_dense
+       || matrix_type_d != rocsparselt_matrix_type_dense)
+        return rocsparse_status_invalid_value;
+
+    return rocsparse_status_success;
+}
+
+/*******************************************************************************
+ * Validate Matmul Arguments
+ ******************************************************************************/
+inline rocsparse_status validateMatmulArgs(rocsparselt_handle handle,
+                                           int64_t            m,
+                                           int64_t            n,
+                                           int64_t            k,
+                                           const void*        alpha,
+                                           const void*        a,
+                                           const void*        b,
+                                           const void*        beta,
+                                           const void*        c,
+                                           const void*        d,
+                                           int                num_batches_a       = 1,
+                                           int                num_batches_b       = 1,
+                                           int                num_batches_c       = 1,
+                                           int                num_batches_d       = 1,
+                                           int64_t            batch_stride_a      = 0,
+                                           int64_t            batch_stride_b      = 0,
+                                           int64_t            batch_stride_c      = 0,
+                                           int64_t            batch_stride_d      = 0,
+                                           int                act_relu            = 0,
+                                           float              act_relu_upperbound = 0.0f,
+                                           float              act_relu_threshold  = 0.0f,
+                                           int                act_gelu            = 0,
+                                           const void*        bias_vector         = nullptr,
+                                           int64_t            bias_stride         = 0)
+{
+    // handle must be valid
+    if(!handle)
+        return rocsparse_status_invalid_handle;
+
+    // sizes must not be negative
+    if(batch_stride_a < 0 || batch_stride_b < 0 || batch_stride_c < 0 || batch_stride_d < 0)
+    {
+        rocsparselt_cerr << "matrix and stride size must be posstive" << std::endl;
+        return rocsparse_status_invalid_size;
+    }
+
+    // number of batches of matrics A,B,C,D must be the same and negative
+    if(num_batches_a != num_batches_b || num_batches_a != num_batches_c
+       || num_batches_a != num_batches_d || num_batches_a < 1)
+    {
+        rocsparselt_cerr << " number of batches of matrics A,B,C,D must be the same and negative"
+                         << std::endl;
+        return rocsparse_status_invalid_size;
+    }
+
     // quick return 0 is valid in BLAS
     // Note: k==0 is not a quick return, because C must still be multiplied by beta
     if(!m || !n || !num_batches_a)
@@ -257,15 +280,6 @@ inline rocsparse_status validateArgs(rocsparselt_handle       handle,
         return rocsparse_status_invalid_pointer;
 
     if(act_relu < 0 || act_gelu < 0 || (bias_vector != nullptr && bias_stride < 0))
-        return rocsparse_status_invalid_value;
-
-    // Only matrix A can be structured matrix.
-    if(matrix_type_a != rocsparselt_matrix_type_structured)
-        return rocsparse_status_invalid_value;
-
-    if(matrix_type_b != rocsparselt_matrix_type_dense
-       || matrix_type_c != rocsparselt_matrix_type_dense
-       || matrix_type_d != rocsparselt_matrix_type_dense)
         return rocsparse_status_invalid_value;
 
     return rocsparse_status_continue;

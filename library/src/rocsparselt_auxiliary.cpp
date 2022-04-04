@@ -120,7 +120,7 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
         // Allocate
         try
         {
-            auto status = validateArgs(
+            auto status = validateMatrixArgs(
                 handle, rows, cols, ld, alignment, valueType, order, rocsparselt_matrix_type_dense);
             if(status != rocsparse_status_success)
                 throw status;
@@ -176,14 +176,14 @@ rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle hand
         // Allocate
         try
         {
-            auto status = validateArgs(handle,
-                                       rows,
-                                       cols,
-                                       ld,
-                                       alignment,
-                                       valueType,
-                                       order,
-                                       rocsparselt_matrix_type_structured);
+            auto status = validateMatrixArgs(handle,
+                                             rows,
+                                             cols,
+                                             ld,
+                                             alignment,
+                                             valueType,
+                                             order,
+                                             rocsparselt_matrix_type_structured);
             if(status != rocsparse_status_success)
                 throw status;
 
@@ -338,38 +338,37 @@ rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
         // Allocate
         try
         {
-            if(matA->type != matB->type || matA->type != matC->type || matA->type != matD->type)
-                throw rocsparse_status_invalid_value;
+            auto status = validateMatmulDescrArgs(handle,
+                                                  opA,
+                                                  opB,
+                                                  matA->m,
+                                                  matA->n,
+                                                  matA->ld,
+                                                  matB->m,
+                                                  matB->n,
+                                                  matB->ld,
+                                                  matC->m,
+                                                  matC->n,
+                                                  matC->ld,
+                                                  matD->m,
+                                                  matD->n,
+                                                  matD->ld,
+                                                  matA->type,
+                                                  matB->type,
+                                                  matC->type,
+                                                  matD->type,
+                                                  computeType,
+                                                  matA->m_type,
+                                                  matB->m_type,
+                                                  matC->m_type,
+                                                  matD->m_type);
+            if(status != rocsparse_status_success)
+                return status;
 
-            switch(matA->type)
-            {
-            case rocsparselt_datatype_bf16_r:
-            case rocsparselt_datatype_bf8_r:
-            case rocsparselt_datatype_f16_r:
-            case rocsparselt_datatype_f8_r:
-                if(computeType != rocsparselt_compute_f32)
-                    throw rocsparse_status_invalid_value;
-                break;
-            case rocsparselt_datatype_i8_r:
-                if(computeType != rocsparselt_compute_i32)
-                    throw rocsparse_status_invalid_value;
-                break;
-            }
             int64_t m, n, k;
             getOriginalSizes(opA, opB, matA->m, matA->n, matB->m, matB->n, m, n, k);
-
-            if(matA->m_type == rocsparselt_matrix_type_structured)
-            {
-                if(matB->m_type == rocsparselt_matrix_type_structured)
-                    return rocsparse_status_invalid_value;
-
-                matA->c_k  = k / 2;
-                matA->c_ld = (opA == rocsparse_operation_transpose ? matA->c_k : m);
-            }
-            else
-            {
-                return rocsparse_status_not_implemented;
-            }
+            matA->c_k  = k / 2;
+            matA->c_ld = (opA == rocsparse_operation_transpose ? matA->c_k : m);
 
             *matmulDescr                 = new _rocsparselt_matmul_descr();
             (*matmulDescr)->op_A         = opA;
