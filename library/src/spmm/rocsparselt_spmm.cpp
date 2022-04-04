@@ -153,66 +153,42 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     else
         plan->alg_selection->attributes[rocsparselt_matmul_alg_config_id].get(&config_id);
 
-    auto validArgs = validateArgs(handle,
-                                  opA,
-                                  opB,
-                                  alpha,
-                                  d_A,
-                                  num_rows_a,
-                                  num_cols_a,
-                                  lda,
-                                  d_B,
-                                  num_rows_b,
-                                  num_cols_b,
-                                  ldb,
-                                  beta,
-                                  d_C,
-                                  num_rows_c,
-                                  num_cols_c,
-                                  ldc,
-                                  d_D,
-                                  num_rows_d,
-                                  num_cols_d,
-                                  ldd,
-                                  type_a,
-                                  type_b,
-                                  type_c,
-                                  type_d,
-                                  compute_type,
-                                  matrix_type_a,
-                                  matrix_type_b,
-                                  matrix_type_c,
-                                  matrix_type_d,
-                                  order_a,
-                                  order_b,
-                                  order_c,
-                                  order_d,
-                                  num_batches_a,
-                                  num_batches_b,
-                                  num_batches_c,
-                                  num_batches_d,
-                                  batch_stride_a,
-                                  batch_stride_b,
-                                  batch_stride_c,
-                                  batch_stride_d,
-                                  act_relu,
-                                  act_relu_upperbound,
-                                  act_relu_threshold,
-                                  act_gelu,
-                                  bias_vector,
-                                  bias_stride);
+    int64_t m, n, k;
+    auto    status
+        = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
+    if(status != rocsparse_status_success)
+        return status;
+
+    auto validArgs = validateMatmulArgs(handle,
+                                        m,
+                                        n,
+                                        k,
+                                        alpha,
+                                        d_A,
+                                        d_B,
+                                        beta,
+                                        d_C,
+                                        d_D,
+                                        num_batches_a,
+                                        num_batches_b,
+                                        num_batches_c,
+                                        num_batches_d,
+                                        batch_stride_a,
+                                        batch_stride_b,
+                                        batch_stride_c,
+                                        batch_stride_d,
+                                        act_relu,
+                                        act_relu_upperbound,
+                                        act_relu_threshold,
+                                        act_gelu,
+                                        bias_vector,
+                                        bias_stride);
 
     if(validArgs != rocsparse_status_continue)
         return validArgs;
 
     float alpha_f = *(reinterpret_cast<const float*>(alpha));
     float beta_f  = *(reinterpret_cast<const float*>(beta));
-
-    int64_t m, n, k;
-    auto    status
-        = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
-    if(status != rocsparse_status_success)
-        return status;
 
     int64_t c_num_cols_a    = (opA == rocsparse_operation_none ? c_k_a : num_cols_a);
     int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
