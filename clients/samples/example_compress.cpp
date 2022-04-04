@@ -103,7 +103,7 @@ void compress(const Ti*      in,
                 int idx[4];
                 int m_idx = 0;
 
-                auto valid_data = [&](int midx, int index, int value) {
+                auto valid_data = [&](int midx, int index, Ti value) {
                     idx[midx]    = index;
                     values[midx] = value;
                 };
@@ -253,14 +253,9 @@ void validate_gold(T*             A,
         std::printf("compressed gold test FAILED: wrong result\n");
 }
 
-void validate_compressed(rocsparselt_half* A,
-                         rocsparselt_half* B,
-                         int64_t           n1,
-                         int64_t           n2,
-                         int64_t           n3,
-                         int64_t           s1,
-                         int64_t           s2,
-                         int64_t           s3)
+template <typename T>
+void validate_compressed(
+    T* A, T* B, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_t s2, int64_t s3)
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
@@ -330,14 +325,9 @@ void validate_metadata(unsigned char* A,
         std::printf("metadata FAILED: wrong result\n");
 }
 
-void print_strided_batched(const char*       name,
-                           rocsparselt_half* A,
-                           int64_t           n1,
-                           int64_t           n2,
-                           int64_t           n3,
-                           int64_t           s1,
-                           int64_t           s2,
-                           int64_t           s3)
+template <typename T>
+void print_strided_batched(
+    const char* name, T* A, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_t s2, int64_t s3)
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
@@ -423,16 +413,17 @@ static void show_usage(char* argv[])
               << std::endl;
 }
 
-static int parse_arguments(int                  argc,
-                           char*                argv[],
-                           int64_t&             m,
-                           int64_t&             n,
-                           int64_t&             ld,
-                           int64_t&             stride,
-                           int&                 batch_count,
-                           rocsparse_operation& trans,
-                           bool&                header,
-                           bool&                verbose)
+static int parse_arguments(int                   argc,
+                           char*                 argv[],
+                           int64_t&              m,
+                           int64_t&              n,
+                           int64_t&              ld,
+                           int64_t&              stride,
+                           int&                  batch_count,
+                           rocsparse_operation&  trans,
+                           rocsparselt_datatype& type,
+                           bool&                 header,
+                           bool&                 verbose)
 {
     if(argc >= 2)
     {
@@ -492,6 +483,24 @@ static int parse_arguments(int                  argc,
                         return EXIT_FAILURE;
                     }
                 }
+                else if((arg == "-r") && (i + 1 < argc))
+                {
+                    ++i;
+                    if(strncmp(argv[i], "h", 1) == 0)
+                    {
+                        type = type;
+                    }
+                    else if(strncmp(argv[i], "b", 1) == 0)
+                    {
+                        type = rocsparselt_datatype_bf16_r;
+                    }
+                    else
+                    {
+                        std::cerr << "error with " << arg << std::endl;
+                        std::cerr << "do not recognize value " << argv[i];
+                        return EXIT_FAILURE;
+                    }
+                }
                 else
                 {
                     std::cerr << "error with " << arg << std::endl;
@@ -542,62 +551,26 @@ bool bad_argument(rocsparse_operation trans,
     return argument_error;
 }
 
-void initialize_a(std::vector<rocsparselt_half>& ha, int64_t size_a)
+template <typename T>
+void initialize_a(std::vector<T>& ha, int64_t size_a)
 {
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<rocsparselt_half>(rand() % 17);
+        ha[i] = static_cast<T>(rand() % 17);
     }
 }
 
-int main(int argc, char* argv[])
+template <typename T>
+void run(int64_t              m,
+         int64_t              n,
+         int64_t              ld,
+         int64_t              stride,
+         int                  batch_count,
+         rocsparse_operation  trans,
+         rocsparselt_datatype type,
+         bool                 verbose)
 {
-    // initialize parameters with default values
-    rocsparse_operation trans = rocsparse_operation_none;
-
-    // invalid int and float for rocsparselt spmm int and float arguments
-    int64_t invalid_int   = std::numeric_limits<int64_t>::min() + 1;
-    float   invalid_float = std::numeric_limits<float>::quiet_NaN();
-
-    // initialize to invalid value to detect if values not specified on command line
-    int64_t m = invalid_int, n = invalid_int, ld = invalid_int, stride = invalid_int;
-
-    int batch_count = std::numeric_limits<int>::min() + 1;
-
-    bool verbose = false;
-    bool header  = false;
-
-    if(parse_arguments(argc, argv, m, n, ld, stride, batch_count, trans, header, verbose))
-    {
-        show_usage(argv);
-        return EXIT_FAILURE;
-    }
-
-    // when arguments not specified, set to default values
-    if(m == invalid_int)
-        m = DIM1;
-    if(n == invalid_int)
-        n = DIM2;
-    if(ld == invalid_int)
-        ld = trans == rocsparse_operation_none ? m : n;
-    if(stride == invalid_int)
-        stride = trans == rocsparse_operation_none ? ld * n : ld * m;
-    if(batch_count == invalid_int)
-        batch_count = BATCH_COUNT;
-
-    if(bad_argument(trans, m, n, ld, stride, batch_count))
-    {
-        show_usage(argv);
-        return EXIT_FAILURE;
-    }
-
-    if(header)
-    {
-        std::cout << "transAB,M,N,K,lda,ldb,ldc,stride_a,stride_b,stride_c,batch_count,alpha,beta,"
-                     "result,error";
-        std::cout << std::endl;
-    }
 
     int64_t stride_1, stride_2;
     int64_t c_stride_1, c_stride_2, c_stride_b;
@@ -644,8 +617,8 @@ int main(int argc, char* argv[])
     int size = batch_count == 0 ? size_1 : size_1 + stride * (batch_count - 1);
 
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
-    std::vector<rocsparselt_half> hp(size);
-    std::vector<rocsparselt_half> hp_test(size);
+    std::vector<T> hp(size);
+    std::vector<T> hp_test(size);
 
     // initial data on host
     initialize_a(hp, size);
@@ -664,18 +637,17 @@ int main(int argc, char* argv[])
     }
 
     // allocate memory on device
-    rocsparselt_half* d;
-    rocsparselt_half* d_test;
-    void*             d_wworkspace;
-    int               num_streams = 0;
-    hipStream_t       stream      = nullptr;
+    T*          d;
+    T*          d_test;
+    void*       d_wworkspace;
+    int         num_streams = 0;
+    hipStream_t stream      = nullptr;
     hipStreamCreate(&stream);
 
-    CHECK_HIP_ERROR(hipMalloc(&d, size * sizeof(rocsparselt_half)));
-    CHECK_HIP_ERROR(hipMalloc(&d_test, size * sizeof(rocsparselt_half)));
+    CHECK_HIP_ERROR(hipMalloc(&d, size * sizeof(T)));
+    CHECK_HIP_ERROR(hipMalloc(&d_test, size * sizeof(T)));
     // copy matrices from host to device
-    CHECK_HIP_ERROR(
-        hipMemcpy(d, hp.data(), sizeof(rocsparselt_half) * size, hipMemcpyHostToDevice));
+    CHECK_HIP_ERROR(hipMemcpy(d, hp.data(), sizeof(T) * size, hipMemcpyHostToDevice));
 
     rocsparselt_handle               handle;
     rocsparselt_mat_descr            matA, matB, matC, matD;
@@ -691,15 +663,15 @@ int main(int argc, char* argv[])
                                                             col,
                                                             ld,
                                                             16,
-                                                            rocsparselt_datatype_f16_r,
+                                                            type,
                                                             rocsparse_order_column,
                                                             rocsparselt_sparsity_50_percent));
     CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matB, col, row, ld, 16, rocsparselt_datatype_f16_r, rocsparse_order_column));
+        handle, &matB, col, row, ld, 16, type, rocsparse_order_column));
     CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matC, row, col, ld, 16, rocsparselt_datatype_f16_r, rocsparse_order_column));
+        handle, &matC, row, col, ld, 16, type, rocsparse_order_column));
     CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matD, row, col, ld, 16, rocsparselt_datatype_f16_r, rocsparse_order_column));
+        handle, &matD, row, col, ld, 16, type, rocsparse_order_column));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
@@ -725,8 +697,7 @@ int main(int argc, char* argv[])
         handle, matmul, d, d_test, rocsparselt_prune_smfmac_strip, stream));
     hipStreamSynchronize(stream);
 
-    CHECK_HIP_ERROR(
-        hipMemcpy(hp_test.data(), d_test, sizeof(rocsparselt_half) * size, hipMemcpyDeviceToHost));
+    CHECK_HIP_ERROR(hipMemcpy(hp_test.data(), d_test, sizeof(T) * size, hipMemcpyDeviceToHost));
 
     if(verbose)
     {
@@ -734,7 +705,7 @@ int main(int argc, char* argv[])
             "hp_test calculated", &hp_test[0], m, n, batch_count, stride_1, stride_2, stride);
     }
 
-    test_prune_check<rocsparselt_half>(handle, matmul, d_test, stream, true);
+    test_prune_check<T>(handle, matmul, d_test, stream, true);
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_selection_init(
         handle, &alg_sel, matmul, rocsparselt_matmul_alg_default));
@@ -747,31 +718,30 @@ int main(int argc, char* argv[])
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size));
 
-    rocsparselt_half*             d_compressed;
-    std::vector<rocsparselt_half> hp_gold(compressed_size / sizeof(rocsparselt_half));
-    std::vector<rocsparselt_half> hp_compressed(compressed_size / sizeof(rocsparselt_half));
+    T*             d_compressed;
+    std::vector<T> hp_gold(compressed_size / sizeof(T));
+    std::vector<T> hp_compressed(compressed_size / sizeof(T));
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
     CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(handle, plan, d_test, d_compressed, stream));
     hipStreamSynchronize(stream);
     CHECK_HIP_ERROR(
         hipMemcpy(hp_compressed.data(), d_compressed, compressed_size, hipMemcpyDeviceToHost));
 
-    compress<rocsparselt_half, float>(
-        &hp_test[0],
-        &hp_gold[0],
-        reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
-        m,
-        n,
-        stride_1,
-        stride_2,
-        stride,
-        c_stride_1,
-        c_stride_2,
-        c_stride_b,
-        m_stride_1,
-        m_stride_2,
-        m_stride_b,
-        batch_count);
+    compress<T, float>(&hp_test[0],
+                       &hp_gold[0],
+                       reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
+                       m,
+                       n,
+                       stride_1,
+                       stride_2,
+                       stride,
+                       c_stride_1,
+                       c_stride_2,
+                       c_stride_b,
+                       m_stride_1,
+                       m_stride_2,
+                       m_stride_b,
+                       batch_count);
 
     if(verbose)
     {
@@ -859,6 +829,71 @@ int main(int argc, char* argv[])
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matC));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matD));
     CHECK_ROCSPARSE_ERROR(rocsparselt_destroy(handle));
+}
+
+int main(int argc, char* argv[])
+{
+    // initialize parameters with default values
+    rocsparse_operation trans = rocsparse_operation_none;
+
+    // invalid int and float for rocsparselt spmm int and float arguments
+    int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
+    int64_t invalid_int   = std::numeric_limits<int>::min() + 1;
+    float   invalid_float = std::numeric_limits<float>::quiet_NaN();
+
+    // initialize to invalid value to detect if values not specified on command line
+    int64_t m = invalid_int64, n = invalid_int64, ld = invalid_int64, stride = invalid_int64;
+
+    int                  batch_count = invalid_int;
+    rocsparselt_datatype type        = rocsparselt_datatype_f16_r;
+
+    bool verbose = false;
+    bool header  = false;
+
+    if(parse_arguments(argc, argv, m, n, ld, stride, batch_count, trans, type, header, verbose))
+    {
+        show_usage(argv);
+        return EXIT_FAILURE;
+    }
+
+    // when arguments not specified, set to default values
+    if(m == invalid_int64)
+        m = DIM1;
+    if(n == invalid_int64)
+        n = DIM2;
+    if(ld == invalid_int64)
+        ld = trans == rocsparse_operation_none ? m : n;
+    if(stride == invalid_int64)
+        stride = trans == rocsparse_operation_none ? ld * n : ld * m;
+    if(batch_count == invalid_int)
+        batch_count = BATCH_COUNT;
+
+    if(bad_argument(trans, m, n, ld, stride, batch_count))
+    {
+        show_usage(argv);
+        return EXIT_FAILURE;
+    }
+
+    if(header)
+    {
+        std::cout << "type,trans,M,N,K,ld,stride,batch_count,"
+                     "result,error";
+        std::cout << std::endl;
+    }
+
+    switch(type)
+    {
+    case rocsparselt_datatype_f16_r:
+        std::cout << "H";
+        run<rocsparselt_half>(m, n, ld, stride, batch_count, trans, type, verbose);
+        break;
+    case rocsparselt_datatype_bf16_r:
+        std::cout << "BF16";
+        run<rocsparselt_bfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
+        break;
+    default:
+        break;
+    }
 
     return EXIT_SUCCESS;
 }

@@ -746,3 +746,4 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
         const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);
 
 GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_half, rocsparselt_half, float)
+GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_bfloat16, rocsparselt_bfloat16, float)

@@ -110,9 +110,8 @@ __global__ void prune_strip_kernel(const Ti* in,
                                    int64_t   batch_stride,
                                    int64_t   sizes)
 {
-    constexpr unsigned int MT0I    = SG0I * TT0I;
-    constexpr unsigned int MT1J    = SG1J * TT1J;
-    constexpr int          tiles_y = 4;
+    constexpr unsigned int MT0I = SG0I * TT0I;
+    constexpr unsigned int MT1J = SG1J * TT1J;
 
     unsigned int serial = hc_get_workitem_id(0);
     unsigned int sg0I   = serial % SG0I;
@@ -173,6 +172,86 @@ __global__ void prune_strip_kernel(const Ti* in,
                     out[pos] = static_cast<Ti>(0.0f);
                 else if constexpr(!InPlace)
                     out[pos] = values[k];
+            }
+        }
+    }
+}
+
+template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J, bool InPlace>
+__global__ void prune_strip_kernel2(const Ti* in,
+                                    Ti*       out,
+                                    int64_t   m,
+                                    int64_t   n,
+                                    int64_t   stride1,
+                                    int64_t   stride2,
+                                    int       num_batches,
+                                    int64_t   batch_stride,
+                                    int64_t   sizes)
+{
+    constexpr unsigned int MT0I = SG0I * TT0I;
+    constexpr unsigned int MT1J = SG1J * TT1J;
+
+    unsigned int serial = hc_get_workitem_id(0);
+    unsigned int sg0I   = serial % SG0I;
+    unsigned int sg1J   = serial / SG0I;
+    unsigned int stride = sg0I * stride1 + sg1J * 4 * stride2;
+
+    unsigned int wg0I    = hc_get_group_id(0);
+    unsigned int wg1J    = hc_get_group_id(1);
+    unsigned int batchId = hc_get_group_id(2);
+
+    if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
+        return;
+
+    unsigned int wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    unsigned int b_stride  = batchId * batch_stride;
+
+    unsigned int globalReadOffset = b_stride + wg_stride + stride;
+
+    for(int i = 0; i < TT0I; i++)
+    {
+        for(int j = 0; j < TT1J; j += 4)
+        {
+            unsigned int offset = globalReadOffset + i * stride1 + j * stride2;
+            Ti           values[4];
+            Tc           square_values[] = {static_cast<Tc>(0.0f),
+                                  static_cast<Tc>(0.0f),
+                                  static_cast<Tc>(0.0f),
+                                  static_cast<Tc>(0.0f)};
+            int          idxs[2];
+#pragma unroll
+            for(int k = 0; k < 4; k++)
+            {
+                unsigned int pos = offset + k * stride2;
+                values[k]        = static_cast<Ti>(0.0f);
+                if(pos < sizes)
+                    values[k] = in[pos];
+                Tc value_tc      = static_cast<Tc>(values[k]);
+                square_values[k] = value_tc * value_tc;
+
+                if(square_values[k] > square_values[idxs[0]])
+                {
+                    idxs[1] = idxs[0];
+                    idxs[0] = k;
+                }
+                else if(square_values[k] > square_values[idxs[1]])
+                {
+                    idxs[1] = k;
+                }
+            }
+
+#pragma unroll
+            for(int k = 0; k < 4; k++)
+            {
+                unsigned int pos = offset + k * stride2;
+                if(k != idxs[0] && k != idxs[1])
+                    out[pos] = static_cast<Ti>(0.0f);
+                else
+                {
+                    if constexpr(InPlace)
+                        continue;
+                    out[pos] = values[k];
+                }
             }
         }
     }
@@ -299,24 +378,20 @@ rocsparse_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle,
                                                rocsparselt_prune_alg    pruneAlg,
                                                hipStream_t              stream)
 {
+#define PRUNE_PARAMS(T)                                                   \
+    handle, m, n, stride0, stride1, num_batches, batch_stride, op, order, \
+        reinterpret_cast<const T*>(d_in), reinterpret_cast<T*>(d_out), pruneAlg, stream
+
     switch(in_type)
     {
     case rocsparselt_datatype_f16_r:
         if(compute_type == rocsparselt_compute_f32)
             return rocsparselt_smfmac_prune_template<rocsparselt_half, float>(
-                handle,
-                m,
-                n,
-                stride0,
-                stride1,
-                num_batches,
-                batch_stride,
-                op,
-                order,
-                reinterpret_cast<const rocsparselt_half*>(d_in),
-                reinterpret_cast<rocsparselt_half*>(d_out),
-                pruneAlg,
-                stream);
+                PRUNE_PARAMS(rocsparselt_half));
+    case rocsparselt_datatype_bf16_r:
+        if(compute_type == rocsparselt_compute_f32)
+            return rocsparselt_smfmac_prune_template<rocsparselt_bfloat16, float>(
+                PRUNE_PARAMS(rocsparselt_bfloat16));
     default:
         return rocsparse_status_not_implemented;
     }
@@ -336,22 +411,18 @@ rocsparse_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle ha
                                                      rocsparselt_datatype     in_type,
                                                      hipStream_t              stream)
 {
+#define PRUNE_CHECK_PARAMS(T)                                             \
+    handle, m, n, stride0, stride1, num_batches, batch_stride, op, order, \
+        reinterpret_cast<const T*>(d_in), d_out, stream
+
     switch(in_type)
     {
     case rocsparselt_datatype_f16_r:
         return rocsparselt_smfmac_prune_check_template<rocsparselt_half>(
-            handle,
-            m,
-            n,
-            stride0,
-            stride1,
-            num_batches,
-            batch_stride,
-            op,
-            order,
-            reinterpret_cast<const rocsparselt_half*>(d_in),
-            d_out,
-            stream);
+            PRUNE_CHECK_PARAMS(rocsparselt_half));
+    case rocsparselt_datatype_bf16_r:
+        return rocsparselt_smfmac_prune_check_template<rocsparselt_bfloat16>(
+            PRUNE_CHECK_PARAMS(rocsparselt_bfloat16));
     default:
         return rocsparse_status_not_implemented;
     }

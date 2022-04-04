@@ -40,6 +40,7 @@ set(rocsparselt_headers_public
   include/rocsparselt-auxiliary.h
   include/rocsparselt-functions.h
   include/rocsparselt-types.h
+  include/rocsparselt-bfloat16.h
   include/rocsparselt.h
   include/rocsparse-types.h
   ${PROJECT_BINARY_DIR}/include/rocsparselt-version.h

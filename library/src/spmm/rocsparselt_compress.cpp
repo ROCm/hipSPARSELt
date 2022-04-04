@@ -214,29 +214,19 @@ rocsparse_status rocsparselt_smfmac_compress_impl(const rocsparselt_handle handl
                                                   rocsparselt_datatype     in_type,
                                                   hipStream_t              stream)
 {
+#define COMPRESS_PARAMS(T)                                                                         \
+    handle, m, n, stride0, stride1, batch_stride, c_stride0, c_stride1, c_batch_stride, m_stride0, \
+        m_stride1, m_batch_stride, num_batches, op, order, reinterpret_cast<const T*>(d_in),       \
+        reinterpret_cast<T*>(d_out), d_metadata, stream
+
     switch(in_type)
     {
     case rocsparselt_datatype_f16_r:
         return rocsparselt_smfmac_compress_template<rocsparselt_half>(
-            handle,
-            m,
-            n,
-            stride0,
-            stride1,
-            batch_stride,
-            c_stride0,
-            c_stride1,
-            c_batch_stride,
-            m_stride0,
-            m_stride1,
-            m_batch_stride,
-            num_batches,
-            op,
-            order,
-            reinterpret_cast<const rocsparselt_half*>(d_in),
-            reinterpret_cast<rocsparselt_half*>(d_out),
-            d_metadata,
-            stream);
+            COMPRESS_PARAMS(rocsparselt_half));
+    case rocsparselt_datatype_bf16_r:
+        return rocsparselt_smfmac_compress_template<rocsparselt_bfloat16>(
+            COMPRESS_PARAMS(rocsparselt_bfloat16));
     default:
         return rocsparse_status_not_implemented;
     }
