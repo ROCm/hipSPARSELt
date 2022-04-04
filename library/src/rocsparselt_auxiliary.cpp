@@ -25,7 +25,6 @@
 #include "handle.h"
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
-#include "spmm_kernels.hpp"
 #include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
@@ -584,65 +583,24 @@ rocsparse_status
             *algSelection        = new _rocsparselt_matmul_alg_selection();
             (*algSelection)->alg = alg;
 
-            auto a_type       = matmulDescr->matrix_A->type;
-            auto b_type       = matmulDescr->matrix_B->type;
-            auto c_type       = matmulDescr->matrix_C->type;
-            auto d_type       = matmulDescr->matrix_D->type;
+            auto in_type      = matmulDescr->matrix_A->type;
+            auto out_type     = matmulDescr->matrix_D->type;
             auto compute_type = matmulDescr->compute_type;
 
             int config_max_id = 0;
-            if(a_type == rocsparselt_datatype_f16_r && b_type == rocsparselt_datatype_f16_r)
-            {
-                if(c_type == rocsparselt_datatype_f16_r && d_type == rocsparselt_datatype_f16_r)
-                {
-                    if(compute_type == rocsparselt_compute_f32)
-                    {
-                        if(matmulDescr->op_A == rocsparse_operation_none)
-                            if(matmulDescr->op_B == rocsparse_operation_none)
-                            {
-                                RocSparseLtKernelSolution<rocsparselt_half,
-                                                          rocsparselt_half,
-                                                          float,
-                                                          rocsparse_operation_none,
-                                                          rocsparse_operation_none>
-                                    rs;
-                                config_max_id = static_cast<int>(rs.size());
-                            }
-                            else
-                            {
-                                RocSparseLtKernelSolution<rocsparselt_half,
-                                                          rocsparselt_half,
-                                                          float,
-                                                          rocsparse_operation_none,
-                                                          rocsparse_operation_transpose>
-                                    rs;
-                                config_max_id = static_cast<int>(rs.size());
-                                ;
-                            }
-                        else if(matmulDescr->op_B == rocsparse_operation_none)
-                        {
-                            RocSparseLtKernelSolution<rocsparselt_half,
-                                                      rocsparselt_half,
-                                                      float,
-                                                      rocsparse_operation_transpose,
-                                                      rocsparse_operation_none>
-                                rs;
-                            config_max_id = static_cast<int>(rs.size());
-                        }
-                        else
-                        {
-                            RocSparseLtKernelSolution<rocsparselt_half,
-                                                      rocsparselt_half,
-                                                      float,
-                                                      rocsparse_operation_transpose,
-                                                      rocsparse_operation_transpose>
-                                rs;
-                            config_max_id = static_cast<int>(rs.size());
-                            ;
-                        }
-                    }
-                }
-            }
+            if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
+               && compute_type == rocsparselt_compute_f32)
+                config_max_id = rocsparselt_get_matmul_alg_config_max_id<rocsparselt_half,
+                                                                         rocsparselt_half,
+                                                                         float>(matmulDescr->op_A,
+                                                                                matmulDescr->op_B);
+            else if(in_type == rocsparselt_datatype_bf16_r
+                    && out_type == rocsparselt_datatype_bf16_r
+                    && compute_type == rocsparselt_compute_f32)
+                config_max_id = rocsparselt_get_matmul_alg_config_max_id<rocsparselt_bfloat16,
+                                                                         rocsparselt_bfloat16,
+                                                                         float>(matmulDescr->op_A,
+                                                                                matmulDescr->op_B);
 
             if(!config_max_id)
             {

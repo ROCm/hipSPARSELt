@@ -752,6 +752,7 @@ extern "C" void rocsparselt_initialize(rocsparselt_handle handle)
         const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);
 
 GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_half, rocsparselt_half, float)
+GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_bfloat16, rocsparselt_bfloat16, float)
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for testing) *

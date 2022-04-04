@@ -30,6 +30,7 @@
 #define _ROCSPARSELT_TYPES_H_
 
 #include "rocsparse-types.h"
+#include "rocsparselt-bfloat16.h"
 
 #include <float.h>
 #include <stddef.h>
