@@ -377,9 +377,6 @@ struct RocsparseltContractionProblem
  *******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocsparse_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem);
-template <typename Ti, typename To, typename Tc, rocsparse_operation OpA, rocsparse_operation OpB>
-rocsparse_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem,
-                                       int                                              index);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for testing) *
