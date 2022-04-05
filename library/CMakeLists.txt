@@ -62,6 +62,7 @@ add_library(roc::rocsparselt ALIAS rocsparselt)
 
 # Target compile options
 target_compile_options(rocsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
+target_compile_definitions(rocsparselt PRIVATE ROCM_USE_FLOAT16)
 
 # Target include directories
 target_include_directories(rocsparselt
