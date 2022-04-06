@@ -116,35 +116,7 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
 #if BUILD_WITH_TENSILE
     return runContractionProblem(problem);
 #else
-    if(problem.trans_a == rocsparse_operation_none)
-        if(problem.trans_b == rocsparse_operation_none)
-            return runContractionProblem<Ti,
-                                         To,
-                                         Tc,
-                                         rocsparse_operation_none,
-                                         rocsparse_operation_none>(
-                problem, config_id, config_max_id, search_iterations);
-        else
-            return runContractionProblem<Ti,
-                                         To,
-                                         Tc,
-                                         rocsparse_operation_none,
-                                         rocsparse_operation_transpose>(
-                problem, config_id, config_max_id, search_iterations);
-    else if(problem.trans_b == rocsparse_operation_none)
-        return runContractionProblem<Ti,
-                                     To,
-                                     Tc,
-                                     rocsparse_operation_transpose,
-                                     rocsparse_operation_transpose>(
-            problem, config_id, config_max_id, search_iterations);
-    else
-        return runContractionProblem<Ti,
-                                     To,
-                                     Tc,
-                                     rocsparse_operation_transpose,
-                                     rocsparse_operation_transpose>(
-            problem, config_id, config_max_id, search_iterations);
+    return runContractionProblem<Ti, To, Tc>(problem, config_id, config_max_id, search_iterations);
 #endif
 }
 

@@ -710,6 +710,15 @@ void run(int64_t              m,
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_selection_init(
         handle, &alg_sel, matmul, rocsparselt_matmul_alg_default));
 
+    int max_config_id;
+    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_get_attribute(handle,
+                                                               alg_sel,
+                                                               rocsparselt_matmul_alg_config_max_id,
+                                                               &max_config_id,
+                                                               sizeof(max_config_id)));
+    printf("max_config_id %d\n", max_config_id);
+
+    return;
     size_t workspace_size, compressed_size;
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size));
 

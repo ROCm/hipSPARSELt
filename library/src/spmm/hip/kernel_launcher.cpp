@@ -610,7 +610,7 @@ namespace
  * runContractionProblem used to run a contraction problem described          *
  * by RocsparseltContractionProblem                                           *
  ******************************************************************************/
-template <typename Ti, typename To, typename Tc, rocsparse_operation OpA, rocsparse_operation OpB>
+template <typename Ti, typename To, typename Tc>
 rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
                                        int*                                             config_id,
                                        const int config_max_id,
@@ -622,9 +622,9 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
     {
         std::shared_ptr<hipDeviceProp_t> deviceProp;
 
-        auto&       adapter    = get_adapter(prob.handle, &deviceProp, prob.handle->device);
-        std::string str        = generate_kernel_category_str<Ti, To, Tc>(OpA, OpB);
-        max_cid                = adapter.getKernelCounts(str);
+        auto&       adapter = get_adapter(prob.handle, &deviceProp, prob.handle->device);
+        std::string str     = generate_kernel_category_str<Ti, To, Tc>(prob.trans_a, prob.trans_b);
+        max_cid             = adapter.getKernelCounts(str);
         KernelParams* solution = adapter.getKernelParams(str);
 
         if(config_max_id != max_cid)
@@ -735,27 +735,8 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
  * rocsparselt dependencies.                                                  *
  ******************************************************************************/
 
-#define GENERATE_RUN_CONTRACTION_PROBLEM(Ti, To, Tc)                                           \
-    template rocsparse_status                                                                  \
-        runContractionProblem<Ti, To, Tc, rocsparse_operation_none, rocsparse_operation_none>( \
-            const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);     \
-    template rocsparse_status runContractionProblem<Ti,                                        \
-                                                    To,                                        \
-                                                    Tc,                                        \
-                                                    rocsparse_operation_none,                  \
-                                                    rocsparse_operation_transpose>(            \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);         \
-    template rocsparse_status runContractionProblem<Ti,                                        \
-                                                    To,                                        \
-                                                    Tc,                                        \
-                                                    rocsparse_operation_transpose,             \
-                                                    rocsparse_operation_none>(                 \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);         \
-    template rocsparse_status runContractionProblem<Ti,                                        \
-                                                    To,                                        \
-                                                    Tc,                                        \
-                                                    rocsparse_operation_transpose,             \
-                                                    rocsparse_operation_transpose>(            \
+#define GENERATE_RUN_CONTRACTION_PROBLEM(Ti, To, Tc)             \
+    template rocsparse_status runContractionProblem<Ti, To, Tc>( \
         const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);
 
 GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_half, rocsparselt_half, float)
