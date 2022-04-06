@@ -128,7 +128,8 @@ static const char* rocsparse_status_to_string(rocsparse_status status)
 }
 template <typename>
 static constexpr char rocsparselt_precision_string[] = "invalid";
-//template <> constexpr char rocsparselt_precision_string<rocsparselt_bfloat16      >[] = "bf16_r";
+template <>
+static constexpr char rocsparselt_precision_string<rocsparselt_bfloat16>[] = "bf16_r";
 template <>
 static constexpr char rocsparselt_precision_string<rocsparselt_half>[] = "f16_r";
 template <>
@@ -470,6 +471,7 @@ inline std::string generate_kernel_category_str(rocsparse_operation opA, rocspar
     return "";
 }
 
+#if !BUILD_WITH_TENSILE
 template <>
 inline std::string
     generate_kernel_category_str<rocsparselt_half, rocsparselt_half, float>(rocsparse_operation opA,
@@ -492,4 +494,5 @@ inline std::string generate_kernel_category_str<rocsparselt_bfloat16, rocsparsel
     str += (opB == rocsparse_operation_none ? "N" : "T");
     return str;
 }
+#endif
 #endif // UTILITY_H

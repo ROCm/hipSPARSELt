@@ -23,7 +23,9 @@
 
 #include "definitions.h"
 #include "handle.h"
+#if !BUILD_WITH_TENSILE
 #include "kernel_launcher.hpp"
+#endif
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
 #include "utility.hpp"
@@ -586,7 +588,7 @@ rocsparse_status
             auto in_type      = matmulDescr->matrix_A->type;
             auto out_type     = matmulDescr->matrix_D->type;
             auto compute_type = matmulDescr->compute_type;
-
+#if !BUILD_WITH_TENSILE
             int config_max_id = 0;
 #if 0
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
@@ -630,6 +632,7 @@ rocsparse_status
             (*algSelection)
                 ->attributes[rocsparselt_matmul_search_iterations]
                 .set(&search_iterations);
+#endif
             log_trace(handle, "rocsparselt_matmul_alg_selection_init");
         }
         catch(const rocsparse_status& status)
