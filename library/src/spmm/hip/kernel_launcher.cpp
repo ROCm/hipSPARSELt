@@ -23,7 +23,6 @@
 #include "kernel_launcher.hpp"
 #include "handle.h"
 #include "hip_solution_adapter.hpp"
-#include "kernel_launcher.hpp"
 #include "rocsparselt-types.h"
 #include "rocsparselt.h"
 #include "rocsparselt_ostream.hpp"
