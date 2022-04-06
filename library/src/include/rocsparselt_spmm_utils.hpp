@@ -26,7 +26,7 @@
 #define ROCSPARSELT_SPMM_UTILS_HPP
 #include "handle.h"
 #include "rocsparselt_ostream.hpp"
-#include "spmm_kernels.hpp"
+//#include "spmm_kernels.hpp"
 
 inline rocsparse_status getOriginalSizes(rocsparse_operation opA,
                                          rocsparse_operation opB,
@@ -285,6 +285,7 @@ inline rocsparse_status validateMatmulArgs(rocsparselt_handle handle,
     return rocsparse_status_continue;
 }
 
+#if 0
 template <typename Ti, typename To, typename Tc>
 inline int rocsparselt_get_matmul_alg_config_max_id(rocsparse_operation opA,
                                                     rocsparse_operation opB)
@@ -336,4 +337,5 @@ inline int rocsparselt_get_matmul_alg_config_max_id(rocsparse_operation opA,
         }
     }
 }
+#endif
 #endif

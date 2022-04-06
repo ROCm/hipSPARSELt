@@ -142,11 +142,11 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
 
     int config_id         = 0;
     int config_max_id     = 0;
-    int search_iterations = 10; //default
+    int search_iterations = search ? 10 : 0; //default
+    plan->alg_selection->attributes[rocsparselt_matmul_alg_config_max_id].get(&config_max_id);
 
     if(search)
     {
-        plan->alg_selection->attributes[rocsparselt_matmul_alg_config_max_id].get(&config_max_id);
         plan->alg_selection->attributes[rocsparselt_matmul_search_iterations].get(
             &search_iterations);
     }

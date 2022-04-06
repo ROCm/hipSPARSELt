@@ -95,7 +95,7 @@ namespace
 
     template <typename Ti, typename To, typename Tc>
     auto ConstructKernelInvoke(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                               const RocSparseLtKernel&                         kernel)
+                               const KernelParams&                              kernel)
     {
         KernelInvocation ki;
 
@@ -103,10 +103,9 @@ namespace
 
         ki.args.reserve(1024, 128);
 
-        ki.kernelName = kernel.name;
+        ki.kernelName = kernel.SolutionNameMin;
 
-        ki.workGroupSize.x
-            = kernel.workGroupSize.x * kernel.workGroupSize.y * kernel.workGroupSize.z;
+        ki.workGroupSize.x = kernel.WorkGroup[0] * kernel.WorkGroup[1] * kernel.WorkGroup[2];
         ki.workGroupSize.y = 1;
         ki.workGroupSize.z = 1;
 
@@ -236,11 +235,11 @@ namespace
 
         for(size_t i = 0; i < batchIndex.size(); i++)
         {
-            if(kernel.packBatchDims & 0x1)
+            if(kernel.PackBatchDims & 0x1)
                 ki.numWorkGroups.x *= batchSizes[i];
-            if(kernel.packBatchDims & 0x2)
+            if(kernel.PackBatchDims & 0x2)
                 ki.numWorkGroups.y *= batchSizes[i];
-            if(!kernel.packBatchDims)
+            if(!kernel.PackBatchDims)
                 ki.numWorkGroups.z *= batchSizes[i];
         }
 
@@ -254,16 +253,15 @@ namespace
         if(transposeC01)
             std::swap(ki.numWorkGroups.x, ki.numWorkGroups.y);
 
-        printf("macroTile %dx%d\n", kernel.macroTile.x, kernel.macroTile.y);
-        ki.numWorkGroups.x = CeilDivide(ki.numWorkGroups.x, kernel.macroTile.x);
-        ki.numWorkGroups.y = CeilDivide(ki.numWorkGroups.y, kernel.macroTile.y);
+        ki.numWorkGroups.x = CeilDivide(ki.numWorkGroups.x, kernel.MacroTile[0]);
+        ki.numWorkGroups.y = CeilDivide(ki.numWorkGroups.y, kernel.MacroTile[1]);
 
         uint32_t problemNumGroupTiles0 = ki.numWorkGroups.x;
         uint32_t problemNumGroupTiles1 = ki.numWorkGroups.y;
         // used only when persistent kernel along batch
         uint32_t problemNumGroupTiles2 = ki.numWorkGroups.z;
 
-        ki.numWorkGroups.y *= kernel.globalSplitU;
+        ki.numWorkGroups.y *= kernel.GlobalSplitU;
 
         ki.numWorkItems.x = ki.workGroupSize.x * ki.numWorkGroups.x;
         ki.numWorkItems.y = ki.workGroupSize.y * ki.numWorkGroups.y;
@@ -273,11 +271,11 @@ namespace
 
         uint64_t tensor2dSizeC = totalAllcoatedElement(sizes_c, strides_c, (size_t)0);
         uint64_t tensor2dSizeA
-            = (kernel.packBatchDims & 0x1)
+            = (kernel.PackBatchDims & 0x1)
                   ? totalAllcoatedElement(sizes_a, strides_a, (size_t)0)
                   : totalAllcoatedElementNonBatch(sizes_a, strides_a, batchIndex);
         uint64_t tensor2dSizeB
-            = (kernel.packBatchDims & 0x2)
+            = (kernel.PackBatchDims & 0x2)
                   ? totalAllcoatedElement(sizes_b, strides_b, (size_t)0)
                   : totalAllcoatedElementNonBatch(sizes_b, strides_b, batchIndex);
 
@@ -303,8 +301,8 @@ namespace
                 ki.args.append<Tc const>("beta_2", *prob.beta);
         }
 
-        size_t startStrideCD = kernel.useInitialStridesCD ? 0 : 1;
-        size_t startStrideAB = kernel.useInitialStridesAB ? 0 : 1;
+        size_t startStrideCD = kernel.UseInitialStridesCD ? 0 : 1;
+        size_t startStrideAB = kernel.UseInitialStridesAB ? 0 : 1;
 
         for(size_t i = startStrideCD; i < sizes_d.size(); i++)
             ki.args.append<uint32_t>(concatenate_if<true>("strideD", i), strides_d[i]);
@@ -335,12 +333,12 @@ namespace
         uint32_t sizeL = boundSizes[0];
 
         // how many stride-sized clicks to stagger start offset
-        unsigned int staggerUIter = kernel.staggerU;
+        unsigned int staggerUIter = kernel.StaggerU;
 
         // /DepthU/GSU
-        int unrollLoopIters = sizeL / kernel.depthU / kernel.globalSplitU;
+        int unrollLoopIters = sizeL / kernel.DepthU / kernel.GlobalSplitU;
 
-        unsigned int shifted = 1 << kernel.staggerStrideShift;
+        unsigned int shifted = 1 << kernel.StaggerStrideShift;
 
         while(staggerUIter > 1)
         {
@@ -361,12 +359,12 @@ namespace
         uint32_t wgmRemainder1            = 0;
         uint32_t magicNumberWgmRemainder1 = 0;
 
-        if(kernel.workGroupMapping != 0)
+        if(kernel.WorkGroupMapping != 0)
         {
-            numFullBlocks = problemNumGroupTiles1 / kernel.workGroupMapping;
-            wgmRemainder1 = problemNumGroupTiles1 % kernel.workGroupMapping;
+            numFullBlocks = problemNumGroupTiles1 / kernel.WorkGroupMapping;
+            wgmRemainder1 = problemNumGroupTiles1 % kernel.WorkGroupMapping;
             if(wgmRemainder1 == 0)
-                wgmRemainder1 = kernel.workGroupMapping;
+                wgmRemainder1 = kernel.WorkGroupMapping;
 
             uint64_t  magicNum;
             const int smallMagicShift = 31;
@@ -467,6 +465,7 @@ namespace
          *********************************************************************/
         void initialize(SolutionAdapter& adapter, int32_t deviceId)
         {
+            printf("%s\n", __func__);
             std::string path;
 #ifndef WIN32
             path.reserve(PATH_MAX);
@@ -505,7 +504,7 @@ namespace
             bool no_match = false;
             if(TestPath(dir))
             {
-                if(adapter.loadCodeObjectMapFile(dir) != hipSuccess)
+                if(adapter.loadLibrary(dir) != hipSuccess)
                     no_match = true;
             }
             else
@@ -618,16 +617,25 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
                                        const int config_max_id,
                                        const int search_iterations)
 {
-    rocsparse_status status = rocsparse_status_internal_error;
-
-    auto solution = RocSparseLtKernelSolution<Ti, To, Tc, OpA, OpB>();
+    rocsparse_status status  = rocsparse_status_internal_error;
+    size_t           max_cid = 0;
+    //auto solution = RocSparseLtKernelSolution<Ti, To, Tc, OpA, OpB>();
     try
     {
         std::shared_ptr<hipDeviceProp_t> deviceProp;
 
-        auto& adapter = get_adapter(prob.handle, &deviceProp, prob.handle->device);
+        auto&       adapter    = get_adapter(prob.handle, &deviceProp, prob.handle->device);
+        std::string str        = generate_kernel_category_str<Ti, To, Tc>(OpA, OpB);
+        max_cid                = adapter.getKernelCounts(str);
+        KernelParams* solution = adapter.getKernelParams(str);
 
-        if(!solution.size())
+        if(config_max_id != max_cid)
+        {
+            rocsparselt_cerr << "config_max_id is out of range (" << max_cid
+                             << ") used this value to instead." << std::endl;
+        }
+
+        if(!max_cid)
         {
             rocsparselt_internal_ostream msg;
             print_once(msg << "\nrocsparselt error: No solution found for " << prob);
@@ -635,18 +643,18 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
         }
         else
         {
-            if(adapter.loadCodeObject(solution.get(*config_id).name) != hipSuccess)
+            if(adapter.loadCodeObject(solution[*config_id].SolutionNameMin) != hipSuccess)
             {
                 rocsparselt_internal_ostream msg;
                 print_once(msg << "\nrocsparselt error: failed to load kernel:  "
-                               << solution.get(*config_id).name);
+                               << solution[*config_id].SolutionNameMin);
             }
             else
             {
                 if(!search_iterations)
                 {
                     adapter.launchKernel(
-                        ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(*config_id)),
+                        ConstructKernelInvoke<Ti, To, Tc>(prob, solution[*config_id]),
                         prob.streams[0],
                         nullptr,
                         nullptr);
@@ -658,9 +666,9 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
                     float      ms;
                     hipEventCreate(&startEvent);
                     hipEventCreate(&stopEvent);
-                    for(int id = 0; id < config_max_id; id++)
+                    for(int id = 0; id < max_cid; id++)
                     {
-                        auto ki = ConstructKernelInvoke<Ti, To, Tc>(prob, solution.get(id));
+                        auto ki = ConstructKernelInvoke<Ti, To, Tc>(prob, solution[id]);
                         //warm up
                         adapter.launchKernel(ki, prob.streams[0], nullptr, nullptr);
 
@@ -686,17 +694,24 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
     catch(const std::exception& e)
     {
         rocsparselt_internal_ostream msg;
-        print_once(msg << "\nrocsparselt error: " << (solution.size() ? "" : "No ")
+        print_once(msg << "\nrocsparselt error: " << (max_cid ? "" : "No ")
                        << "Solution found, but exception thrown for " << prob << e.what());
     }
     catch(...)
     {
         rocsparselt_internal_ostream msg;
-        print_once(msg << "\nrocsparselt error: " << (solution.size() ? "" : "No ")
+        print_once(msg << "\nrocsparselt error: " << (max_cid ? "" : "No ")
                        << "Solution found, but unknown exception thrown for " << prob);
     }
 
     return status;
+}
+
+size_t getKernelCounts(rocsparselt_handle handle, std::string const& category)
+{
+    auto& adapter = get_adapter(handle);
+    printf("%s category=%s\n", __func__, category.c_str());
+    return adapter.getKernelCounts(category);
 }
 
 /***************************************************************

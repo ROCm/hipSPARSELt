@@ -85,7 +85,7 @@ inline hipError_t load_lib_functions(void* handle, const char* name, void** func
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::loadCodeObjectMapFile(std::string const& path)
+hipError_t SolutionAdapter::loadLibrary(std::string const& path)
 {
     void* handle;
     char* err;
@@ -100,16 +100,19 @@ hipError_t SolutionAdapter::loadCodeObjectMapFile(std::string const& path)
         return hipErrorInvalidContext;
     }
 
-    void* get_kernel_byte;
-
-    load_lib_functions(handle, "get_kernel_byte", (void**)&get_kernel_byte);
+    function_table funcs
+        = {{"get_kernel_byte", NULL}, {"get_kernel_params", NULL}, {"get_kernel_counts", NULL}};
+    hipError_t status;
+    for(auto& func : funcs)
+    {
+        if((status = load_lib_functions(handle, func.first.c_str(), &func.second)) != hipSuccess)
+            return status;
+    }
 
     {
         std::lock_guard<std::mutex> guard(m_access);
         m_lib_handles.push_back(handle);
-        function_table fucs;
-        fucs["get_kernel_byte"] = get_kernel_byte;
-        m_lib_functions.push_back(fucs);
+        m_lib_functions.push_back(funcs);
         m_loadedLibNames.push_back(concatenate(path));
     }
     return hipSuccess;
@@ -304,6 +307,34 @@ hipError_t SolutionAdapter::launchKernels(std::vector<KernelInvocation> const& k
         HIP_CHECK_RETURN(launchKernel(kernels[i], stream, startEvents[i], stopEvents[i]));
     }
     return hipSuccess;
+}
+
+size_t SolutionAdapter::getKernelCounts(std::string const& category)
+{
+    for(auto& fucs : m_lib_functions)
+    {
+        auto it = fucs.find("get_kernel_counts");
+        if(it == fucs.end())
+            continue;
+
+        int (*get_kernel_counts)(const char*);
+        *(void**)(&get_kernel_counts) = it->second;
+        return get_kernel_counts(category.c_str());
+    }
+}
+
+KernelParams* SolutionAdapter::getKernelParams(std::string const& category)
+{
+    for(auto& fucs : m_lib_functions)
+    {
+        auto it = fucs.find("get_kernel_params");
+        if(it == fucs.end())
+            continue;
+
+        KernelParams* (*get_kernel_params)(const char*);
+        *(void**)(&get_kernel_params) = it->second;
+        return get_kernel_params(category.c_str());
+    }
 }
 
 std::ostream& operator<<(std::ostream& stream, SolutionAdapter const& adapter)
