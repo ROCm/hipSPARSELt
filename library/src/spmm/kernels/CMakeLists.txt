@@ -30,8 +30,14 @@ macro(GENERATE_KERNEL_LIB arch)
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernels.cpp
         COMMAND addKernels ${CMAKE_CURRENT_BINARY_DIR}/${arch} kernels ${SPMM_KERNELS_O_${arch}}
         DEPENDS spmm_kernels_o_${arch} addKernels)
-  add_library(spmm_kernels_${arch} SHARED ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernels.cpp)
-  add_dependencies(spmm_kernels_${arch} spmm_kernels_cpp_${arch})
+  add_custom_target(spmm_kernels_params_cpp_${arch} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernel_params.cpp)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernel_params.cpp
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/utils/addKernels.py --filename ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernel_params.cpp --yaml ${KERNELS_PATH}/${arch}
+    DEPENDS spmm_kernels_o_${arch})
+
+  add_library(spmm_kernels_${arch} SHARED ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernels.cpp ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernel_params.cpp)
+  add_dependencies(spmm_kernels_${arch} spmm_kernels_cpp_${arch} spmm_kernels_params_cpp_${arch})
 endmacro()
 
 set(KERNELS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/kernels)
