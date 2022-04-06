@@ -776,7 +776,7 @@ int main(int argc, char* argv[])
     // calculate golden or correct result
     for(int i = 0; i < batch_count; i++)
     {
-        rocsparselt_half* a_ptr = &ha[i * stride_a];
+        rocsparselt_half* a_ptr = &h_prune[i * stride_a];
         rocsparselt_half* b_ptr = &hb[i * stride_b];
         rocsparselt_half* c_ptr = &hc[i * stride_c];
         rocsparselt_half* d_ptr = &hd_gold[i * stride_d];
