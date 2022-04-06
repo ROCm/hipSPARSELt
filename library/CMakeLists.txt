@@ -121,7 +121,6 @@ target_include_directories(rocsparselt
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
                                    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
                                    $<BUILD_INTERFACE:${Tensile_INC}>
-                                   $<BUILD_INTERFACE:${SPMM_KERNELS_INC}>
                                    $<BUILD_INTERFACE:${KERNEL_LAUNCHER_INC}>
                            PUBLIC  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
                                    $<INSTALL_INTERFACE:include>
