@@ -23,6 +23,7 @@
 
 #include "definitions.h"
 #include "handle.h"
+#include "kernel_launcher.hpp"
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
 #include "utility.hpp"
@@ -587,12 +588,14 @@ rocsparse_status
             auto compute_type = matmulDescr->compute_type;
 
             int config_max_id = 0;
+#if 0
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
                 config_max_id = rocsparselt_get_matmul_alg_config_max_id<rocsparselt_half,
                                                                          rocsparselt_half,
                                                                          float>(matmulDescr->op_A,
                                                                                 matmulDescr->op_B);
+                generate_kernel_category_str<ocsparselt_half, rocsparselt_half, float>(matmulDescr->op_A, matmulDescr->op_B);
             else if(in_type == rocsparselt_datatype_bf16_r
                     && out_type == rocsparselt_datatype_bf16_r
                     && compute_type == rocsparselt_compute_f32)
@@ -600,6 +603,20 @@ rocsparse_status
                                                                          rocsparselt_bfloat16,
                                                                          float>(matmulDescr->op_A,
                                                                                 matmulDescr->op_B);
+#else
+            std::string str;
+            if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
+               && compute_type == rocsparselt_compute_f32)
+                str = generate_kernel_category_str<rocsparselt_half, rocsparselt_half, float>(
+                    matmulDescr->op_A, matmulDescr->op_B);
+            else if(in_type == rocsparselt_datatype_bf16_r
+                    && out_type == rocsparselt_datatype_bf16_r
+                    && compute_type == rocsparselt_compute_f32)
+                str = generate_kernel_category_str<rocsparselt_bfloat16,
+                                                   rocsparselt_bfloat16,
+                                                   float>(matmulDescr->op_A, matmulDescr->op_B);
+            config_max_id = getKernelCounts(handle, str);
+#endif
 
             if(!config_max_id)
             {

@@ -262,3 +262,24 @@ public:
 
     KernelArguments args;
 };
+
+struct KernelParams
+{
+    char         SolutionNameMin[256];
+    int          DataType;
+    int          DestDataType;
+    int          ComputeDataType;
+    bool         TransposeA;
+    bool         TransposeB;
+    unsigned int WorkGroup[3];
+    unsigned int ThreadTile[3];
+    unsigned int MacroTile[3];
+    size_t       StaggerU;
+    size_t       DepthU;
+    size_t       GlobalSplitU;
+    size_t       StaggerStrideShift;
+    int          WorkGroupMapping;
+    size_t       PackBatchDims;
+    bool         UseInitialStridesAB;
+    bool         UseInitialStridesCD;
+};

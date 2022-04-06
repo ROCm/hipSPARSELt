@@ -460,4 +460,33 @@ using floating_data_t = typename floating_traits<T>::data_t;
 // for internal use during testing, fetch arch name
 std::string rocsparselt_internal_get_arch_name();
 
+template <typename Ti, typename To, typename Tc>
+inline std::string generate_kernel_category_str(rocsparse_operation opA, rocsparse_operation opB)
+{
+    return "";
+}
+
+template <>
+inline std::string
+    generate_kernel_category_str<rocsparselt_half, rocsparselt_half, float>(rocsparse_operation opA,
+                                                                            rocsparse_operation opB)
+{
+    std::string str = "4_4_0_";
+    str += (opA == rocsparse_operation_none ? "N" : "T");
+    str += "_";
+    str += (opB == rocsparse_operation_none ? "N" : "T");
+    return str;
+}
+
+template <>
+inline std::string generate_kernel_category_str<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(
+    rocsparse_operation opA, rocsparse_operation opB)
+{
+    std::string str = "7_7_0_";
+    str += (opA == rocsparse_operation_none ? "N" : "T");
+    str += "_";
+    str += (opB == rocsparse_operation_none ? "N" : "T");
+    return str;
+}
+
 #endif // UTILITY_H

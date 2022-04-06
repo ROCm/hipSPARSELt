@@ -43,25 +43,27 @@ public:
     {
         return m_name;
     }
-    hipError_t loadCodeObjectMapFile(std::string const& path);
-    hipError_t loadCodeObject(std::string const& name);
-    hipError_t loadCodeObject(const void* image, std::string const& name);
-    hipError_t loadCodeObjectBytes(std::vector<uint8_t> const& bytes, std::string const& name);
-    hipError_t launchKernel(KernelInvocation const& kernel);
-    hipError_t launchKernel(KernelInvocation const& kernel,
-                            hipStream_t             stream,
-                            hipEvent_t              startEvent,
-                            hipEvent_t              stopEvent);
-    hipError_t launchKernels(std::vector<KernelInvocation> const& kernels);
-    hipError_t launchKernels(std::vector<KernelInvocation> const& kernels,
-                             hipStream_t                          stream,
-                             hipEvent_t                           startEvent,
-                             hipEvent_t                           stopEvent);
-    hipError_t launchKernels(std::vector<KernelInvocation> const& kernels,
-                             hipStream_t                          stream,
-                             std::vector<hipEvent_t> const&       startEvents,
-                             std::vector<hipEvent_t> const&       stopEvents);
-    hipError_t initKernel(std::string const& name);
+    hipError_t    loadLibrary(std::string const& path);
+    hipError_t    loadCodeObject(std::string const& name);
+    hipError_t    loadCodeObject(const void* image, std::string const& name);
+    hipError_t    loadCodeObjectBytes(std::vector<uint8_t> const& bytes, std::string const& name);
+    hipError_t    launchKernel(KernelInvocation const& kernel);
+    hipError_t    launchKernel(KernelInvocation const& kernel,
+                               hipStream_t             stream,
+                               hipEvent_t              startEvent,
+                               hipEvent_t              stopEvent);
+    hipError_t    launchKernels(std::vector<KernelInvocation> const& kernels);
+    hipError_t    launchKernels(std::vector<KernelInvocation> const& kernels,
+                                hipStream_t                          stream,
+                                hipEvent_t                           startEvent,
+                                hipEvent_t                           stopEvent);
+    hipError_t    launchKernels(std::vector<KernelInvocation> const& kernels,
+                                hipStream_t                          stream,
+                                std::vector<hipEvent_t> const&       startEvents,
+                                std::vector<hipEvent_t> const&       stopEvents);
+    hipError_t    initKernel(std::string const& name);
+    size_t        getKernelCounts(std::string const& category);
+    KernelParams* getKernelParams(std::string const& category);
 
 private:
     using function_table = std::map<std::string, void*>;
