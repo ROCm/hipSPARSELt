@@ -27,7 +27,6 @@
 #include "rocsparselt-types.h"
 #include "rocsparselt.h"
 #include "rocsparselt_ostream.hpp"
-#include "spmm_kernels.hpp"
 #include "utility.hpp"
 
 #include <atomic>
@@ -619,7 +618,6 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
 {
     rocsparse_status status  = rocsparse_status_internal_error;
     size_t           max_cid = 0;
-    //auto solution = RocSparseLtKernelSolution<Ti, To, Tc, OpA, OpB>();
     try
     {
         std::shared_ptr<hipDeviceProp_t> deviceProp;

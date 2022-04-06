@@ -49,6 +49,3 @@ FOREACH(f ${arch_folders})
       GENERATE_KERNEL_LIB(${f})
   ENDIF()
 ENDFOREACH()
-
-set(SPMM_KERNELS_INC ${CMAKE_CURRENT_SOURCE_DIR}/src/spmm/kernels)
-

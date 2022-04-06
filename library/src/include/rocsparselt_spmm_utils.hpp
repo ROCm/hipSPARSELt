@@ -26,7 +26,6 @@
 #define ROCSPARSELT_SPMM_UTILS_HPP
 #include "handle.h"
 #include "rocsparselt_ostream.hpp"
-//#include "spmm_kernels.hpp"
 
 inline rocsparse_status getOriginalSizes(rocsparse_operation opA,
                                          rocsparse_operation opB,
@@ -285,57 +284,4 @@ inline rocsparse_status validateMatmulArgs(rocsparselt_handle handle,
     return rocsparse_status_continue;
 }
 
-#if 0
-template <typename Ti, typename To, typename Tc>
-inline int rocsparselt_get_matmul_alg_config_max_id(rocsparse_operation opA,
-                                                    rocsparse_operation opB)
-{
-    if(opA == rocsparse_operation_none)
-    {
-        if(opB == rocsparse_operation_none)
-        {
-            RocSparseLtKernelSolution<Ti,
-                                      To,
-                                      Tc,
-                                      rocsparse_operation_none,
-                                      rocsparse_operation_none>
-                rs;
-            return static_cast<int>(rs.size());
-        }
-        else
-        {
-            RocSparseLtKernelSolution<Ti,
-                                      To,
-                                      Tc,
-                                      rocsparse_operation_none,
-                                      rocsparse_operation_transpose>
-                rs;
-            return static_cast<int>(rs.size());
-        }
-    }
-    else
-    {
-        if(opB == rocsparse_operation_none)
-        {
-            RocSparseLtKernelSolution<Ti,
-                                      To,
-                                      Tc,
-                                      rocsparse_operation_transpose,
-                                      rocsparse_operation_none>
-                rs;
-            return static_cast<int>(rs.size());
-        }
-        else
-        {
-            RocSparseLtKernelSolution<Ti,
-                                      To,
-                                      Tc,
-                                      rocsparse_operation_transpose,
-                                      rocsparse_operation_transpose>
-                rs;
-            return static_cast<int>(rs.size());
-        }
-    }
-}
-#endif
 #endif
