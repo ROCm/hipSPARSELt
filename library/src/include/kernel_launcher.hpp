@@ -446,7 +446,7 @@ struct RocsparseltContractionProblem
     };
 };
 
-template <typename Ti, typename To, typename Tc, rocsparse_operation OpA, rocsparse_operation OpB>
+template <typename Ti, typename To, typename Tc>
 rocsparse_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem,
                                        int*                                             config_id,
                                        const int config_max_id,
