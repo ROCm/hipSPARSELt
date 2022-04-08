@@ -26,7 +26,6 @@ class KernelArguments:
     UseInitialStridesCD = False
 
 def writefile(filename, kernel_maps):
-    print(filename)
     with open(filename, 'w') as f:
         try:
             f.write("#include <map>\n")
@@ -36,7 +35,6 @@ def writefile(filename, kernel_maps):
             f.write("\n")
             f.write("std::map<std::string, int> kernel_count = \n{\n")
             count_keys = len(kernel_maps.keys())
-            print(count_keys)
             for key in kernel_maps.keys():
                 count = len(kernel_maps[key])
                 count_keys  = count_keys - 1
@@ -77,7 +75,6 @@ def writefile(filename, kernel_maps):
 
             f.write("std::map<std::string, std::vector<KernelParams>> kernel_params = \n{\n")
             count_keys = len(kernel_maps.keys())
-            print(count_keys)
             for key in kernel_maps.keys():
                 f.write("{}\"{}\", {}".format("{", key, "{"))
                 for ka in kernel_maps[key]:
@@ -118,7 +115,6 @@ def main(args):
     if '--yaml' in optDict:
         path = optDict['--yaml']
         files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-        print(files)
         for file_name in files:
             file_name_u = file_name.upper()
             if ".YAML" not in file_name_u :
@@ -126,7 +122,6 @@ def main(args):
             with open(os.path.join(path, file_name), 'r') as f:
                 try:
                     contents_a = yaml.safe_load(f)
-                    print("len=", len(contents_a))
                     contents4 = contents_a[4]
                     contents5 = contents_a[5]
                     for c_index in range(0, len(contents5)):
@@ -184,7 +179,6 @@ def main(args):
                     print(e)
                     return
 
-    print(kernel_maps["4_4_0_N_N"][0])
     writefile(filename, kernel_maps)
 
 if __name__=="__main__":
