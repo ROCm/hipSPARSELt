@@ -1,0 +1,2 @@
+include: prune_gtest.yaml
+include: compress_gtest.yaml

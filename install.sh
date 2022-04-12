@@ -16,6 +16,7 @@ function display_help()
   echo "    [-d|--dependencies] install build dependencies"
   echo "    [-a|--architecture] Set GPU architecture target(s), e.g., all, gfx000, gfx900, gfx906:xnack-;gfx908:xnack-"
   echo "    [-c|--clients] build library clients too (combines with -i & -d)"
+  echo "    [--cpu_ref_lib <lib>] specify library to use for CPU reference code in testing (blis or lapack)"
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"
   echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
   echo "    [-k|--relwithdebinfo] -DCMAKE_BUILD_TYPE=RelWithDebInfo"
@@ -158,6 +159,15 @@ install_packages( )
     fi
   fi
 
+  # wget is needed for blis
+  if [[ "${cpu_ref_lib}" == blis ]] && [[ ! -e "${build_dir}/deps/blis/lib/libblis.so" ]]; then
+    client_dependencies_ubuntu+=("wget")
+    client_dependencies_centos_rhel+=("wget")
+    client_dependencies_centos_rhel_8+=("wget")
+    client_dependencies_fedora+=("wget")
+    client_dependencies_sles+=("wget")
+  fi
+
   case "${ID}" in
     ubuntu)
       elevate_if_not_root apt update
@@ -256,6 +266,7 @@ build_address_sanitizer=false
 matrices_dir=
 matrices_dir_install=
 gpu_architecture=all
+cpu_ref_lib=blis
 
 # #################################################
 # Parameter parsing
@@ -264,7 +275,7 @@ gpu_architecture=all
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,matrices-dir:,matrices-dir-install:,architecture: --options hicdgrka: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,matrices-dir:,matrices-dir-install:,architecture:,cpu_ref_lib: --options hicdgrka: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -317,6 +328,9 @@ while true; do
         -a|--architecture)
             gpu_architecture=${2}
             shift 2 ;;
+        --cpu_ref_lib)
+            cpu_ref_lib=${2}
+            shift 2 ;;
         --matrices-dir)
             matrices_dir=${2}
             if [[ "${matrices_dir}" == "" ]];then
@@ -365,8 +379,43 @@ if ! [[ "${matrices_dir}" == "" ]];then
     cmake -DCMAKE_MATRICES_DIR=${matrices_dir} -P ./cmake/ClientMatrices.cmake
 fi
 
-build_dir=./build
+if [[ "${cpu_ref_lib}" == blis ]]; then
+  LINK_BLIS=true
+elif [[ "${cpu_ref_lib}" == lapack ]]; then
+  LINK_BLIS=false
+else
+  echo "Currently the only CPU library options are blis and lapack"
+      exit 2
+fi
+
+build_dir=$(readlink -m ./build)
 printf "\033[32mCreating project build directory in: \033[33m${build_dir}\033[0m\n"
+
+install_blis()
+{
+    #Download prebuilt AMD multithreaded blis
+    if [[ "${cpu_ref_lib}" == blis ]] && [[ ! -e "./blis/lib/libblis.so" ]]; then
+      case "${ID}" in
+          centos|rhel|sles|opensuse-leap)
+              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
+              ;;
+          ubuntu)
+              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+              ;;
+          *)
+              echo "Unsupported OS for this script"
+              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+              ;;
+      esac
+
+      tar -xvf blis.tar.gz
+      rm -rf blis/amd-blis-mt
+      mv amd-blis-mt blis
+      rm blis.tar.gz
+      cd blis/lib
+      ln -sf libblis-mt.so libblis.so
+    fi
+}
 
 # #################################################
 # prep
@@ -471,7 +520,11 @@ pushd .
 
   # clients
   if [[ "${build_clients}" == true ]]; then
-      cmake_client_options="${cmake_client_options} -DBUILD_CLIENTS_SAMPLES=ON -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_BENCHMARKS=ON"
+      pushd .
+      mkdir -p ${build_dir}/deps && cd ${build_dir}/deps
+      install_blis
+      popd
+      cmake_client_options="${cmake_client_options} -DBUILD_CLIENTS_SAMPLES=ON -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_BENCHMARKS=ON -DLINK_BLIS=${LINK_BLIS} -DBUILD_DIR=${build_dir}"
 
       #
       # Add matrices_dir if exists.

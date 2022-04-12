@@ -17,10 +17,10 @@ project( rocsparselt-clients LANGUAGES CXX C  )
 
 if( SKIP_LIBRARY )
   include_directories(${ROCSPARSELT_LIBRARY_DIR}/include)
-  include_directories(${ROCSPARSELT_LIBRARY_DIR}/include/internal)
+  #include_directories(${ROCSPARSELT_LIBRARY_DIR}/include/internal)
 else()
   include_directories(${CMAKE_BINARY_DIR}/include)
-  include_directories(${CMAKE_BINARY_DIR}/include/internal)
+  #include_directories(${CMAKE_BINARY_DIR}/include/internal)
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -64,3 +64,58 @@ endif( )
 if( BUILD_CLIENTS_SAMPLES )
   add_subdirectory( samples )
 endif( )
+
+if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
+
+  # Linking lapack library requires fortran flags
+  find_package( cblas REQUIRED CONFIG )
+  if (LINK_BLIS)
+    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
+    set( BLIS_CPP ../common/blis_interface.cpp )
+    set( BLAS_LIBRARY ${BUILD_DIR}/deps/blis/lib/libblis.so )
+  else()
+    set( BLAS_LIBRARY "blas" )
+  endif()
+
+  # common source files used in subdirectories benchmarks and gtest thus ../common
+  set( rocsparselt_test_bench_common
+      ../common/singletons.cpp
+      ../common/utility.cpp
+      ../common/cblas_interface.cpp
+      ../common/argument_model.cpp
+      ../common/rocsparselt_parse_data.cpp
+      ../common/rocsparselt_arguments.cpp
+      ../common/rocsparselt_random.cpp
+      ${BLIS_CPP}
+    )
+
+  #if( BUILD_CLIENTS_BENCHMARKS )
+  #  add_subdirectory( benchmarks )
+  #endif( )
+  #
+  if( BUILD_CLIENTS_TESTS )
+    add_subdirectory( gtest )
+  endif( )
+
+endif()
+
+
+set( ROCSPARSELT_COMMON "${PROJECT_BINARY_DIR}/staging/rocsparselt_common.yaml")
+add_custom_command( OUTPUT "${ROCSPARSELT_COMMON}"
+                    COMMAND ${CMAKE_COMMAND} -E copy include/rocsparselt_common.yaml "${ROCSPARSELT_COMMON}"
+                    DEPENDS include/rocsparselt_common.yaml
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+set( ROCSPARSELT_TEMPLATE "${PROJECT_BINARY_DIR}/staging/rocsparselt_template.yaml")
+add_custom_command( OUTPUT "${ROCSPARSELT_TEMPLATE}"
+                    COMMAND ${CMAKE_COMMAND} -E copy include/rocsparselt_template.yaml "${ROCSPARSELT_TEMPLATE}"
+                    DEPENDS include/rocsparselt_template.yaml
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+set( ROCSPARSELT_GENTEST "${PROJECT_BINARY_DIR}/staging/rocsparselt_gentest.py")
+add_custom_command( OUTPUT "${ROCSPARSELT_GENTEST}"
+                    COMMAND ${CMAKE_COMMAND} -E copy common/rocsparselt_gentest.py "${ROCSPARSELT_GENTEST}"
+                    DEPENDS common/rocsparselt_gentest.py
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+add_custom_target( rocsparselt-common DEPENDS "${ROCSPARSELT_COMMON}" "${ROCSPARSELT_TEMPLATE}" "${ROCSPARSELT_GENTEST}" )
