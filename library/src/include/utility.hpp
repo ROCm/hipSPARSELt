@@ -458,7 +458,86 @@ template <typename T>
 using floating_data_t = typename floating_traits<T>::data_t;
 
 // for internal use during testing, fetch arch name
-std::string rocsparselt_internal_get_arch_name();
+ROCSPARSELT_EXPORT std::string rocsparselt_internal_get_arch_name();
+
+extern "C" ROCSPARSELT_EXPORT rocsparse_status rocsparselt_get_version(rocsparselt_handle handle,
+                                                                       int*               version);
+
+/*********************************************************************************************************
+ * \brief The main structure for Numerical checking to detect numerical abnormalities such as NaN/zero/Inf
+ *********************************************************************************************************/
+typedef struct rocsparselt_check_numerics_s
+{
+    // Set to true if there is a NaN in the vector/matrix
+    bool has_NaN = false;
+
+    // Set to true if there is a zero in the vector/matrix
+    bool has_zero = false;
+
+    // Set to true if there is an Infinity in the vector/matrix
+    bool has_Inf = false;
+} rocsparselt_check_numerics_t;
+
+/*******************************************************************************
+* \brief  returns true if arg is NaN
+********************************************************************************/
+template <typename T, std::enable_if_t<std::is_integral<T>{}, int> = 0>
+__host__ __device__ inline bool rocsparselt_isnan(T)
+{
+    return false;
+}
+
+template <typename T, std::enable_if_t<!std::is_integral<T>{}, int> = 0>
+__host__ __device__ inline bool rocsparselt_isnan(T arg)
+{
+    return std::isnan(arg);
+}
+
+__host__ __device__ inline bool rocsparselt_isnan(rocsparselt_half arg)
+{
+    union
+    {
+        rocsparselt_half fp;
+        uint16_t         data;
+    } x = {arg};
+    return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) != 0;
+}
+
+/*******************************************************************************
+* \brief  returns true if arg is Infinity
+********************************************************************************/
+
+template <typename T, std::enable_if_t<std::is_integral<T>{}, int> = 0>
+__host__ __device__ inline bool rocsparselt_isinf(T)
+{
+    return false;
+}
+
+template <typename T, std::enable_if_t<!std::is_integral<T>{}, int> = 0>
+__host__ __device__ inline bool rocsparselt_isinf(T arg)
+{
+    return std::isinf(arg);
+}
+
+__host__ __device__ inline bool rocsparselt_isinf(rocsparselt_half arg)
+{
+    union
+    {
+        rocsparselt_half fp;
+        uint16_t         data;
+    } x = {arg};
+    return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) == 0;
+}
+
+/*******************************************************************************
+* \brief  returns true if arg is zero
+********************************************************************************/
+
+template <typename T>
+__host__ __device__ inline bool rocsparselt_iszero(T arg)
+{
+    return arg == 0;
+}
 
 template <typename Ti, typename To, typename Tc>
 inline std::string generate_kernel_category_str(rocsparse_operation opA, rocsparse_operation opB)

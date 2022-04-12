@@ -42,7 +42,7 @@
 #include <unistd.h>
 #endif
 
-extern "C" void rocsparselt_abort();
+extern "C" ROCSPARSELT_EXPORT void rocsparselt_abort() __attribute__((__noreturn__));
 
 /*****************************************************************************
  * rocSPARSELt output streams                                                    *
@@ -55,7 +55,7 @@ extern "C" void rocsparselt_abort();
  * The rocsparselt_internal_ostream class performs atomic IO on log files, and provides *
  * consistent formatting                                                   *
  ***************************************************************************/
-class rocsparselt_internal_ostream
+class ROCSPARSELT_EXPORT rocsparselt_internal_ostream
 {
     /**************************************************************************
      * The worker class sets up a worker thread for writing to log files. Two *
