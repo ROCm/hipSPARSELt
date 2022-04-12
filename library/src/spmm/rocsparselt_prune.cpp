@@ -474,7 +474,7 @@ rocsparse_status rocsparselt_smfmac_prune(const rocsparselt_handle       handle,
     rocsparselt_datatype type  = matrix->type;
 
     int     num_batches  = 1;
-    int64_t batch_stride = ld * matrix->n;
+    int64_t batch_stride = 0;
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 
@@ -535,7 +535,7 @@ rocsparse_status rocsparselt_smfmac_prune_check(const rocsparselt_handle       h
     rocsparselt_datatype type  = matrix->type;
 
     int     num_batches  = 1;
-    int64_t batch_stride = ld * matrix->n;
+    int64_t batch_stride = 0;
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 
