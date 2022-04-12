@@ -463,7 +463,6 @@ namespace
          *********************************************************************/
         void initialize(SolutionAdapter& adapter, int32_t deviceId)
         {
-            printf("%s\n", __func__);
             std::string path;
 #ifndef WIN32
             path.reserve(PATH_MAX);
@@ -707,7 +706,6 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
 size_t getKernelCounts(rocsparselt_handle handle, std::string const& category)
 {
     auto& adapter = get_adapter(handle);
-    printf("%s category=%s\n", __func__, category.c_str());
     return adapter.getKernelCounts(category);
 }
 
