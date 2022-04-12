@@ -140,6 +140,9 @@ rocsparse_status rocsparselt_matmul(rocsparselt_handle      handle,
  *  This function's behavior is the same of rocsparselt_matmul
  *
  *  \note
+ *  d_C and d_D must be two different memory buffers, otherwise the output will be incorrect.
+ *
+ *  \note
  *  This function is NOT asynchronous with respect to streams[0] (blocking call)
  *
  *  \note
