@@ -73,6 +73,40 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
                                          int32_t                       numStreams,
                                          bool                          search = false)
 {
+    // Check if handle is valid
+    if(handle == nullptr || plan == nullptr)
+    {
+        return rocsparse_status_invalid_handle;
+    }
+
+    // Check if pointer is valid
+    if(alpha == nullptr || beta == nullptr || d_A == nullptr || d_B == nullptr || d_C == nullptr
+       || d_D == nullptr)
+    {
+        return rocsparse_status_invalid_pointer;
+    }
+
+    if(workspace == nullptr && plan->workspace_size != 0)
+    {
+        rocsparselt_cerr << "The parameter number 9 (workspace) had an illegal value: "
+                            "expected a device memroy with "
+                         << plan->workspace_size << " bytes, but current is nullptr" << std::endl;
+        return rocsparse_status_invalid_value;
+    }
+
+    if(numStreams < 0)
+    {
+        rocsparselt_cerr << "The parameter number 11 (numStreams) had an illegal value: "
+                         << numStreams << std::endl;
+        return rocsparse_status_invalid_value;
+    }
+    else if(streams == nullptr && numStreams > 0)
+    {
+        rocsparselt_cerr << "The parameter number 10 (streams) had an illegal value: nullptr"
+                         << std::endl;
+        return rocsparse_status_invalid_value;
+    }
+
     rocsparse_operation      opA          = plan->matmul_descr->op_A;
     rocsparse_operation      opB          = plan->matmul_descr->op_B;
     rocsparselt_compute_type compute_type = plan->matmul_descr->compute_type;
@@ -87,7 +121,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     rocsparselt_matrix_type matrix_type_a  = plan->matmul_descr->matrix_A->m_type;
     rocsparselt_datatype    type_a         = plan->matmul_descr->matrix_A->type;
     int                     num_batches_a  = 1;
-    int64_t                 batch_stride_a = lda * num_cols_a;
+    int64_t                 batch_stride_a = 0;
     int64_t c_batch_stride_a = (opA == rocsparse_operation_none) ? c_lda * c_k_a : c_lda * num_cols_a;
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
@@ -100,7 +134,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     rocsparselt_matrix_type matrix_type_b  = plan->matmul_descr->matrix_B->m_type;
     rocsparselt_datatype    type_b         = plan->matmul_descr->matrix_B->type;
     int                     num_batches_b  = 1;
-    int64_t                 batch_stride_b = ldb * num_cols_b;
+    int64_t                 batch_stride_b = 0;
     plan->matmul_descr->matrix_B->attributes[rocsparselt_mat_num_batches].get(&num_batches_b);
     plan->matmul_descr->matrix_B->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_b);
 
@@ -112,7 +146,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     rocsparselt_matrix_type matrix_type_c  = plan->matmul_descr->matrix_C->m_type;
     rocsparselt_datatype    type_c         = plan->matmul_descr->matrix_C->type;
     int                     num_batches_c  = 1;
-    int64_t                 batch_stride_c = ldc * num_cols_c;
+    int64_t                 batch_stride_c = 0;
     plan->matmul_descr->matrix_C->attributes[rocsparselt_mat_num_batches].get(&num_batches_c);
     plan->matmul_descr->matrix_C->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_c);
 
@@ -124,7 +158,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     rocsparselt_matrix_type matrix_type_d  = plan->matmul_descr->matrix_D->m_type;
     rocsparselt_datatype    type_d         = plan->matmul_descr->matrix_D->type;
     int                     num_batches_d  = 1;
-    int64_t                 batch_stride_d = ldd * num_cols_d;
+    int64_t                 batch_stride_d = 0;
     plan->matmul_descr->matrix_D->attributes[rocsparselt_mat_num_batches].get(&num_batches_d);
     plan->matmul_descr->matrix_D->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_d);
 
@@ -229,19 +263,6 @@ rocsparse_status rocsparselt_matmul(const rocsparselt_handle      handle,
                                     int32_t                       numStreams)
 
 {
-    // Check if handle is valid
-    if(handle == nullptr || plan == nullptr)
-    {
-        return rocsparse_status_invalid_handle;
-    }
-
-    // Check if pointer is valid
-    if(alpha == nullptr || beta == nullptr || d_A == nullptr || d_B == nullptr || d_C == nullptr
-       || d_D == nullptr || workspace == nullptr || streams == nullptr)
-    {
-        return rocsparse_status_invalid_pointer;
-    }
-
     return rocsparselt_matmul_impl(
         handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams);
 }
@@ -262,24 +283,8 @@ rocsparse_status rocsparselt_matmul_search(const rocsparselt_handle      handle,
                                            int32_t                       numStreams)
 
 {
-    // Check if handle is valid
-    if(handle == nullptr || plan == nullptr)
-    {
-        return rocsparse_status_invalid_handle;
-    }
-
-    // Check if pointer is valid
-    if(alpha == nullptr || beta == nullptr || d_A == nullptr || d_B == nullptr || d_C == nullptr
-       || d_D == nullptr || workspace == nullptr || streams == nullptr)
-    {
-        return rocsparse_status_invalid_pointer;
-    }
-
-    {
-        //TODO
-        return rocsparselt_matmul_impl(
-            handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams, true);
-    }
+    return rocsparselt_matmul_impl(
+        handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams, true);
 }
 
 #ifdef __cplusplus

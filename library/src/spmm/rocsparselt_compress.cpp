@@ -356,7 +356,7 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
     rocsparselt_datatype type  = matrix->type;
 
     int     num_batches  = 1;
-    int64_t batch_stride = ld * matrix->n;
+    int64_t batch_stride = 0;
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 

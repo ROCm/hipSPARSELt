@@ -134,6 +134,10 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
             (*matDescr)->alignment = alignment;
             (*matDescr)->type      = valueType;
             (*matDescr)->order     = order;
+            int     num_batches    = 1;
+            int64_t batch_stride   = cols * ld;
+            (*matDescr)->attributes[rocsparselt_mat_batch_stride].set(&batch_stride);
+            (*matDescr)->attributes[rocsparselt_mat_num_batches].set(&num_batches);
             log_trace(handle, "rocsparselt_dense_descr_init");
         }
         catch(const rocsparse_status& status)
@@ -197,7 +201,10 @@ rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle hand
             (*matDescr)->type      = valueType;
             (*matDescr)->order     = order;
             (*matDescr)->sparsity  = sparsity;
-
+            int     num_batches    = 1;
+            int64_t batch_stride   = cols * ld;
+            (*matDescr)->attributes[rocsparselt_mat_batch_stride].set(&batch_stride);
+            (*matDescr)->attributes[rocsparselt_mat_num_batches].set(&num_batches);
             log_trace(handle, "rocsparselt_structured_descr_init");
         }
         catch(const rocsparse_status& status)
@@ -260,6 +267,51 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
         // Allocate
         try
         {
+            switch(matAttribute)
+            {
+            case rocsparselt_mat_num_batches:
+            {
+                if(sizeof(int) != dataSize)
+                {
+                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
+                                        "expected 4 bytes(sizeof(int)), current size "
+                                     << dataSize << " bytes" << std::endl;
+                    return rocsparse_status_invalid_size;
+                }
+                const int* num_batches = reinterpret_cast<const int*>(data);
+                if(*num_batches < 1)
+                {
+                    rocsparselt_cerr
+                        << "The number of batches must be greater or equal to 1, current: "
+                        << *num_batches << std::endl;
+                    return rocsparse_status_invalid_value;
+                }
+                break;
+            }
+            case rocsparselt_mat_batch_stride:
+            {
+                if(sizeof(int64_t) != dataSize)
+                {
+                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
+                                        "expected 8 bytes(sizeof(int64_t)), current size "
+                                     << dataSize << " bytes" << std::endl;
+                    return rocsparse_status_invalid_size;
+                }
+                const int64_t* batch_stride = reinterpret_cast<const int64_t*>(data);
+                if(*batch_stride != 0)
+                {
+                    int64_t expected_batch_stride = matDescr->n * matDescr->ld;
+                    if(*batch_stride < expected_batch_stride)
+                    {
+                        rocsparselt_cerr << "The batch stride must be 0 or at least cols * ld ("
+                                         << expected_batch_stride << "), current: " << *batch_stride
+                                         << std::endl;
+                        return rocsparse_status_invalid_value;
+                    }
+                }
+                break;
+            }
+            }
             matDescr->attributes[matAttribute].set(data, dataSize);
             log_trace(handle, "rocsparselt_mat_descr_set_attribute");
         }
@@ -298,8 +350,18 @@ rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle   
     {
         try
         {
+            if(matDescr->attributes[matAttribute].length() < dataSize)
+            {
+                rocsparselt_cerr
+                    << "The parameter number 5 (dataSize) had an illegal value: expected "
+                    << matDescr->attributes[matAttribute].length() << " bytes, current size "
+                    << dataSize << " bytes" << std::endl;
+                return rocsparse_status_invalid_size;
+            }
             if(matDescr->attributes[matAttribute].get(data, dataSize) == 0)
-                return rocsparse_status_invalid_value;
+            {
+                return rocsparse_status_internal_error;
+            }
             log_trace(handle, "rocsparselt_mat_descr_get_attribute");
         }
         catch(const rocsparse_status& status)
@@ -617,13 +679,12 @@ rocsparse_status
                                                    float>(matmulDescr->op_A, matmulDescr->op_B);
             config_max_id = getKernelCounts(handle, str);
 #endif
-
             if(!config_max_id)
             {
                 delete(*algSelection);
+                rocsparselt_cerr << "There are no solutions for this problem size" << std::endl;
                 return rocsparse_status_not_implemented;
             }
-
             (*algSelection)->attributes[rocsparselt_matmul_alg_config_max_id].set(&config_max_id);
 
             const int search_iterations = 10;
@@ -696,25 +757,56 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
         // Allocate
         try
         {
-            if(attribute == rocsparselt_matmul_alg_config_id)
+            switch(attribute)
             {
+            case rocsparselt_matmul_alg_config_id:
+            {
+                if(sizeof(int) != dataSize)
+                {
+                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
+                                        "expected 4 bytes(sizeof(int)), current size "
+                                     << dataSize << " bytes" << std::endl;
+                    return rocsparse_status_invalid_size;
+                }
+
                 int config_max_id;
                 algSelection->attributes[rocsparselt_matmul_alg_config_max_id].get(&config_max_id);
 
                 const int* config_id = reinterpret_cast<const int*>(data);
                 if(*config_id >= config_max_id)
                 {
-                    rocsparselt_cerr << "the value of rocsparselt_matmul_alg_config_id data"
+                    rocsparselt_cerr << "The value of rocsparselt_matmul_alg_config_id data"
                                      << config_id << "is out of the range [0, "
                                      << (config_max_id - 1) << "]" << std::endl;
                     return rocsparse_status_invalid_value;
                 }
+                break;
             }
-            else if(attribute == rocsparselt_matmul_alg_config_max_id)
+            case rocsparselt_matmul_alg_config_max_id:
             {
-                rocsparselt_cerr << "rocsparselt_matmul_alg_config_max_id is query only."
+                rocsparselt_cerr << "rocsparselt_matmul_alg_config_max_id is only for query."
                                  << std::endl;
                 return rocsparse_status_invalid_value;
+            }
+            case rocsparselt_matmul_search_iterations:
+            {
+                if(sizeof(int) != dataSize)
+                {
+                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
+                                        "expected 4 bytes(sizeof(int)), current size "
+                                     << dataSize << " bytes" << std::endl;
+                    return rocsparse_status_invalid_size;
+                }
+                const int* search_iterations = reinterpret_cast<const int*>(data);
+                if(*search_iterations < 1)
+                {
+                    rocsparselt_cerr
+                        << "The search iterations must be greater or equal to 1, current: "
+                        << *search_iterations << std::endl;
+                    return rocsparse_status_invalid_value;
+                }
+                break;
+            }
             }
             algSelection->attributes[attribute].set(data, dataSize);
             log_trace(handle, "rocsparselt_matmul_alg_set_attribute");
@@ -754,8 +846,16 @@ rocsparse_status rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle  
     {
         try
         {
+            if(algSelection->attributes[attribute].length() < dataSize)
+            {
+                rocsparselt_cerr
+                    << "The parameter number 5 (dataSize) had an illegal value: expected "
+                    << algSelection->attributes[attribute].length() << " bytes, current size "
+                    << dataSize << " bytes" << std::endl;
+                return rocsparse_status_invalid_size;
+            }
             if(algSelection->attributes[attribute].get(data, dataSize) == 0)
-                return rocsparse_status_invalid_value;
+                return rocsparse_status_internal_error;
             log_trace(handle, "rocsparselt_matmul_alg_get_attribute");
         }
         catch(const rocsparse_status& status)
