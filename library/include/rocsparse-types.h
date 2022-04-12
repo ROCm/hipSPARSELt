@@ -274,10 +274,9 @@ typedef enum rocsparse_solve_policy_
  *  \brief Indicates if the pointer is device pointer or host pointer.
  *
  *  \details
- *  The \ref rocsparse_pointer_mode indicates whether scalar values are passed by
- *  reference on the host or device. The \ref rocsparse_pointer_mode can be changed by
- *  rocsparse_set_pointer_mode(). The currently used pointer mode can be obtained by
- *  rocsparse_get_pointer_mode().
+ *  The \ref rocsparse_pointer_mode indicates whether scalar values (alpha/beta) are passed by
+ *  reference on the host or device.
+ *  Note, only support rocsparse_pointer_mode_host.
  */
 typedef enum rocsparse_pointer_mode_
 {
