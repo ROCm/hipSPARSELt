@@ -322,12 +322,11 @@ public:
         return os << float(half);
     }
 
-#if 0
-    friend rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream& os, rocsparselt_bfloat16 bf16)
+    friend rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream& os,
+                                                    rocsparselt_bfloat16          bf16)
     {
         return os << float(bf16);
     }
-#endif
 
     // Integer output
     friend rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream& os, int32_t x)
