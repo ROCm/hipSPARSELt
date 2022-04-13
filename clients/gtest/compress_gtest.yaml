@@ -113,22 +113,22 @@ Definitions:
     - { M:    64, N:  1536, K:   384, lda:    64, ldb:  1536, ldc:    64, ldd:    64, stride_a:    24576, stride_b:        0, stride_c:    98304, stride_d:    98304 }
 
   - &conv_ctest_fwd
-    - { M: 12544, N:     1, K:    64, lda: 12544, ldb:    64, ldc: 12544, ldd: 12544, stride_a:   802816, stride_b:        0, stride_c:    12544, stride_d:    12544 }
-    - { M:  3136, N:     1, K:   128, lda:  3136, ldb:   128, ldc:  3136, ldd:  3136, stride_a:   401408, stride_b:        0, stride_c:     3136, stride_d:     3136 }
-    - { M:  3136, N:     1, K:   256, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0, stride_c:     3136, stride_d:     3136 }
-    - { M:  3136, N:     1, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:     3136, stride_d:     3136 }
-    - { M: 32768, N:     1, K:   480, lda: 32768, ldb:   480, ldc: 32768, ldd: 32768, stride_a: 15728640, stride_b:        0, stride_c:    32768, stride_d:    32768 }
-    - { M:   729, N:     1, K:    64, lda:   729, ldb:    64, ldc:   729, ldd:   729, stride_a:    46656, stride_b:        0, stride_c:      729, stride_d:      729 }
-    - { M:   784, N:     1, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0, stride_c:      784, stride_d:      784 }
-    - { M:   784, N:     1, K:   192, lda:   784, ldb:   192, ldc:   784, ldd:   784, stride_a:   150528, stride_b:        0, stride_c:      784, stride_d:      784 }
-    - { M:   784, N:     1, K:   256, lda:   784, ldb:   256, ldc:   784, ldd:   784, stride_a:   200704, stride_b:        0, stride_c:      784, stride_d:      784 }
-    - { M:   784, N:     1, K:   320, lda:   784, ldb:   320, ldc:   784, ldd:   784, stride_a:   250880, stride_b:        0, stride_c:      784, stride_d:      784 }
-    - { M:   784, N:     1, K:   512, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0, stride_c:      784, stride_d:      784 }
-    - { M:   784, N:     1, K:    64, lda:   784, ldb:    64, ldc:   784, ldd:   784, stride_a:    50176, stride_b:        0, stride_c:      784, stride_d:      784 }
-    - { M:  8192, N:     1, K:   480, lda:  8192, ldb:   480, ldc:  8192, ldd:  8192, stride_a:  3932160, stride_b:        0, stride_c:     8192, stride_d:     8192 }
-    - { M:  8192, N:     1, K:   512, lda:  8192, ldb:   512, ldc:  8192, ldd:  8192, stride_a:  4194304, stride_b:        0, stride_c:     8192, stride_d:     8192 }
-    - { M:  8192, N:     1, K:   528, lda:  8192, ldb:   528, ldc:  8192, ldd:  8192, stride_a:  4325376, stride_b:        0, stride_c:     8192, stride_d:     8192 }
-    - { M:  8192, N:     1, K:   832, lda:  8192, ldb:   832, ldc:  8192, ldd:  8192, stride_a:  6815744, stride_b:        0, stride_c:     8192, stride_d:     8192 }
+    - { M: 12544, N:     8, K:    64, lda: 12544, ldb:    64, ldc: 12544, ldd: 12544, stride_a:   802816, stride_b:        0}
+    - { M:  3136, N:     8, K:   128, lda:  3136, ldb:   128, ldc:  3136, ldd:  3136, stride_a:   401408, stride_b:        0}
+    - { M:  3136, N:     8, K:   256, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0}
+    - { M:  3136, N:     8, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0}
+    - { M: 32768, N:     8, K:   480, lda: 32768, ldb:   480, ldc: 32768, ldd: 32768, stride_a: 15728640, stride_b:        0}
+    - { M:   729, N:     8, K:    64, lda:   729, ldb:    64, ldc:   729, ldd:   729, stride_a:    46656, stride_b:        0}
+    - { M:   784, N:     8, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0}
+    - { M:   784, N:     8, K:   192, lda:   784, ldb:   192, ldc:   784, ldd:   784, stride_a:   150528, stride_b:        0}
+    - { M:   784, N:     8, K:   256, lda:   784, ldb:   256, ldc:   784, ldd:   784, stride_a:   200704, stride_b:        0}
+    - { M:   784, N:     8, K:   320, lda:   784, ldb:   320, ldc:   784, ldd:   784, stride_a:   250880, stride_b:        0}
+    - { M:   784, N:     8, K:   512, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0}
+    - { M:   784, N:     8, K:    64, lda:   784, ldb:    64, ldc:   784, ldd:   784, stride_a:    50176, stride_b:        0}
+    - { M:  8192, N:     8, K:   480, lda:  8192, ldb:   480, ldc:  8192, ldd:  8192, stride_a:  3932160, stride_b:        0}
+    - { M:  8192, N:     8, K:   512, lda:  8192, ldb:   512, ldc:  8192, ldd:  8192, stride_a:  4194304, stride_b:        0}
+    - { M:  8192, N:     8, K:   528, lda:  8192, ldb:   528, ldc:  8192, ldd:  8192, stride_a:  4325376, stride_b:        0}
+    - { M:  8192, N:     8, K:   832, lda:  8192, ldb:   832, ldc:  8192, ldd:  8192, stride_a:  6815744, stride_b:        0}
 
   - &transA_transB_range
     - { transA: N, transB: N }
@@ -150,7 +150,7 @@ Tests:
     compress: *half_bf16_precisions
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
-  batch_count: [ -1, 0, 3 ]
+  batch_count: [ 3 ]
 
 - name: compress_small_stride_zero
   category: quick
@@ -167,7 +167,7 @@ Tests:
     compress: *half_bf16_precisions
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
-  batch_count: [ -1, 0, 3 ]
+  batch_count: [ 3 ]
 
 - name: compress_medium_stride_zero
   category: nightly
@@ -184,7 +184,7 @@ Tests:
     compress: *half_bf16_precisions
   matrix_size: *large_matrix_size_range
   transA_transB: *transA_transB_range
-  batch_count: [ -1, 0, 3 ]
+  batch_count: [ 3 ]
 
 - name: compress_large_stride_zero
   category: pre_checkin
@@ -193,7 +193,7 @@ Tests:
   matrix_size: *large_matrix_size_stride_a_range
   transA: N
   transB: N
-  batch_count: [ -1, 0, 3 ]
+  batch_count: [ 3 ]
 
 - name: compress_deepbench
   category: nightly
