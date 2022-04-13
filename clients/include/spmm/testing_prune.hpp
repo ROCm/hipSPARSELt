@@ -194,14 +194,6 @@ void testing_prune(const Arguments& arg)
     int64_t stride_b    = arg.stride_b;
     int64_t stride_c    = arg.stride_c;
     int64_t stride_d    = stride_c;
-    if(num_batches <= 0)
-    {
-        num_batches = 1;
-        stride_a    = lda * A_col;
-        stride_b    = ldb * B_col;
-        stride_c    = ldc * N;
-        stride_d    = stride_c;
-    }
 
     rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
                                      handle,
@@ -283,7 +275,7 @@ void testing_prune(const Arguments& arg)
     rocsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
-    const size_t size_A      = num_batches > 0 ? stride_a * num_batches : lda * A_col;
+    const size_t size_A      = stride_a == 0 ? A_col * lda : num_batches * stride_a;
     const size_t size_A_copy = arg.unit_check || arg.norm_check ? size_A : 0;
 
     // allocate memory on device
@@ -311,6 +303,10 @@ void testing_prune(const Arguments& arg)
     else if(arg.initialization == rocsparselt_initialization::hpl)
     {
         rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda);
+    }
+    else if(arg.initialization == rocsparselt_initialization::special)
+    {
+        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda);
     }
     else
     {

@@ -293,6 +293,12 @@ void testing_compress(const Arguments& arg)
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
+    int     num_batches = arg.batch_count;
+    int64_t stride_a    = arg.stride_a;
+    int64_t stride_b    = arg.stride_b;
+    int64_t stride_c    = arg.stride_c;
+    int64_t stride_d    = stride_c;
+
     int64_t A_row = transA == rocsparse_operation_none ? M : K;
     int64_t A_col = transA == rocsparse_operation_none ? K : M;
     int64_t B_row = transB == rocsparse_operation_none ? K : N;
@@ -303,26 +309,16 @@ void testing_compress(const Arguments& arg)
 
     int64_t c_stride_1_a = transA == rocsparse_operation_none ? 1 : K / 2;
     int64_t c_stride_2_a = transA == rocsparse_operation_none ? M : 1;
-    int64_t c_stride_a
+    int64_t c_stride_a_r
         = transA == rocsparse_operation_none ? K / 2 * c_stride_2_a : M * c_stride_1_a;
+    int64_t c_stride_a = stride_a == 0 ? 0 : c_stride_a_r;
 
     int64_t m_stride_1_a = K / 8;
     int64_t m_stride_2_a = 1;
-    int64_t m_stride_a   = M * m_stride_1_a;
+    int64_t m_stride_a_r = M * m_stride_1_a;
+    int64_t m_stride_a   = stride_a == 0 ? 0 : m_stride_a_r;
 
-    int     num_batches = arg.batch_count;
-    int64_t stride_a    = arg.stride_a;
-    int64_t stride_b    = arg.stride_b;
-    int64_t stride_c    = arg.stride_c;
-    int64_t stride_d    = stride_c;
-    if(num_batches <= 0)
-    {
-        num_batches = 1;
-        stride_a    = lda * A_col;
-        stride_b    = ldb * B_col;
-        stride_c    = ldc * N;
-        stride_d    = stride_c;
-    }
+    auto metadata_offset = c_stride_a_r * sizeof(Ti) * (stride_a == 0 ? 1 : num_batches);
 
     rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
                                      handle,
@@ -414,7 +410,7 @@ void testing_compress(const Arguments& arg)
     EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
                               rocsparse_status_success);
 
-    const size_t size_A             = num_batches > 0 ? stride_a * num_batches : lda * A_col;
+    const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
     const size_t size_A_compressed_copy = arg.unit_check || arg.norm_check ? compressed_size : 0;
 
@@ -444,6 +440,10 @@ void testing_compress(const Arguments& arg)
     else if(arg.initialization == rocsparselt_initialization::hpl)
     {
         rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda);
+    }
+    else if(arg.initialization == rocsparselt_initialization::special)
+    {
+        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda);
     }
     else
     {
@@ -486,7 +486,7 @@ void testing_compress(const Arguments& arg)
 
         compress<Ti, Tc>(hA_pruned,
                          reinterpret_cast<Ti*>(hA_gold.data()),
-                         hA_gold.data() + c_stride_a * num_batches * sizeof(Ti),
+                         hA_gold.data() + metadata_offset,
                          M,
                          K,
                          stride_1_a,
@@ -508,7 +508,6 @@ void testing_compress(const Arguments& arg)
         // check host error and norm
         if(arg.unit_check)
         {
-            auto metadata_offset = c_stride_a * num_batches * sizeof(Ti);
             self_validate<Ti>(hA_pruned,
                               reinterpret_cast<Ti*>(hA_gold.data()),
                               hA_1 + metadata_offset,

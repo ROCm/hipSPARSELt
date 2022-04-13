@@ -89,7 +89,7 @@ namespace
 
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
-                name << '_' << arg.M << '_' << arg.K << '_' << arg.lda;
+                name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.lda;
 
                 name << '_' << arg.batch_count;
 
