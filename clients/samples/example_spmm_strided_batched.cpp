@@ -636,11 +636,14 @@ int main(int argc, char* argv[])
     std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", " << ldc << ", "
               << stride_a << ", " << stride_b << ", " << stride_c << ", " << batch_count << ", "
               << alpha << ", " << beta << ", ";
+    int64_t stride_a_r = stride_a == 0 ? size_a1 : stride_a;
+    int64_t stride_b_r = stride_b == 0 ? size_b1 : stride_b;
+    int64_t stride_c_r = stride_c == 0 ? size_c1 : stride_c;
 
-    int size_a = batch_count == 0 ? size_a1 : size_a1 + stride_a * (batch_count - 1);
-    int size_b = batch_count == 0 ? size_b1 : size_b1 + stride_b * (batch_count - 1);
-    int size_c = batch_count == 0 ? size_c1 : size_c1 + stride_c * (batch_count - 1);
-    int size_d = size_c;
+    int64_t size_a = stride_a_r * batch_count;
+    int64_t size_b = stride_b_r * batch_count;
+    int64_t size_c = stride_c_r * batch_count;
+    int64_t size_d = size_c;
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
     std::vector<rocsparselt_half> ha(size_a);
     std::vector<rocsparselt_half> h_prune(size_a);
@@ -657,26 +660,26 @@ int main(int argc, char* argv[])
         printf("\n");
         if(trans_a == rocsparse_operation_none)
         {
-            print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda, stride_a);
+            print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda, stride_a_r);
         }
         else
         {
-            print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1, stride_a);
+            print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1, stride_a_r);
         }
         if(trans_b == rocsparse_operation_none)
         {
-            print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb, stride_b);
+            print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb, stride_b_r);
         }
         else
         {
-            print_strided_batched("hb initial", &hb[0], k, n, batch_count, ldb, 1, stride_b);
+            print_strided_batched("hb initial", &hb[0], k, n, batch_count, ldb, 1, stride_b_r);
         }
-        print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc, stride_c);
+        print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc, stride_c_r);
     }
 
     // allocate memory on device
     rocsparselt_half *da, *da_p, *db, *dc, *dd, *d_compressed;
-    void*             d_wworkspace;
+    void*             d_workspace;
     int               num_streams = 1;
     hipStream_t       stream      = nullptr;
     hipStream_t       streams[1]  = {stream};
@@ -764,7 +767,7 @@ int main(int argc, char* argv[])
                                              &beta,
                                              dc,
                                              dd,
-                                             d_wworkspace,
+                                             d_workspace,
                                              &streams[0],
                                              num_streams));
     hipStreamSynchronize(stream);
@@ -803,55 +806,56 @@ int main(int argc, char* argv[])
         std::vector<rocsparselt_half> h_compressed(compressed_size);
         CHECK_HIP_ERROR(
             hipMemcpy(&h_compressed[0], d_compressed, compressed_size, hipMemcpyDeviceToHost));
-        printf("ha original sizes %lu -> compressed size %ld\n",
-               size_a * sizeof(rocsparselt_half),
-               compressed_size);
+
+        auto batch_count_c = stride_a == 0 ? 1 : batch_count;
         if(trans_a == rocsparse_operation_none)
         {
             print_strided_batched(
-                "ha_prune calculated, N ", &h_prune[0], m, k, batch_count, 1, lda, stride_a);
+                "ha_prune calculated, N ", &h_prune[0], m, k, batch_count, 1, lda, stride_a_r);
             print_strided_batched("ha_compressed calculated, N ",
                                   &h_compressed[0],
                                   m,
                                   k / 2,
-                                  batch_count,
+                                  batch_count_c,
                                   1,
                                   m,
                                   m * k / 2);
-            print_strided_batched_meta("h_compressed metadata, N",
-                                       reinterpret_cast<unsigned char*>(&h_compressed[m * k / 2]),
-                                       m,
-                                       k / 8,
-                                       batch_count,
-                                       k / 8,
-                                       1,
-                                       m * k / 8);
+            print_strided_batched_meta(
+                "h_compressed metadata, N",
+                reinterpret_cast<unsigned char*>(&h_compressed[m * k / 2 * batch_count_c]),
+                m,
+                k / 8,
+                batch_count_c,
+                k / 8,
+                1,
+                m * k / 8);
         }
         else
         {
             print_strided_batched(
-                "ha_prune calculated, T ", &ha[0], m, k, batch_count, lda, 1, stride_a);
+                "ha_prune calculated, T ", &ha[0], m, k, batch_count, lda, 1, stride_a_r);
             print_strided_batched("ha_compressed calculated, T",
                                   &h_compressed[0],
                                   m,
                                   k / 2,
-                                  batch_count,
+                                  batch_count_c,
                                   k / 2,
                                   1,
                                   m * k / 2);
-            print_strided_batched_meta("h_compressed metadata, T",
-                                       reinterpret_cast<unsigned char*>(&h_compressed[m * k / 2]),
-                                       m,
-                                       k / 8,
-                                       batch_count,
-                                       k / 8,
-                                       1,
-                                       m * k / 8);
+            print_strided_batched_meta(
+                "h_compressed metadata, T",
+                reinterpret_cast<unsigned char*>(&h_compressed[m * k / 2 * batch_count_c]),
+                m,
+                k / 8,
+                batch_count_c,
+                k / 8,
+                1,
+                m * k / 8);
         }
 
         print_strided_batched(
-            "hc_gold calculated", &hd_gold[0], m, n, batch_count, 1, ldc, stride_c);
-        print_strided_batched("hd calculated", &hd[0], m, n, batch_count, 1, ldc, stride_c);
+            "hc_gold calculated", &hd_gold[0], m, n, batch_count, 1, ldc, stride_c_r);
+        print_strided_batched("hd calculated", &hd[0], m, n, batch_count, 1, ldc, stride_c_r);
     }
 
     bool passed = true;

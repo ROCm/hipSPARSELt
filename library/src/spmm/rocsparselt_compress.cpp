@@ -263,6 +263,7 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
         int64_t               c_ld;
         rocsparselt_datatype  type;
         int                   num_batches = 1;
+        int64_t               batch_stride;
 
         if(plan->matmul_descr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         {
@@ -277,6 +278,13 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
         c_ld     = matrix->c_ld;
         type     = matrix->type;
         matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
+        matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+
+        //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
+        if(batch_stride == 0) //boardcast case.
+        {
+            num_batches = 1;
+        }
 
         int64_t metadata_offset
             = rocsparselt_metadata_offset_in_compressed_matrix(num_cols, c_ld, num_batches, type);
@@ -359,10 +367,17 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
     int64_t batch_stride = 0;
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+    //set number of batches to 1, since we only care the first batch under the boradcast case.
+    if(batch_stride == 0)
+    {
+        num_batches  = 1;
+        batch_stride = matrix->n * ld;
+    }
 
-    unsigned char* d_metadata
-        = reinterpret_cast<unsigned char*>(d_compressed)
-          + c_batch_stride * num_batches * rocsparselt_datatype_bytes(type); //metadata_offset;
+    auto num_cols = plan->matmul_descr->op_A == rocsparse_operation_none ? matrix->c_k : matrix->n;
+    unsigned char* d_metadata = reinterpret_cast<unsigned char*>(d_compressed)
+                                + rocsparselt_metadata_offset_in_compressed_matrix(
+                                    num_cols, matrix->c_ld, num_batches, type);
 
     return rocsparselt_smfmac_compress_impl(handle,
                                             o_m,

@@ -394,7 +394,7 @@ void run(int64_t              m,
     std::cout << ", " << m << ", " << n << ", " << ld << ", " << stride << ", " << batch_count
               << std::endl;
 
-    int size = batch_count == 0 ? size_1 : size_1 + stride * (batch_count - 1);
+    int size = stride == 0 ? size_1 * batch_count : stride * batch_count;
 
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
     std::vector<T> hp(size);
@@ -482,10 +482,11 @@ void run(int64_t              m,
 
     if(verbose)
     {
+        auto stride_r = stride == 0 ? size_1 : stride;
         print_strided_batched(
-            "hp_gold calculated", &hp_gold[0], m, n, batch_count, stride_1, stride_2, stride);
+            "hp_gold calculated", &hp_gold[0], m, n, batch_count, stride_1, stride_2, stride_r);
         print_strided_batched(
-            "hp_test calculated", &hp_test[0], m, n, batch_count, stride_1, stride_2, stride);
+            "hp_test calculated", &hp_test[0], m, n, batch_count, stride_1, stride_2, stride_r);
     }
 
     validate<T>(&hp_gold[0], &hp_test[0], m, n, batch_count, stride_1, stride_2, stride);
