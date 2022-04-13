@@ -93,6 +93,13 @@ _rocsparselt_attribute::~_rocsparselt_attribute()
     clear();
 }
 
+_rocsparselt_attribute& _rocsparselt_attribute::operator=(const _rocsparselt_attribute& rhs)
+{
+    clear();
+    set(rhs._data, rhs._data_size);
+    return *this;
+};
+
 void _rocsparselt_attribute::clear()
 {
     set(nullptr, 0);

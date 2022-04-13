@@ -478,6 +478,13 @@ rocsparse_status rocsparselt_smfmac_prune(const rocsparselt_handle       handle,
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 
+    //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
+    if(batch_stride == 0) //boardcast case.
+    {
+        num_batches  = 1;
+        batch_stride = matrix->n * ld;
+    }
+
     int64_t stride0 = (opA == rocsparse_operation_transpose) ? ld : 1;
     int64_t stride1 = (opA == rocsparse_operation_transpose) ? 1 : ld;
 
@@ -538,6 +545,13 @@ rocsparse_status rocsparselt_smfmac_prune_check(const rocsparselt_handle       h
     int64_t batch_stride = 0;
     matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
     matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+
+    //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
+    if(batch_stride == 0) //boardcast case.
+    {
+        num_batches  = 1;
+        batch_stride = matrix->n * ld;
+    }
 
     int64_t stride0 = (opA == rocsparse_operation_transpose) ? ld : 1;
     int64_t stride1 = (opA == rocsparse_operation_transpose) ? 1 : ld;

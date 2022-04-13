@@ -573,48 +573,50 @@ void run(int64_t              m,
 {
 
     int64_t stride_1, stride_2;
-    int64_t c_stride_1, c_stride_2, c_stride_b;
-    int64_t m_stride_1, m_stride_2, m_stride_b;
+    int64_t c_stride_1, c_stride_2, c_stride_b, c_stride_b_r;
+    int64_t m_stride_1, m_stride_2, m_stride_b, m_stride_b_r;
     int64_t row, col;
     int     size_1;
     if(trans == rocsparse_operation_none)
     {
         std::cout << "N";
-        row      = m;
-        col      = n;
-        stride_1 = 1;
-        stride_2 = ld;
-        size_1   = ld * n;
+        row          = m;
+        col          = n;
+        stride_1     = 1;
+        stride_2     = ld;
+        size_1       = ld * n;
+        c_stride_1   = 1;
+        c_stride_2   = m;
+        c_stride_b_r = n / 2 * c_stride_2;
 
-        c_stride_1 = 1;
-        c_stride_2 = m;
-        c_stride_b = n / 2 * c_stride_2;
-
-        m_stride_1 = n / 8;
-        m_stride_2 = 1;
-        m_stride_b = m * m_stride_1;
+        m_stride_1   = n / 8;
+        m_stride_2   = 1;
+        m_stride_b_r = m * m_stride_1;
     }
     else
     {
         std::cout << "T";
-        row        = n;
-        col        = m;
-        stride_1   = ld;
-        stride_2   = 1;
-        size_1     = ld * m;
-        c_stride_1 = n / 2;
-        c_stride_2 = 1;
-        c_stride_b = m * c_stride_1;
+        row          = n;
+        col          = m;
+        stride_1     = ld;
+        stride_2     = 1;
+        size_1       = ld * m;
+        c_stride_1   = n / 2;
+        c_stride_2   = 1;
+        c_stride_b_r = m * c_stride_1;
 
-        m_stride_1 = n / 8;
-        m_stride_2 = 1;
-        m_stride_b = m * m_stride_1;
+        m_stride_1   = n / 8;
+        m_stride_2   = 1;
+        m_stride_b_r = m * m_stride_1;
     }
+    c_stride_b         = stride == 0 ? 0 : c_stride_b_r;
+    m_stride_b         = stride == 0 ? 0 : m_stride_b_r;
+    auto batch_count_f = stride == 0 ? 1 : batch_count;
 
     std::cout << ", " << m << ", " << n << ", " << ld << ", " << stride << ", " << batch_count
               << std::endl;
 
-    int size = batch_count == 0 ? size_1 : size_1 + stride * (batch_count - 1);
+    int size = stride == 0 ? size_1 * batch_count : stride * batch_count;
 
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
     std::vector<T> hp(size);
@@ -718,6 +720,8 @@ void run(int64_t              m,
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size));
 
+    printf("compressed_size = %ld\n", compressed_size);
+
     T*             d_compressed;
     std::vector<T> hp_gold(compressed_size / sizeof(T));
     std::vector<T> hp_compressed(compressed_size / sizeof(T));
@@ -729,7 +733,7 @@ void run(int64_t              m,
 
     compress<T, float>(&hp_test[0],
                        &hp_gold[0],
-                       reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
+                       reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
                        m,
                        n,
                        stride_1,
@@ -753,17 +757,17 @@ void run(int64_t              m,
                               batch_count,
                               c_stride_1,
                               c_stride_2,
-                              c_stride_b);
+                              c_stride_b_r);
 
         print_strided_batched_meta(
             "host gold metadata calculated",
-            reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
+            reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
             m,
             n / 8,
             batch_count,
             m_stride_1,
             m_stride_2,
-            m_stride_b);
+            m_stride_b_r);
 
         print_strided_batched("device compress calculated",
                               &hp_compressed[0],
@@ -772,21 +776,21 @@ void run(int64_t              m,
                               batch_count,
                               c_stride_1,
                               c_stride_2,
-                              c_stride_b);
+                              c_stride_b_r);
         print_strided_batched_meta(
             "device metadata calculated",
-            reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b * batch_count]),
+            reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),
             m,
             n / 8,
             batch_count,
             m_stride_1,
             m_stride_2,
-            m_stride_b);
+            m_stride_b_r);
     }
 
     validate_gold(&hp_test[0],
                   &hp_gold[0],
-                  reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
+                  reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
                   m,
                   n,
                   batch_count,
@@ -807,14 +811,15 @@ void run(int64_t              m,
                   m_stride_b);
     validate_compressed(
         &hp_gold[0], &hp_compressed[0], m, n / 2, batch_count, c_stride_1, c_stride_2, c_stride_b);
-    validate_metadata(reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b * batch_count]),
-                      reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b * batch_count]),
-                      m,
-                      n / 8,
-                      batch_count,
-                      m_stride_1,
-                      m_stride_2,
-                      m_stride_b);
+    validate_metadata(
+        reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
+        reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),
+        m,
+        n / 8,
+        batch_count,
+        m_stride_1,
+        m_stride_2,
+        m_stride_b);
 
     //validate(&hp_test[0], &hp_compressed[0], reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b * batch_count]), m, n, batch_count, stride_1, stride_2, stride, m, n/2, batch_count, c_stride_1, c_stride_2, c_stride_b, m, n/8, batch_count, m_stride_1, m_stride_2, m_stride_b);
 

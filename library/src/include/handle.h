@@ -36,6 +36,7 @@
 struct _rocsparselt_attribute
 {
     _rocsparselt_attribute(){};
+    _rocsparselt_attribute& operator=(const _rocsparselt_attribute& rhs);
 
     ~_rocsparselt_attribute();
 
@@ -115,8 +116,37 @@ struct _rocsparselt_mat_descr
 {
     // constructor
     _rocsparselt_mat_descr(){};
+    _rocsparselt_mat_descr(const _rocsparselt_mat_descr& rhs)
+        : m_type(rhs.m_type)
+        , m(rhs.m)
+        , n(rhs.n)
+        , ld(rhs.ld)
+        , alignment(rhs.alignment)
+        , type(rhs.type)
+        , order(rhs.order)
+        , sparsity(rhs.sparsity)
+        , c_k(rhs.c_k)
+        , c_ld(rhs.c_ld)
+    {
+        for(int i = 0; i < 2; i++)
+        {
+            attributes[i] = rhs.attributes[i];
+        }
+    };
+
     // destructor
-    ~_rocsparselt_mat_descr(){};
+    ~_rocsparselt_mat_descr()
+    {
+        for(int i = 0; i < 2; i++)
+        {
+            attributes[i].clear();
+        }
+    };
+
+    rocsparselt_mat_descr clone()
+    {
+        return new _rocsparselt_mat_descr(*this);
+    };
 
     // matrix type
     rocsparselt_matrix_type m_type = rocsparselt_matrix_type_unknown;
@@ -153,8 +183,41 @@ struct _rocsparselt_matmul_descr
 {
     // constructor
     _rocsparselt_matmul_descr(){};
+    _rocsparselt_matmul_descr(const _rocsparselt_matmul_descr& rhs)
+        : op_A(rhs.op_A)
+        , op_B(rhs.op_B)
+        , compute_type(rhs.compute_type)
+        , activation_relu(rhs.activation_relu)
+        , activation_relu_upperbound(rhs.activation_relu_upperbound)
+        , activation_relu_threshold(rhs.activation_relu_threshold)
+        , activation_gelu(rhs.activation_gelu)
+        , bias_stride(rhs.bias_stride)
+    {
+        matrix_A     = rhs.matrix_A->clone();
+        matrix_B     = rhs.matrix_B->clone();
+        matrix_C     = rhs.matrix_C->clone();
+        matrix_D     = rhs.matrix_D->clone();
+        bias_pointer = rhs.bias_pointer;
+        own_by_us    = true;
+    };
+
     // destructor
-    ~_rocsparselt_matmul_descr(){};
+    ~_rocsparselt_matmul_descr()
+    {
+        if(own_by_us)
+        {
+            delete matrix_A;
+            delete matrix_B;
+            delete matrix_C;
+            delete matrix_D;
+        }
+        bias_pointer.clear();
+    };
+
+    rocsparselt_matmul_descr clone()
+    {
+        return new _rocsparselt_matmul_descr(*this);
+    };
 
     // operation applied to the matrix A
     rocsparse_operation op_A;
@@ -177,6 +240,9 @@ struct _rocsparselt_matmul_descr
     int                    activation_gelu            = 0;
     _rocsparselt_attribute bias_pointer;
     int64_t                bias_stride = (int64_t)0;
+
+private:
+    bool own_by_us = false;
 };
 
 /********************************************************************************
@@ -190,7 +256,13 @@ struct _rocsparselt_matmul_alg_selection
     // constructor
     _rocsparselt_matmul_alg_selection(){};
     // destructor
-    ~_rocsparselt_matmul_alg_selection(){};
+    ~_rocsparselt_matmul_alg_selection()
+    {
+        for(int i = 0; i < 3; i++)
+        {
+            attributes[i].clear();
+        }
+    };
     //
     rocsparselt_matmul_alg alg;
     //data of rocsparselt_matmul_alg_attribute
@@ -208,7 +280,10 @@ struct _rocsparselt_matmul_plan
     // constructor
     _rocsparselt_matmul_plan(){};
     // destructor
-    ~_rocsparselt_matmul_plan(){};
+    ~_rocsparselt_matmul_plan()
+    {
+        delete matmul_descr;
+    };
     //
     rocsparselt_matmul_descr matmul_descr;
     //

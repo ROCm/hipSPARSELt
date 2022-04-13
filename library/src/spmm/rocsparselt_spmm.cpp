@@ -122,9 +122,11 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     rocsparselt_datatype    type_a         = plan->matmul_descr->matrix_A->type;
     int                     num_batches_a  = 1;
     int64_t                 batch_stride_a = 0;
-    int64_t c_batch_stride_a = (opA == rocsparse_operation_none) ? c_lda * c_k_a : c_lda * num_cols_a;
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
+    int64_t c_batch_stride_a = (batch_stride_a == 0                 ? 0
+                                : (opA == rocsparse_operation_none) ? c_lda * c_k_a
+                                                                    : c_lda * num_cols_a);
 
     // matrix B
     int64_t                 num_rows_b     = plan->matmul_descr->matrix_B->m;
@@ -226,7 +228,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
 
     int64_t c_num_cols_a    = (opA == rocsparse_operation_none ? c_k_a : num_cols_a);
     int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
-        c_num_cols_a, c_lda, num_batches_a, type_a);
+        c_num_cols_a, c_lda, (batch_stride_a == 0 ? 1 : num_batches_a), type_a);
     if(status != rocsparse_status_success)
         return status;
 

@@ -225,11 +225,6 @@ rocsparse_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr matDe
     // Destruct
     try
     {
-        constexpr size_t attrs = sizeof(matDescr->attributes) / sizeof(matDescr->attributes[0]);
-        for(int i = 0; i < attrs; i++)
-        {
-            matDescr->attributes[i].clear();
-        }
         delete matDescr;
     }
     catch(const rocsparse_status& status)
@@ -464,7 +459,6 @@ rocsparse_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr
     // Destruct
     try
     {
-        matmulDescr->bias_pointer.clear();
         delete matmulDescr;
     }
     catch(const rocsparse_status& status)
@@ -686,7 +680,8 @@ rocsparse_status
                 return rocsparse_status_not_implemented;
             }
             (*algSelection)->attributes[rocsparselt_matmul_alg_config_max_id].set(&config_max_id);
-
+            const int config_id = 0;
+            (*algSelection)->attributes[rocsparselt_matmul_alg_config_id].set(&config_id);
             const int search_iterations = 10;
             (*algSelection)
                 ->attributes[rocsparselt_matmul_search_iterations]
@@ -715,12 +710,6 @@ rocsparse_status
     // Destruct
     try
     {
-        constexpr size_t attrs
-            = sizeof(algSelection->attributes) / sizeof(algSelection->attributes[0]);
-        for(int i = 0; i < attrs; i++)
-        {
-            algSelection->attributes[i].clear();
-        }
         delete algSelection;
     }
     catch(const rocsparse_status& status)
@@ -892,7 +881,7 @@ rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle          
         try
         {
             *plan                   = new _rocsparselt_matmul_plan();
-            (*plan)->matmul_descr   = matmulDescr;
+            (*plan)->matmul_descr   = matmulDescr->clone();
             (*plan)->alg_selection  = algSelection;
             (*plan)->workspace_size = workspaceSize;
             log_trace(handle, "rocsparselt_matmul_plan_init");
