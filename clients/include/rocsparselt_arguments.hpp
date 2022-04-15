@@ -60,6 +60,7 @@ struct Arguments
 
     uint32_t algo;
     int32_t  solution_index;
+    uint32_t prune_algo;
 
     rocsparselt_datatype     a_type;
     rocsparselt_datatype     b_type;
@@ -67,7 +68,6 @@ struct Arguments
     rocsparselt_datatype     d_type;
     rocsparselt_compute_type compute_type;
 
-    rocsparselt_prune_alg      prune_algo;
     rocsparselt_initialization initialization;
 
     // memory padding for testing write out of bounds
@@ -124,12 +124,12 @@ struct Arguments
     OPER(cold_iters) SEP             \
     OPER(algo) SEP                   \
     OPER(solution_index) SEP         \
+    OPER(prune_algo) SEP             \
     OPER(a_type) SEP                 \
     OPER(b_type) SEP                 \
     OPER(c_type) SEP                 \
     OPER(d_type) SEP                 \
     OPER(compute_type) SEP           \
-    OPER(prune_algo) SEP             \
     OPER(initialization) SEP         \
     OPER(pad) SEP                    \
     OPER(threads) SEP                \
@@ -258,7 +258,7 @@ namespace ArgumentsHelper
     // clang-format off
 #define APPLY(NAME)                                                                         \
     template <>                                                                             \
-    ROCBLAS_CLANG_STATIC constexpr auto                                                     \
+    static constexpr auto                                                     \
         apply<e_##NAME == e_alpha ? rocsparselt_argument(-1)                                    \
                                   : e_##NAME == e_beta ? rocsparselt_argument(-2) : e_##NAME> = \
             [](auto&& func, const Arguments& arg, auto) { func(#NAME, arg.NAME); }
@@ -268,14 +268,14 @@ namespace ArgumentsHelper
 
     // Specialization for e_alpha
     template <>
-    ROCBLAS_CLANG_STATIC constexpr auto apply<e_alpha> =
+    static constexpr auto apply<e_alpha> =
         [](auto&& func, const Arguments& arg, auto T) {
             func("alpha", arg.get_alpha<decltype(T)>());
         };
 
     // Specialization for e_beta
     template <>
-    ROCBLAS_CLANG_STATIC constexpr auto apply<e_beta> =
+    static constexpr auto apply<e_beta> =
         [](auto&& func, const Arguments& arg, auto T) {
             func("beta", arg.get_beta<decltype(T)>());
         };

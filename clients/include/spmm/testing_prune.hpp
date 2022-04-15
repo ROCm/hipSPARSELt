@@ -75,26 +75,6 @@ void prune_strip(const Ti* in,
         }
 }
 
-template <typename T>
-void validate(T* A, T* B, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_t s2, int64_t s3)
-{
-    // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
-    // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-    for(int i3 = 0; i3 < n3; i3++)
-    {
-        for(int i1 = 0; i1 < n1; i1++)
-        {
-            for(int i2 = 0; i2 < n2; i2++)
-            {
-                auto pos     = (i1 * s1) + (i2 * s2) + (i3 * s3);
-                auto value_a = A[pos];
-                auto value_b = B[pos];
-                ASSERT_TRUE(value_a == value_b);
-            }
-        }
-    }
-}
-
 template <typename Ti, typename To, typename Tc>
 void testing_prune_bad_arg(const Arguments& arg)
 {
@@ -156,8 +136,8 @@ void testing_prune_bad_arg(const Arguments& arg)
 template <typename Ti, typename To, typename Tc>
 void testing_prune(const Arguments& arg)
 {
-    rocsparselt_prune_alg prune_algo = arg.prune_algo;
-    if(prune_algo == rocsparselt_prune_smfmac_tile)
+    rocsparselt_prune_alg prune_algo = rocsparselt_prune_alg(arg.prune_algo);
+    if(prune_algo != rocsparselt_prune_smfmac_strip)
         return;
 
     auto prune_cpu = prune_algo == rocsparselt_prune_smfmac_strip ? prune_strip<Ti, Tc> : nullptr;
@@ -350,7 +330,12 @@ void testing_prune(const Arguments& arg)
         // check host error and norm
         if(arg.unit_check)
         {
-            validate<Ti>(hA_gold, hA_1, M, K, num_batches, stride_1_a, stride_2_a, stride_a);
+            unit_check_general<Ti>(M, K, lda, stride_a, hA_gold, hA_1, num_batches);
+        }
+
+        if(arg.norm_check)
+        {
+            unit_check_diff<Ti>(M, K, lda, stride_a, hA_gold, hA_1, num_batches);
         }
 
         device_vector<int> d_valid(1, 1, HMM);
@@ -362,7 +347,7 @@ void testing_prune(const Arguments& arg)
         CHECK_HIP_ERROR(
             hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
         hipStreamSynchronize(stream);
-        ASSERT_TRUE(h_valid == 0);
+        CHECK_SUCCESS(h_valid == 0);
 
         //check the original matrix is sparisty 50 or not.
         EXPECT_ROCSPARSELT_STATUS(
@@ -371,7 +356,7 @@ void testing_prune(const Arguments& arg)
         CHECK_HIP_ERROR(
             hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
         hipStreamSynchronize(stream);
-        ASSERT_TRUE(h_valid != 0);
+        CHECK_SUCCESS(h_valid != 0);
     }
 
     if(arg.timing)
@@ -395,13 +380,13 @@ void testing_prune(const Arguments& arg)
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
-        ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_alpha, e_lda, e_beta, e_ldb, e_ldc>{}
-            .log_args<Ti>(rocsparselt_cout,
-                          arg,
-                          gpu_time_used,
-                          prune_strip_gflop_count<Ti>(M, K),
-                          ArgumentLogging::NA_value,
-                          cpu_time_used,
-                          rocsparselt_error);
+        ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_lda, e_stride_a, e_batch_count>{}
+            .log_args<float>(rocsparselt_cout,
+                             arg,
+                             gpu_time_used,
+                             prune_strip_gflop_count<Ti>(M, K),
+                             ArgumentLogging::NA_value,
+                             cpu_time_used,
+                             rocsparselt_error);
     }
 }

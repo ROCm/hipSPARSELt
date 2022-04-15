@@ -20,11 +20,6 @@ Datatypes:
         trig_float: 222
         hpl: 333
         special: 444
-  - rocsparselt_prune_alg:
-      bases: [ c_int ]
-      attr:
-        strip: 0
-        title: 1
 
 Common threads and streams: &common_threads_streams
   - { threads: 0,  streams: 0}
@@ -74,12 +69,12 @@ Arguments:
   - cold_iters: c_int32
   - algo: c_uint32
   - solution_index: c_int32
+  - prune_algo: c_uint32
   - a_type: rocsparselt_datatype
   - b_type: rocsparselt_datatype
   - c_type: rocsparselt_datatype
   - d_type: rocsparselt_datatype
   - compute_type: rocsparselt_compute_type
-  - prune_algo: rocsparselt_prune_alg
   - initialization: rocsparselt_initialization
   - pad: c_uint32
   - threads: c_uint16
@@ -150,7 +145,7 @@ Defaults:
   cold_iters: 2
   algo: 0
   solution_index: 0
-  prune_algo: strip
+  prune_algo: 1
   workspace_size: 0
   initialization: rand_int
   category: nightly

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Copyright 2018-2020 Advanced Micro Devices, Inc.
-Expand rocBLAS YAML test data file into binary Arguments records"""
+Expand rocSPARSELt YAML test data file into binary Arguments records"""
 
 import re
 import sys
@@ -79,7 +79,7 @@ def process_doc(doc):
 def parse_args():
     """Parse command-line arguments, returning input and output files"""
     parser = argparse.ArgumentParser(description="""
-Expand rocBLAS YAML test data file into binary Arguments records
+Expand rocSPARSELt YAML test data file into binary Arguments records
 """)
     parser.add_argument('infile',
                         nargs='?',

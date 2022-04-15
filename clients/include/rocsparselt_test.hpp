@@ -31,7 +31,7 @@
 #include <vector>
 
 #ifdef GOOGLE_TEST
-
+#define CHECK_SUCCESS(ERROR) ASSERT_EQ((ERROR), true)
 // Extra macro so that macro arguments get expanded before calling Google Test
 #define CHECK_HIP_ERROR2(ERROR) ASSERT_EQ(ERROR, hipSuccess)
 #define CHECK_HIP_ERROR(ERROR) CHECK_HIP_ERROR2(ERROR)
@@ -102,6 +102,10 @@ inline void rocsparselt_expect_status(rocsparse_status status, rocsparse_status 
 #define CHECK_DEVICE_ALLOCATION CHECK_HIP_ERROR
 
 #define EXPECT_ROCSPARSELT_STATUS rocsparselt_expect_status
+
+#define CHECK_SUCCESS(ERROR) \
+    if(!(ERROR))             \
+        exit(EXIT_FAILURE);
 
 #endif // GOOGLE_TEST
 
@@ -384,7 +388,7 @@ struct rocsparselt_test_invalid
                          << " b: " << rocsparselt_datatype2string(arg.b_type)
                          << " c: " << rocsparselt_datatype2string(arg.c_type)
                          << " d: " << rocsparselt_datatype2string(arg.d_type)
-                         << " compute:" << rocsparselt_datatype2string(arg.compute_type)
+                         << " compute:" << rocsparselt_computetype2string(arg.compute_type)
                          << std::endl;
         rocsparselt_abort();
 #endif

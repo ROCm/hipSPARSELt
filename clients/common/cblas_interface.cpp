@@ -129,24 +129,23 @@ void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparse_operation  
         C[i] = rocsparselt_half(C_float[i]);
 }
 
-#if 0
 template <>
-void cblas_gemm<int8_t, int32_t, int32_t>(rocsparse_operation transA,
-                                          rocsparse_operation transB,
-                                          int64_t       m,
-                                          int64_t       n,
-                                          int64_t       k,
-                                          int32_t           alpha,
-                                          const int8_t*     A,
-                                          int64_t       lda,
-                                          const int8_t*     B,
-                                          int64_t       ldb,
-                                          int32_t           beta,
-                                          int32_t*          C,
-                                          int64_t       ldc,
-                                          bool              alt)
+void cblas_gemm<int8_t, int8_t, int32_t>(rocsparse_operation transA,
+                                         rocsparse_operation transB,
+                                         int64_t             m,
+                                         int64_t             n,
+                                         int64_t             k,
+                                         float               alpha,
+                                         const int8_t*       A,
+                                         int64_t             lda,
+                                         const int8_t*       B,
+                                         int64_t             ldb,
+                                         float               beta,
+                                         int8_t*             C,
+                                         int64_t             ldc,
+                                         bool                alt)
 {
-    // cblas does not support int8_t input / int32_t output, however non-overflowing
+    // cblas does not support int8_t input / int8_t output, however non-overflowing
     // 32-bit integer operations can be represented accurately with double-precision
     // floats, so convert to doubles and downcast result down to int32_t.
     // NOTE: This will not properly account for 32-bit integer overflow, however
@@ -184,6 +183,5 @@ void cblas_gemm<int8_t, int32_t, int32_t>(rocsparse_operation transA,
                 ldc);
 
     for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<int32_t>(C_double[i]);
+        C[i] = static_cast<int8_t>(C_double[i]);
 }
-#endif
