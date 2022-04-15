@@ -37,6 +37,15 @@
 extern "C" {
 #endif
 
+/*! \brief Initialize rocSPARSELt on the current HIP device, to avoid costly startup time at the first call on that device.
+    \details
+
+    Calling `rocsparselt_initialize()`` allows upfront intialization including device specific kernel setup,
+    otherwise this function is automatically called on the first function call that requires these initializations (mainly SPMM).
+
+ ******************************************************************************/
+ROCSPARSELT_EXPORT void rocsparselt_initialize(void);
+
 /*
 * ===========================================================================
 *    SPARSE Matrix Multiplication

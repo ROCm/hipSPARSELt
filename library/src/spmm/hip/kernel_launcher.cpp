@@ -525,9 +525,7 @@ namespace
     };
 
     // Return the library and adapter for the current HIP device
-    auto& get_adapter(rocsparselt_handle                handle,
-                      std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr,
-                      int                               device     = -1)
+    auto& get_adapter(std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr, int device = -1)
     {
         try
         {
@@ -551,7 +549,7 @@ namespace
                 if(!adapter)
                 {
                     // Allocate a new adapter using the current HIP device
-                    adapter = new SolutionAdapter(handle);
+                    adapter = new SolutionAdapter();
 
                     // Initialize the adapter and possibly the library
                     host.initialize(*adapter, device);
@@ -620,7 +618,7 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
     {
         std::shared_ptr<hipDeviceProp_t> deviceProp;
 
-        auto&       adapter = get_adapter(prob.handle, &deviceProp, prob.handle->device);
+        auto&       adapter = get_adapter(&deviceProp, prob.handle->device);
         std::string str     = generate_kernel_category_str<Ti, To, Tc>(prob.trans_a, prob.trans_b);
         max_cid             = adapter.getKernelCounts(str);
         KernelParams* solution = adapter.getKernelParams(str);
@@ -650,6 +648,7 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
                 if(!search_iterations)
                 {
                     adapter.launchKernel(
+                        prob.handle,
                         ConstructKernelInvoke<Ti, To, Tc>(prob, solution[*config_id]),
                         prob.streams[0],
                         nullptr,
@@ -666,12 +665,13 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
                     {
                         auto ki = ConstructKernelInvoke<Ti, To, Tc>(prob, solution[id]);
                         //warm up
-                        adapter.launchKernel(ki, prob.streams[0], nullptr, nullptr);
+                        adapter.launchKernel(prob.handle, ki, prob.streams[0], nullptr, nullptr);
 
                         hipEventRecord(startEvent, prob.streams[0]);
                         for(int it = 0; it < search_iterations; it++)
                         {
-                            adapter.launchKernel(ki, prob.streams[0], nullptr, nullptr);
+                            adapter.launchKernel(
+                                prob.handle, ki, prob.streams[0], nullptr, nullptr);
                         }
                         hipEventRecord(stopEvent, prob.streams[0]);
                         hipEventSynchronize(stopEvent);
@@ -705,7 +705,7 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
 
 size_t getKernelCounts(rocsparselt_handle handle, std::string const& category)
 {
-    auto& adapter = get_adapter(handle);
+    auto& adapter = get_adapter();
     return adapter.getKernelCounts(category);
 }
 
@@ -713,9 +713,9 @@ size_t getKernelCounts(rocsparselt_handle handle, std::string const& category)
  * ! \brief  Initialize rocsparselt for the current HIP device, to *
  * avoid costly startup time at the first call on that device. *
  ***************************************************************/
-extern "C" void rocsparselt_initialize(rocsparselt_handle handle)
+extern "C" void rocsparselt_initialize()
 {
-    get_adapter(handle);
+    get_adapter();
 }
 
 /*******************************************************************************************

@@ -45,14 +45,10 @@
         }                                                                    \
     } while(0)
 
-SolutionAdapter::SolutionAdapter(rocsparselt_handle handle)
-    : m_handle(handle)
-{
-}
+SolutionAdapter::SolutionAdapter() {}
 
-SolutionAdapter::SolutionAdapter(rocsparselt_handle handle, std::string const& name)
-    : m_handle(handle)
-    , m_name(name)
+SolutionAdapter::SolutionAdapter(std::string const& name)
+    : m_name(name)
 {
 }
 
@@ -198,17 +194,18 @@ hipError_t SolutionAdapter::getKernel(hipFunction_t& rv, std::string const& name
     return err;
 }
 
-hipError_t SolutionAdapter::launchKernel(KernelInvocation const& kernel)
+hipError_t SolutionAdapter::launchKernel(rocsparselt_handle handle, KernelInvocation const& kernel)
 {
-    return launchKernel(kernel, nullptr, nullptr, nullptr);
+    return launchKernel(handle, kernel, nullptr, nullptr, nullptr);
 }
 
-hipError_t SolutionAdapter::launchKernel(KernelInvocation const& kernel,
+hipError_t SolutionAdapter::launchKernel(rocsparselt_handle      handle,
+                                         KernelInvocation const& kernel,
                                          hipStream_t             stream,
                                          hipEvent_t              startEvent,
                                          hipEvent_t              stopEvent)
 {
-    if(m_handle->layer_mode & rocsparse_layer_mode_log_trace)
+    if(handle->layer_mode & rocsparse_layer_mode_log_trace)
     {
         rocsparselt_cout << "Kernel " << kernel.kernelName << "\n"
                          << " l"
@@ -256,16 +253,18 @@ hipError_t SolutionAdapter::launchKernel(KernelInvocation const& kernel,
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::launchKernels(std::vector<KernelInvocation> const& kernels)
+hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   handle,
+                                          std::vector<KernelInvocation> const& kernels)
 {
     for(auto const& k : kernels)
     {
-        HIP_CHECK_RETURN(launchKernel(k));
+        HIP_CHECK_RETURN(launchKernel(handle, k));
     }
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::launchKernels(std::vector<KernelInvocation> const& kernels,
+hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   handle,
+                                          std::vector<KernelInvocation> const& kernels,
                                           hipStream_t                          stream,
                                           hipEvent_t                           startEvent,
                                           hipEvent_t                           stopEvent)
@@ -283,12 +282,13 @@ hipError_t SolutionAdapter::launchKernels(std::vector<KernelInvocation> const& k
         if(iter == last)
             kStop = stopEvent;
 
-        HIP_CHECK_RETURN(launchKernel(*iter, stream, kStart, kStop));
+        HIP_CHECK_RETURN(launchKernel(handle, *iter, stream, kStart, kStop));
     }
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::launchKernels(std::vector<KernelInvocation> const& kernels,
+hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   handle,
+                                          std::vector<KernelInvocation> const& kernels,
                                           hipStream_t                          stream,
                                           std::vector<hipEvent_t> const&       startEvents,
                                           std::vector<hipEvent_t> const&       stopEvents)
@@ -304,7 +304,7 @@ hipError_t SolutionAdapter::launchKernels(std::vector<KernelInvocation> const& k
 
     for(size_t i = 0; i < kernels.size(); i++)
     {
-        HIP_CHECK_RETURN(launchKernel(kernels[i], stream, startEvents[i], stopEvents[i]));
+        HIP_CHECK_RETURN(launchKernel(handle, kernels[i], stream, startEvents[i], stopEvents[i]));
     }
     return hipSuccess;
 }
@@ -321,6 +321,7 @@ size_t SolutionAdapter::getKernelCounts(std::string const& category)
         *(void**)(&get_kernel_counts) = it->second;
         return get_kernel_counts(category.c_str());
     }
+    return 0;
 }
 
 KernelParams* SolutionAdapter::getKernelParams(std::string const& category)
@@ -335,6 +336,7 @@ KernelParams* SolutionAdapter::getKernelParams(std::string const& category)
         *(void**)(&get_kernel_params) = it->second;
         return get_kernel_params(category.c_str());
     }
+    return nullptr;
 }
 
 std::ostream& operator<<(std::ostream& stream, SolutionAdapter const& adapter)
