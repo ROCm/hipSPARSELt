@@ -36,8 +36,8 @@
 class SolutionAdapter
 {
 public:
-    SolutionAdapter(rocsparselt_handle handle);
-    SolutionAdapter(rocsparselt_handle handle, std::string const& name);
+    SolutionAdapter();
+    SolutionAdapter(std::string const& name);
     ~SolutionAdapter();
     std::string name() const
     {
@@ -47,17 +47,21 @@ public:
     hipError_t    loadCodeObject(std::string const& name);
     hipError_t    loadCodeObject(const void* image, std::string const& name);
     hipError_t    loadCodeObjectBytes(std::vector<uint8_t> const& bytes, std::string const& name);
-    hipError_t    launchKernel(KernelInvocation const& kernel);
-    hipError_t    launchKernel(KernelInvocation const& kernel,
+    hipError_t    launchKernel(rocsparselt_handle handle, KernelInvocation const& kernel);
+    hipError_t    launchKernel(rocsparselt_handle      handle,
+                               KernelInvocation const& kernel,
                                hipStream_t             stream,
                                hipEvent_t              startEvent,
                                hipEvent_t              stopEvent);
-    hipError_t    launchKernels(std::vector<KernelInvocation> const& kernels);
-    hipError_t    launchKernels(std::vector<KernelInvocation> const& kernels,
+    hipError_t    launchKernels(rocsparselt_handle                   handle,
+                                std::vector<KernelInvocation> const& kernels);
+    hipError_t    launchKernels(rocsparselt_handle                   handle,
+                                std::vector<KernelInvocation> const& kernels,
                                 hipStream_t                          stream,
                                 hipEvent_t                           startEvent,
                                 hipEvent_t                           stopEvent);
-    hipError_t    launchKernels(std::vector<KernelInvocation> const& kernels,
+    hipError_t    launchKernels(rocsparselt_handle                   handle,
+                                std::vector<KernelInvocation> const& kernels,
                                 hipStream_t                          stream,
                                 std::vector<hipEvent_t> const&       startEvents,
                                 std::vector<hipEvent_t> const&       stopEvents);
@@ -72,7 +76,6 @@ private:
     std::mutex m_access;
     std::unordered_map<std::string, hipModule_t>   m_modules;
     std::unordered_map<std::string, hipFunction_t> m_kernels;
-    rocsparselt_handle                             m_handle;
     std::string                                    m_name = "HipSolutionAdapter";
     std::vector<std::string>                       m_loadedModuleNames;
     std::vector<void*>                             m_lib_handles;
