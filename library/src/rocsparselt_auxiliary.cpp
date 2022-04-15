@@ -111,10 +111,6 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
     {
         return rocsparse_status_invalid_pointer;
     }
-    else if(order != rocsparse_order_column)
-    {
-        return rocsparse_status_not_implemented;
-    }
     else
     {
         *matDescr = nullptr;
@@ -643,23 +639,7 @@ rocsparse_status
             auto out_type     = matmulDescr->matrix_D->type;
             auto compute_type = matmulDescr->compute_type;
 
-            int config_max_id = 0;
-#if 0
-            if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
-               && compute_type == rocsparselt_compute_f32)
-                config_max_id = rocsparselt_get_matmul_alg_config_max_id<rocsparselt_half,
-                                                                         rocsparselt_half,
-                                                                         float>(matmulDescr->op_A,
-                                                                                matmulDescr->op_B);
-                generate_kernel_category_str<ocsparselt_half, rocsparselt_half, float>(matmulDescr->op_A, matmulDescr->op_B);
-            else if(in_type == rocsparselt_datatype_bf16_r
-                    && out_type == rocsparselt_datatype_bf16_r
-                    && compute_type == rocsparselt_compute_f32)
-                config_max_id = rocsparselt_get_matmul_alg_config_max_id<rocsparselt_bfloat16,
-                                                                         rocsparselt_bfloat16,
-                                                                         float>(matmulDescr->op_A,
-                                                                                matmulDescr->op_B);
-#else
+            int         config_max_id = 0;
             std::string str;
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
@@ -672,7 +652,6 @@ rocsparse_status
                                                    rocsparselt_bfloat16,
                                                    float>(matmulDescr->op_A, matmulDescr->op_B);
             config_max_id = getKernelCounts(handle, str);
-#endif
             if(!config_max_id)
             {
                 delete(*algSelection);
@@ -873,6 +852,10 @@ rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle          
     else if(plan == nullptr || matmulDescr == nullptr || algSelection == nullptr)
     {
         return rocsparse_status_invalid_pointer;
+    }
+    else if(workspaceSize < 0)
+    {
+        return rocsparse_status_invalid_size;
     }
     else
     {
