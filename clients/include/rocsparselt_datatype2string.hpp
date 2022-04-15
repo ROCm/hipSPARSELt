@@ -52,7 +52,7 @@ constexpr auto rocsparselt_datatype2string(rocsparselt_datatype type)
 }
 
 // return precision string for rocsparselt_datatype
-constexpr auto rocsparselt_compute_type2string(rocsparselt_compute_type type)
+constexpr auto rocsparselt_computetype2string(rocsparselt_compute_type type)
 {
     switch(type)
     {

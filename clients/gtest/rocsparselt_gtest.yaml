@@ -1,2 +1,3 @@
 include: prune_gtest.yaml
 include: compress_gtest.yaml
+include: spmm_gtest.yaml

@@ -9,17 +9,10 @@ find_package( GTest REQUIRED )
 set(rocsparselt_test_source
     rocsparselt_gtest_main.cpp
     rocsparselt_test.cpp
-#    general_gtest.cpp
-#    set_get_pointer_mode_gtest.cpp
-#    set_get_atomics_mode_gtest.cpp
-#    logging_mode_gtest.cpp
-#    ostream_threadsafety_gtest.cpp
-#    set_get_vector_gtest.cpp
-#    set_get_matrix_gtest.cpp
     prune_gtest.cpp
     compress_gtest.cpp
-#    gemm_gtest.cpp
-    )
+    spmm_gtest.cpp
+  )
 
 add_executable( rocsparselt-test ${rocsparselt_test_source} ${rocsparselt_test_bench_common} )
 

@@ -72,52 +72,8 @@ void self_validate(T*             A,
                         b = C[c_pos];
                         m_idx++;
                     }
-                    ASSERT_TRUE(a == b);
+                    CHECK_SUCCESS(a == b);
                 }
-            }
-        }
-    }
-}
-
-template <typename T>
-void validate(T* A, T* B, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_t s2, int64_t s3)
-{
-    // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
-    // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-    for(int i3 = 0; i3 < n3; i3++)
-    {
-        for(int i1 = 0; i1 < n1; i1++)
-        {
-            for(int i2 = 0; i2 < n2; i2++)
-            {
-                auto a = A[(i1 * s1) + (i2 * s2) + (i3 * s3)];
-                auto b = B[(i1 * s1) + (i2 * s2) + (i3 * s3)];
-                ASSERT_TRUE(a == b);
-            }
-        }
-    }
-}
-
-void validate_metadata(unsigned char* A,
-                       unsigned char* B,
-                       int64_t        n1,
-                       int64_t        n2,
-                       int64_t        n3,
-                       int64_t        s1,
-                       int64_t        s2,
-                       int64_t        s3)
-{
-    // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
-    // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-    for(int i3 = 0; i3 < n3; i3++)
-    {
-        for(int i1 = 0; i1 < n1; i1++)
-        {
-            for(int i2 = 0; i2 < n2; i2++)
-            {
-                auto a = A[(i1 * s1) + (i2 * s2) + (i3 * s3)];
-                auto b = B[(i1 * s1) + (i2 * s2) + (i3 * s3)];
-                ASSERT_TRUE(a == b);
             }
         }
     }
@@ -174,7 +130,7 @@ void compress(const Ti*      in,
                     {
                         rocsparselt_cerr << "Err - The given matrix is not a 2:4 sparse matrix"
                                          << std::endl;
-                        ASSERT_TRUE(false);
+                        CHECK_SUCCESS(false);
                     }
 
                     if((k == 3 && m_idx == 0) || (k == 7 && m_idx == 2))
@@ -458,19 +414,15 @@ void testing_compress(const Arguments& arg)
 
     // copy data from CPU to device
     CHECK_HIP_ERROR(dA.transfer_from(hA));
-
-    if(arg.unit_check || arg.norm_check || arg.timing)
-    {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_prune(
-                handle, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-            rocsparse_status_success);
-        hipStreamSynchronize(stream);
-        hA_pruned.transfer_from(dA);
-    }
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_prune(handle, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
+        rocsparse_status_success);
 
     if(arg.unit_check || arg.norm_check)
     {
+        hipStreamSynchronize(stream);
+        hA_pruned.transfer_from(dA);
+
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
             rocsparse_status_success);
@@ -530,22 +482,39 @@ void testing_compress(const Arguments& arg)
                               m_stride_2_a,
                               m_stride_a);
 
-            validate<Ti>(reinterpret_cast<Ti*>(hA_gold.data()),
-                         reinterpret_cast<Ti*>(hA_1.data()),
-                         M,
-                         K / 2,
-                         num_batches,
-                         c_stride_1_a,
-                         c_stride_2_a,
-                         c_stride_a);
-            validate_metadata(hA_gold + metadata_offset,
-                              hA_1 + metadata_offset,
-                              M,
-                              K / 8,
-                              num_batches,
-                              m_stride_1_a,
-                              m_stride_2_a,
-                              m_stride_a);
+            unit_check_general<Ti>(M,
+                                   K / 2,
+                                   M,
+                                   c_stride_a,
+                                   reinterpret_cast<Ti*>(hA_gold.data()),
+                                   reinterpret_cast<Ti*>(hA_1.data()),
+                                   num_batches);
+            unit_check_general<int8_t>(M,
+                                       K / 8,
+                                       M,
+                                       m_stride_a,
+                                       reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
+                                       reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
+                                       num_batches);
+        }
+        if(arg.norm_check)
+        {
+            auto err1 = unit_check_diff<Ti>(M,
+                                            K / 2,
+                                            M,
+                                            c_stride_a,
+                                            reinterpret_cast<Ti*>(hA_gold.data()),
+                                            reinterpret_cast<Ti*>(hA_1.data()),
+                                            num_batches);
+            auto err2
+                = unit_check_diff<int8_t>(M,
+                                          K / 8,
+                                          M,
+                                          m_stride_a,
+                                          reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
+                                          reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
+                                          num_batches);
+            rocsparselt_error = err1 + err2;
         }
     }
 
@@ -570,13 +539,13 @@ void testing_compress(const Arguments& arg)
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
-        ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_alpha, e_lda, e_beta, e_ldb, e_ldc>{}
-            .log_args<Ti>(rocsparselt_cout,
-                          arg,
-                          gpu_time_used,
-                          ArgumentLogging::NA_value,
-                          ArgumentLogging::NA_value,
-                          cpu_time_used,
-                          rocsparselt_error);
+        ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_lda, e_stride_a, e_batch_count>{}
+            .log_args<float>(rocsparselt_cout,
+                             arg,
+                             gpu_time_used,
+                             ArgumentLogging::NA_value,
+                             ArgumentLogging::NA_value,
+                             cpu_time_used,
+                             rocsparselt_error);
     }
 }

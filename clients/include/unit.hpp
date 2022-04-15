@@ -138,6 +138,13 @@ inline void
     UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_EQ);
 }
 
+template <>
+inline void
+    unit_check_general(int64_t M, int64_t N, int64_t lda, const int8_t* hCPU, const int8_t* hGPU)
+{
+    UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_EQ);
+}
+
 template <typename T, typename T_hpa = T>
 void unit_check_general(int64_t                        M,
                         int64_t                        N,
@@ -219,6 +226,18 @@ inline void unit_check_general(int64_t        M,
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_EQ);
 }
 
+template <>
+inline void unit_check_general(int64_t       M,
+                               int64_t       N,
+                               int64_t       lda,
+                               int64_t       strideA,
+                               const int8_t* hCPU,
+                               const int8_t* hGPU,
+                               int64_t       batch_count)
+{
+    UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_EQ);
+}
+
 template <typename T, typename T_hpa = T>
 void unit_check_general(int64_t                                    M,
                         int64_t                                    N,
@@ -268,6 +287,17 @@ inline void unit_check_general(int64_t                M,
                                const host_vector<int> hCPU[],
                                const host_vector<int> hGPU[],
                                int64_t                batch_count)
+{
+    UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_EQ);
+}
+
+template <>
+inline void unit_check_general(int64_t                   M,
+                               int64_t                   N,
+                               int64_t                   lda,
+                               const host_vector<int8_t> hCPU[],
+                               const host_vector<int8_t> hGPU[],
+                               int64_t                   batch_count)
 {
     UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_EQ);
 }
@@ -348,6 +378,17 @@ inline void unit_check_general(int64_t          M,
 }
 
 template <>
+inline void unit_check_general(int64_t             M,
+                               int64_t             N,
+                               int64_t             lda,
+                               const int8_t* const hCPU[],
+                               const int8_t* const hGPU[],
+                               int64_t             batch_count)
+{
+    UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_EQ);
+}
+
+template <>
 inline void unit_check_general(int64_t            M,
                                int64_t            N,
                                int64_t            lda,
@@ -381,4 +422,29 @@ template <typename T>
 constexpr double get_epsilon()
 {
     return std::numeric_limits<T>::epsilon();
+}
+
+template <typename T>
+inline int64_t unit_check_diff(
+    int64_t M, int64_t N, int64_t lda, int64_t stride, T* hCPU, T* hGPU, int64_t batch_count)
+{
+    int64_t error = 0;
+    do
+    {
+        for(size_t k = 0; k < batch_count; k++)
+            for(size_t j = 0; j < N; j++)
+                for(size_t i = 0; i < M; i++)
+                    if(rocsparselt_isnan(hCPU[i + j * size_t(lda) + k * stride]))
+                    {
+                        error += rocsparselt_isnan(hGPU[i + j * size_t(lda) + k * stride]) ? 0 : 1;
+                    }
+                    else
+                    {
+                        error += (hCPU[i + j * size_t(lda) + k * stride]
+                                  == hGPU[i + j * size_t(lda) + k * stride])
+                                     ? 0
+                                     : 1;
+                    }
+    } while(0);
+    return error;
 }

@@ -181,7 +181,7 @@ static const unsigned test_timeout = [] {
     // Number of seconds each test is allowed to take before all testing is killed.
     constexpr unsigned TEST_TIMEOUT = 600;
     unsigned           timeout;
-    const char*        env = getenv("ROCBLAS_TEST_TIMEOUT");
+    const char*        env = getenv("ROCSPARSELT_TEST_TIMEOUT");
     return env && sscanf(env, "%u", &timeout) == 1 ? timeout : TEST_TIMEOUT;
 }();
 

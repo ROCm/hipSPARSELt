@@ -15,18 +15,18 @@
  */
 
 // gemm
-template <typename Ti, typename To = Ti, typename Tc>
+template <typename Ti, typename To, typename Tc>
 void cblas_gemm(rocsparse_operation    transA,
                 rocsparse_operation    transB,
                 int64_t                m,
                 int64_t                n,
                 int64_t                k,
-                Tc                     alpha,
+                float                  alpha,
                 const Ti*              A,
                 int64_t                lda,
                 const Ti*              B,
                 int64_t                ldb,
-                Tc                     beta,
+                float                  beta,
                 std::add_pointer_t<To> C,
                 int64_t                ldc,
                 bool                   alt = false);
