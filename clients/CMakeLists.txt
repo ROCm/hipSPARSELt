@@ -89,10 +89,10 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       ${BLIS_CPP}
     )
 
-  #if( BUILD_CLIENTS_BENCHMARKS )
-  #  add_subdirectory( benchmarks )
-  #endif( )
-  #
+  if( BUILD_CLIENTS_BENCHMARKS )
+    add_subdirectory( benchmarks )
+  endif( )
+
   if( BUILD_CLIENTS_TESTS )
     add_subdirectory( gtest )
   endif( )
