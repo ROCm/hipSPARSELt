@@ -75,13 +75,12 @@ namespace
         using tensile_type = Tensile::Half;
     };
 
-#if 0
     template <>
     struct rocsparselt_to_tensile_type<rocsparselt_bfloat16>
     {
         using tensile_type = Tensile::BFloat16;
     };
-
+#if 0
     // int8_t -> int8_t (supported for MI-kernel) / rocsparselt_int8x4 -> PackedInt8x4
     template <>
     struct rocsparselt_to_tensile_type<int8_t>
@@ -109,10 +108,10 @@ namespace
 
     template <>
     constexpr auto tensile_datatype<rocsparselt_half> = Tensile::DataType::Half;
-#if 0
+
     template <>
     constexpr auto tensile_datatype<rocsparselt_bfloat16> = Tensile::DataType::BFloat16;
-#endif
+
     template <>
     constexpr auto tensile_datatype<float> = Tensile::DataType::Float;
 
@@ -722,6 +721,8 @@ template rocsparse_status runContractionProblem(
     const RocsparseltContractionProblem<rocsparselt_half, rocsparselt_half, float>&);
 template rocsparse_status
     runContractionProblem(const RocsparseltContractionProblem<rocsparselt_half>&);
+template rocsparse_status runContractionProblem(
+    const RocsparseltContractionProblem<rocsparselt_bfloat16, rocsparselt_bfloat16, float>&);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for testing) *
