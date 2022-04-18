@@ -126,7 +126,9 @@ def main(args):
                     contents5 = contents_a[5]
                     for c_index in range(0, len(contents5)):
                         ka = KernelArguments()
-                        ka.SolutionNameMin = contents5[c_index].get('SolutionNameMin')
+                        #append K1 (Kernel True) at the buttom for single-source compilation
+                        #TODO do not appened this key word.
+                        ka.SolutionNameMin = contents5[c_index].get('SolutionNameMin') + "K1"
                         ka.DataType = contents4.get('DataType')
                         ka.DestDataType = contents4.get('DestDataType')
                         ka.ComputeDataType = contents4.get('ComputeDataType')
