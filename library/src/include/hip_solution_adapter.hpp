@@ -52,7 +52,8 @@ public:
                                KernelInvocation const& kernel,
                                hipStream_t             stream,
                                hipEvent_t              startEvent,
-                               hipEvent_t              stopEvent);
+                               hipEvent_t              stopEvent,
+                               int                     iter = 1);
     hipError_t    launchKernels(rocsparselt_handle                   handle,
                                 std::vector<KernelInvocation> const& kernels);
     hipError_t    launchKernels(rocsparselt_handle                   handle,

@@ -451,7 +451,11 @@ rocsparse_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc>
                                        int*                                             config_id,
                                        const int config_max_id,
                                        const int search_iterations);
-size_t           getKernelCounts(rocsparselt_handle handle, std::string const& category);
+template <typename Ti, typename To, typename Tc>
+rocsparse_status initSolutions(rocsparselt_handle  handle,
+                               rocsparse_operation opA,
+                               rocsparse_operation opB,
+                               int*                kernel_counts);
 
 /***********************************************************************************
  * Whether Kernel Launcher has been initialized for at least one device (used for testing) *

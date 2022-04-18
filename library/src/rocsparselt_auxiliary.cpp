@@ -639,19 +639,18 @@ rocsparse_status
             auto out_type     = matmulDescr->matrix_D->type;
             auto compute_type = matmulDescr->compute_type;
 
-            int         config_max_id = 0;
-            std::string str;
+            int config_max_id = 0;
+
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
-                str = generate_kernel_category_str<rocsparselt_half, rocsparselt_half, float>(
-                    matmulDescr->op_A, matmulDescr->op_B);
+                initSolutions<rocsparselt_half, rocsparselt_half, float>(
+                    handle, matmulDescr->op_A, matmulDescr->op_B, &config_max_id);
             else if(in_type == rocsparselt_datatype_bf16_r
                     && out_type == rocsparselt_datatype_bf16_r
                     && compute_type == rocsparselt_compute_f32)
-                str = generate_kernel_category_str<rocsparselt_bfloat16,
-                                                   rocsparselt_bfloat16,
-                                                   float>(matmulDescr->op_A, matmulDescr->op_B);
-            config_max_id = getKernelCounts(handle, str);
+                initSolutions<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(
+                    handle, matmulDescr->op_A, matmulDescr->op_B, &config_max_id);
+
             if(!config_max_id)
             {
                 delete(*algSelection);
