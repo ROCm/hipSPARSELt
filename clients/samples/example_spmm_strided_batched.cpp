@@ -493,16 +493,17 @@ int main(int argc, char* argv[])
     rocsparse_operation trans_b = rocsparse_operation_transpose;
 
     // invalid int and float for rocsparselt spmm int and float arguments
-    int64_t invalid_int   = std::numeric_limits<int64_t>::min() + 1;
+    int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
+    int     invalid_int   = std::numeric_limits<int>::min() + 1;
     float   invalid_float = std::numeric_limits<float>::quiet_NaN();
 
     // initialize to invalid value to detect if values not specified on command line
-    int64_t m = invalid_int, lda = invalid_int, stride_a = invalid_int;
-    int64_t n = invalid_int, ldb = invalid_int, stride_b = invalid_int;
-    int64_t k = invalid_int, ldc = invalid_int, stride_c = invalid_int;
-    int64_t ldd = invalid_int, stride_d = invalid_int;
+    int64_t m = invalid_int64, lda = invalid_int64, stride_a = invalid_int64;
+    int64_t n = invalid_int64, ldb = invalid_int64, stride_b = invalid_int64;
+    int64_t k = invalid_int64, ldc = invalid_int64, stride_c = invalid_int64;
+    int64_t ldd = invalid_int64, stride_d = invalid_int64;
 
-    int batch_count = std::numeric_limits<int>::min() + 1;
+    int batch_count = invalid_int;
 
     float alpha = invalid_float;
     float beta  = invalid_float;

@@ -843,7 +843,7 @@ int main(int argc, char* argv[])
 
     // invalid int and float for rocsparselt spmm int and float arguments
     int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
-    int64_t invalid_int   = std::numeric_limits<int>::min() + 1;
+    int     invalid_int   = std::numeric_limits<int>::min() + 1;
     float   invalid_float = std::numeric_limits<float>::quiet_NaN();
 
     // initialize to invalid value to detect if values not specified on command line
