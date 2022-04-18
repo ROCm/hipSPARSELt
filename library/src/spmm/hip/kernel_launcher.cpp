@@ -637,54 +637,38 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
         }
         else
         {
-            if(adapter.loadCodeObject(solution[*config_id].SolutionNameMin) != hipSuccess)
+            if(!search_iterations)
             {
-                rocsparselt_internal_ostream msg;
-                print_once(msg << "\nrocsparselt error: failed to load kernel:  "
-                               << solution[*config_id].SolutionNameMin);
+                adapter.launchKernel(prob.handle,
+                                     ConstructKernelInvoke<Ti, To, Tc>(prob, solution[*config_id]),
+                                     prob.streams[0],
+                                     nullptr,
+                                     nullptr);
             }
             else
             {
-                if(!search_iterations)
+                float      min_ms = std::numeric_limits<float>::max();
+                hipEvent_t startEvent, stopEvent;
+                float      ms;
+                hipEventCreate(&startEvent);
+                hipEventCreate(&stopEvent);
+                for(int id = 0; id < max_cid; id++)
                 {
+                    auto ki = ConstructKernelInvoke<Ti, To, Tc>(prob, solution[id]);
+                    //warm up
+                    adapter.launchKernel(prob.handle, ki, prob.streams[0], nullptr, nullptr);
+
                     adapter.launchKernel(
-                        prob.handle,
-                        ConstructKernelInvoke<Ti, To, Tc>(prob, solution[*config_id]),
-                        prob.streams[0],
-                        nullptr,
-                        nullptr);
+                        prob.handle, ki, prob.streams[0], startEvent, stopEvent, search_iterations);
+                    hipEventSynchronize(stopEvent);
+                    hipEventElapsedTime(&ms, startEvent, stopEvent);
+                    if(ms < min_ms)
+                        *config_id = id;
                 }
-                else
-                {
-                    float      min_ms = std::numeric_limits<float>::max();
-                    hipEvent_t startEvent, stopEvent;
-                    float      ms;
-                    hipEventCreate(&startEvent);
-                    hipEventCreate(&stopEvent);
-                    for(int id = 0; id < max_cid; id++)
-                    {
-                        auto ki = ConstructKernelInvoke<Ti, To, Tc>(prob, solution[id]);
-                        //warm up
-                        adapter.launchKernel(prob.handle, ki, prob.streams[0], nullptr, nullptr);
-
-                        hipEventRecord(startEvent, prob.streams[0]);
-                        for(int it = 0; it < search_iterations; it++)
-                        {
-                            adapter.launchKernel(
-                                prob.handle, ki, prob.streams[0], nullptr, nullptr);
-                        }
-                        hipEventRecord(stopEvent, prob.streams[0]);
-                        hipEventSynchronize(stopEvent);
-
-                        hipEventElapsedTime(&ms, startEvent, stopEvent);
-                        if(ms < min_ms)
-                            *config_id = id;
-                    }
-                    hipEventDestroy(startEvent);
-                    hipEventDestroy(stopEvent);
-                }
-                status = rocsparse_status_success;
+                hipEventDestroy(startEvent);
+                hipEventDestroy(stopEvent);
             }
+            status = rocsparse_status_success;
         }
     }
     catch(const std::exception& e)
@@ -703,10 +687,27 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
     return status;
 }
 
-size_t getKernelCounts(rocsparselt_handle handle, std::string const& category)
+/******************************************************************************
+ * initSolutions used to initialize specific type's solutions at the early stage.               *
+ * ****************************************************************************/
+template <typename Ti, typename To, typename Tc>
+rocsparse_status initSolutions(rocsparselt_handle  handle,
+                               rocsparse_operation opA,
+                               rocsparse_operation opB,
+                               int*                kernel_counts)
 {
-    auto& adapter = get_adapter();
-    return adapter.getKernelCounts(category);
+    std::shared_ptr<hipDeviceProp_t> deviceProp;
+    auto&                            adapter = get_adapter(&deviceProp, handle->device);
+    std::string                      str     = generate_kernel_category_str<Ti, To, Tc>(opA, opB);
+
+    *kernel_counts = adapter.getKernelCounts(str);
+    if(*kernel_counts <= 0)
+        return rocsparse_status_not_implemented;
+
+    KernelParams* solution = adapter.getKernelParams(str);
+    for(int i = 0; i < *kernel_counts; i++)
+        adapter.loadCodeObject(solution[i].SolutionNameMin);
+    return rocsparse_status_success;
 }
 
 /***************************************************************

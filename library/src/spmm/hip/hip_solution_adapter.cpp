@@ -122,6 +122,10 @@ hipError_t SolutionAdapter::loadCodeObjectBytes(std::vector<uint8_t> const& byte
 
 hipError_t SolutionAdapter::loadCodeObject(std::string const& name)
 {
+    //check if the module already exist.
+    if(m_modules.find(name) != m_modules.end())
+        return hipSuccess;
+
     for(auto& fucs : m_lib_functions)
     {
         auto it = fucs.find("get_kernel_byte");
@@ -142,15 +146,14 @@ hipError_t SolutionAdapter::loadCodeObject(std::string const& name)
 
 hipError_t SolutionAdapter::loadCodeObject(const void* image, std::string const& name)
 {
-    hipModule_t module;
-
-    HIP_CHECK_RETURN(hipModuleLoadData(&module, image));
-    rocsparselt_cout << "load module " << name << " success" << std::endl;
+    std::lock_guard<std::mutex> guard(m_access);
+    auto                        it = m_modules.find(name);
+    if(it == m_modules.end())
     {
-        std::lock_guard<std::mutex> guard(m_access);
-        auto                        it = m_modules.find(name);
-        if(it == m_modules.end())
-            m_modules[name] = module;
+        hipModule_t module;
+        HIP_CHECK_RETURN(hipModuleLoadData(&module, image));
+        //rocsparselt_cout << "load module " << name << " success" << std::endl;
+        m_modules[name] = module;
     }
     return hipSuccess;
 }
@@ -170,7 +173,7 @@ hipError_t SolutionAdapter::getKernel(hipFunction_t& rv, std::string const& name
     if(it_k != m_kernels.end())
     {
         rv = it_k->second;
-        printf("load function %s success\n", name.c_str());
+        //rocsparselt_cout << "load function " << name << " success" << std::endl;
         return err;
     }
 
@@ -183,7 +186,7 @@ hipError_t SolutionAdapter::getKernel(hipFunction_t& rv, std::string const& name
         if(err == hipSuccess)
         {
             m_kernels[name] = rv;
-            printf("load function %s success\n", name.c_str());
+            //rocsparselt_cout << "load function " << name << " success" << std::endl;
             return err;
         }
         else if(err != hipErrorNotFound)
@@ -203,7 +206,8 @@ hipError_t SolutionAdapter::launchKernel(rocsparselt_handle      handle,
                                          KernelInvocation const& kernel,
                                          hipStream_t             stream,
                                          hipEvent_t              startEvent,
-                                         hipEvent_t              stopEvent)
+                                         hipEvent_t              stopEvent,
+                                         int                     iter)
 {
     if(handle->layer_mode & rocsparse_layer_mode_log_trace)
     {
@@ -220,6 +224,8 @@ hipError_t SolutionAdapter::launchKernel(rocsparselt_handle      handle,
                          << kernel.args << std::endl;
     }
 
+    HIP_CHECK_RETURN(loadCodeObject(kernel.kernelName));
+
     hipFunction_t function;
     HIP_CHECK_RETURN(getKernel(function, kernel.kernelName));
 
@@ -234,20 +240,21 @@ hipError_t SolutionAdapter::launchKernel(rocsparselt_handle      handle,
 
     if(startEvent != nullptr)
         HIP_CHECK_RETURN(hipEventRecord(startEvent, stream));
-    HIP_CHECK_RETURN(hipExtModuleLaunchKernel(function,
-                                              kernel.numWorkItems.x,
-                                              kernel.numWorkItems.y,
-                                              kernel.numWorkItems.z,
-                                              kernel.workGroupSize.x,
-                                              kernel.workGroupSize.y,
-                                              kernel.workGroupSize.z,
-                                              kernel.sharedMemBytes, // sharedMem
-                                              stream, // stream
-                                              nullptr,
-                                              (void**)&hipLaunchParams,
-                                              nullptr, // event
-                                              nullptr // event
-                                              ));
+    for(int i = 0; i < iter; i++)
+        HIP_CHECK_RETURN(hipExtModuleLaunchKernel(function,
+                                                  kernel.numWorkItems.x,
+                                                  kernel.numWorkItems.y,
+                                                  kernel.numWorkItems.z,
+                                                  kernel.workGroupSize.x,
+                                                  kernel.workGroupSize.y,
+                                                  kernel.workGroupSize.z,
+                                                  kernel.sharedMemBytes, // sharedMem
+                                                  stream, // stream
+                                                  nullptr,
+                                                  (void**)&hipLaunchParams,
+                                                  nullptr, // event
+                                                  nullptr // event
+                                                  ));
     if(stopEvent != nullptr)
         HIP_CHECK_RETURN(hipEventRecord(stopEvent, stream));
     return hipSuccess;
