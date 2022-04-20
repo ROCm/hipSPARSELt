@@ -206,6 +206,7 @@ try
     std::string compute_type;
     std::string initialization;
     std::string filter;
+    std::string activation_type;
     int         device_id;
     int         flags             = 0;
     bool        datafile          = rocsparselt_parse_data(argc, argv);
@@ -344,6 +345,18 @@ try
          value<uint32_t>(&arg.prune_algo)->default_value(1),
          "prune algo, 0: tile algo, 1: (default) stip algo")
 
+        ("activation_type",
+         value<std::string>(&activation_type)->default_value("none"),
+         "Options: None, clippedrelu, gelu, relu")
+
+        ("activation_arg1",
+         value<float>(&arg.activation_arg1)->default_value(0),
+         "activation argument #1, when activation_type is clippedrelu, this argument used to be the threshold.")
+
+        ("activation_arg2",
+         value<float>(&arg.activation_arg2)->default_value(std::numeric_limits<float>::infinity()),
+         "activation argument #2, when activation_type is clippedrelu, this argument used to be the upperbound.")
+
         ("device",
          value<int>(&device_id)->default_value(0),
          "Set default device to be used for subsequent program runs")
@@ -439,6 +452,10 @@ try
     arg.initialization = string2rocsparselt_initialization(initialization);
     if(arg.initialization == static_cast<rocsparselt_initialization>(-1))
         throw std::invalid_argument("Invalid value for --initialization " + initialization);
+
+    arg.activation_type = string2rocsparselt_activation_type(activation_type);
+    if(arg.activation_type == static_cast<rocsparselt_activation_type>(-1))
+        throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
 
     if(arg.M < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M));

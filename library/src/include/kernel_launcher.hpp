@@ -152,6 +152,13 @@ struct RocsparseltContractionProblem
     bool                 sparseA;
     const unsigned char* metadata;
 
+    int         act_relu;
+    float       act_relu_upperbound;
+    float       act_relu_threshold;
+    int         act_gelu;
+    const void* bias_vector;
+    int64_t     bias_stride;
+
     hipStream_t* streams;
     int32_t      numStreams;
 
@@ -184,6 +191,12 @@ struct RocsparseltContractionProblem
                                   bool                 strided_batch,
                                   bool                 sparseA,
                                   const unsigned char* metadata,
+                                  int                  act_relu,
+                                  float                act_relu_upperbound,
+                                  float                act_relu_threshold,
+                                  int                  act_gelu,
+                                  const void*          bias_vector,
+                                  int64_t              bias_stride,
                                   hipStream_t*         streams,
                                   int32_t              numStreams)
         : handle(handle)
@@ -222,6 +235,12 @@ struct RocsparseltContractionProblem
         , strided_batch(strided_batch)
         , sparseA(sparseA)
         , metadata(metadata)
+        , act_relu(act_relu)
+        , act_relu_upperbound(act_relu_upperbound)
+        , act_relu_threshold(act_relu_threshold)
+        , act_gelu(act_gelu)
+        , bias_vector(bias_vector)
+        , bias_stride(bias_stride)
         , streams(streams)
         , numStreams(numStreams)
     {
@@ -261,6 +280,12 @@ struct RocsparseltContractionProblem
                                   bool                 strided_batch,
                                   bool                 sparseA,
                                   const unsigned char* metadata,
+                                  int                  act_relu,
+                                  float                act_relu_upperbound,
+                                  float                act_relu_threshold,
+                                  int                  act_gelu,
+                                  const void*          bias_vector,
+                                  int64_t              bias_stride,
                                   hipStream_t*         streams,
                                   int32_t              numStreams)
         : handle(handle)
@@ -299,6 +324,12 @@ struct RocsparseltContractionProblem
         , strided_batch(strided_batch)
         , sparseA(sparseA)
         , metadata(metadata)
+        , act_relu(act_relu)
+        , act_relu_upperbound(act_relu_upperbound)
+        , act_relu_threshold(act_relu_threshold)
+        , act_gelu(act_gelu)
+        , bias_vector(bias_vector)
+        , bias_stride(bias_stride)
         , streams(streams)
         , numStreams(numStreams)
     {
@@ -340,6 +371,12 @@ struct RocsparseltContractionProblem
                                   bool                 strided_batch,
                                   bool                 sparseA,
                                   const unsigned char* metadata,
+                                  int                  act_relu,
+                                  float                act_relu_upperbound,
+                                  float                act_relu_threshold,
+                                  int                  act_gelu,
+                                  const void*          bias_vector,
+                                  int64_t              bias_stride,
                                   hipStream_t*         streams,
                                   int32_t              numStreams)
         : handle(handle)
@@ -378,6 +415,12 @@ struct RocsparseltContractionProblem
         , strided_batch(strided_batch)
         , sparseA(sparseA)
         , metadata(metadata)
+        , act_relu(act_relu)
+        , act_relu_upperbound(act_relu_upperbound)
+        , act_relu_threshold(act_relu_threshold)
+        , act_gelu(act_gelu)
+        , bias_vector(bias_vector)
+        , bias_stride(bias_stride)
         , streams(streams)
         , numStreams(numStreams)
     {
@@ -442,7 +485,17 @@ struct RocsparseltContractionProblem
                             "stride_c",
                             prob.batch_stride_c,
                             "stride_d",
-                            prob.batch_stride_d));
+                            prob.batch_stride_d,
+                            "relu",
+                            prob.act_relu,
+                            "relu_upperbound",
+                            prob.act_relu_upperbound,
+                            "relu_threshold",
+                            prob.act_relu_threshold,
+                            "gelu",
+                            prob.act_gelu,
+                            "bias_stride",
+                            prob.bias_stride));
     };
 };
 

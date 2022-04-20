@@ -23,3 +23,21 @@ constexpr double gemm_gflop_count(int64_t m, int64_t n, int64_t k)
 {
     return (2.0 * m * n * k) / 1e9;
 }
+
+template <typename T>
+constexpr double relu_gflop_count(int64_t m, int64_t n)
+{
+    return (m * n) / 1e9;
+}
+
+template <typename T>
+constexpr double clippedrelu_gflop_count(int64_t m, int64_t n)
+{
+    return (m * n) / 1e9;
+}
+
+template <typename T>
+constexpr double gelu_gflop_count(int64_t m, int64_t n)
+{
+    return (9.0 * m * n) / 1e9;
+}

@@ -87,6 +87,10 @@ struct Arguments
     char transA;
     char transB;
 
+    rocsparselt_activation_type activation_type;
+    float                       activation_arg1; // threshold when activation type is relu
+    float                       activation_arg2; // upperbound when activation type is relu
+
     bool c_noalias_d;
     bool HMM;
     /*************************************************************************
@@ -140,6 +144,9 @@ struct Arguments
     OPER(timing) SEP                 \
     OPER(transA) SEP                 \
     OPER(transB) SEP                 \
+    OPER(activation_type) SEP        \
+    OPER(activation_arg1) SEP        \
+    OPER(activation_arg2) SEP        \
     OPER(c_noalias_d) SEP            \
     OPER(HMM) SEP
 

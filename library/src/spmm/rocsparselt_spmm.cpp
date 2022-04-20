@@ -212,13 +212,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
                                         batch_stride_a,
                                         batch_stride_b,
                                         batch_stride_c,
-                                        batch_stride_d,
-                                        act_relu,
-                                        act_relu_upperbound,
-                                        act_relu_threshold,
-                                        act_gelu,
-                                        bias_vector,
-                                        bias_stride);
+                                        batch_stride_d);
 
     if(validArgs != rocsparse_status_continue)
         return validArgs;

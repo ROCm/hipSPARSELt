@@ -22,13 +22,13 @@
 
 #pragma once
 
+#include "rocsparselt_ostream.hpp"
 #include <cstring>
 #include <hip/hip_runtime_api.h>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
 class KernelArguments
 {
 public:
@@ -181,7 +181,7 @@ inline std::string KernelArguments::stringForValue(T value, bool bound)
 
     using castType = std::conditional_t<std::is_pointer<T>::value, void const*, T>;
 
-    std::ostringstream msg;
+    rocsparselt_internal_ostream msg;
     msg << static_cast<castType>(value);
     return msg.str();
 }
@@ -282,4 +282,9 @@ struct KernelParams
     size_t       PackBatchDims;
     bool         UseInitialStridesAB;
     bool         UseInitialStridesCD;
+    bool         ActivationFused;
+    int          GlobalAccumulation;
+    bool         Activation;
+    bool         ActivationHPA;
+    char         ActivationType[32];
 };

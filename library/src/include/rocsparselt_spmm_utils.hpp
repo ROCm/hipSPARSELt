@@ -26,6 +26,7 @@
 #define ROCSPARSELT_SPMM_UTILS_HPP
 #include "handle.h"
 #include "rocsparselt_ostream.hpp"
+#include <cxxabi.h>
 
 inline rocsparse_status getOriginalSizes(rocsparse_operation opA,
                                          rocsparse_operation opB,
@@ -75,6 +76,60 @@ inline int64_t rocsparselt_metadata_offset_in_compressed_matrix(int64_t         
     auto    bpe          = rocsparselt_datatype_bytes(type);
     int64_t offset       = num_batches * batch_stride * bpe;
     return offset;
+}
+
+template <typename T>
+inline rocsparse_status validateSetAttributeDataSize(size_t dataSize,
+                                                     size_t expectedSize = sizeof(T))
+{
+    if(expectedSize != dataSize)
+    {
+        int   status = -4;
+        char* mname  = __cxxabiv1::__cxa_demangle(typeid(T).name(), NULL, NULL, &status);
+
+        rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
+                         << "expected " << expectedSize << " bytes(sizeof("
+                         << (status == 0 ? mname : typeid(T).name()) << "))"
+                         << ", current size " << dataSize << " bytes" << std::endl;
+
+        if(status == 0)
+            free(mname);
+        return rocsparse_status_invalid_size;
+    }
+    return rocsparse_status_success;
+}
+
+template <>
+inline rocsparse_status validateSetAttributeDataSize<void>(size_t dataSize, size_t expectedSize)
+{
+    if(expectedSize > dataSize)
+    {
+        rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
+                         << "at least " << expectedSize << " bytes, current size " << dataSize
+                         << " bytes" << std::endl;
+        return rocsparse_status_invalid_size;
+    }
+    return rocsparse_status_success;
+}
+
+template <typename T>
+inline rocsparse_status validateGetAttributeDataSize(size_t dataSize,
+                                                     size_t expectedSize = sizeof(T))
+{
+    return validateGetAttributeDataSize<void>(dataSize, expectedSize);
+}
+
+template <>
+inline rocsparse_status validateGetAttributeDataSize<void>(size_t dataSize, size_t expectedSize)
+{
+    if(expectedSize < dataSize)
+    {
+        rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: expected "
+                         << expectedSize << " bytes, current size " << dataSize << " bytes"
+                         << std::endl;
+        return rocsparse_status_invalid_size;
+    }
+    return rocsparse_status_success;
 }
 
 /*******************************************************************************
@@ -232,20 +287,14 @@ inline rocsparse_status validateMatmulArgs(rocsparselt_handle handle,
                                            const void*        beta,
                                            const void*        c,
                                            const void*        d,
-                                           int                num_batches_a       = 1,
-                                           int                num_batches_b       = 1,
-                                           int                num_batches_c       = 1,
-                                           int                num_batches_d       = 1,
-                                           int64_t            batch_stride_a      = 0,
-                                           int64_t            batch_stride_b      = 0,
-                                           int64_t            batch_stride_c      = 0,
-                                           int64_t            batch_stride_d      = 0,
-                                           int                act_relu            = 0,
-                                           float              act_relu_upperbound = 0.0f,
-                                           float              act_relu_threshold  = 0.0f,
-                                           int                act_gelu            = 0,
-                                           const void*        bias_vector         = nullptr,
-                                           int64_t            bias_stride         = 0)
+                                           int                num_batches_a  = 1,
+                                           int                num_batches_b  = 1,
+                                           int                num_batches_c  = 1,
+                                           int                num_batches_d  = 1,
+                                           int64_t            batch_stride_a = 0,
+                                           int64_t            batch_stride_b = 0,
+                                           int64_t            batch_stride_c = 0,
+                                           int64_t            batch_stride_d = 0)
 {
     // handle must be valid
     if(!handle)
@@ -278,9 +327,6 @@ inline rocsparse_status validateMatmulArgs(rocsparselt_handle handle,
     // pointers must be valid
     if((k && (!a || !b || !alpha)) || !c || !d)
         return rocsparse_status_invalid_pointer;
-
-    if(act_relu < 0 || act_gelu < 0 || (bias_vector != nullptr && bias_stride < 0))
-        return rocsparse_status_invalid_value;
 
     return rocsparse_status_continue;
 }

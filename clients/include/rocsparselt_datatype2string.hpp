@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../../library/src/include/activation.hpp"
 #include "rocsparselt.h"
 #include <string>
 

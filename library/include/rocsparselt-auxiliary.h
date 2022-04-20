@@ -242,6 +242,65 @@ ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr descr);
 
 /*! \ingroup aux_module
+ *  \brief Specify the matrix attribute of a matrix descriptor
+ *
+ *  \details
+ *  \p rocsparselt_matmul_descr_set_attribute sets the value of the specified attribute belonging
+ *  to matrix descr such as number of batches and their stride.
+ *
+ *  @param[inout]
+ *  matDescr        the matrix descriptor
+ *  @param[in]
+ *  handle          the rocsparselt handle
+ *  matAttribute    \ref rocsparselt_matmul_activation_relu, \ref rocsparselt_matmul_activation_relu_upperbound,
+ *                  \ref rocsparselt_matmul_activation_relu_threashold, \ref rocsparselt_matmul_activation_gelu,
+ *                  \ref rocsparselt_matmul_bias_pointer, \ref rocsparselt_matmul_bias_stride
+ *  data            pointer to the value to which the specified attribute will be set.
+ *  dataSize        size in bytes of the attribute value used for verification.
+ *
+ *  \retval rocsparse_status_success the operation completed successfully.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p descr pointer is invalid.
+ *  \retval rocsparse_status_invalid_pointer \p data pointer is invalid.
+ *  \retval rocsparse_status_invalid_value \p rocsparselt_mat_descr_attribute is invalid.
+ */
+ROCSPARSELT_EXPORT
+rocsparse_status
+    rocsparselt_matmul_descr_set_attribute(const rocsparselt_handle           handle,
+                                           rocsparselt_matmul_descr           matDescr,
+                                           rocsparselt_matmul_descr_attribute matAttribute,
+                                           const void*                        data,
+                                           size_t                             dataSize);
+
+/*! \ingroup aux_module
+ *  \brief Get the matrix type of a matrix descriptor
+ *
+ *  \details
+ *  \p rocsparselt_matmul_descr_get_attribute returns the matrix attribute of a matrix descriptor
+ *
+ *  @param[inout]
+ *  data            the memory address containing the attribute value retrieved by this function
+ *
+ *  @param[in]
+ *  handle          the rocsparselt handle
+ *  matAttribute    \ref rocsparselt_matmul_activation_relu, \ref rocsparselt_matmul_activation_relu_upperbound,
+ *                  \ref rocsparselt_matmul_activation_relu_threashold, \ref rocsparselt_matmul_activation_gelu,
+ *                  \ref rocsparselt_matmul_bias_pointer, \ref rocsparselt_matmul_bias_stride
+ *  matDescr        the matrix descriptor
+ *  dataSize        size in bytes of the attribute value used for verification.
+ *
+ *  \retval rocsparse_status_success the operation completed successfully.
+ *  \retval rocsparse_status_invalid_pointer \p handle, \p descr or \p data pointer is invalid.
+ *  \retval rocsparse_status_invalid_value \p rocsparselt_mat_descr_attribute is invalid.
+ */
+ROCSPARSELT_EXPORT
+rocsparse_status
+    rocsparselt_matmul_descr_get_attribute(const rocsparselt_handle           handle,
+                                           const rocsparselt_matmul_descr     matDescr,
+                                           rocsparselt_matmul_descr_attribute matAttribute,
+                                           void*                              data,
+                                           size_t                             dataSize);
+
+/*! \ingroup aux_module
  *  \brief Initializes the algorithm selection descriptor
  *  \details
  *  \p rocsparselt_matmul_alg_selection_init creates a algorithm selection descriptor.

@@ -21,6 +21,7 @@
  *
  * ************************************************************************ */
 #include "kernel_launcher.hpp"
+#include "activation.hpp"
 #include "handle.h"
 #include "hip_solution_adapter.hpp"
 #include "rocsparselt-types.h"
@@ -297,6 +298,46 @@ namespace
             ki.args.append<Tc const>("beta", *prob.beta);
             if(std::is_same<Tc, rocsparselt_half>::value)
                 ki.args.append<Tc const>("beta_2", *prob.beta);
+        }
+
+        rocsparselt_activation_type act_type
+            = string2rocsparselt_activation_type(kernel.ActivationType);
+        if((act_type != rocsparselt_activation_type::none) && kernel.ActivationFused
+           && (!kernel.GlobalAccumulation))
+        {
+            rocsparselt_activation_type act_type = rocsparselt_activation_type::none;
+            float                       act0     = prob.act_relu_threshold;
+            float                       act1     = prob.act_relu_upperbound;
+            if(prob.act_relu != 0)
+            {
+                if(prob.act_relu_upperbound == std::numeric_limits<float>::infinity()
+                   && prob.act_relu_threshold == 0)
+                {
+                    act_type = rocsparselt_activation_type::relu;
+                    //relu not using these arguments.
+                    act0 = 0.0f;
+                    act1 = std::numeric_limits<float>::infinity();
+                }
+                else
+                {
+                    act_type = rocsparselt_activation_type::clippedrelu;
+                }
+            }
+            else if(prob.act_gelu != 0)
+                act_type = rocsparselt_activation_type::gelu;
+
+            if(kernel.ActivationHPA)
+            {
+                //same as the alpha/beta type.
+                ki.args.append<float>("activation_0", act0);
+                ki.args.append<float>("activation_1", act1);
+            }
+            else
+            {
+                ki.args.append<To>("activation_0", static_cast<To>(act0));
+                ki.args.append<To>("activation_1", static_cast<To>(act1));
+            }
+            ki.args.append<uint32_t>("activationType", static_cast<uint32_t>(act_type));
         }
 
         size_t startStrideCD = kernel.UseInitialStridesCD ? 0 : 1;
