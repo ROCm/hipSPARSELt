@@ -12,7 +12,7 @@ Datatypes:
       attr:
         f32: 300
         i32: 301
-  - { half: f16_r}
+  - { half: f16_r }
   - rocsparselt_initialization:
       bases: [ c_int ]
       attr:
@@ -20,6 +20,14 @@ Datatypes:
         trig_float: 222
         hpl: 333
         special: 444
+  - rocsparselt_activation_type:
+      bases: [ c_int ]
+      attr:
+        none: 0
+        clippedrelu: 2
+        gelu: 3
+        relu: 5
+
 
 Common threads and streams: &common_threads_streams
   - { threads: 0,  streams: 0}
@@ -85,6 +93,9 @@ Arguments:
   - timing: c_int8
   - transA: c_char
   - transB: c_char
+  - activation_type: rocsparselt_activation_type
+  - activation_arg1: c_float
+  - activation_arg2: c_float
   - c_noalias_d: c_bool
   - HMM: c_bool
 
@@ -153,3 +164,6 @@ Defaults:
   name: rocsparselt-bench
   c_noalias_d: false
   user_allocated_workspace: 0
+  activation_type: none
+  activation_arg1: 0
+  activation_arg2: 0

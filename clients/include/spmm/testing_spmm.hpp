@@ -17,6 +17,56 @@
 #include "rocsparselt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
+#include <cstddef>
+#include <omp.h>
+
+template <typename Ti, typename To, typename Tact, typename F>
+void activation(Ti* in, To* out, Tact arg1, Tact arg2, F& func)
+{
+    auto in_Tact = static_cast<Tact>(*in);
+    *out         = static_cast<To>(func(in_Tact, arg1, arg2));
+}
+
+template <typename Tact, typename F>
+void activation(int8_t* in, int8_t* out, Tact arg1, Tact arg2, F& func)
+{
+    auto saturate = [](Tact val) {
+        auto _val = std::nearbyint(static_cast<double>(val));
+        _val      = _val > 127.f ? 127.f : _val < -128.f ? -128.f : _val;
+        return _val;
+    };
+
+    auto in_Tact = static_cast<Tact>(*in);
+    auto o       = saturate(func(in_Tact, arg1, arg2));
+    *out         = static_cast<int8_t>(o);
+}
+
+auto _relu
+    = [](auto in, auto /*arg1*/, auto /*arg2*/) { return std::max(0.0f, static_cast<float>(in)); };
+
+auto _clippedrelu = [](auto in, auto arg1, auto arg2) {
+    if(in > arg1)
+        return std::min(in, arg2);
+    else
+        return 0.0f;
+};
+
+auto _gelu = [](auto in, auto /*arg1*/, auto /*arg2*/) {
+    using Tc = float;
+
+    constexpr auto k0    = static_cast<Tc>(0.7978845608028654);
+    constexpr auto k1    = static_cast<Tc>(0.044715);
+    Tc             in_Tc = static_cast<Tc>(in);
+
+    auto multiply = [](Tc a, Tc b) { return static_cast<Tc>(a * b); };
+
+    // float(0.5 * x * (1 + tanh(k0 * x * (1 + k1 * x * x))));
+    auto tmp = static_cast<Tc>(1) + multiply(k1, multiply(in_Tc, in_Tc));
+    tmp      = multiply(k0, multiply(in_Tc, tmp));
+    tmp      = static_cast<Tc>(1) + static_cast<Tc>(tanh(tmp));
+    tmp      = multiply(static_cast<Tc>(0.5f), multiply(in_Tc, tmp));
+    return tmp;
+};
 
 template <typename Ti, typename To, typename Tc>
 void testing_spmm_bad_arg(const Arguments& arg)
@@ -111,15 +161,17 @@ void testing_spmm(const Arguments& arg)
     rocsparse_operation transA = char2rocsparse_operation(arg.transA);
     rocsparse_operation transB = char2rocsparse_operation(arg.transB);
 
-    int64_t M          = arg.M;
-    int64_t N          = arg.N;
-    int64_t K          = arg.K;
-    Tc      h_alpha_Tc = arg.get_alpha<Tc>();
-    Tc      h_beta_Tc  = arg.get_beta<Tc>();
-    int64_t lda        = arg.lda;
-    int64_t ldb        = arg.ldb;
-    int64_t ldc        = arg.ldc;
-    int64_t ldd        = arg.ldd;
+    using Talpha = float;
+
+    int64_t M       = arg.M;
+    int64_t N       = arg.N;
+    int64_t K       = arg.K;
+    Talpha  h_alpha = arg.get_alpha<Talpha>();
+    Talpha  h_beta  = arg.get_beta<Talpha>();
+    int64_t lda     = arg.lda;
+    int64_t ldb     = arg.ldb;
+    int64_t ldc     = arg.ldc;
+    int64_t ldd     = arg.ldd;
 
     double gpu_time_used, cpu_time_used;
     gpu_time_used = cpu_time_used              = 0.0;
@@ -236,6 +288,47 @@ void testing_spmm(const Arguments& arg)
     rocsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
+    int activation_on = 1;
+    switch(arg.activation_type)
+    {
+    case rocsparselt_activation_type::clippedrelu:
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_relu_upperbound,
+                                                   &arg.activation_arg2,
+                                                   sizeof(float)),
+            rocsparse_status_success);
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_relu_threshold,
+                                                   &arg.activation_arg1,
+                                                   sizeof(float)),
+            rocsparse_status_success);
+    case rocsparselt_activation_type::relu:
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_relu,
+                                                   &activation_on,
+                                                   sizeof(activation_on)),
+            rocsparse_status_success);
+        break;
+    case rocsparselt_activation_type::gelu:
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_gelu,
+                                                   &activation_on,
+                                                   sizeof(activation_on)),
+            rocsparse_status_success);
+        break;
+    default:
+        activation_on = 0;
+        break;
+    }
+
     rocsparselt_local_matmul_alg_selection alg_sel(handle, matmul, rocsparselt_matmul_alg_default);
 
     size_t workspace_size, compressed_size;
@@ -253,6 +346,7 @@ void testing_spmm(const Arguments& arg)
     const size_t size_C      = stride_c == 0 ? ldc * N * num_batches : stride_c * num_batches;
     const size_t size_D      = stride_d == 0 ? ldd * N * num_batches : stride_d * num_batches;
     const size_t size_D_copy = arg.unit_check || arg.norm_check ? size_D : 0;
+    const size_t size_D_act_copy = activation_on ? size_D_copy : 0;
 
     // allocate memory on device
     device_vector<Ti>            dA(size_A, 1, HMM);
@@ -269,12 +363,13 @@ void testing_spmm(const Arguments& arg)
     CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
-    host_vector<Ti> hA(size_A);
-    host_vector<Ti> hA_pruned(size_A_pruned_copy);
-    host_vector<Ti> hB(size_B);
-    host_vector<To> hC(size_C);
-    host_vector<To> hD_gold(size_D_copy);
-    host_vector<To> hD_1(size_D_copy);
+    host_vector<Ti>     hA(size_A);
+    host_vector<Ti>     hA_pruned(size_A_pruned_copy);
+    host_vector<Ti>     hB(size_B);
+    host_vector<To>     hC(size_C);
+    host_vector<To>     hD_gold(size_D_copy);
+    host_vector<Talpha> hD_gold_act(size_D_copy);
+    host_vector<To>     hD_1(size_D_copy);
 
     rocsparselt_seedrand();
 
@@ -332,6 +427,19 @@ void testing_spmm(const Arguments& arg)
     CHECK_HIP_ERROR(dB.transfer_from(hB));
     CHECK_HIP_ERROR(dC.transfer_from(hC));
 
+    if(size_D_copy)
+    {
+        if(activation_on)
+        {
+            std::transform(hC.begin(), hC.end(), hD_gold_act.begin(), [](To c) -> Talpha {
+                return static_cast<Talpha>(c);
+            });
+        }
+        else
+        {
+            std::copy(hC.begin(), hC.end(), hD_gold.begin());
+        }
+    }
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_smfmac_prune(handle, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
         rocsparse_status_success);
@@ -345,18 +453,10 @@ void testing_spmm(const Arguments& arg)
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
 
-        EXPECT_ROCSPARSELT_STATUS(rocsparselt_matmul(handle,
-                                                     plan,
-                                                     &h_alpha_Tc,
-                                                     dA_compressd,
-                                                     dB,
-                                                     &h_beta_Tc,
-                                                     dC,
-                                                     dD,
-                                                     dWorkspace,
-                                                     &stream,
-                                                     1),
-                                  rocsparse_status_success);
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul(
+                handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
+            rocsparse_status_success);
 
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
@@ -366,20 +466,74 @@ void testing_spmm(const Arguments& arg)
 
         for(int i = 0; i < num_batches; i++)
         {
-            cblas_gemm<Ti, To, Tc>(transA,
-                                   transB,
-                                   M,
-                                   N,
-                                   K,
-                                   h_alpha_Tc,
-                                   hA_pruned + stride_a * i,
-                                   lda,
-                                   hB + stride_b * i,
-                                   ldb,
-                                   h_beta_Tc,
-                                   hD_gold + stride_d * i,
-                                   ldd,
-                                   false);
+            if(activation_on)
+            {
+                cblas_gemm<Ti, Talpha, Talpha>(transA,
+                                               transB,
+                                               M,
+                                               N,
+                                               K,
+                                               h_alpha,
+                                               hA_pruned + stride_a * i,
+                                               lda,
+                                               hB + stride_b * i,
+                                               ldb,
+                                               h_beta,
+                                               hD_gold_act + stride_d * i,
+                                               ldd,
+                                               false);
+                for(int j = 0; j < M; j++)
+                {
+#pragma omp parallel for
+                    for(int k = 0; k < N; k++)
+                    {
+                        auto pos = stride_d * i + k * ldd + j;
+
+                        switch(arg.activation_type)
+                        {
+                        case rocsparselt_activation_type::clippedrelu:
+                            activation(hD_gold_act + pos,
+                                       hD_gold + pos,
+                                       arg.activation_arg1,
+                                       arg.activation_arg2,
+                                       ::_clippedrelu);
+                            break;
+                        case rocsparselt_activation_type::gelu:
+                            activation(hD_gold_act + pos,
+                                       hD_gold + pos,
+                                       arg.activation_arg1,
+                                       arg.activation_arg2,
+                                       ::_gelu);
+                            break;
+                        case rocsparselt_activation_type::relu:
+                            activation(hD_gold_act + pos,
+                                       hD_gold + pos,
+                                       arg.activation_arg1,
+                                       arg.activation_arg2,
+                                       ::_relu);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+            }
+
+            else
+                cblas_gemm<Ti, To, Talpha>(transA,
+                                           transB,
+                                           M,
+                                           N,
+                                           K,
+                                           h_alpha,
+                                           hA_pruned + stride_a * i,
+                                           lda,
+                                           hB + stride_b * i,
+                                           ldb,
+                                           h_beta,
+                                           hD_gold + stride_d * i,
+                                           ldd,
+                                           false);
         }
 
         if(arg.timing)
@@ -422,10 +576,10 @@ void testing_spmm(const Arguments& arg)
         {
             EXPECT_ROCSPARSELT_STATUS(rocsparselt_matmul(handle,
                                                          plan,
-                                                         &h_alpha_Tc,
+                                                         &h_alpha,
                                                          dA_compressd,
                                                          dB,
-                                                         &h_beta_Tc,
+                                                         &h_beta,
                                                          dC,
                                                          dD,
                                                          dWorkspace,
@@ -439,10 +593,10 @@ void testing_spmm(const Arguments& arg)
         {
             EXPECT_ROCSPARSELT_STATUS(rocsparselt_matmul(handle,
                                                          plan,
-                                                         &h_alpha_Tc,
+                                                         &h_alpha,
                                                          dA_compressd,
                                                          dB,
-                                                         &h_beta_Tc,
+                                                         &h_beta,
                                                          dC,
                                                          dD,
                                                          dWorkspace,
@@ -452,6 +606,21 @@ void testing_spmm(const Arguments& arg)
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
+        auto flops = gemm_gflop_count<float>(M, N, K);
+        switch(arg.activation_type)
+        {
+        case rocsparselt_activation_type::relu:
+            flops += relu_gflop_count<float>(M, N);
+            break;
+        case rocsparselt_activation_type::clippedrelu:
+            flops += clippedrelu_gflop_count<float>(M, N);
+            break;
+        case rocsparselt_activation_type::gelu:
+            flops += gelu_gflop_count<float>(M, N);
+            break;
+        default:
+            break;
+        }
         ArgumentModel<e_transA,
                       e_transB,
                       e_M,
@@ -471,7 +640,7 @@ void testing_spmm(const Arguments& arg)
             .log_args<float>(rocsparselt_cout,
                              arg,
                              gpu_time_used,
-                             gemm_gflop_count<float>(M, N, K),
+                             flops,
                              ArgumentLogging::NA_value,
                              cpu_time_used,
                              rocsparselt_error);

@@ -30,4 +30,5 @@ set(KERNEL_LAUNCHER_SRC
 set(KERNEL_LAUNCHER_INC
    src/include/hip_solution_adapter.hpp
    src/include/kernel_arguments.hpp
+   src/include/activation.hpp
 )

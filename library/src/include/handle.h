@@ -235,11 +235,11 @@ struct _rocsparselt_matmul_descr
     rocsparselt_compute_type compute_type;
     //data of rocsparselt_matmul_descr_attribute
     int                    activation_relu            = 0;
-    float                  activation_relu_upperbound = 0.0f;
+    float                  activation_relu_upperbound = std::numeric_limits<float>::infinity();
     float                  activation_relu_threshold  = 0.0f;
     int                    activation_gelu            = 0;
     _rocsparselt_attribute bias_pointer;
-    int64_t                bias_stride = (int64_t)0;
+    int64_t                bias_stride = 0;
 
 private:
     bool own_by_us = false;

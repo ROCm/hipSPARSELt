@@ -106,6 +106,12 @@ rocsparse_status spmm_batched_template(rocsparselt_handle   handle,
                                                       strided_batch,
                                                       sparseA,
                                                       metadata,
+                                                      act_relu,
+                                                      act_relu_upperbound,
+                                                      act_relu_threshold,
+                                                      act_gelu,
+                                                      bias_vector,
+                                                      bias_stride,
                                                       streams,
                                                       numStreams};
     return runContractionProblem<Ti, To, Tc>(problem, config_id, config_max_id, search_iterations);

@@ -24,6 +24,11 @@ class KernelArguments:
     PackBatchDims = 0
     UseInitialStridesAB = False
     UseInitialStridesCD = False
+    ActivationFused = False
+    GlobalAccumulation = 0
+    Activation = False
+    ActivationHPA = False
+    ActivationType = ""
 
 def writefile(filename, kernel_maps):
     with open(filename, 'w') as f:
@@ -71,6 +76,11 @@ def writefile(filename, kernel_maps):
             f.write("    size_t PackBatchDims;\n")
             f.write("    bool UseInitialStridesAB;\n")
             f.write("    bool UseInitialStridesCD;\n")
+            f.write("    bool ActivationFused;\n")
+            f.write("    int GlobalAccumulation;\n")
+            f.write("    bool Activation;\n")
+            f.write("    bool ActivationHPA;\n")
+            f.write("    char ActivationType[32];\n")
             f.write("};\n")
 
             f.write("std::map<std::string, std::vector<KernelParams>> kernel_params = \n{\n")
@@ -81,12 +91,14 @@ def writefile(filename, kernel_maps):
                     wg = "{} {}, {}, {}{}".format("{", ka.WorkGroup[0], ka.WorkGroup[1], ka.WorkGroup[2], "}")
                     tt = "{} {}, {}, {}{}".format("{", ka.ThreadTile[0], ka.ThreadTile[1], ka.ThreadTile[2], "}")
                     mt = "{} {}, {}, {}{}".format("{", ka.MacroTile[0], ka.MacroTile[1], ka.MacroTile[2], "}")
-                    values = "\"{}\", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(
+                    values = "\"{}\", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, \"{}\"".format(
                             ka.SolutionNameMin, ka.DataType, ka.DestDataType, ka.ComputeDataType,
                             "true" if ka.TransposeA else "false", "true" if ka.TransposeB else "false",
                             wg, tt, mt,
                             ka.StaggerU, ka.DepthU, ka.GlobalSplitU, ka.StaggerStrideShift, ka.WorkGroupMapping, ka.PackBatchDims,
-                            "true" if ka.UseInitialStridesA else "false", "true" if ka.UseInitialStridesCD else "false")
+                            "true" if ka.UseInitialStridesA else "false", "true" if ka.UseInitialStridesCD else "false",
+                            "true" if ka.ActivationFused else "false", 0 if not ka.GlobalAccumulation else ka.GlobalAccumulation,
+                            "true" if ka.Activation else "false", "true" if ka.ActivationHPA else "false", ka.ActivationType)
                     f.write("{}{}{},\n".format("{", values, "}"))
                 f.write("}},\n")
             f.write("};\n")
@@ -125,15 +137,11 @@ def main(args):
                     contents4 = contents_a[4]
                     contents5 = contents_a[5]
                     for c_index in range(0, len(contents5)):
+                        contents_p = contents5[c_index].get('ProblemType')
                         ka = KernelArguments()
                         #append K1 (Kernel True) at the buttom for single-source compilation
                         #TODO do not appened this key word.
                         ka.SolutionNameMin = contents5[c_index].get('SolutionNameMin') + "K1"
-                        ka.DataType = contents4.get('DataType')
-                        ka.DestDataType = contents4.get('DestDataType')
-                        ka.ComputeDataType = contents4.get('ComputeDataType')
-                        ka.TransposeA = contents4.get('TransposeA')
-                        ka.TransposeB = contents4.get('TransposeB')
                         ka.DataType = contents4.get('DataType')
                         ka.DestDataType = contents4.get('DestDataType')
                         ka.ComputeDataType = contents4.get('ComputeDataType')
@@ -152,6 +160,12 @@ def main(args):
                         ka.PackBatchDims = contents5[c_index].get('PackBatchDims')
                         ka.UseInitialStridesA = contents4.get('UseInitialStridesAB')
                         ka.UseInitialStridesC = contents4.get('UseInitialStridesCD')
+                        ka.ActivationFused = contents5[c_index].get('ActivationFused')
+                        ka.GlobalAccumulation = contents5[c_index].get('_GlobalAccumulation')
+                        ka.Activation = contents_p.get('Activation')
+                        ka.ActivationHPA = contents_p.get('ActivationHPA')
+                        ka.ActivationType = contents_p.get('ActivationType')
+
                         if '--v' in optDict:
                             print("SolutionNameMin=", ka.SolutionNameMin)
                             print("DataType=", ka.DataType)
@@ -170,6 +184,11 @@ def main(args):
                             print("PackBatchDims=", ka.PackBatchDims)
                             print("UseInitialStridesA=", ka.UseInitialStridesA)
                             print("UseInitialStridesC=", ka.UseInitialStridesC)
+                            print("ActivationFused=", ka.ActivationFused)
+                            print("GlobalAccumulation=", ka.GlobalAccumulation)
+                            print("Activation=", ka.Activation)
+                            print("ActivationHPA=", ka.ActivationHPA)
+                            print("ActivationType=", ka.ActivationType)
                         key="{}_{}_{}_{}_{}".format(ka.DataType, ka.DestDataType, ka.ComputeDataType, 'T' if ka.TransposeA else 'N', 'T' if ka.TransposeB else 'N')
                         if key in kernel_maps :
                             kernel_maps[key].append(ka)

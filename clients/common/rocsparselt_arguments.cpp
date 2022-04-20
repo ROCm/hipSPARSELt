@@ -74,8 +74,11 @@ void Arguments::init()
     transA = '*';
     transB = '*';
 
-    c_noalias_d = false;
-    HMM         = false;
+    activation_type = rocsparselt_activation_type::none;
+    activation_arg1 = 0.0f;
+    activation_arg2 = std::numeric_limits<float>::infinity();
+    c_noalias_d     = false;
+    HMM             = false;
 }
 
 // Function to print Arguments out to stream in YAML format

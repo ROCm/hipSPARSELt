@@ -482,55 +482,73 @@ rocsparse_status
     }
     else if(data == nullptr)
     {
+        rocsparselt_cerr << "The parameter number 4 (data) cannot be NULL" << std::endl;
         return rocsparse_status_invalid_pointer;
-    }
-    else if(dataSize <= 0)
-    {
-        return rocsparse_status_invalid_value;
     }
     else
     {
         // Allocate
         try
         {
+            rocsparse_status status;
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
-                if(sizeof(int) == dataSize)
-                    memcpy(&matmulDescr->activation_relu, data, sizeof(int));
-                else
-                    return rocsparse_status_invalid_value;
+                if((status = validateSetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                matmulDescr->activation_relu = *(reinterpret_cast<const int*>(data));
                 break;
             case rocsparselt_matmul_activation_relu_upperbound:
-                if(sizeof(float) == dataSize)
-                    memcpy(&matmulDescr->activation_relu_upperbound, data, sizeof(float));
-                else
-                    return rocsparse_status_invalid_value;
+                if((status = validateSetAttributeDataSize<float>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                matmulDescr->activation_relu_upperbound = *(reinterpret_cast<const float*>(data));
                 break;
             case rocsparselt_matmul_activation_relu_threshold:
-                if(sizeof(float) == dataSize)
-                    memcpy(&matmulDescr->activation_relu_threshold, data, sizeof(float));
-                else
-                    return rocsparse_status_invalid_value;
+                if((status = validateSetAttributeDataSize<float>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                matmulDescr->activation_relu_threshold = *(reinterpret_cast<const float*>(data));
                 break;
             case rocsparselt_matmul_activation_gelu:
-                if(sizeof(int) == dataSize)
-                    memcpy(&matmulDescr->activation_gelu, data, sizeof(int));
-                else
-                    return rocsparse_status_invalid_value;
+                if((status = validateSetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                matmulDescr->activation_gelu = *(reinterpret_cast<const int*>(data));
                 break;
+#if ENABLE_BIAS
             case rocsparselt_matmul_bias_pointer:
-
-                //TODO Check the bias vector size is equal to the number of rows of the output matrix D.
-
+            {
+                auto excpected_size = rocsparselt_datatype_bytes(matmulDescr->matrix_D.type)
+                                      * matmulDescr->matrix_D.m;
+                if((status = validateSetAttributeDataSize<void>(dataSize, excpected_size))
+                   != rocsparse_status_success)
+                    return status;
                 matmulDescr->bias_pointer.set(data, dataSize);
+
                 break;
+            }
             case rocsparselt_matmul_bias_stride:
-                if(sizeof(int64_t) == dataSize)
-                    memcpy(&matmulDescr->bias_stride, data, sizeof(int64_t));
-                else
+            {
+                if((status = validateSetAttributeDataSize<int64_t>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                const int64_t* bias_stride = reinterpret_cast<const int64_t*>(data);
+                if(*bias_stride != 0 && *bias_stride < matmulDescr->matrix_D.m)
+                {
+                    rocsparselt_cerr << "The batch stride must be 0 or at least the number of rows "
+                                        "of the output matrix (D) ("
+                                     << matmulDescr->matrix_D.m << "), current: " << *bias_stride
+                                     << std::endl;
                     return rocsparse_status_invalid_value;
+                }
+                matmulDescr->bias_stride = *bias_stride;
                 break;
+            }
+#endif
+            default:
+                return rocsparse_status_not_implemented;
             }
             log_trace(handle, "rocsparselt_matmul_descr_set_attribute");
         }
@@ -554,6 +572,7 @@ rocsparse_status
                                            size_t                             dataSize)
 
 {
+
     // Check if matmulDescr is valid
     if(matmulDescr == nullptr)
     {
@@ -567,36 +586,51 @@ rocsparse_status
     {
         try
         {
+            rocsparse_status status;
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
-                if(dataSize < sizeof(int))
-                    return rocsparse_status_invalid_value;
-                memcpy(data, &matmulDescr->activation_relu, sizeof(int));
+                if((status = validateGetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                *(reinterpret_cast<int*>(data)) = matmulDescr->activation_relu;
                 break;
             case rocsparselt_matmul_activation_relu_upperbound:
-                if(dataSize < sizeof(float))
-                    return rocsparse_status_invalid_value;
-                memcpy(data, &matmulDescr->activation_relu_upperbound, sizeof(float));
+                if((status = validateGetAttributeDataSize<float>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                *(reinterpret_cast<float*>(data)) = matmulDescr->activation_relu_upperbound;
                 break;
             case rocsparselt_matmul_activation_relu_threshold:
-                if(dataSize < sizeof(float))
-                    return rocsparse_status_invalid_value;
-                memcpy(data, &matmulDescr->activation_relu_threshold, sizeof(float));
+                if((status = validateGetAttributeDataSize<float>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                *(reinterpret_cast<float*>(data)) = matmulDescr->activation_relu_threshold;
                 break;
             case rocsparselt_matmul_activation_gelu:
-                if(dataSize < sizeof(int))
-                    return rocsparse_status_invalid_value;
-                memcpy(data, &matmulDescr->activation_gelu, sizeof(int));
+                if((status = validateGetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                *(reinterpret_cast<int*>(data)) = matmulDescr->activation_gelu;
                 break;
+#if ENABLE_BIAS
             case rocsparselt_matmul_bias_pointer:
-                matmulDescr->bias_pointer.get(data, dataSize);
+                if((status = validateGetAttributeDataSize<void>(dataSize,
+                                                                matmulDescr->bias_pointer.length()))
+                   != rocsparse_status_success)
+                    return status;
+                if(matmulDescr->bias_pointer.get(data, dataSize) == 0)
+                    return rocsparse_status_internal_error;
                 break;
             case rocsparselt_matmul_bias_stride:
-                if(dataSize < sizeof(int64_t))
-                    return rocsparse_status_invalid_value;
-                memcpy(data, &matmulDescr->bias_stride, sizeof(int64_t));
+                if((status = validateGetAttributeDataSize<int64_t>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+                *(reinterpret_cast<int64_t*>(data)) = matmulDescr->bias_stride;
                 break;
+#endif
+            default:
+                return rocsparse_status_not_implemented;
             }
             log_trace(handle, "rocsparselt_matmul_descr_get_attribute");
         }

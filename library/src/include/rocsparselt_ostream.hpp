@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "activation.hpp"
 #include "rocsparselt.h"
 #include "utility.hpp"
 #include <cmath>
@@ -411,6 +412,14 @@ public:
 
     {
         return os << rocsparselt_transpose_letter(trans);
+    }
+
+    // rocsparselt_activation_type output
+    friend rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream& os,
+                                                    rocsparselt_activation_type   activation_type)
+
+    {
+        return os << rocsparselt_activation_type_string(activation_type);
     }
 
     // rocsparselt_status output
