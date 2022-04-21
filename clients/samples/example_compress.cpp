@@ -399,18 +399,20 @@ void print_strided_batched_meta(const char*    name,
 // cppcheck-suppress constParameter
 static void show_usage(char* argv[])
 {
-    std::cerr << "Usage: " << argv[0] << " <options>\n"
-              << "options:\n"
-              << "\t-h, --help\t\t\t\tShow this help message\n"
-              << "\t-v, --verbose\t\t\t\tverbose output\n"
-              << "\t-m \t\t\tm\t\tGEMM_STRIDED_BATCHED argument m\n"
-              << "\t-n \t\t\tn\t\tGEMM_STRIDED_BATCHED argument n\n"
-              << "\t--ld \t\t\tld \t\tGEMM_STRIDED_BATCHED argument lda\n"
-              << "\t--trans \t\ttrans \tGEMM_STRIDED_BATCHED argument trans_a\n"
-              << "\t--stride \t\tstride \tGEMM_STRIDED_BATCHED argument stride_a\n"
-              << "\t--batch_count \t\tbatch_count \tGEMM_STRIDED_BATCHED argument batch count\n"
-              << "\t--header \t\theader \t\tprint header for output\n"
-              << std::endl;
+    std::cerr
+        << "Usage: " << argv[0] << " <options>\n"
+        << "options:\n"
+        << "\t-h, --help\t\t\t\tShow this help message\n"
+        << "\t-v, --verbose\t\t\t\tverbose output\n"
+        << "\t-m \t\t\tm\t\tGEMM_STRIDED_BATCHED argument m\n"
+        << "\t-n \t\t\tn\t\tGEMM_STRIDED_BATCHED argument n\n"
+        << "\t--ld \t\t\tld \t\tGEMM_STRIDED_BATCHED argument lda\n"
+        << "\t--trans \t\ttrans \tGEMM_STRIDED_BATCHED argument trans_a\n"
+        << "\t--stride \t\tstride \tGEMM_STRIDED_BATCHED argument stride_a\n"
+        << "\t--batch_count \t\tbatch_count \tGEMM_STRIDED_BATCHED argument batch count\n"
+        << "\t-r \t\tprecision \tGEMM_STRIDED_BATCHED argument precsion, etc., h=half, b=bfloat16\n"
+        << "\t--header \t\theader \t\tprint header for output\n"
+        << std::endl;
 }
 
 static int parse_arguments(int                   argc,
@@ -493,6 +495,10 @@ static int parse_arguments(int                   argc,
                     else if(strncmp(argv[i], "b", 1) == 0)
                     {
                         type = rocsparselt_datatype_bf16_r;
+                    }
+                    else if(strncmp(argv[i], "i8", 1) == 0)
+                    {
+                        type = rocsparselt_datatype_i8_r;
                     }
                     else
                     {
@@ -692,8 +698,11 @@ void run(int64_t              m,
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matD, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
 
+    auto compute_type
+        = type == rocsparselt_datatype_i8_r ? rocsparselt_compute_i32 : rocsparselt_compute_f32;
+
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(
-        handle, &matmul, trans, trans, matA, matB, matC, matD, rocsparselt_compute_f32));
+        handle, &matmul, trans, trans, matA, matB, matC, matD, compute_type));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_prune(
         handle, matmul, d, d_test, rocsparselt_prune_smfmac_strip, stream));
@@ -895,6 +904,10 @@ int main(int argc, char* argv[])
     case rocsparselt_datatype_bf16_r:
         std::cout << "BF16";
         run<rocsparselt_bfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
+        break;
+    case rocsparselt_datatype_i8_r:
+        std::cout << "I8";
+        run<int8_t>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     default:
         break;

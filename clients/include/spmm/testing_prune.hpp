@@ -140,7 +140,8 @@ void testing_prune(const Arguments& arg)
     if(prune_algo != rocsparselt_prune_smfmac_strip)
         return;
 
-    auto prune_cpu = prune_algo == rocsparselt_prune_smfmac_strip ? prune_strip<Ti, Tc> : nullptr;
+    auto prune_cpu
+        = prune_algo == rocsparselt_prune_smfmac_strip ? prune_strip<Ti, float> : nullptr;
 
     rocsparse_operation transA = char2rocsparse_operation(arg.transA);
     rocsparse_operation transB = char2rocsparse_operation(arg.transB);
@@ -348,15 +349,6 @@ void testing_prune(const Arguments& arg)
             hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
         hipStreamSynchronize(stream);
         CHECK_SUCCESS(h_valid == 0);
-
-        //check the original matrix is sparisty 50 or not.
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_prune_check(handle, matmul, dA, d_valid, stream),
-            rocsparse_status_success);
-        CHECK_HIP_ERROR(
-            hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
-        hipStreamSynchronize(stream);
-        CHECK_SUCCESS(h_valid != 0);
     }
 
     if(arg.timing)

@@ -174,6 +174,7 @@ inline rocsparse_status validateMatrixArgs(rocsparselt_handle      handle,
     {
     case rocsparselt_datatype_f16_r:
     case rocsparselt_datatype_bf16_r:
+    case rocsparselt_datatype_i8_r:
         break;
     default:
         return rocsparse_status_not_implemented;

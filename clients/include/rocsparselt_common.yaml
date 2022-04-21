@@ -37,17 +37,12 @@ Common threads and streams: &common_threads_streams
   # - { threads: 5, streams: 5 }
 
 Real precisions: &real_precisions
-  - &half_precision
+  - &hpa_half_precision
     { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: f32 }
-  - &int8_precision
-    { a_type:  i8_r, b_type:  i8_r, c_type: i8_r, d_type: i8_r, compute_type: i32 }
-  - &bf16_precision
+  - &hpa_bf16_precision
     { a_type:  bf16_r, b_type:  bf16_r, c_type: bf16_r, d_type: bf16_r, compute_type: f32 }
-
-Short precisions: &half_bf16_precisions
-  - *half_precision
-  - *bf16_precision
-
+  - &hpa_int8_precision
+    { a_type:  i8_r, b_type:  i8_r, c_type: i8_r, d_type: i8_r, compute_type: i32 }
 
 # The Arguments struct passed directly to C++. See rocsparselt_arguments.hpp.
 # The order of the entries is significant, so it can't simply be a dictionary.

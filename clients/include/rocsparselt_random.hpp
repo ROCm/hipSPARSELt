@@ -246,6 +246,15 @@ inline T random_hpl_generator()
     return std::uniform_real_distribution<double>(-0.5, 0.5)(t_rocsparselt_rng);
 }
 
+/*! \brief  generate a random number in [-1.0,1.0] doubles  */
+template <>
+inline int8_t random_hpl_generator()
+{
+
+    return static_cast<int8_t>(
+        std::uniform_real_distribution<double>(-1.0, 1.0)(t_rocsparselt_rng));
+}
+
 // for rocsparselt_bfloat16, generate float, and convert to rocsparselt_bfloat16
 /*! \brief  generate a random number in HPL-like [-0.5,0.5] doubles  */
 template <>

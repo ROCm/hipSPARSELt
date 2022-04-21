@@ -138,14 +138,14 @@ Tests:
 - name: spmm_bad_arg
   category: pre_checkin
   function:
-    - spmm_bad_arg: *half_bf16_precisions
+    - spmm_bad_arg: *real_precisions
   transA: N
   transB: N
 
 - name: spmm_small
   category: quick
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   batch_count: [ 3 ]
@@ -153,7 +153,7 @@ Tests:
 - name: spmm_small_stride_zero
   category: quick
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *small_matrix_size_stride_a_range
   transA: N
   transB: N
@@ -162,7 +162,7 @@ Tests:
 - name: spmm_medium
   category: pre_checkin
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   batch_count: [ 3 ]
@@ -170,7 +170,7 @@ Tests:
 - name: spmm_medium_stride_zero
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *medium_matrix_size_stride_a_range
   transA: N
   transB: N
@@ -179,7 +179,7 @@ Tests:
 - name: spmm_large
   category: pre_checkin
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *large_matrix_size_range
   transA_transB: *transA_transB_range
   batch_count: [ 3 ]
@@ -187,7 +187,7 @@ Tests:
 - name: spmm_large_stride_zero
   category: pre_checkin
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *large_matrix_size_stride_a_range
   transA: N
   transB: N
@@ -196,7 +196,7 @@ Tests:
 - name: spmm_deepbench
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *deepbench_vec
   transA: N
   transB: T
@@ -205,7 +205,7 @@ Tests:
 - name: spmm_deepbench_alt
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *deepbench_vec
   initialization: special
   transA: N
@@ -215,7 +215,7 @@ Tests:
 - name: spmm_conv_resnet50_fwd
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *conv_resnet50_fwd
   transA: N
   transB: N
@@ -224,7 +224,7 @@ Tests:
 - name: spmm_conv_resnet50_bwddata
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *conv_resnet50_bwddata
   transA: N
   transB: T
@@ -233,7 +233,7 @@ Tests:
 - name: spmm_conv_inception4_fwd
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *conv_inception4_fwd
   transA: N
   transB: N
@@ -242,7 +242,7 @@ Tests:
 - name: spmm_conv_inception4_bwddata
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *conv_inception4_bwddata
   transA: N
   transB: T
@@ -251,7 +251,7 @@ Tests:
 - name: spmm_conv_ctest_fwd
   category: nightly
   function:
-    spmm: *half_bf16_precisions
+    spmm: *real_precisions
   matrix_size: *conv_ctest_fwd
   transA: N
   transB: N

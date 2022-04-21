@@ -146,8 +146,8 @@ __global__ void prune_strip_kernel(const Ti* in,
                     values[k] = in[pos];
             }
 
-            float   max_norm2 = static_cast<float>(-1.0f);
-            int64_t pos_a, pos_b;
+            auto max_norm2 = static_cast<Tc>(-1.0);
+            int  pos_a = 0, pos_b = 0;
 
 #pragma unroll
             for(int a = 0; a < 4; a++)
@@ -385,13 +385,13 @@ rocsparse_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle,
     switch(in_type)
     {
     case rocsparselt_datatype_f16_r:
-        if(compute_type == rocsparselt_compute_f32)
-            return rocsparselt_smfmac_prune_template<rocsparselt_half, float>(
-                PRUNE_PARAMS(rocsparselt_half));
+        return rocsparselt_smfmac_prune_template<rocsparselt_half, float>(
+            PRUNE_PARAMS(rocsparselt_half));
     case rocsparselt_datatype_bf16_r:
-        if(compute_type == rocsparselt_compute_f32)
-            return rocsparselt_smfmac_prune_template<rocsparselt_bfloat16, float>(
-                PRUNE_PARAMS(rocsparselt_bfloat16));
+        return rocsparselt_smfmac_prune_template<rocsparselt_bfloat16, float>(
+            PRUNE_PARAMS(rocsparselt_bfloat16));
+    case rocsparselt_datatype_i8_r:
+        return rocsparselt_smfmac_prune_template<int8_t, float>(PRUNE_PARAMS(int8_t));
     default:
         return rocsparse_status_not_implemented;
     }
@@ -423,6 +423,8 @@ rocsparse_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle ha
     case rocsparselt_datatype_bf16_r:
         return rocsparselt_smfmac_prune_check_template<rocsparselt_bfloat16>(
             PRUNE_CHECK_PARAMS(rocsparselt_bfloat16));
+    case rocsparselt_datatype_i8_r:
+        return rocsparselt_smfmac_prune_check_template<int8_t>(PRUNE_CHECK_PARAMS(int8_t));
     default:
         return rocsparse_status_not_implemented;
     }

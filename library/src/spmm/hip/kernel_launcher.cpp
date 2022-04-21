@@ -770,13 +770,16 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
 }
 
 /******************************************************************************
- * Intantiate the cases of runContractionProblem which are needed to satisfy  *
- * rocsparselt dependencies.                                                  *
+ * Intantiate the cases of runContractionProblem / initSolutions which are    *
+ * needed to satisfy rocsparselt dependencies.                                *
  ******************************************************************************/
 
-#define GENERATE_RUN_CONTRACTION_PROBLEM(Ti, To, Tc)             \
-    template rocsparse_status runContractionProblem<Ti, To, Tc>( \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int);
+#define GENERATE_DEFINITIONS(Ti, To, Tc)                                               \
+    template rocsparse_status runContractionProblem<Ti, To, Tc>(                       \
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int); \
+    template rocsparse_status initSolutions<Ti, To, Tc>(                               \
+        rocsparselt_handle, rocsparse_operation, rocsparse_operation, int*);
 
-GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_half, rocsparselt_half, float)
-GENERATE_RUN_CONTRACTION_PROBLEM(rocsparselt_bfloat16, rocsparselt_bfloat16, float)
+GENERATE_DEFINITIONS(rocsparselt_half, rocsparselt_half, float)
+GENERATE_DEFINITIONS(rocsparselt_bfloat16, rocsparselt_bfloat16, float)
+GENERATE_DEFINITIONS(int8_t, int8_t, int32_t)
