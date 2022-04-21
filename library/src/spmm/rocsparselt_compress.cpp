@@ -227,6 +227,8 @@ rocsparse_status rocsparselt_smfmac_compress_impl(const rocsparselt_handle handl
     case rocsparselt_datatype_bf16_r:
         return rocsparselt_smfmac_compress_template<rocsparselt_bfloat16>(
             COMPRESS_PARAMS(rocsparselt_bfloat16));
+    case rocsparselt_datatype_i8_r:
+        return rocsparselt_smfmac_compress_template<int8_t>(COMPRESS_PARAMS(int8_t));
     default:
         return rocsparse_status_not_implemented;
     }

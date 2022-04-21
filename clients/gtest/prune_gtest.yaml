@@ -138,14 +138,14 @@ Tests:
 - name: prune_bad_arg
   category: pre_checkin
   function:
-    - prune_bad_arg: *half_bf16_precisions
+    - prune_bad_arg: *real_precisions
   transA: N
   transB: N
 
 - name: prune_small
   category: quick
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   batch_count: [ 3 ]
@@ -154,7 +154,7 @@ Tests:
 - name: prune_small_stride_zero
   category: quick
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *small_matrix_size_stride_a_range
   transA: N
   transB: N
@@ -164,7 +164,7 @@ Tests:
 - name: prune_medium
   category: pre_checkin
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   batch_count: [ 3 ]
@@ -173,7 +173,7 @@ Tests:
 - name: prune_medium_stride_zero
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *medium_matrix_size_stride_a_range
   transA: N
   transB: N
@@ -183,7 +183,7 @@ Tests:
 - name: prune_large
   category: pre_checkin
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *large_matrix_size_range
   transA_transB: *transA_transB_range
   batch_count: [ 3 ]
@@ -192,7 +192,7 @@ Tests:
 - name: prune_large_stride_zero
   category: pre_checkin
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *large_matrix_size_stride_a_range
   transA: N
   transB: N
@@ -202,7 +202,7 @@ Tests:
 - name: prune_deepbench
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *deepbench_vec
   transA: N
   transB: T
@@ -212,7 +212,7 @@ Tests:
 - name: prune_deepbench_alt
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *deepbench_vec
   initialization: special
   transA: N
@@ -223,7 +223,7 @@ Tests:
 - name: prune_conv_resnet50_fwd
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *conv_resnet50_fwd
   transA: N
   transB: N
@@ -233,7 +233,7 @@ Tests:
 - name: prune_conv_resnet50_bwddata
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *conv_resnet50_bwddata
   transA: N
   transB: T
@@ -243,7 +243,7 @@ Tests:
 - name: prune_conv_inception4_fwd
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *conv_inception4_fwd
   transA: N
   transB: N
@@ -253,7 +253,7 @@ Tests:
 - name: prune_conv_inception4_bwddata
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *conv_inception4_bwddata
   transA: N
   transB: T
@@ -263,7 +263,7 @@ Tests:
 - name: prune_conv_ctest_fwd
   category: nightly
   function:
-    prune: *half_bf16_precisions
+    prune: *real_precisions
   matrix_size: *conv_ctest_fwd
   transA: N
   transB: N

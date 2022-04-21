@@ -684,6 +684,10 @@ rocsparse_status
                     && compute_type == rocsparselt_compute_f32)
                 initSolutions<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(
                     handle, matmulDescr->op_A, matmulDescr->op_B, &config_max_id);
+            else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
+                    && compute_type == rocsparselt_compute_i32)
+                initSolutions<int8_t, int8_t, int32_t>(
+                    handle, matmulDescr->op_A, matmulDescr->op_B, &config_max_id);
 
             if(!config_max_id)
             {

@@ -282,6 +282,17 @@ inline rocsparse_status rocsparselt_spmm_template(rocsparselt_handle       handl
             }
         }
     }
+    else if(a_type == rocsparselt_datatype_i8_r && b_type == rocsparselt_datatype_i8_r)
+    {
+        if(c_type == rocsparselt_datatype_i8_r && d_type == rocsparselt_datatype_i8_r)
+        {
+            if(compute_type == rocsparselt_compute_i32)
+            {
+                rs_status = spmm_typecasting<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(
+                    EX_TYPECASTING_PARM);
+            }
+        }
+    }
     else
     {
         rs_status = rocsparse_status_not_implemented;

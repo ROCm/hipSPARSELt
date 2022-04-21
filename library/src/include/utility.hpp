@@ -568,4 +568,14 @@ inline std::string generate_kernel_category_str<rocsparselt_bfloat16, rocsparsel
     return str;
 }
 
+template <>
+inline std::string generate_kernel_category_str<int8_t, int8_t, int32_t>(rocsparse_operation opA,
+                                                                         rocsparse_operation opB)
+{
+    std::string str = "8_8_0_";
+    str += (opA == rocsparse_operation_none ? "N" : "T");
+    str += "_";
+    str += (opB == rocsparse_operation_none ? "N" : "T");
+    return str;
+}
 #endif // UTILITY_H
