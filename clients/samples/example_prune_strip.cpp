@@ -452,34 +452,22 @@ void run(int64_t              m,
                                                             rocsparse_order_column,
                                                             rocsparselt_sparsity_50_percent));
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_dense_descr_init(handle, &matB, n, m, ld, 16, type, rocsparse_order_column));
+        rocsparselt_dense_descr_init(handle, &matB, n, m, n, 16, type, rocsparse_order_column));
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_dense_descr_init(handle, &matC, m, n, ld, 16, type, rocsparse_order_column));
+        rocsparselt_dense_descr_init(handle, &matC, m, m, m, 16, type, rocsparse_order_column));
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_dense_descr_init(handle, &matD, m, n, ld, 16, type, rocsparse_order_column));
+        rocsparselt_dense_descr_init(handle, &matD, m, m, m, 16, type, rocsparse_order_column));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matA, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matB, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matC, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matD, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
 
     auto compute_type
         = type == rocsparselt_datatype_i8_r ? rocsparselt_compute_i32 : rocsparselt_compute_f32;
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(
-        handle, &matmul, trans, trans, matA, matB, matC, matD, compute_type));
+        handle, &matmul, trans, rocsparse_operation_none, matA, matB, matC, matD, compute_type));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_prune(
         handle, matmul, d, d_test, rocsparselt_prune_smfmac_strip, stream));

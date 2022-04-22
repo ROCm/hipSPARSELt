@@ -674,12 +674,12 @@ void run(int64_t              m,
                                                             type,
                                                             rocsparse_order_column,
                                                             rocsparselt_sparsity_50_percent));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matB, col, row, ld, 16, type, rocsparse_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matC, row, col, ld, 16, type, rocsparse_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matD, row, col, ld, 16, type, rocsparse_order_column));
+    CHECK_ROCSPARSE_ERROR(
+        rocsparselt_dense_descr_init(handle, &matB, n, m, n, 16, type, rocsparse_order_column));
+    CHECK_ROCSPARSE_ERROR(
+        rocsparselt_dense_descr_init(handle, &matC, m, m, m, 16, type, rocsparse_order_column));
+    CHECK_ROCSPARSE_ERROR(
+        rocsparselt_dense_descr_init(handle, &matD, m, m, m, 16, type, rocsparse_order_column));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
@@ -702,7 +702,7 @@ void run(int64_t              m,
         = type == rocsparselt_datatype_i8_r ? rocsparselt_compute_i32 : rocsparselt_compute_f32;
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(
-        handle, &matmul, trans, trans, matA, matB, matC, matD, compute_type));
+        handle, &matmul, trans, rocsparse_operation_none, matA, matB, matC, matD, compute_type));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_prune(
         handle, matmul, d, d_test, rocsparselt_prune_smfmac_strip, stream));
@@ -898,15 +898,15 @@ int main(int argc, char* argv[])
     switch(type)
     {
     case rocsparselt_datatype_f16_r:
-        std::cout << "H";
+        std::cout << "H_";
         run<rocsparselt_half>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     case rocsparselt_datatype_bf16_r:
-        std::cout << "BF16";
+        std::cout << "BF16_";
         run<rocsparselt_bfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     case rocsparselt_datatype_i8_r:
-        std::cout << "I8";
+        std::cout << "I8_";
         run<int8_t>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     default:
