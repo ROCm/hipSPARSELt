@@ -159,13 +159,6 @@ inline rocsparse_status validateMatrixArgs(rocsparselt_handle      handle,
         return rocsparse_status_invalid_size;
     }
 
-    if(matrixType == rocsparselt_matrix_type_structured)
-        if(num_cols % 8 != 0)
-        {
-            rocsparselt_cerr << "row and col must be the mutliplication of 8" << std::endl;
-            return rocsparse_status_invalid_size;
-        }
-
     if(order == rocsparse_order_row)
         return rocsparse_status_not_implemented;
 
@@ -225,7 +218,7 @@ inline rocsparse_status validateMatmulDescrArgs(rocsparselt_handle       handle,
 
     if(m != num_rows_c || m != num_rows_d || n != num_cols_c || n != num_cols_d)
     {
-        rocsparselt_cerr << " matrix size is not valid" << std::endl;
+        rocsparselt_cerr << "matrix size is not valid" << std::endl;
         return rocsparse_status_invalid_size;
     }
 
