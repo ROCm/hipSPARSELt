@@ -537,27 +537,27 @@ int main(int argc, char* argv[])
     }
 
     // when arguments not specified, set to default values
-    if(m == invalid_int)
+    if(m == invalid_int64)
         m = DIM1;
-    if(n == invalid_int)
+    if(n == invalid_int64)
         n = DIM2;
-    if(k == invalid_int)
+    if(k == invalid_int64)
         k = DIM3;
-    if(lda == invalid_int)
+    if(lda == invalid_int64)
         lda = trans_a == rocsparse_operation_none ? m : k;
-    if(ldb == invalid_int)
+    if(ldb == invalid_int64)
         ldb = trans_b == rocsparse_operation_none ? k : n;
-    if(ldc == invalid_int)
+    if(ldc == invalid_int64)
         ldc = m;
-    if(ldd == invalid_int)
+    if(ldd == invalid_int64)
         ldd = m;
-    if(stride_a == invalid_int)
+    if(stride_a == invalid_int64)
         stride_a = trans_a == rocsparse_operation_none ? lda * k : lda * m;
-    if(stride_b == invalid_int)
+    if(stride_b == invalid_int64)
         stride_b = trans_b == rocsparse_operation_none ? ldb * n : ldb * k;
-    if(stride_c == invalid_int)
+    if(stride_c == invalid_int64)
         stride_c = ldc * n;
-    if(stride_d == invalid_int)
+    if(stride_d == invalid_int64)
         stride_d = ldd * n;
     if(alpha != alpha)
         alpha = ALPHA; // check for alpha == invalid_float == NaN
@@ -594,7 +594,7 @@ int main(int argc, char* argv[])
 
     int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
     int64_t row_a, col_a, row_b, col_b, row_c, col_c;
-    int     size_a1, size_b1, size_c1 = ldc * n;
+    int     size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
     if(trans_a == rocsparse_operation_none)
     {
         std::cout << "N";
@@ -635,16 +635,17 @@ int main(int argc, char* argv[])
     col_c = n;
 
     std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", " << ldc << ", "
-              << stride_a << ", " << stride_b << ", " << stride_c << ", " << batch_count << ", "
-              << alpha << ", " << beta << ", ";
+              << ldd << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", " << stride_d
+              << ", " << batch_count << ", " << alpha << ", " << beta << ", ";
     int64_t stride_a_r = stride_a == 0 ? size_a1 : stride_a;
     int64_t stride_b_r = stride_b == 0 ? size_b1 : stride_b;
     int64_t stride_c_r = stride_c == 0 ? size_c1 : stride_c;
+    int64_t stride_d_r = stride_d == 0 ? size_d1 : stride_d;
 
-    int64_t size_a = stride_a_r * batch_count;
-    int64_t size_b = stride_b_r * batch_count;
-    int64_t size_c = stride_c_r * batch_count;
-    int64_t size_d = size_c;
+    int64_t size_a = stride_a_r * (stride_a == 0 ? 1 : batch_count);
+    int64_t size_b = stride_b_r * (stride_b == 0 ? 1 : batch_count);
+    int64_t size_c = stride_c_r * (stride_c == 0 ? 1 : batch_count);
+    int64_t size_d = stride_d_r * (stride_d == 0 ? 1 : batch_count);
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
     std::vector<rocsparselt_half> ha(size_a);
     std::vector<rocsparselt_half> h_prune(size_a);
