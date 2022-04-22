@@ -16,12 +16,12 @@
 #include "utility.hpp"
 
 template <typename Ti, typename Tc>
-inline float norm2(Ti a, Ti b)
+inline float norm1(Ti a, Ti b)
 {
     auto ac = static_cast<Tc>(a);
     auto bc = static_cast<Tc>(b);
 
-    return static_cast<Tc>(sqrt(ac * ac + bc * bc));
+    return static_cast<Tc>(abs(ac) + abs(bc));
 }
 
 template <typename Ti, typename Tc>
@@ -45,18 +45,18 @@ void prune_strip(const Ti* in,
                     pos[k] = b * stride_b + i * stride1 + (j + k) * stride2;
                 }
 
-                auto max_norm2 = static_cast<Tc>(-1.0f);
+                auto max_norm1 = static_cast<Tc>(-1.0f);
                 int  pos_a, pos_b;
                 for(int a = 0; a < 4; a++)
                 {
                     for(int b = a + 1; b < 4; b++)
                     {
-                        auto norm2_v = norm2<Ti, double>(in[pos[a]], in[pos[b]]);
-                        if(norm2_v > max_norm2)
+                        auto norm1_v = norm1<Ti, double>(in[pos[a]], in[pos[b]]);
+                        if(norm1_v > max_norm1)
                         {
                             pos_a     = a;
                             pos_b     = b;
-                            max_norm2 = norm2_v;
+                            max_norm1 = norm1_v;
                         }
                     }
                 }
@@ -133,12 +133,18 @@ void testing_prune_bad_arg(const Arguments& arg)
         rocsparse_status_invalid_pointer);
 }
 
-template <typename Ti, typename To, typename Tc>
+template <typename Ti,
+          typename To,
+          typename Tc,
+          rocsparselt_batch_type btype = rocsparselt_batch_type::none>
 void testing_prune(const Arguments& arg)
 {
     rocsparselt_prune_alg prune_algo = rocsparselt_prune_alg(arg.prune_algo);
     if(prune_algo != rocsparselt_prune_smfmac_strip)
         return;
+
+    constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
+    constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
 
     auto prune_cpu
         = prune_algo == rocsparselt_prune_smfmac_strip ? prune_strip<Ti, float> : nullptr;
@@ -153,6 +159,7 @@ void testing_prune(const Arguments& arg)
     int64_t lda = arg.lda;
     int64_t ldb = arg.ldb;
     int64_t ldc = arg.ldc;
+    int64_t ldd = arg.ldd;
 
     double gpu_time_used, cpu_time_used;
     gpu_time_used = cpu_time_used              = 0.0;
@@ -170,11 +177,11 @@ void testing_prune(const Arguments& arg)
     int64_t stride_1_a = transA == rocsparse_operation_none ? 1 : lda;
     int64_t stride_2_a = transA == rocsparse_operation_none ? lda : 1;
 
-    int     num_batches = arg.batch_count;
-    int64_t stride_a    = arg.stride_a;
-    int64_t stride_b    = arg.stride_b;
-    int64_t stride_c    = arg.stride_c;
-    int64_t stride_d    = stride_c;
+    int     num_batches = (do_batched || do_strided_batched ? arg.batch_count : 1);
+    int64_t stride_a    = do_strided_batched ? arg.stride_a : lda * A_col;
+    int64_t stride_b    = do_strided_batched ? arg.stride_b : ldb * B_col;
+    int64_t stride_c    = do_strided_batched ? arg.stride_c : ldc * M;
+    int64_t stride_d    = do_strided_batched ? arg.stride_c : ldd * M;
 
     rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
                                      handle,
@@ -198,6 +205,7 @@ void testing_prune(const Arguments& arg)
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
     bool invalid_size_c = ldc < M;
+    bool invalid_size_d = ldd < M;
     if(invalid_size_a)
     {
         EXPECT_ROCSPARSELT_STATUS(matA.status(), rocsparse_status_invalid_size);
@@ -216,8 +224,14 @@ void testing_prune(const Arguments& arg)
 
         return;
     }
+    if(invalid_size_d)
+    {
+        EXPECT_ROCSPARSELT_STATUS(matD.status(), rocsparse_status_invalid_size);
 
-    if(num_batches > 0)
+        return;
+    }
+
+    if(do_batched || do_strided_batched)
     {
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
@@ -235,21 +249,13 @@ void testing_prune(const Arguments& arg)
             rocsparselt_mat_descr_set_attribute(
                 handle, matD, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
             rocsparse_status_success);
+    }
+
+    if(do_strided_batched)
+    {
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(int64_t)),
-            rocsparse_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(int64_t)),
-            rocsparse_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(int64_t)),
-            rocsparse_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(int64_t)),
             rocsparse_status_success);
     }
 
@@ -275,29 +281,19 @@ void testing_prune(const Arguments& arg)
     // Initial Data on CPU
     if(arg.initialization == rocsparselt_initialization::rand_int)
     {
-        rocsparselt_init<Ti>(hA, A_row, A_col, lda);
+        rocsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
     else if(arg.initialization == rocsparselt_initialization::trig_float)
     {
-        rocsparselt_init_sin<Ti>(hA, A_row, A_col, lda);
+        rocsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
     else if(arg.initialization == rocsparselt_initialization::hpl)
     {
-        rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda);
+        rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
     else if(arg.initialization == rocsparselt_initialization::special)
     {
-        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda);
-    }
-    else
-    {
-#ifdef GOOGLE_TEST
-        FAIL() << "unknown initialization type";
-        return;
-#else
-        rocsparselt_cerr << "unknown initialization type" << std::endl;
-        rocsparselt_abort();
-#endif
+        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
 
     // copy data from CPU to device
@@ -331,12 +327,13 @@ void testing_prune(const Arguments& arg)
         // check host error and norm
         if(arg.unit_check)
         {
-            unit_check_general<Ti>(M, K, lda, stride_a, hA_gold, hA_1, num_batches);
+            unit_check_general<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
         }
 
         if(arg.norm_check)
         {
-            unit_check_diff<Ti>(M, K, lda, stride_a, hA_gold, hA_1, num_batches);
+            rocsparselt_error
+                = unit_check_diff<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
         }
 
         device_vector<int> d_valid(1, 1, HMM);

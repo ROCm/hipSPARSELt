@@ -155,7 +155,10 @@ void testing_spmm_bad_arg(const Arguments& arg)
         rocsparse_status_invalid_value);
 }
 
-template <typename Ti, typename To, typename Tc>
+template <typename Ti,
+          typename To,
+          typename Tc,
+          rocsparselt_batch_type btype = rocsparselt_batch_type::none>
 void testing_spmm(const Arguments& arg)
 {
     rocsparse_operation transA = char2rocsparse_operation(arg.transA);
@@ -181,12 +184,6 @@ void testing_spmm(const Arguments& arg)
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
-    int     num_batches = arg.batch_count;
-    int64_t stride_a    = arg.stride_a;
-    int64_t stride_b    = arg.stride_b;
-    int64_t stride_c    = arg.stride_c;
-    int64_t stride_d    = stride_c;
-
     int64_t A_row = transA == rocsparse_operation_none ? M : K;
     int64_t A_col = transA == rocsparse_operation_none ? K : M;
     int64_t B_row = transB == rocsparse_operation_none ? K : N;
@@ -195,18 +192,13 @@ void testing_spmm(const Arguments& arg)
     int64_t stride_1_a = transA == rocsparse_operation_none ? 1 : lda;
     int64_t stride_2_a = transA == rocsparse_operation_none ? lda : 1;
 
-    int64_t c_stride_1_a = transA == rocsparse_operation_none ? 1 : K / 2;
-    int64_t c_stride_2_a = transA == rocsparse_operation_none ? M : 1;
-    int64_t c_stride_a_r
-        = transA == rocsparse_operation_none ? K / 2 * c_stride_2_a : M * c_stride_1_a;
-    int64_t c_stride_a = stride_a == 0 ? 0 : c_stride_a_r;
-
-    int64_t m_stride_1_a = K / 8;
-    int64_t m_stride_2_a = 1;
-    int64_t m_stride_a_r = M * m_stride_1_a;
-    int64_t m_stride_a   = stride_a == 0 ? 0 : m_stride_a_r;
-
-    auto metadata_offset = c_stride_a_r * sizeof(Ti) * (stride_a == 0 ? 1 : num_batches);
+    constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
+    constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
+    int            num_batches        = (do_batched || do_strided_batched ? arg.batch_count : 1);
+    int64_t        stride_a           = do_strided_batched ? arg.stride_a : lda * A_col;
+    int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
+    int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * M;
+    int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * M;
 
     rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
                                      handle,
@@ -249,7 +241,7 @@ void testing_spmm(const Arguments& arg)
         return;
     }
 
-    if(num_batches > 0)
+    if(do_batched || do_strided_batched)
     {
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
@@ -267,6 +259,10 @@ void testing_spmm(const Arguments& arg)
             rocsparselt_mat_descr_set_attribute(
                 handle, matD, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
             rocsparse_status_success);
+    }
+
+    if(do_strided_batched)
+    {
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(int64_t)),
@@ -396,15 +392,10 @@ void testing_spmm(const Arguments& arg)
             rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
             rocsparselt_init_hpl<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
         }
-        else
+        else if(arg.initialization == rocsparselt_initialization::special)
         {
-#ifdef GOOGLE_TEST
-            FAIL() << "unknown initialization type";
-            return;
-#else
-            rocsparselt_cerr << "unknown initialization type" << std::endl;
-            rocsparselt_abort();
-#endif
+            rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, num_batches);
+            rocsparselt_init_alt_impl_small<Ti>(hB, B_row, B_col, ldb, num_batches);
         }
     }
 
@@ -420,6 +411,8 @@ void testing_spmm(const Arguments& arg)
             rocsparselt_init_sin<To>(hC, M, N, ldc, stride_c, num_batches);
         else if(arg.initialization == rocsparselt_initialization::hpl)
             rocsparselt_init_hpl<To>(hC, M, N, ldc, stride_c, num_batches);
+        else if(arg.initialization == rocsparselt_initialization::special)
+            rocsparselt_init<To>(hC, M, N, ldc, stride_c, num_batches);
     }
 
     // copy data from CPU to device
@@ -447,17 +440,14 @@ void testing_spmm(const Arguments& arg)
     EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
                               rocsparse_status_success);
 
-    double rocsparselt_err = 0.0;
     if(arg.unit_check || arg.norm_check)
     {
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
-
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_matmul(
                 handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
             rocsparse_status_success);
-
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
         {
@@ -562,7 +552,7 @@ void testing_spmm(const Arguments& arg)
 
         if(arg.norm_check)
         {
-            rocsparselt_err = std::abs(
+            rocsparselt_error = std::abs(
                 norm_check_general<To>('F', M, N, ldd, stride_d, hD_gold, hD_1, num_batches));
         }
     }
@@ -571,7 +561,6 @@ void testing_spmm(const Arguments& arg)
     {
         int number_cold_calls = arg.cold_iters;
         int number_hot_calls  = arg.iters;
-
         for(int i = 0; i < number_cold_calls; i++)
         {
             EXPECT_ROCSPARSELT_STATUS(rocsparselt_matmul(handle,
@@ -605,8 +594,7 @@ void testing_spmm(const Arguments& arg)
                                       rocsparse_status_success);
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
-
-        auto flops = gemm_gflop_count<float>(M, N, K);
+        auto flops    = gemm_gflop_count<float>(M, N, K);
         switch(arg.activation_type)
         {
         case rocsparselt_activation_type::relu:
@@ -621,28 +609,26 @@ void testing_spmm(const Arguments& arg)
         default:
             break;
         }
-        ArgumentModel<e_transA,
-                      e_transB,
-                      e_M,
-                      e_N,
-                      e_K,
-                      e_alpha,
-                      e_lda,
-                      e_stride_a,
-                      e_beta,
-                      e_ldb,
-                      e_stride_b,
-                      e_ldc,
-                      e_stride_c,
-                      e_ldd,
-                      e_stride_d,
-                      e_batch_count>{}
-            .log_args<float>(rocsparselt_cout,
-                             arg,
-                             gpu_time_used,
-                             flops,
-                             ArgumentLogging::NA_value,
-                             cpu_time_used,
-                             rocsparselt_error);
+#define argument_param_nb                                                                     \
+    e_transA, e_transB, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a, e_beta, e_ldb, e_stride_b, \
+        e_ldc, e_stride_c, e_ldd, e_stride_d
+#define argument_param argument_param_nb, e_batch_count
+
+        if(do_batched || do_strided_batched)
+            ArgumentModel<argument_param>{}.log_args<float>(rocsparselt_cout,
+                                                            arg,
+                                                            gpu_time_used,
+                                                            flops,
+                                                            ArgumentLogging::NA_value,
+                                                            cpu_time_used,
+                                                            rocsparselt_error);
+        else
+            ArgumentModel<argument_param_nb>{}.log_args<float>(rocsparselt_cout,
+                                                               arg,
+                                                               gpu_time_used,
+                                                               flops,
+                                                               ArgumentLogging::NA_value,
+                                                               cpu_time_used,
+                                                               rocsparselt_error);
     }
 }

@@ -40,6 +40,10 @@ namespace
         {
             if(!strcmp(arg.function, "prune"))
                 testing_prune<Ti, To, Tc>(arg);
+            else if(!strcmp(arg.function, "prune_batched"))
+                testing_prune<Ti, To, Tc, rocsparselt_batch_type::batched>(arg);
+            else if(!strcmp(arg.function, "prune_strided_batched"))
+                testing_prune<Ti, To, Tc, rocsparselt_batch_type::strided_batched>(arg);
             else if(!strcmp(arg.function, "prune_bad_arg"))
                 testing_prune_bad_arg<Ti, To, Tc>(arg);
             else
@@ -58,7 +62,9 @@ namespace
         // Filter for which functions apply to this suite
         static bool function_filter(const Arguments& arg)
         {
-            return !strcmp(arg.function, "prune") || !strcmp(arg.function, "prune_bad_arg");
+            return !strcmp(arg.function, "prune") || !strcmp(arg.function, "prune_batched")
+                   || !strcmp(arg.function, "prune_strided_batched")
+                   || !strcmp(arg.function, "prune_bad_arg");
         }
 
         // Google Test name suffix based on parameters

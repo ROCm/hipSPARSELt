@@ -63,7 +63,11 @@ set_target_properties( rocsparselt-test PROPERTIES
 set( ROCSPARSELT_TEST_DATA "${PROJECT_BINARY_DIR}/staging/rocsparselt_gtest.data")
 add_custom_command( OUTPUT "${ROCSPARSELT_TEST_DATA}"
                     COMMAND ${python} ../common/rocsparselt_gentest.py -I ../include rocsparselt_gtest.yaml -o "${ROCSPARSELT_TEST_DATA}"
-                    DEPENDS ../common/rocsparselt_gentest.py ../include/rocsparselt_common.yaml prune_gtest.yaml compress_gtest.yaml
+                    DEPENDS ../common/rocsparselt_gentest.py ../include/rocsparselt_common.yaml
+                            spmm_common.yaml spmm_batched_common.yaml spmm_strided_batched_common.yaml
+                            prune_gtest.yaml prune_batched_gtest.yaml prune_strided_batched_gtest.yaml
+                            compress_gtest.yaml compress_batched_gtest.yaml compress_strided_batched_gtest.yaml
+                            spmm_gtest.yaml spmm_batched_gtest.yaml spmm_strided_batched_gtest.yaml
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 add_custom_target( rocsparselt-test-data
                    DEPENDS "${ROCSPARSELT_TEST_DATA}" )
