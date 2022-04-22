@@ -1,138 +1,25 @@
 ---
 include: rocsparselt_common.yaml
 include: known_bugs.yaml
+include: spmm_common.yaml
 
 Definitions:
-  - &small_matrix_size_range
-    - { M:     8, N:     8, K:     8, lda:     8, ldb:     8, ldc:     8, ldd:     8, stride_a:       64, stride_b:       64, stride_c:       64, stride_d:       64 }
-    - { M:    16, N:    16, K:    16, lda:    16, ldb:    16, ldc:    16, ldd:    16, stride_a:      256, stride_b:      256, stride_c:      256, stride_d:      256 }
-    - { M:    16, N:    16, K:    16, lda:    16, ldb:    16, ldc:    16, ldd:    16, stride_a:      256, stride_b:      256, stride_c:      256, stride_d:      256 }
-    - { M:    64, N:    64, K:    64, lda:    64, ldb:    64, ldc:    64, ldd:    64, stride_a:     4096, stride_b:     4096, stride_c:     4096, stride_d:     4096 }
-    - { M:   128, N:   128, K:   128, lda:   128, ldb:   128, ldc:   128, ldd:   128, stride_a:    16384, stride_b:    16384, stride_c:    16384, stride_d:    16384 }
+  - &alpha_beta_range
+    - { alpha:  5, beta:  0 }
+    - { alpha:  0, beta:  3 }
+    - { alpha:  1, beta:  3 }
+    - { alpha:  1, beta:  1 }
 
-  - &small_matrix_size_stride_a_range
-    - { M:    16, N:    16, K:    16, lda:    16, ldb:    16, ldc:    16, ldd:    16, stride_a:        0, stride_b:      256, stride_c:      256, stride_d:      256 }
-    - { M:    64, N:    64, K:    64, lda:    64, ldb:    64, ldc:    64, ldd:    64, stride_a:     4096, stride_b:        0, stride_c:     4096, stride_d:     4096 }
-    - { M:   128, N:   128, K:   128, lda:   128, ldb:   128, ldc:   128, ldd:   128, stride_a:        0, stride_b:    16384, stride_c:    16384, stride_d:    16384 }
-
-  - &medium_matrix_size_range
-    - { M:   256, N:   256, K:   256, lda:   256, ldb:   256, ldc:   256, ldd:   256, stride_a:    65536, stride_b:    65536, stride_c:    65536, stride_d:    65536 }
-
-  - &medium_matrix_size_stride_a_range
-    - { M:   256, N:   256, K:   256, lda:   256, ldb:   256, ldc:   256, ldd:   256, stride_a:        0, stride_b:    65536, stride_c:    65536, stride_d:    65536 }
-
-  - &large_matrix_size_range
-    - { M:   512, N:   512, K:   512, lda:   512, ldb:   512, ldc:   512, ldd:   512, stride_a:   262144, stride_b:   262144, stride_c:   262144, stride_d:   262144 }
-
-  - &large_matrix_size_stride_a_range
-    - { M:   512, N:   512, K:   512, lda:   512, ldb:   512, ldc:   512, ldd:   512, stride_a:   262144, stride_b:        0, stride_c:   262144, stride_d:   262144 }
-
-  - &deepbench_vec
-    - { M: 12544, N:    64, K:    64, lda: 12544, ldb:    64, ldc: 12544, ldd: 12544, stride_a:   802816, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M: 12544, N:    64, K:    64, lda: 12544, ldb:    64, ldc: 12544, ldd: 12544, stride_a:   802816, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:  3136, N:   256, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:  3136, N:   256, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:  3136, N:    64, K:   256, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:  3136, N:    64, K:   256, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:   784, N:   128, K:   512, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:   784, N:   128, K:   512, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:   784, N:   512, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0, stride_c:   401408, stride_d:   401408 }
-    - { M:   784, N:   512, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0, stride_c:   401408, stride_d:   401408 }
-    - { M:   784, N:    64, K:   192, lda:   784, ldb:   192, ldc:   784, ldd:   784, stride_a:   150528, stride_b:        0, stride_c:    50176, stride_d:    50176 }
-    - { M: 12544, N:    64, K:    64, lda: 12544, ldb:    64, ldc: 12544, ldd: 12544, stride_a:   802816, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M: 12544, N:    64, K:    64, lda: 12544, ldb:    64, ldc: 12544, ldd: 12544, stride_a:   802816, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:   196, N:  1024, K:   256, lda:   196, ldb:  1024, ldc:   196, ldd:   196, stride_a:    50176, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:   196, N:  1024, K:   256, lda:   196, ldb:  1024, ldc:   196, ldd:   196, stride_a:    50176, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:   196, N:   256, K:  1024, lda:   196, ldb:   256, ldc:   196, ldd:   196, stride_a:   200704, stride_b:        0, stride_c:    50176, stride_d:    50176 }
-    - { M:   196, N:   256, K:  1024, lda:   196, ldb:   256, ldc:   196, ldd:   196, stride_a:   200704, stride_b:        0, stride_c:    50176, stride_d:    50176 }
-    - { M:   196, N:   256, K:   256, lda:   196, ldb:   256, ldc:   196, ldd:   196, stride_a:    50176, stride_b:        0, stride_c:    50176, stride_d:    50176 }
-    - { M:   196, N:   256, K:   256, lda:   196, ldb:   256, ldc:   196, ldd:   196, stride_a:    50176, stride_b:        0, stride_c:    50176, stride_d:    50176 }
-    - { M:   196, N:   512, K:   192, lda:   196, ldb:   512, ldc:   196, ldd:   196, stride_a:    37632, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:  3136, N:   256, K:    64, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:  3136, N:   256, K:    64, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:  3136, N:    64, K:   256, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:  3136, N:    64, K:   256, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:    49, N:  2048, K:   512, lda:    49, ldb:  2048, ldc:    49, ldd:    49, stride_a:    25088, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:    49, N:  2048, K:   512, lda:    49, ldb:  2048, ldc:    49, ldd:    49, stride_a:    25088, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:    49, N:   512, K:  2048, lda:    49, ldb:   512, ldc:    49, ldd:    49, stride_a:   100352, stride_b:        0, stride_c:    25088, stride_d:    25088 }
-    - { M:    49, N:   512, K:  2048, lda:    49, ldb:   512, ldc:    49, ldd:    49, stride_a:   100352, stride_b:        0, stride_c:    25088, stride_d:    25088 }
-    - { M:    49, N:   512, K:   512, lda:    49, ldb:   512, ldc:    49, ldd:    49, stride_a:    25088, stride_b:        0, stride_c:    25088, stride_d:    25088 }
-    - { M:    49, N:   512, K:   512, lda:    49, ldb:   512, ldc:    49, ldd:    49, stride_a:    25088, stride_b:        0, stride_c:    25088, stride_d:    25088 }
-    - { M:    49, N:   832, K:   256, lda:    49, ldb:   832, ldc:    49, ldd:    49, stride_a:    12544, stride_b:        0, stride_c:    40768, stride_d:    40768 }
-    - { M:   784, N:   128, K:   512, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:   784, N:   128, K:   512, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:   784, N:   192, K:    64, lda:   784, ldb:   192, ldc:   784, ldd:   784, stride_a:    50176, stride_b:        0, stride_c:   150528, stride_d:   150528 }
-    - { M:   784, N:   512, K:   128, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0, stride_c:   401408, stride_d:   401408 }
-    - { M:   784, N:   512, K:   128, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0, stride_c:   401408, stride_d:   401408 }
-    - { M:  3025, N:   256, K:    64, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025, stride_a:   193600, stride_b:        0, stride_c:   774400, stride_d:   774400 }
-
-  - &conv_resnet50_fwd
-    - { M:  3025, N:    64, K:   256, lda:  3025, ldb:   256, ldc:  3025, ldd:  3025, stride_a:   774400, stride_b:        0, stride_c:   193600, stride_d:   193600 }
-    - { M:  3025, N:    64, K:    64, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025, stride_a:   193600, stride_b:        0, stride_c:   193600, stride_d:   193600 }
-    - { M:  3025, N:   256, K:    64, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025, stride_a:   193600, stride_b:        0, stride_c:   774400, stride_d:   774400 }
-    - { M:  3136, N:   256, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:  3136, N:    64, K:   256, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:  3136, N:    64, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:   784, N:   128, K:   512, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:   784, N:   512, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0, stride_c:   401408, stride_d:   401408 }
-
-  - &conv_resnet50_bwddata
-    - { M:   196, N:  1024, K:   256, lda:   196, ldb:  1024, ldc:   196, ldd:   196, stride_a:    50176, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:   196, N:   256, K:  1024, lda:   196, ldb:   256, ldc:   196, ldd:   196, stride_a:   200704, stride_b:        0, stride_c:    50176, stride_d:    50176 }
-    - { M:  3025, N:   256, K:    64, lda:  3025, ldb:   256, ldc:  3025, ldd:  3025, stride_a:   193600, stride_b:        0, stride_c:   774400, stride_d:   774400 }
-    - { M:  3025, N:    64, K:   256, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025, stride_a:   774400, stride_b:        0, stride_c:   193600, stride_d:   193600 }
-    - { M:  3025, N:    64, K:    64, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025, stride_a:   193600, stride_b:        0, stride_c:   193600, stride_d:   193600 }
-    - { M:  3136, N:   256, K:    64, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   802816, stride_d:   802816 }
-    - { M:  3136, N:    64, K:   256, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:  3136, N:    64, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0, stride_c:   200704, stride_d:   200704 }
-    - { M:    49, N:  2048, K:   512, lda:    49, ldb:  2048, ldc:    49, ldd:    49, stride_a:    25088, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:    49, N:   512, K:  2048, lda:    49, ldb:   512, ldc:    49, ldd:    49, stride_a:   100352, stride_b:        0, stride_c:    25088, stride_d:    25088 }
-    - { M:   784, N:   128, K:   512, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0, stride_c:   100352, stride_d:   100352 }
-    - { M:   784, N:   512, K:   128, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0, stride_c:   401408, stride_d:   401408 }
-
-  - &conv_inception4_fwd
-    - { M:  1225, N:   192, K:   384, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225, stride_a:   470400, stride_b:        0, stride_c:   235200, stride_d:   235200 }
-    - { M:  1225, N:    64, K:   384, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225, stride_a:   470400, stride_b:        0, stride_c:    78400, stride_d:    78400 }
-    - { M:  1225, N:    96, K:   384, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225, stride_a:   470400, stride_b:        0, stride_c:   117600, stride_d:   117600 }
-    - { M:   289, N:   128, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:   295936, stride_b:        0, stride_c:    36992, stride_d:    36992 }
-    - { M:   289, N:   192, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:   295936, stride_b:        0, stride_c:    55488, stride_d:    55488 }
-    - { M:   289, N:   256, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:   295936, stride_b:        0, stride_c:    73984, stride_d:    73984 }
-    - { M:   289, N:   384, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:   295936, stride_b:        0, stride_c:   110976, stride_d:   110976 }
-    - { M:  5329, N:    64, K:   160, lda:  5329, ldb:   160, ldc:  5329, ldd:  5329, stride_a:   852640, stride_b:        0, stride_c:   341056, stride_d:   341056 }
-
-  - &conv_inception4_bwddata
-    - { M:  1225, N:   384, K:   192, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225, stride_a:   235200, stride_b:        0, stride_c:   470400, stride_d:   470400 }
-    - { M:  1225, N:   384, K:    64, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225, stride_a:    78400, stride_b:        0, stride_c:   470400, stride_d:   470400 }
-    - { M:  1225, N:   384, K:    96, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225, stride_a:   117600, stride_b:        0, stride_c:   470400, stride_d:   470400 }
-    - { M:   289, N:  1024, K:   128, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:    36992, stride_b:        0, stride_c:   295936, stride_d:   295936 }
-    - { M:   289, N:  1024, K:   192, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:    55488, stride_b:        0, stride_c:   295936, stride_d:   295936 }
-    - { M:   289, N:  1024, K:   256, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:    73984, stride_b:        0, stride_c:   295936, stride_d:   295936 }
-    - { M:   289, N:  1024, K:   384, lda:   289, ldb:  1024, ldc:   289, ldd:   289, stride_a:   110976, stride_b:        0, stride_c:   295936, stride_d:   295936 }
-    - { M:  5329, N:   160, K:    64, lda:  5329, ldb:   160, ldc:  5329, ldd:  5329, stride_a:   341056, stride_b:        0, stride_c:   852640, stride_d:   852640 }
-    - { M:    64, N:  1536, K:   256, lda:    64, ldb:  1536, ldc:    64, ldd:    64, stride_a:    16384, stride_b:        0, stride_c:    98304, stride_d:    98304 }
-    - { M:    64, N:  1536, K:   384, lda:    64, ldb:  1536, ldc:    64, ldd:    64, stride_a:    24576, stride_b:        0, stride_c:    98304, stride_d:    98304 }
-
-  - &conv_ctest_fwd
-    - { M: 12544, N:     8, K:    64, lda: 12544, ldb:    64, ldc: 12544, ldd: 12544, stride_a:   802816, stride_b:        0}
-    - { M:  3136, N:     8, K:   128, lda:  3136, ldb:   128, ldc:  3136, ldd:  3136, stride_a:   401408, stride_b:        0}
-    - { M:  3136, N:     8, K:   256, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136, stride_a:   802816, stride_b:        0}
-    - { M:  3136, N:     8, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136, stride_a:   200704, stride_b:        0}
-    - { M: 32768, N:     8, K:   480, lda: 32768, ldb:   480, ldc: 32768, ldd: 32768, stride_a: 15728640, stride_b:        0}
-    - { M:   729, N:     8, K:    64, lda:   729, ldb:    64, ldc:   729, ldd:   729, stride_a:    46656, stride_b:        0}
-    - { M:   784, N:     8, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784, stride_a:   100352, stride_b:        0}
-    - { M:   784, N:     8, K:   192, lda:   784, ldb:   192, ldc:   784, ldd:   784, stride_a:   150528, stride_b:        0}
-    - { M:   784, N:     8, K:   256, lda:   784, ldb:   256, ldc:   784, ldd:   784, stride_a:   200704, stride_b:        0}
-    - { M:   784, N:     8, K:   320, lda:   784, ldb:   320, ldc:   784, ldd:   784, stride_a:   250880, stride_b:        0}
-    - { M:   784, N:     8, K:   512, lda:   784, ldb:   512, ldc:   784, ldd:   784, stride_a:   401408, stride_b:        0}
-    - { M:   784, N:     8, K:    64, lda:   784, ldb:    64, ldc:   784, ldd:   784, stride_a:    50176, stride_b:        0}
-    - { M:  8192, N:     8, K:   480, lda:  8192, ldb:   480, ldc:  8192, ldd:  8192, stride_a:  3932160, stride_b:        0}
-    - { M:  8192, N:     8, K:   512, lda:  8192, ldb:   512, ldc:  8192, ldd:  8192, stride_a:  4194304, stride_b:        0}
-    - { M:  8192, N:     8, K:   528, lda:  8192, ldb:   528, ldc:  8192, ldd:  8192, stride_a:  4325376, stride_b:        0}
-    - { M:  8192, N:     8, K:   832, lda:  8192, ldb:   832, ldc:  8192, ldd:  8192, stride_a:  6815744, stride_b:        0}
+  - &alpha_beta_range_small
+    - { alpha: 2, alphai: 2, beta: -1.0, betai: 2.0 }
 
   - &transA_transB_range
     - { transA: N, transB: N }
     - { transA: T, transB: N }
+
+  - &deepbench_alpha_beta_range
+    - { alpha: 1, beta: 0 }
+    - { alpha: 1, beta: 1 }
 
 Tests:
 - name: prune_bad_arg
@@ -141,6 +28,14 @@ Tests:
     - prune_bad_arg: *real_precisions
   transA: N
   transB: N
+  fortran: [ false, true ]
+
+# Tests confirm no NaN propagation when alpha = 0, 2 and beta = 0. Value .NaN is converted into zero
+- {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *hpa_bf16_precision,
+   function: prune, transA: N, transB: N, M: 256, N: 128, K:  64, alpha: [ .NaN, 2 ], beta: [ .NaN, 2 ] }
+
+
+# Split *real_precisions into *int8 and *nonint8_real_precisions. Since int8 has flags 0,1
 
 - name: prune_small
   category: quick
@@ -148,18 +43,7 @@ Tests:
     prune: *real_precisions
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
-  batch_count: [ 3 ]
-  prune_algo: [ 0, 1 ]
-
-- name: prune_small_stride_zero
-  category: quick
-  function:
-    prune: *real_precisions
-  matrix_size: *small_matrix_size_stride_a_range
-  transA: N
-  transB: N
-  batch_count: [ 1, 3 ]
-  prune_algo: [ 0, 1 ]
+  alpha_beta: *alpha_beta_range
 
 - name: prune_medium
   category: pre_checkin
@@ -167,107 +51,436 @@ Tests:
     prune: *real_precisions
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
-  batch_count: [ 3 ]
-  prune_algo: [ 0, 1 ]
+  alpha_beta: *alpha_beta_range
 
-- name: prune_medium_stride_zero
-  category: nightly
-  function:
-    prune: *real_precisions
-  matrix_size: *medium_matrix_size_stride_a_range
-  transA: N
-  transB: N
-  batch_count: 3
-  prune_algo: [ 0, 1 ]
-
-- name: prune_large
+- name: prune_medium_alt
   category: pre_checkin
   function:
-    prune: *real_precisions
-  matrix_size: *large_matrix_size_range
+    prune: *hpa_half_precision
+  matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
-  batch_count: [ 3 ]
-  prune_algo: [ 0, 1 ]
+  alpha: 1
+  beta: 0
+  initialization: special
 
-- name: prune_large_stride_zero
+- name: prune_medium_HMM
+  category: HMM
+  function:
+    prune: *real_precisions
+  matrix_size: *medium_matrix_size_range
+  transA: [ N ]
+  transB: [ N ]
+  alpha: 1
+  beta: 1
+  HMM: true
+
+- name: prune_chunk
   category: pre_checkin
   function:
     prune: *real_precisions
-  matrix_size: *large_matrix_size_stride_a_range
-  transA: N
-  transB: N
-  batch_count: [ 3 ]
-  prune_algo: [ 0, 1 ]
+  matrix_size: *chunk_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha: 2
+  beta: 3
+
+# Split *int8_half_single_precisions into *int8 and *half_single_precisions. Since int8 has flags 0,1
 
 - name: prune_deepbench
   category: nightly
   function:
     prune: *real_precisions
-  matrix_size: *deepbench_vec
-  transA: N
-  transB: T
-  batch_count: [ 2 ]
-  prune_algo: [ 0, 1 ]
+  matrix_size: *deepbench_sizes
+  alpha_beta: *deepbench_alpha_beta_range
+  transA_transB: *transA_transB_range
 
 - name: prune_deepbench_alt
   category: nightly
   function:
-    prune: *real_precisions
-  matrix_size: *deepbench_vec
+    prune: *hpa_half_precision
+  matrix_size: *deepbench_sizes
+  alpha: 1
+  beta: 0
+  flags: 4
   initialization: special
-  transA: N
-  transB: T
-  batch_count: [ 2 ]
-  prune_algo: [ 0, 1 ]
+  transA_transB: *transA_transB_range
 
-- name: prune_conv_resnet50_fwd
+- name: prune_deepbench_large_int8
+  category: nightly
+  function:
+    prune: *hpa_int8_precision
+  matrix_size: *deepbench_large_sizes
+  alpha_beta: *deepbench_alpha_beta_range
+  transA: T
+  transB: N
+
+- name: resnet50_fwd
   category: nightly
   function:
     prune: *real_precisions
-  matrix_size: *conv_resnet50_fwd
   transA: N
   transB: N
-  batch_count: 4
-  prune_algo: [ 0, 1 ]
+  matrix_size: *resnet50_fwd_sizes
+  alpha: 1
+  beta: 0
 
-- name: prune_conv_resnet50_bwddata
+- name: resnet50_fwd_alt
   category: nightly
   function:
-    prune: *real_precisions
-  matrix_size: *conv_resnet50_bwddata
-  transA: N
-  transB: T
-  batch_count: 4
-  prune_algo: [ 0, 1 ]
-
-- name: prune_conv_inception4_fwd
-  category: nightly
-  function:
-    prune: *real_precisions
-  matrix_size: *conv_inception4_fwd
+    prune: *hpa_half_precision
   transA: N
   transB: N
-  batch_count: 4
-  prune_algo: [ 0, 1 ]
+  matrix_size: *resnet50_fwd_sizes
+  alpha: 1
+  beta: 0
+  initialization: special
 
-- name: prune_conv_inception4_bwddata
+- name: resnet50_bwdwrw
   category: nightly
   function:
     prune: *real_precisions
-  matrix_size: *conv_inception4_bwddata
+  transA: T
+  transB: N
+  matrix_size: *resnet50_bwdwrw_sizes
+  alpha: 1
+  beta: 1
+
+- name: resnet50_bwddata
+  category: nightly
+  function:
+    prune: *real_precisions
   transA: N
   transB: T
-  batch_count: 4
-  prune_algo: [ 0, 1 ]
+  matrix_size: *resnet50_bwddata_sizes
+  alpha: 1
+  beta: 0
 
-- name: prune_conv_ctest_fwd
+- name: inception4_fwd
   category: nightly
   function:
     prune: *real_precisions
-  matrix_size: *conv_ctest_fwd
   transA: N
   transB: N
-  batch_count: 1
-  prune_algo: [ 0, 1 ]
+  matrix_size: *inception4_fwd_sizes
+  alpha: 1
+  beta: 0
 
+- name: inception4_bwdwrw
+  category: nightly
+  function:
+    prune: *real_precisions
+  transA: T
+  transB: N
+  matrix_size: *inception4_bwdwrw_sizes
+  alpha: 1
+  beta: 1
+
+- name: inception4_bwddata
+  category: nightly
+  function:
+    prune: *real_precisions
+  transA: N
+  transB: T
+  matrix_size: *inception4_bwddata_sizes
+  alpha: 1
+  beta: 0
+
+- name: ctest_bwdwrw
+  category: nightly
+  function:
+    prune: *real_precisions
+  transA: T
+  transB: N
+  alpha: 1
+  beta: 1
+  matrix_size: *ctest_bwdwrw_sizes
+
+- name: ctest_fwd
+  category: nightly
+  function:
+    prune: *real_precisions
+  transA: N
+  transB: N
+  alpha: 1
+  beta: 0
+  matrix_size: *ctest_fwd_sizes
+
+- name: prune_8
+  category: quick
+  function:
+    prune: *real_precisions
+  M: 8
+  N: 8
+  K: 8
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_9_12
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 9..12
+  N: 9..12
+  K: 8
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_13_16
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 13..16
+  N: 13..16
+  K: 16
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_17_20
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 17..20
+  N: 17..20
+  K: 16
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_20_23
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 20..23
+  N: 20..23
+  K: 16
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_24_27
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 24..27
+  N: 24..27
+  K: 24
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_28_31
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 28..31
+  N: 28..31
+  K: 24
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_32
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 31..33
+  N: 31..33
+  K: 32
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_32_9_129
+  category: nightly
+  function:
+    prune: *real_precisions
+  M: 9..129
+  N: 31..33
+  K: 32
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_48
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 47..49
+  N: 47..49
+  K: 48
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_48_9_129
+  category: nightly
+  function:
+    prune: *real_precisions
+  M: 47..49
+  N: 9..129
+  K: 48
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_64
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 63..65
+  N: 63..65
+  K: 64
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_64_9_129
+  category: nightly
+  function:
+    prune: *real_precisions
+  M: 63..65
+  N: 63..65
+  K: [16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128]
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_64_8
+  category: quick
+  function:
+    prune: *real_precisions
+  M: 63..65
+  N: 8
+  K: 8
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_8_64
+  category: quick
+  function:
+    prune: *real_precisions
+  M: 8
+  N: 8
+  K: 64
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_69_alias
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 69
+  N: 65
+  K: 64
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+  c_noalias_d: [false, true]
+
+- name: prune_96
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 95..97
+  N: 95..97
+  K: 96
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_128
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 127..129
+  N: 127..129
+  K: 128
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_256
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 255..257
+  N: 255..257
+  K: 256
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_256_9_12_16
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 255..257
+  N: 9..12
+  K: 16
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_13_16_256_8
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 13..16
+  N: 255..257
+  K: 8
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_9_12_13_16_256
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+
+  M: 9..12
+  N: 13..16
+  K: 256
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_512
+  category: pre_checkin
+  function:
+    prune: *real_precisions
+  M: 511..513
+  N: 511..513
+  K: 512
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_1024
+  category: nightly
+  function:
+    prune: *real_precisions
+  M: 1023..1025
+  N: 1023..1025
+  K: 1024
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+
+- name: prune_ldd
+  category: quick
+  function:
+    prune: *real_precisions
+  matrix_size: *ldd_size_range
+  c_noalias_d: [false, true]
+  transA_transB: *transA_transB_range
+  alpha_beta: *alpha_beta_range
+
+- name: prune_bf16
+  category: quick
+  function:
+    prune: *hpa_bf16_precision
+  transA: T
+  transB: N
+  alpha: 1
+  beta: 0
+  matrix_size:
+    - { M:  512, N:  512, K:  512 }
+    - { M: 1024, N: 1024, K: 1024 }
+    - { M: 2048, N: 2048, K: 2048 }
+    - { M: 4096, N: 4096, K: 4096 }
+    - { M:  960, N: 1024, K: 1024 }
+    - { M: 3840, N: 4096, K: 4096 }
+
+- name: prune_small2
+  category: pre_checkin
+  transA: N
+  transB: N
+  function:
+    prune: *real_precisions
+  matrix_size:
+    - { M:  512, N:  512, K:  512 }
+    - { M: 960,  N: 1024, K: 1024 }
+    - { M: 1024, N: 1024, K: 1024 }
+  alpha: [ 0.0, 0.5, 1.0 ]
+  beta:  [ 0.0, 0.5, 1.0 ]
 ...

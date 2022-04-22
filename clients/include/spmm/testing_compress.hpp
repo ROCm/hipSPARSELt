@@ -140,7 +140,7 @@ void compress(const Ti*      in,
                         valid_data(m_idx++, k - 1, value);
                     }
                     if((k == 3 && m_idx == 1) || (k == 7 && m_idx == 3)
-                       || static_cast<Tc>(value) != static_cast<Tc>(0))
+                       || value != static_cast<Ti>(0))
                     {
                         offset = b * stride_b + i * stride1 + (j + k) * stride2;
                         value  = in[offset];
@@ -227,7 +227,10 @@ void testing_compress_bad_arg(const Arguments& arg)
                               rocsparse_status_invalid_pointer);
 }
 
-template <typename Ti, typename To, typename Tc>
+template <typename Ti,
+          typename To,
+          typename Tc,
+          rocsparselt_batch_type btype = rocsparselt_batch_type::none>
 void testing_compress(const Arguments& arg)
 {
     rocsparse_operation transA = char2rocsparse_operation(arg.transA);
@@ -240,20 +243,16 @@ void testing_compress(const Arguments& arg)
     int64_t lda = arg.lda;
     int64_t ldb = arg.ldb;
     int64_t ldc = arg.ldc;
+    int64_t ldd = arg.ldd;
 
     double gpu_time_used, cpu_time_used;
-    gpu_time_used = cpu_time_used              = 0.0;
-    double                   rocsparselt_error = 0.0;
-    bool                     HMM               = arg.HMM;
+    gpu_time_used = cpu_time_used                = 0.0;
+    double                   rocsparselt_error_c = 0.0;
+    double                   rocsparselt_error_m = 0.0;
+    bool                     HMM                 = arg.HMM;
     rocsparselt_local_handle handle{arg};
     hipStream_t              stream;
     hipStreamCreate(&stream);
-
-    int     num_batches = arg.batch_count;
-    int64_t stride_a    = arg.stride_a;
-    int64_t stride_b    = arg.stride_b;
-    int64_t stride_c    = arg.stride_c;
-    int64_t stride_d    = stride_c;
 
     int64_t A_row = transA == rocsparse_operation_none ? M : K;
     int64_t A_col = transA == rocsparse_operation_none ? K : M;
@@ -263,18 +262,13 @@ void testing_compress(const Arguments& arg)
     int64_t stride_1_a = transA == rocsparse_operation_none ? 1 : lda;
     int64_t stride_2_a = transA == rocsparse_operation_none ? lda : 1;
 
-    int64_t c_stride_1_a = transA == rocsparse_operation_none ? 1 : K / 2;
-    int64_t c_stride_2_a = transA == rocsparse_operation_none ? M : 1;
-    int64_t c_stride_a_r
-        = transA == rocsparse_operation_none ? K / 2 * c_stride_2_a : M * c_stride_1_a;
-    int64_t c_stride_a = stride_a == 0 ? 0 : c_stride_a_r;
-
-    int64_t m_stride_1_a = K / 8;
-    int64_t m_stride_2_a = 1;
-    int64_t m_stride_a_r = M * m_stride_1_a;
-    int64_t m_stride_a   = stride_a == 0 ? 0 : m_stride_a_r;
-
-    auto metadata_offset = c_stride_a_r * sizeof(Ti) * (stride_a == 0 ? 1 : num_batches);
+    constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
+    constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
+    int            num_batches        = (do_batched || do_strided_batched ? arg.batch_count : 1);
+    int64_t        stride_a           = do_strided_batched ? arg.stride_a : lda * A_col;
+    int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
+    int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * M;
+    int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * M;
 
     rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
                                      handle,
@@ -317,7 +311,7 @@ void testing_compress(const Arguments& arg)
         return;
     }
 
-    if(num_batches > 0)
+    if(do_batched || do_strided_batched)
     {
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
@@ -335,21 +329,12 @@ void testing_compress(const Arguments& arg)
             rocsparselt_mat_descr_set_attribute(
                 handle, matD, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
             rocsparse_status_success);
+    }
+    if(do_strided_batched)
+    {
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(int64_t)),
-            rocsparse_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(int64_t)),
-            rocsparse_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(int64_t)),
-            rocsparse_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(int64_t)),
             rocsparse_status_success);
     }
 
@@ -367,7 +352,7 @@ void testing_compress(const Arguments& arg)
                               rocsparse_status_success);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
-    const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
+    const size_t size_A_pruned_copy     = arg.unit_check || arg.norm_check ? size_A : 0;
     const size_t size_A_compressed_copy = arg.unit_check || arg.norm_check ? compressed_size : 0;
 
     // allocate memory on device
@@ -387,29 +372,19 @@ void testing_compress(const Arguments& arg)
     // Initial Data on CPU
     if(arg.initialization == rocsparselt_initialization::rand_int)
     {
-        rocsparselt_init<Ti>(hA, A_row, A_col, lda);
+        rocsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
     else if(arg.initialization == rocsparselt_initialization::trig_float)
     {
-        rocsparselt_init_sin<Ti>(hA, A_row, A_col, lda);
+        rocsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
     else if(arg.initialization == rocsparselt_initialization::hpl)
     {
-        rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda);
+        rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
     else if(arg.initialization == rocsparselt_initialization::special)
     {
-        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda);
-    }
-    else
-    {
-#ifdef GOOGLE_TEST
-        FAIL() << "unknown initialization type";
-        return;
-#else
-        rocsparselt_cerr << "unknown initialization type" << std::endl;
-        rocsparselt_abort();
-#endif
+        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
 
     // copy data from CPU to device
@@ -420,6 +395,22 @@ void testing_compress(const Arguments& arg)
 
     if(arg.unit_check || arg.norm_check)
     {
+        //compressd matrix
+        int64_t c_ld         = transA == rocsparse_operation_none ? M : K / 2;
+        int64_t c_stride_1_a = transA == rocsparse_operation_none ? 1 : c_ld;
+        int64_t c_stride_2_a = transA == rocsparse_operation_none ? c_ld : 1;
+        int64_t c_stride_a_r = K / 2 * M;
+        int64_t c_stride_a   = stride_a == 0 ? 0 : c_stride_a_r;
+
+        //metadata
+        int64_t m_ld         = M;
+        int64_t m_stride_1_a = K / 8;
+        int64_t m_stride_2_a = 1;
+        int64_t m_stride_a_r = M * m_stride_1_a;
+        int64_t m_stride_a   = stride_a == 0 ? 0 : m_stride_a_r;
+
+        auto metadata_offset = c_stride_a_r * sizeof(Ti) * (stride_a == 0 ? 1 : num_batches);
+
         hipStreamSynchronize(stream);
         hA_pruned.transfer_from(dA);
 
@@ -482,16 +473,16 @@ void testing_compress(const Arguments& arg)
                               m_stride_2_a,
                               m_stride_a);
 
-            unit_check_general<Ti>(M,
-                                   K / 2,
-                                   M,
+            unit_check_general<Ti>(A_row,
+                                   A_col / 2,
+                                   c_ld,
                                    c_stride_a,
                                    reinterpret_cast<Ti*>(hA_gold.data()),
                                    reinterpret_cast<Ti*>(hA_1.data()),
                                    num_batches);
-            unit_check_general<int8_t>(M,
-                                       K / 8,
-                                       M,
+            unit_check_general<int8_t>(A_row,
+                                       A_col / 8,
+                                       A_row,
                                        m_stride_a,
                                        reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
                                        reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
@@ -499,22 +490,21 @@ void testing_compress(const Arguments& arg)
         }
         if(arg.norm_check)
         {
-            auto err1 = unit_check_diff<Ti>(M,
-                                            K / 2,
-                                            M,
-                                            c_stride_a,
-                                            reinterpret_cast<Ti*>(hA_gold.data()),
-                                            reinterpret_cast<Ti*>(hA_1.data()),
-                                            num_batches);
-            auto err2
-                = unit_check_diff<int8_t>(M,
-                                          K / 8,
-                                          M,
+            rocsparselt_error_c = unit_check_diff<Ti>(A_row,
+                                                      A_col / 2,
+                                                      c_ld,
+                                                      c_stride_a,
+                                                      reinterpret_cast<Ti*>(hA_gold.data()),
+                                                      reinterpret_cast<Ti*>(hA_1.data()),
+                                                      num_batches);
+            rocsparselt_error_m
+                = unit_check_diff<int8_t>(A_row,
+                                          A_col / 8,
+                                          A_row,
                                           m_stride_a,
                                           reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
                                           reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
                                           num_batches);
-            rocsparselt_error = err1 + err2;
         }
     }
 
@@ -546,6 +536,7 @@ void testing_compress(const Arguments& arg)
                              ArgumentLogging::NA_value,
                              ArgumentLogging::NA_value,
                              cpu_time_used,
-                             rocsparselt_error);
+                             rocsparselt_error_c,
+                             rocsparselt_error_m);
     }
 }

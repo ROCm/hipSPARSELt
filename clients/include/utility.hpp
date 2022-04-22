@@ -70,6 +70,13 @@
 #define TOO_MANY_DEVICES_STRING_GTEST "Succeeded\n" TOO_MANY_DEVICES_STRING
 #define HMM_NOT_SUPPORTED_GTEST "Succeeded\n" HMM_NOT_SUPPORTED
 
+enum class rocsparselt_batch_type
+{
+    none = 0,
+    batched,
+    strided_batched
+};
+
 /* ============================================================================================ */
 /*! \brief  local handle which is automatically created and destroyed  */
 class rocsparselt_local_handle

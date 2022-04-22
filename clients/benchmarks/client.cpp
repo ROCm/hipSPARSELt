@@ -77,8 +77,17 @@ struct perf_sparse<
     {
         static const func_map map = {
             {"prune", testing_prune<Ti, To, Tc>},
+            {"prune_batched", testing_prune<Ti, To, Tc, rocsparselt_batch_type::batched>},
+            {"prune_strided_batched",
+             testing_prune<Ti, To, Tc, rocsparselt_batch_type::strided_batched>},
             {"compress", testing_compress<Ti, To, Tc>},
+            {"compress_batched", testing_compress<Ti, To, Tc, rocsparselt_batch_type::batched>},
+            {"compress_strided_batched",
+             testing_compress<Ti, To, Tc, rocsparselt_batch_type::strided_batched>},
             {"spmm", testing_spmm<Ti, To, Tc>},
+            {"spmm_batched", testing_spmm<Ti, To, Tc, rocsparselt_batch_type::batched>},
+            {"spmm_strided_batched",
+             testing_spmm<Ti, To, Tc, rocsparselt_batch_type::strided_batched>},
         };
         run_function(map, arg);
     }
@@ -115,54 +124,51 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
             return 0;
     }
 
-    if(!strcmp(function, "spmm") || !strcmp(function, "prune") || !strcmp(function, "compress"))
+    // adjust dimension for GEMM routines
+    int64_t min_lda = arg.transA == 'N' ? arg.M : arg.K;
+    int64_t min_ldb = arg.transB == 'N' ? arg.K : arg.N;
+    int64_t min_ldc = arg.M;
+    int64_t min_ldd = arg.M;
+    if(arg.lda < min_lda)
     {
-        // adjust dimension for GEMM routines
-        int64_t min_lda = arg.transA == 'N' ? arg.M : arg.K;
-        int64_t min_ldb = arg.transB == 'N' ? arg.K : arg.N;
-        int64_t min_ldc = arg.M;
-        int64_t min_ldd = arg.M;
-        if(arg.lda < min_lda)
-        {
-            rocsparselt_cout << "rocsparselt-bench INFO: lda < min_lda, set lda = " << min_lda
-                             << std::endl;
-            arg.lda = min_lda;
-        }
-        if(arg.ldb < min_ldb)
-        {
-            rocsparselt_cout << "rocsparselt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb
-                             << std::endl;
-            arg.ldb = min_ldb;
-        }
-        if(arg.ldc < min_ldc)
-        {
-            rocsparselt_cout << "rocsparselt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc
-                             << std::endl;
-            arg.ldc = min_ldc;
-        }
-        if(arg.ldd < min_ldd)
-        {
-            rocsparselt_cout << "rocsparselt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc
-                             << std::endl;
-            arg.ldd = min_ldd;
-        }
-        int64_t min_stride_c = arg.ldc * arg.N;
-        int64_t min_stride_d = arg.ldd * arg.N;
-        if(!any_stride && arg.stride_c < min_stride_c)
-        {
-            rocsparselt_cout << "rocsparselt-bench INFO: stride_c < min_stride_c, set stride_c = "
-                             << min_stride_c << std::endl;
-            arg.stride_c = min_stride_c;
-        }
-        if(!any_stride && arg.stride_d < min_stride_d)
-        {
-            rocsparselt_cout << "rocsparselt-bench INFO: stride_d < min_stride_d, set stride_d = "
-                             << min_stride_d << std::endl;
-            arg.stride_d = min_stride_d;
-        }
-
-        rocsparselt_spmm_dispatch<perf_sparse>(arg);
+        rocsparselt_cout << "rocsparselt-bench INFO: lda < min_lda, set lda = " << min_lda
+                         << std::endl;
+        arg.lda = min_lda;
     }
+    if(arg.ldb < min_ldb)
+    {
+        rocsparselt_cout << "rocsparselt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb
+                         << std::endl;
+        arg.ldb = min_ldb;
+    }
+    if(arg.ldc < min_ldc)
+    {
+        rocsparselt_cout << "rocsparselt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc
+                         << std::endl;
+        arg.ldc = min_ldc;
+    }
+    if(arg.ldd < min_ldd)
+    {
+        rocsparselt_cout << "rocsparselt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc
+                         << std::endl;
+        arg.ldd = min_ldd;
+    }
+    int64_t min_stride_c = arg.ldc * arg.N;
+    int64_t min_stride_d = arg.ldd * arg.N;
+    if(!any_stride && arg.stride_c < min_stride_c)
+    {
+        rocsparselt_cout << "rocsparselt-bench INFO: stride_c < min_stride_c, set stride_c = "
+                         << min_stride_c << std::endl;
+        arg.stride_c = min_stride_c;
+    }
+    if(!any_stride && arg.stride_d < min_stride_d)
+    {
+        rocsparselt_cout << "rocsparselt-bench INFO: stride_d < min_stride_d, set stride_d = "
+                         << min_stride_d << std::endl;
+        arg.stride_d = min_stride_d;
+    }
+
+    rocsparselt_spmm_dispatch<perf_sparse>(arg);
     return 0;
 }
 

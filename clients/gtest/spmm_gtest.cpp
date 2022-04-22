@@ -40,6 +40,10 @@ namespace
         {
             if(!strcmp(arg.function, "spmm"))
                 testing_spmm<Ti, To, Tc>(arg);
+            else if(!strcmp(arg.function, "spmm_batched"))
+                testing_spmm<Ti, To, Tc, rocsparselt_batch_type::batched>(arg);
+            else if(!strcmp(arg.function, "spmm_strided_batched"))
+                testing_spmm<Ti, To, Tc, rocsparselt_batch_type::strided_batched>(arg);
             else if(!strcmp(arg.function, "spmm_bad_arg"))
                 testing_spmm_bad_arg<Ti, To, Tc>(arg);
             else
@@ -58,23 +62,24 @@ namespace
         // Filter for which functions apply to this suite
         static bool function_filter(const Arguments& arg)
         {
-            return !strcmp(arg.function, "spmm") || !strcmp(arg.function, "spmm_bad_arg");
+            return !strcmp(arg.function, "spmm") || !strcmp(arg.function, "spmm_batched")
+                   || !strcmp(arg.function, "spmm_strided_batched")
+                   || !strcmp(arg.function, "spmm_bad_arg");
         }
 
         // Google Test name suffix based on parameters
         static std::string name_suffix(const Arguments& arg)
         {
             RocSparseLt_TestName<spmm_test> name(arg.name);
-            name << rocsparselt_datatype2string(arg.a_type);
 
             if(strstr(arg.function, "_bad_arg") != nullptr)
             {
-                name << "_bad_arg";
+                name << "bad_arg";
             }
             else
             {
-
-                name << rocsparselt_datatype2string(arg.b_type)
+                name << rocsparselt_datatype2string(arg.a_type)
+                     << rocsparselt_datatype2string(arg.b_type)
                      << rocsparselt_datatype2string(arg.c_type)
                      << rocsparselt_datatype2string(arg.d_type)
                      << rocsparselt_computetype2string(arg.compute_type);
@@ -83,8 +88,13 @@ namespace
 
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.alpha << '_'
                      << arg.lda << '_' << arg.ldb << '_' << arg.beta << '_' << arg.ldc << '_'
-                     << arg.ldd << '_' << arg.batch_count << '_' << arg.stride_a << '_'
-                     << arg.stride_b << '_' << arg.stride_c;
+                     << arg.ldd;
+
+                if(strstr(arg.function, "_batched") != nullptr)
+                    name << '_' << arg.batch_count;
+
+                if(strstr(arg.function, "_strided_batched") != nullptr)
+                    name << '_' << arg.stride_a << '_' << arg.stride_b << '_' << arg.stride_c;
             }
 
             return std::move(name);

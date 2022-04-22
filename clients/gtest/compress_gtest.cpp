@@ -40,6 +40,10 @@ namespace
         {
             if(!strcmp(arg.function, "compress"))
                 testing_compress<Ti, To, Tc>(arg);
+            else if(!strcmp(arg.function, "compress_batched"))
+                testing_compress<Ti, To, Tc, rocsparselt_batch_type::batched>(arg);
+            else if(!strcmp(arg.function, "compress_strided_batched"))
+                testing_compress<Ti, To, Tc, rocsparselt_batch_type::strided_batched>(arg);
             else if(!strcmp(arg.function, "compress_bad_arg"))
                 testing_compress_bad_arg<Ti, To, Tc>(arg);
             else
@@ -58,7 +62,9 @@ namespace
         // Filter for which functions apply to this suite
         static bool function_filter(const Arguments& arg)
         {
-            return !strcmp(arg.function, "compress") || !strcmp(arg.function, "compress_bad_arg");
+            return !strcmp(arg.function, "compress") || !strcmp(arg.function, "compress_batched")
+                   || !strcmp(arg.function, "compress_strided_batched")
+                   || !strcmp(arg.function, "compress_bad_arg");
         }
 
         // Google Test name suffix based on parameters
@@ -73,14 +79,15 @@ namespace
             }
             else
             {
-
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.lda;
 
-                name << '_' << arg.batch_count;
+                if(strstr(arg.function, "_batched") != nullptr)
+                    name << '_' << arg.batch_count;
 
-                name << '_' << arg.stride_a;
+                if(strstr(arg.function, "_strided_batched") != nullptr)
+                    name << '_' << arg.stride_a;
             }
             return std::move(name);
         }
