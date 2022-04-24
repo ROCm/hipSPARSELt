@@ -290,15 +290,8 @@ namespace
         if(prob.sparseA)
             ki.args.append<unsigned char const*>("metadata", prob.metadata);
 
-        ki.args.append<Tc const>("alpha", *prob.alpha);
-        if(std::is_same<Tc, rocsparselt_half>::value)
-            ki.args.append<Tc const>("alpha_2", *prob.alpha);
-
-        {
-            ki.args.append<Tc const>("beta", *prob.beta);
-            if(std::is_same<Tc, rocsparselt_half>::value)
-                ki.args.append<Tc const>("beta_2", *prob.beta);
-        }
+        ki.args.append<float>("alpha", *prob.alpha);
+        ki.args.append<float>("beta", *prob.beta);
 
         rocsparselt_activation_type act_type
             = string2rocsparselt_activation_type(kernel.ActivationType);
