@@ -258,17 +258,14 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
         // Allocate
         try
         {
+            rocsparse_status status;
             switch(matAttribute)
             {
             case rocsparselt_mat_num_batches:
             {
-                if(sizeof(int) != dataSize)
-                {
-                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
-                                        "expected 4 bytes(sizeof(int)), current size "
-                                     << dataSize << " bytes" << std::endl;
-                    return rocsparse_status_invalid_size;
-                }
+                if((status = validateSetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
                 const int* num_batches = reinterpret_cast<const int*>(data);
                 if(*num_batches < 1)
                 {
@@ -281,13 +278,9 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
             }
             case rocsparselt_mat_batch_stride:
             {
-                if(sizeof(int64_t) != dataSize)
-                {
-                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
-                                        "expected 8 bytes(sizeof(int64_t)), current size "
-                                     << dataSize << " bytes" << std::endl;
-                    return rocsparse_status_invalid_size;
-                }
+                if((status = validateSetAttributeDataSize<int64_t>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
                 const int64_t* batch_stride = reinterpret_cast<const int64_t*>(data);
                 if(*batch_stride != 0)
                 {
@@ -341,13 +334,21 @@ rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle   
     {
         try
         {
-            if(matDescr->attributes[matAttribute].length() < dataSize)
+            rocsparse_status status;
+            switch(matAttribute)
             {
-                rocsparselt_cerr
-                    << "The parameter number 5 (dataSize) had an illegal value: expected "
-                    << matDescr->attributes[matAttribute].length() << " bytes, current size "
-                    << dataSize << " bytes" << std::endl;
-                return rocsparse_status_invalid_size;
+            case rocsparselt_mat_num_batches:
+            {
+                if((status = validateGetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+            }
+            case rocsparselt_mat_batch_stride:
+            {
+                if((status = validateGetAttributeDataSize<int64_t>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+            }
             }
             if(matDescr->attributes[matAttribute].get(data, dataSize) == 0)
             {
@@ -762,17 +763,14 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
         // Allocate
         try
         {
+            rocsparse_status status;
             switch(attribute)
             {
             case rocsparselt_matmul_alg_config_id:
             {
-                if(sizeof(int) != dataSize)
-                {
-                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
-                                        "expected 4 bytes(sizeof(int)), current size "
-                                     << dataSize << " bytes" << std::endl;
-                    return rocsparse_status_invalid_size;
-                }
+                if((status = validateSetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
 
                 int config_max_id;
                 algSelection->attributes[rocsparselt_matmul_alg_config_max_id].get(&config_max_id);
@@ -795,13 +793,9 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
             }
             case rocsparselt_matmul_search_iterations:
             {
-                if(sizeof(int) != dataSize)
-                {
-                    rocsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: "
-                                        "expected 4 bytes(sizeof(int)), current size "
-                                     << dataSize << " bytes" << std::endl;
-                    return rocsparse_status_invalid_size;
-                }
+                if((status = validateSetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
                 const int* search_iterations = reinterpret_cast<const int*>(data);
                 if(*search_iterations < 1)
                 {
@@ -851,13 +845,17 @@ rocsparse_status rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle  
     {
         try
         {
-            if(algSelection->attributes[attribute].length() < dataSize)
+            rocsparse_status status;
+            switch(attribute)
             {
-                rocsparselt_cerr
-                    << "The parameter number 5 (dataSize) had an illegal value: expected "
-                    << algSelection->attributes[attribute].length() << " bytes, current size "
-                    << dataSize << " bytes" << std::endl;
-                return rocsparse_status_invalid_size;
+            case rocsparselt_matmul_alg_config_id:
+            case rocsparselt_matmul_alg_config_max_id:
+            case rocsparselt_matmul_search_iterations:
+            {
+                if((status = validateGetAttributeDataSize<int>(dataSize))
+                   != rocsparse_status_success)
+                    return status;
+            }
             }
             if(algSelection->attributes[attribute].get(data, dataSize) == 0)
                 return rocsparse_status_internal_error;
