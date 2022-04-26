@@ -216,7 +216,7 @@ inline rocsparse_status validateMatmulDescrArgs(rocsparselt_handle       handle,
     if(status != rocsparse_status_success)
         return status;
 
-    if(m != num_rows_c || m != num_rows_d || n != num_cols_c || n != num_cols_d)
+    if(m != (num_rows_c | num_rows_d) || n != (num_cols_c | num_cols_d))
     {
         rocsparselt_cerr << "matrix size is not valid" << std::endl;
         return rocsparse_status_invalid_size;
@@ -230,7 +230,7 @@ inline rocsparse_status validateMatmulDescrArgs(rocsparselt_handle       handle,
     }
 
     // data type of matrics must be the same
-    if(type_a != type_b || type_a != type_c || type_a != type_c)
+    if(type_a != (type_b | type_c | type_d))
         return rocsparse_status_invalid_value;
 
     switch(type_a)
@@ -267,62 +267,4 @@ inline rocsparse_status validateMatmulDescrArgs(rocsparselt_handle       handle,
 
     return rocsparse_status_success;
 }
-
-/*******************************************************************************
- * Validate Matmul Arguments
- ******************************************************************************/
-inline rocsparse_status validateMatmulArgs(rocsparselt_handle handle,
-                                           int64_t            m,
-                                           int64_t            n,
-                                           int64_t            k,
-                                           const void*        alpha,
-                                           const void*        a,
-                                           const void*        b,
-                                           const void*        beta,
-                                           const void*        c,
-                                           const void*        d,
-                                           int                num_batches_a  = 1,
-                                           int                num_batches_b  = 1,
-                                           int                num_batches_c  = 1,
-                                           int                num_batches_d  = 1,
-                                           int64_t            batch_stride_a = 0,
-                                           int64_t            batch_stride_b = 0,
-                                           int64_t            batch_stride_c = 0,
-                                           int64_t            batch_stride_d = 0)
-{
-    // handle must be valid
-    if(!handle)
-        return rocsparse_status_invalid_handle;
-
-    // sizes must not be negative
-    if(batch_stride_a < 0 || batch_stride_b < 0 || batch_stride_c < 0 || batch_stride_d < 0)
-    {
-        rocsparselt_cerr << "matrix and stride size must be posstive" << std::endl;
-        return rocsparse_status_invalid_size;
-    }
-
-    // number of batches of matrics A,B,C,D must be the same and negative
-    if(num_batches_a != num_batches_b || num_batches_a != num_batches_c
-       || num_batches_a != num_batches_d || num_batches_a < 1)
-    {
-        rocsparselt_cerr << " number of batches of matrics A,B,C,D must be the same and negative"
-                         << std::endl;
-        return rocsparse_status_invalid_size;
-    }
-
-    // quick return 0 is valid in BLAS
-    // Note: k==0 is not a quick return, because C must still be multiplied by beta
-    if(!m || !n || !num_batches_a)
-        return rocsparse_status_success;
-
-    if(!beta)
-        return rocsparse_status_invalid_pointer;
-
-    // pointers must be valid
-    if((k && (!a || !b || !alpha)) || !c || !d)
-        return rocsparse_status_invalid_pointer;
-
-    return rocsparse_status_continue;
-}
-
 #endif

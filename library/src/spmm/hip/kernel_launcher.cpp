@@ -257,8 +257,6 @@ namespace
 
         uint32_t problemNumGroupTiles0 = ki.numWorkGroups.x;
         uint32_t problemNumGroupTiles1 = ki.numWorkGroups.y;
-        // used only when persistent kernel along batch
-        uint32_t problemNumGroupTiles2 = ki.numWorkGroups.z;
 
         ki.numWorkGroups.y *= kernel.GlobalSplitU;
 

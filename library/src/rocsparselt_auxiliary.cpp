@@ -898,6 +898,19 @@ rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle          
         // Allocate
         try
         {
+            int num_batches_a = 1, num_batches_b = 1, num_batches_c = 1, num_batches_d = 1;
+            matmulDescr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
+            matmulDescr->matrix_B->attributes[rocsparselt_mat_num_batches].get(&num_batches_b);
+            matmulDescr->matrix_C->attributes[rocsparselt_mat_num_batches].get(&num_batches_c);
+            matmulDescr->matrix_D->attributes[rocsparselt_mat_num_batches].get(&num_batches_d);
+
+            if(num_batches_a != (num_batches_b | num_batches_c | num_batches_d))
+            {
+                rocsparselt_cerr << " number of batches of matrics A,B,C,D must be the same"
+                                 << std::endl;
+                return rocsparse_status_invalid_size;
+            }
+
             *plan                   = new _rocsparselt_matmul_plan();
             (*plan)->matmul_descr   = matmulDescr->clone();
             (*plan)->alg_selection  = algSelection;
