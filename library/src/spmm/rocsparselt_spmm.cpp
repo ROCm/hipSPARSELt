@@ -112,16 +112,13 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     rocsparselt_compute_type compute_type = plan->matmul_descr->compute_type;
 
     // matrix A
-    int64_t                 num_rows_a     = plan->matmul_descr->matrix_A->m;
-    int64_t                 num_cols_a     = plan->matmul_descr->matrix_A->n;
-    int64_t                 lda            = plan->matmul_descr->matrix_A->ld;
-    int64_t                 c_k_a          = plan->matmul_descr->matrix_A->c_k;
-    int64_t                 c_lda          = plan->matmul_descr->matrix_A->c_ld;
-    rocsparse_order         order_a        = plan->matmul_descr->matrix_A->order;
-    rocsparselt_matrix_type matrix_type_a  = plan->matmul_descr->matrix_A->m_type;
-    rocsparselt_datatype    type_a         = plan->matmul_descr->matrix_A->type;
-    int                     num_batches_a  = 1;
-    int64_t                 batch_stride_a = 0;
+    int64_t              num_rows_a     = plan->matmul_descr->matrix_A->m;
+    int64_t              num_cols_a     = plan->matmul_descr->matrix_A->n;
+    int64_t              c_k_a          = plan->matmul_descr->matrix_A->c_k;
+    int64_t              c_lda          = plan->matmul_descr->matrix_A->c_ld;
+    rocsparselt_datatype type_a         = plan->matmul_descr->matrix_A->type;
+    int                  num_batches_a  = 1;
+    int64_t              batch_stride_a = 0;
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
     int64_t c_batch_stride_a = (batch_stride_a == 0                 ? 0
@@ -129,38 +126,28 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
                                                                     : c_lda * num_cols_a);
 
     // matrix B
-    int64_t                 num_rows_b     = plan->matmul_descr->matrix_B->m;
-    int64_t                 num_cols_b     = plan->matmul_descr->matrix_B->n;
-    int64_t                 ldb            = plan->matmul_descr->matrix_B->ld;
-    rocsparse_order         order_b        = plan->matmul_descr->matrix_B->order;
-    rocsparselt_matrix_type matrix_type_b  = plan->matmul_descr->matrix_B->m_type;
-    rocsparselt_datatype    type_b         = plan->matmul_descr->matrix_B->type;
-    int                     num_batches_b  = 1;
-    int64_t                 batch_stride_b = 0;
+    int64_t              num_rows_b     = plan->matmul_descr->matrix_B->m;
+    int64_t              num_cols_b     = plan->matmul_descr->matrix_B->n;
+    int64_t              ldb            = plan->matmul_descr->matrix_B->ld;
+    rocsparselt_datatype type_b         = plan->matmul_descr->matrix_B->type;
+    int                  num_batches_b  = 1;
+    int64_t              batch_stride_b = 0;
     plan->matmul_descr->matrix_B->attributes[rocsparselt_mat_num_batches].get(&num_batches_b);
     plan->matmul_descr->matrix_B->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_b);
 
     // matrix C
-    int64_t                 num_rows_c     = plan->matmul_descr->matrix_C->m;
-    int64_t                 num_cols_c     = plan->matmul_descr->matrix_C->n;
-    int64_t                 ldc            = plan->matmul_descr->matrix_C->ld;
-    rocsparse_order         order_c        = plan->matmul_descr->matrix_C->order;
-    rocsparselt_matrix_type matrix_type_c  = plan->matmul_descr->matrix_C->m_type;
-    rocsparselt_datatype    type_c         = plan->matmul_descr->matrix_C->type;
-    int                     num_batches_c  = 1;
-    int64_t                 batch_stride_c = 0;
+    int64_t              ldc            = plan->matmul_descr->matrix_C->ld;
+    rocsparselt_datatype type_c         = plan->matmul_descr->matrix_C->type;
+    int                  num_batches_c  = 1;
+    int64_t              batch_stride_c = 0;
     plan->matmul_descr->matrix_C->attributes[rocsparselt_mat_num_batches].get(&num_batches_c);
     plan->matmul_descr->matrix_C->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_c);
 
     // matrix D
-    int64_t                 num_rows_d     = plan->matmul_descr->matrix_D->m;
-    int64_t                 num_cols_d     = plan->matmul_descr->matrix_D->n;
-    int64_t                 ldd            = plan->matmul_descr->matrix_D->ld;
-    rocsparse_order         order_d        = plan->matmul_descr->matrix_D->order;
-    rocsparselt_matrix_type matrix_type_d  = plan->matmul_descr->matrix_D->m_type;
-    rocsparselt_datatype    type_d         = plan->matmul_descr->matrix_D->type;
-    int                     num_batches_d  = 1;
-    int64_t                 batch_stride_d = 0;
+    int64_t              ldd            = plan->matmul_descr->matrix_D->ld;
+    rocsparselt_datatype type_d         = plan->matmul_descr->matrix_D->type;
+    int                  num_batches_d  = 1;
+    int64_t              batch_stride_d = 0;
     plan->matmul_descr->matrix_D->attributes[rocsparselt_mat_num_batches].get(&num_batches_d);
     plan->matmul_descr->matrix_D->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_d);
 
@@ -174,8 +161,6 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     int64_t bias_stride = plan->matmul_descr->bias_stride;
 
     // algorithm selection
-    rocsparselt_matmul_alg alg = plan->alg_selection->alg;
-
     int config_id         = 0;
     int config_max_id     = 0;
     int search_iterations = search ? 10 : 0; //default
@@ -194,31 +179,6 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
         = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
     if(status != rocsparse_status_success)
         return status;
-
-    auto validArgs = validateMatmulArgs(handle,
-                                        m,
-                                        n,
-                                        k,
-                                        alpha,
-                                        d_A,
-                                        d_B,
-                                        beta,
-                                        d_C,
-                                        d_D,
-                                        num_batches_a,
-                                        num_batches_b,
-                                        num_batches_c,
-                                        num_batches_d,
-                                        batch_stride_a,
-                                        batch_stride_b,
-                                        batch_stride_c,
-                                        batch_stride_d);
-
-    if(validArgs != rocsparse_status_continue)
-        return validArgs;
-
-    float alpha_f = *(reinterpret_cast<const float*>(alpha));
-    float beta_f  = *(reinterpret_cast<const float*>(beta));
 
     int64_t c_num_cols_a    = (opA == rocsparse_operation_none ? c_k_a : num_cols_a);
     int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
