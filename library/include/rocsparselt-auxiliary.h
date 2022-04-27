@@ -48,11 +48,10 @@ extern "C" {
  *  using rocsparselt_destroy_handle().
  *
  *  @param[out]
- *  handle  the pointer to the handle to the rocSPARSELt library context.
+ *  handle  rocsparselt library handle
  *
  *  \retval rocsparse_status_success the initialization succeeded.
- *  \retval rocsparse_status_invalid_handle \p handle pointer is invalid.
- *  \retval rocsparse_status_internal_error an internal error occurred.
+ *  \retval rocsparse_status_invalid_pointer \p handle pointer is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_init(rocsparselt_handle* handle);
@@ -65,11 +64,10 @@ rocsparse_status rocsparselt_init(rocsparselt_handle* handle);
  *  resources used by the rocSPARSELt library.
  *
  *  @param[in]
- *  handle  the handle to the rocSPARSELt library context.
+ *  handle  rocsparselt library handle
  *
  *  \retval rocsparse_status_success the operation completed successfully.
  *  \retval rocsparse_status_invalid_handle \p handle is invalid.
- *  \retval rocsparse_status_internal_error an internal error occurred.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_destroy(const rocsparselt_handle handle);
@@ -85,8 +83,10 @@ rocsparse_status rocsparselt_destroy(const rocsparselt_handle handle);
  *  matDescr   the pointer to the dense matrix descriptor
  *
  *  \retval rocsparse_status_success the operation completed successfully.
+ *  \retval rocsparse_status_invalid_handle \p handle is invalid.
  *  \retval rocsparse_status_invalid_pointer \p descr pointer is invalid.
- *  \retval rocsparse_status_invalid_value
+ *  \retval rocsparse_status_invalid_size \p row, \p cols or \p ld is invalid.
+ *  \retval rocsparse_status_not_implement \ref rocsparselt_datatype or \ref rocsparse_order is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
@@ -109,8 +109,10 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
  *  matDescr   the pointer to the dense matrix descriptor
  *
  *  \retval rocsparse_status_success the operation completed successfully.
+ *  \retval rocsparse_status_invalid_handle \p handle is invalid.
  *  \retval rocsparse_status_invalid_pointer \p descr pointer is invalid.
- *  \retval rocsparse_status_invalid_value
+ *  \retval rocsparse_status_invalid_size \p row, \p cols or \p ld is invalid.
+ *  \retval rocsparse_status_not_implement \ref rocsparselt_datatype or \ref rocsparse_order is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle handle,
@@ -134,7 +136,7 @@ rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle hand
  *  descr   the matrix descriptor
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_pointer \p descr is invalid.
+ *  \retval rocsparse_status_invalid_handle \p descr is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr descr);
@@ -155,9 +157,10 @@ rocsparse_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr descr
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_handle \p handle or \p descr pointer is invalid.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p descr is invalid.
  *  \retval rocsparse_status_invalid_pointer \p data pointer is invalid.
- *  \retval rocsparse_status_invalid_value \p rocsparselt_mat_descr_attribute is invalid.
+ *  \retval rocsparse_status_invalid_value \p data content is invalid, see \ref rocsparselt_mat_descr_attribute.
+ *  \retval rocsparse_status_invalid_size \p dataSize is invalid
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle        handle,
@@ -182,8 +185,10 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_pointer \p handle, \p descr or \p data pointer is invalid.
- *  \retval rocsparse_status_invalid_value \p rocsparselt_mat_descr_attribute is invalid.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p descr is invalid.
+ *  \retval rocsparse_status_invalid_pointer \p data pointer is invalid.
+ *  \retval rocsparse_status_invalid_value \p data content is invalid, see \ref rocsparselt_mat_descr_attribute.
+ *  \retval rocsparse_status_invalid_size \p dataSize is invalid
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle        handle,
@@ -203,8 +208,8 @@ rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle   
  *  matmulDescr     the matrix multiplication descriptor
  *  @param[in]
  *  handle   the rocsparselt handle
- *  opA
- *  opB
+ *  opA      rocsparse operation for Matrix A.
+ *  opB      rocsparse operation for Matrix B.
  *  matA     the matrix descriptor
  *  matB     the matrix descriptor
  *  matC     the matrix descriptor
@@ -213,7 +218,9 @@ rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle   
  *
  *  \retval rocsparse_status_success the operation completed successfully.
  *  \retval rocsparse_status_invalid_pointer \p matmulDescr pointer is invalid.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p matA or \p matB or \p matC or \p matD is invalid.
  *  \retval rocsparse_status_invalid_value \p computeType is invalid.
+ *  \retval rocsparse_status_invalid_size sizes of matrix A,b,C,D is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
@@ -236,7 +243,7 @@ rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
  *  descr   the matrix multiplication descriptor
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_value \p descr is invalid.
+ *  \retval rocsparse_status_invalid_handle \p descr is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr descr);
@@ -259,9 +266,11 @@ rocsparse_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_handle \p handle or \p descr pointer is invalid.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p matDescr is invalid.
  *  \retval rocsparse_status_invalid_pointer \p data pointer is invalid.
- *  \retval rocsparse_status_invalid_value \p rocsparselt_mat_descr_attribute is invalid.
+ *  \retval rocsparse_status_invalid_value \p data content is invalid, see \ref rocsparselt_matmul_descr_attribute.
+ *  \retval rocsparse_status_not_implemented \p rocsparselt_mat_descr_attribute is not supported.
+ *  \retval rocsparse_status_invalid_size \p dataSize is invalid
  */
 ROCSPARSELT_EXPORT
 rocsparse_status
@@ -289,8 +298,11 @@ rocsparse_status
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_pointer \p handle, \p descr or \p data pointer is invalid.
- *  \retval rocsparse_status_invalid_value \p rocsparselt_mat_descr_attribute is invalid.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p matDescr is invalid.
+ *  \retval rocsparse_status_invalid_pointer \p data pointer is invalid.
+ *  \retval rocsparse_status_invalid_value \p data content is invalid, see \ref rocsparselt_matmul_descr_attribute.
+ *  \retval rocsparse_status_not_implemented \p rocsparselt_mat_descr_attribute is not supported.
+ *  \retval rocsparse_status_invalid_size \p dataSize is invalid
  */
 ROCSPARSELT_EXPORT
 rocsparse_status
@@ -310,8 +322,9 @@ rocsparse_status
  *  algSelection the pointer to the algorithm selection descriptor
  *
  *  \retval rocsparse_status_success the operation completed successfully.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p matmulDescr is invalid.
  *  \retval rocsparse_status_invalid_pointer \p algSelection pointer is invalid.
- *  \retval rocsparse_status_invalid_value
+ *  \retval rocsparse_status_not_implemented no solution be found for this specific problem (defined by matmulDescr).
  */
 ROCSPARSELT_EXPORT
 rocsparse_status
@@ -330,7 +343,7 @@ rocsparse_status
  *  algSelection   the algorithm selection descriptor
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_pointer \p algSelection is invalid.
+ *  \retval rocsparse_status_invalid_handle \p algSelection is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status
@@ -352,9 +365,10 @@ rocsparse_status
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_handle \p handle or \p algSelection pointer is invalid.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p algSelection is invalid.
  *  \retval rocsparse_status_invalid_pointer \p data pointer is invalid.
- *  \retval rocsparse_status_invalid_value \p rocsparselt_matmul_alg_attribute is invalid.
+ *  \retval rocsparse_status_invalid_value \p data content is invalid, see \ref rocsparselt_matmul_alg_attribute.
+ *  \retval rocsparse_status_invalid_size \p dataSize is invalid
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle         handle,
@@ -379,9 +393,10 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_handle \p handle or \p algSelection pointer is invalid.
+ *  \retval rocsparse_status_invalid_handle \p handle or \p algSelection is invalid.
  *  \retval rocsparse_status_invalid_pointer \p data pointer is invalid.
- *  \retval rocsparse_status_invalid_value \p rocsparselt_matmul_alg_attribute is invalid.
+ *  \retval rocsparse_status_invalid_value \p data content is invalid, see \ref rocsparselt_matmul_alg_attribute.
+ *  \retval rocsparse_status_invalid_size \p dataSize is invalid
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle         handle,
@@ -401,7 +416,8 @@ rocsparse_status rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle  
  *
  *  \retval rocsparse_status_success the operation completed successfully.
  *  \retval rocsparse_status_invalid_pointer \p plan pointer is invalid.
- *  \retval rocsparse_status_invalid_value
+ *  \retval rocsparse_status_invalid_handle \p handle or \p matmulDescr or \p algSelection is invalid.
+ *  \retval rocsparse_status_invalid_size \p workspaceSize is invalid or values of \p rocsparselt_mat_num_batches from matrix A to D are inconisistent
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle               handle,
@@ -421,8 +437,7 @@ rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle          
  *  plan the matrix multiplication plan descriptor
  *
  *  \retval rocsparse_status_success the operation completed successfully.
- *  \retval rocsparse_status_invalid_pointer \p plan pointer is invalid.
- *  \retval rocsparse_status_invalid_value
+ *  \retval rocsparse_status_invalid_handle \p plan is invalid.
  */
 ROCSPARSELT_EXPORT
 rocsparse_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan plan);
