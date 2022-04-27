@@ -49,7 +49,7 @@ rocsparse_status rocsparselt_init(rocsparselt_handle* handle)
     // Check if handle is valid
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparse_status_invalid_pointer;
     }
     else
     {
@@ -73,6 +73,11 @@ rocsparse_status rocsparselt_init(rocsparselt_handle* handle)
  *******************************************************************************/
 rocsparse_status rocsparselt_destroy(const rocsparselt_handle handle)
 {
+    if(handle == nullptr)
+    {
+        return rocsparse_status_invalid_handle;
+    }
+
     log_trace(handle, "rocsparse_destroy");
     // Destruct
     try
@@ -217,7 +222,7 @@ rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle hand
 rocsparse_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr matDescr)
 {
     if(matDescr == nullptr)
-        return rocsparse_status_invalid_pointer;
+        return rocsparse_status_invalid_handle;
     // Destruct
     try
     {
@@ -241,17 +246,13 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
                                                      size_t                          dataSize)
 
 {
-    if(handle == nullptr)
+    if(handle == nullptr || matDescr == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
-    else if(data == nullptr || matDescr == nullptr)
+    else if(data == nullptr)
     {
         return rocsparse_status_invalid_pointer;
-    }
-    else if(dataSize <= 0)
-    {
-        return rocsparse_status_invalid_value;
     }
     else
     {
@@ -318,17 +319,13 @@ rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle   
                                                      size_t                          dataSize)
 {
     // Check if matmulDescr is valid
-    if(handle == nullptr)
+    if(handle == nullptr || matDescr == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
-    else if(data == nullptr || matDescr == nullptr)
+    else if(data == nullptr)
     {
         return rocsparse_status_invalid_pointer;
-    }
-    else if(dataSize <= 0)
-    {
-        return rocsparse_status_invalid_value;
     }
     else
     {
@@ -349,6 +346,8 @@ rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle   
                    != rocsparse_status_success)
                     return status;
             }
+            default:
+                return rocsparse_status_invalid_value;
             }
             if(matDescr->attributes[matAttribute].get(data, dataSize) == 0)
             {
@@ -378,12 +377,12 @@ rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
                                                rocsparselt_compute_type  computeType)
 {
     // Check if matmulDescr is valid
-    if(handle == nullptr)
+    if(handle == nullptr || matA == nullptr || matB == nullptr || matC == nullptr
+       || matD == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
-    else if(matmulDescr == nullptr || matA == nullptr || matB == nullptr || matC == nullptr
-            || matD == nullptr)
+    else if(matmulDescr == nullptr)
     {
         return rocsparse_status_invalid_pointer;
     }
@@ -421,6 +420,7 @@ rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
                 return status;
 
             int64_t m, n, k;
+            //don't need to check the status here, since which was done in validateMatmulDescrArgs().
             getOriginalSizes(opA, opB, matA->m, matA->n, matB->m, matB->n, m, n, k);
             matA->c_k  = k / 2;
             matA->c_ld = (opA == rocsparse_operation_transpose ? matA->c_k : m);
@@ -450,9 +450,8 @@ rocsparse_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr
 {
     if(matmulDescr == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparse_status_invalid_handle;
     }
-
     // Destruct
     try
     {
@@ -477,7 +476,7 @@ rocsparse_status
                                            size_t                             dataSize)
 {
     // Check if matmulDescr is valid
-    if(matmulDescr == nullptr)
+    if(handle == nullptr || matmulDescr == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
@@ -575,7 +574,7 @@ rocsparse_status
 {
 
     // Check if matmulDescr is valid
-    if(matmulDescr == nullptr)
+    if(handle || matmulDescr == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
@@ -653,11 +652,11 @@ rocsparse_status
                                           rocsparselt_matmul_alg            alg)
 {
     // Check if algSelection is valid
-    if(handle == nullptr)
+    if(handle == nullptr || matmulDescr == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
-    else if(algSelection == nullptr || matmulDescr == nullptr)
+    else if(algSelection == nullptr)
     {
         return rocsparse_status_invalid_pointer;
     }
@@ -721,7 +720,7 @@ rocsparse_status
 {
     if(algSelection == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparse_status_invalid_handle;
     }
 
     // Destruct
@@ -746,17 +745,13 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
                                                       size_t                           dataSize)
 {
     // Check if algSelection is valid
-    if(handle == nullptr)
+    if(handle == nullptr || algSelection == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
-    else if(data == nullptr || algSelection == nullptr)
+    else if(data == nullptr)
     {
         return rocsparse_status_invalid_pointer;
-    }
-    else if(dataSize <= 0)
-    {
-        return rocsparse_status_invalid_value;
     }
     else
     {
@@ -880,11 +875,11 @@ rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle          
 
 {
     // Check if plan is valid
-    if(handle == nullptr)
+    if(handle == nullptr || matmulDescr == nullptr || algSelection == nullptr)
     {
         return rocsparse_status_invalid_handle;
     }
-    else if(plan == nullptr || matmulDescr == nullptr || algSelection == nullptr)
+    else if(plan == nullptr)
     {
         return rocsparse_status_invalid_pointer;
     }
@@ -932,7 +927,7 @@ rocsparse_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan p
 {
     if(plan == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparse_status_invalid_handle;
     }
     // Destruct
     try

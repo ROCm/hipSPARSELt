@@ -167,10 +167,10 @@ struct _rocsparselt_mat_descr
     // matrix attributes
     _rocsparselt_attribute attributes[2];
 
-    // info of compressed matrix, will auto fill at rocsparselt_matmul_descr_init().
-    // num k after compressed.
+    // info of compressed matrix, will be auto filled at rocsparselt_matmul_descr_init().
+    // numbeer of k after compressed.
     int64_t c_k;
-    // memory alignment in bytes after compressed.
+    // leading dimension of compressed matrix.
     int64_t c_ld;
 };
 
