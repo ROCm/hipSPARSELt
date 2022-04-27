@@ -510,6 +510,9 @@ rocsparse_status initSolutions(rocsparselt_handle  handle,
                                rocsparse_operation opB,
                                int*                kernel_counts);
 
+template <typename Ti, typename To, typename Tc>
+std::string generate_kernel_category_str(rocsparse_operation opA, rocsparse_operation opB);
+
 /***********************************************************************************
  * Whether Kernel Launcher has been initialized for at least one device (used for testing) *
  ***********************************************************************************/
