@@ -1,13 +1,41 @@
 # rocSPARSELt
 rocSPARSELt provides general matrix-matrix operations for sparse computation implemented on top of AMD's Radeon Open eCosystem Platform [ROCm][] runtime and toolchains. rocSPARSELt is created using the [HIP][] programming language and optimized for AMD's latest discrete GPUs.
 
-## Documentation (TBD)
+## Key Features
+- AMD sparse MFMA matrix core support
+- Mixed-precision computation support:
+  - <span style="color:green">FP16</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+  - <span style="color:green">BFLOAT16</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+  - <span style="color:green">INT8</span> inpput/output, <span style="color:green">INT32</span> Matrix Core accumulate
+- Matrix pruning and compression functionalities
+- Auto-tuning functionality (see rocsparselt_matmul_search())
+- Batched Sparse Gemm support:
+  - Single sparse matrix / Multiple dense matrices (Broadcast)
+  - Multiple sparse and dense matrices
+- Activation function fuse in spmm kernel support:
+  - ReLU
+  - ClippedReLU (ReLU with uppoer bound and threshold setting)
+  - GeLU
+
+## On Going Feature Development
+- Add support for Mixed-precision computation
+  - <span style="color:green">FP8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+  - <span style="color:green">BF8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+- Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
+- Add support for prune alogright - prune_tile_method
+- New APIs for compression and pruning decoupled from rocsparselt_matmul_plan
+- New activation functions
+  - Abs
+  - LeakyReLU
+  - Sigmoid
+  - Tanh
+## Documentation
 The latest rocSPARSELt documentation and API description can be found [here][] or downloaded as [pdf][].
 
 ## Requirements
 * Git
 * CMake (3.5 or later)
-* AMD [ROCm] 3.5 platform or later
+* AMD [ROCm] 5.0 platform or later
 
 Optional:
 * [GTest][]
@@ -28,11 +56,12 @@ cd rocSPARSELt
 
 # Run install.sh script
 # Command line options:
-#   -h|--help         - prints help message
-#   -i|--install      - install after build
-#   -d|--dependencies - install build dependencies
-#   -c|--clients      - build library clients too (combines with -i & -d)
-#   -g|--debug        - build with debug flag
+#   -h|--help            - prints help message
+#   -i|--install         - install after build
+#   -d|--dependencies    - install build dependencies
+#   -c|--clients         - build library clients too (combines with -i & -d)
+#   -g|--debug           - build with debug flag
+#   -k|--relwithdebinfo  - build with RelWithDebInfo
 ./install.sh -dci
 ```
 
