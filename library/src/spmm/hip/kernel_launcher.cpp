@@ -764,13 +764,22 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
  * Intantiate the cases of runContractionProblem / initSolutions which are    *
  * needed to satisfy rocsparselt dependencies.                                *
  ******************************************************************************/
-
-#define GENERATE_DEFINITIONS(Ti, To, Tc)                                               \
+#define GENERATE_DEFINITIONS(Ti, To, Tc, Ca)                                           \
+    template <>                                                                        \
+    std::string generate_kernel_category_str<Ti, To, Tc>(rocsparse_operation opA,      \
+                                                         rocsparse_operation opB)      \
+    {                                                                                  \
+        std::string str = #Ca;                                                         \
+        str += (opA == rocsparse_operation_none ? "N" : "T");                          \
+        str += "_";                                                                    \
+        str += (opB == rocsparse_operation_none ? "N" : "T");                          \
+        return str;                                                                    \
+    }                                                                                  \
     template rocsparse_status runContractionProblem<Ti, To, Tc>(                       \
         const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int); \
     template rocsparse_status initSolutions<Ti, To, Tc>(                               \
         rocsparselt_handle, rocsparse_operation, rocsparse_operation, int*);
 
-GENERATE_DEFINITIONS(rocsparselt_half, rocsparselt_half, float)
-GENERATE_DEFINITIONS(rocsparselt_bfloat16, rocsparselt_bfloat16, float)
-GENERATE_DEFINITIONS(int8_t, int8_t, int32_t)
+GENERATE_DEFINITIONS(rocsparselt_half, rocsparselt_half, float, "4_4_0")
+GENERATE_DEFINITIONS(rocsparselt_bfloat16, rocsparselt_bfloat16, float, "7_7_0")
+GENERATE_DEFINITIONS(int8_t, int8_t, int32_t, "8_8_0")
