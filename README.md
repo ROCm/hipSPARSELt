@@ -30,7 +30,7 @@ rocSPARSELt provides general matrix-matrix operations for sparse computation imp
   - Sigmoid
   - Tanh
 ## Documentation
-The latest rocSPARSELt documentation and API description can be found [here][] or downloaded as [pdf][].
+The latest rocSPARSELt documentation and API description can be found [here](doc/rocSPARSELt_api_v0.1.docx) or downloaded as [pdf](doc/rocSPARSELt_api_v0.1.pdf).
 
 ## Requirements
 * Git
