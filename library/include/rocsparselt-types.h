@@ -29,12 +29,14 @@
 #ifndef _ROCSPARSELT_TYPES_H_
 #define _ROCSPARSELT_TYPES_H_
 
-#include "rocsparse-types.h"
 #include "rocsparselt-bfloat16.h"
 
 #include <float.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#define ROCSPARSE_KERNEL __global__
+#define ROCSPARSE_DEVICE_ILF __device__
 
 /*! \ingroup types_module
  *  \brief Handle to the rocSPARSELt library context queue.
@@ -105,6 +107,84 @@ typedef struct rocsparselt_half
     uint16_t data;
 } rocsparselt_half;
 #endif
+
+/*! \ingroup types_module
+ *  \brief Specify whether the matrix is to be transposed or not.
+ *
+ *  \details
+ *  The \ref rocsparselt_operation indicates the operation performed with the given matrix.
+ */
+typedef enum rocsparselt_operation_
+{
+    rocsparselt_operation_none                = 111, /**< Operate with matrix. */
+    rocsparselt_operation_transpose           = 112, /**< Operate with transpose. */
+    rocsparselt_operation_conjugate_transpose = 113 /**< Operate with conj. transpose. */
+} rocsparselt_operation;
+
+/*! \ingroup types_module
+ *  \brief List of rocsparse status codes definition.
+ *
+ *  \details
+ *  This is a list of the \ref rocsparselt_status types that are used by the rocSPARSE
+ *  library.
+ */
+typedef enum rocsparselt_status_
+{
+    rocsparselt_status_success                 = 0, /**< success. */
+    rocsparselt_status_invalid_handle          = 1, /**< handle not initialized, invalid or null. */
+    rocsparselt_status_not_implemented         = 2, /**< function is not implemented. */
+    rocsparselt_status_invalid_pointer         = 3, /**< invalid pointer parameter. */
+    rocsparselt_status_invalid_size            = 4, /**< invalid size parameter. */
+    rocsparselt_status_memory_error            = 5, /**< failed memory allocation, copy, dealloc. */
+    rocsparselt_status_internal_error          = 6, /**< other internal library failure. */
+    rocsparselt_status_invalid_value           = 7, /**< invalid value parameter. */
+    rocsparselt_status_arch_mismatch           = 8, /**< device arch is not supported. */
+    rocsparselt_status_zero_pivot              = 9, /**< encountered zero pivot. */
+    rocsparselt_status_not_initialized         = 10, /**< descriptor has not been initialized. */
+    rocsparselt_status_type_mismatch           = 11, /**< index types do not match. */
+    rocsparselt_status_requires_sorted_storage = 12, /**< sorted storage required. */
+    rocsparselt_status_continue                = 13 /**< nothing preventing function to proceed. */
+} rocsparselt_status;
+
+/*! \ingroup types_module
+ *  \brief List of dense matrix ordering.
+ *
+ *  \details
+ *  This is a list of supported \ref rocsparselt_order types that are used to describe the
+ *  memory layout of a dense matrix
+ */
+typedef enum rocsparselt_order_
+{
+    rocsparselt_order_row    = 0, /**< Row major. */
+    rocsparselt_order_column = 1 /**< Column major. */
+} rocsparselt_order;
+
+/*! \ingroup types_module
+ *  \brief Indicates if the pointer is device pointer or host pointer.
+ *
+ *  \details
+ *  The \ref rocsparselt_pointer_mode indicates whether scalar values (alpha/beta) are passed by
+ *  reference on the host or device.
+ *  Note, only support rocsparselt_pointer_mode_host.
+ */
+typedef enum rocsparselt_pointer_mode_
+{
+    rocsparselt_pointer_mode_host   = 0, /**< scalar pointers are in host memory. */
+    rocsparselt_pointer_mode_device = 1 /**< scalar pointers are in device memory. */
+} rocsparselt_pointer_mode;
+
+/*! \ingroup types_module
+ *  \brief Indicates if layer is active with bitmask.
+ *
+ *  \details
+ *  The \ref rocsparselt_layer_mode bit mask indicates the logging characteristics.
+ */
+typedef enum rocsparselt_layer_mode
+{
+    rocsparselt_layer_mode_none      = 0x0, /**< layer is not active. */
+    rocsparselt_layer_mode_log_trace = 0x1, /**< layer is in logging mode. */
+    rocsparselt_layer_mode_log_bench = 0x2 /**< layer is in benchmarking mode. */
+} rocsparselt_layer_mode;
 
 /*! \ingroup types_module
  *  \brief Specify the sparsity of the structured matrix.

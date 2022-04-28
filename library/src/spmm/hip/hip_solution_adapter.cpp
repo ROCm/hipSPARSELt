@@ -209,7 +209,7 @@ hipError_t SolutionAdapter::launchKernel(rocsparselt_handle      handle,
                                          hipEvent_t              stopEvent,
                                          int                     iter)
 {
-    if(handle->layer_mode & rocsparse_layer_mode_log_trace)
+    if(handle->layer_mode & rocsparselt_layer_mode_log_trace)
     {
         rocsparselt_cout << "Kernel " << kernel.kernelName << "\n"
                          << " l"

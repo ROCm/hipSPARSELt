@@ -91,9 +91,9 @@ struct _rocsparselt_handle
     int asic_rev;
 
     // pointer mode ; default mode is host
-    rocsparse_pointer_mode pointer_mode = rocsparse_pointer_mode_host;
+    rocsparselt_pointer_mode pointer_mode = rocsparselt_pointer_mode_host;
     // logging mode
-    rocsparse_layer_mode layer_mode;
+    rocsparselt_layer_mode layer_mode;
     // device buffer
     size_t buffer_size;
     void*  buffer;
@@ -161,7 +161,7 @@ struct _rocsparselt_mat_descr
     // data type of the matrix
     rocsparselt_datatype type;
     // memory layout
-    rocsparse_order order;
+    rocsparselt_order order;
     // matrix sparsity ratio
     rocsparselt_sparsity sparsity;
     // matrix attributes
@@ -220,9 +220,9 @@ struct _rocsparselt_matmul_descr
     };
 
     // operation applied to the matrix A
-    rocsparse_operation op_A;
+    rocsparselt_operation op_A;
     // operation applied to the matrix B
-    rocsparse_operation op_B;
+    rocsparselt_operation op_B;
     // matrix description of the matrix A
     rocsparselt_mat_descr matrix_A;
     // matrix description of the matrix B

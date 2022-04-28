@@ -112,7 +112,7 @@ public:
 class rocsparselt_local_mat_descr
 {
     rocsparselt_mat_descr m_descr;
-    rocsparse_status      m_status  = rocsparse_status_not_initialized;
+    rocsparselt_status    m_status  = rocsparselt_status_not_initialized;
     static constexpr int  alignment = 16;
 
 public:
@@ -122,7 +122,7 @@ public:
                                 int64_t                 col,
                                 int64_t                 ld,
                                 rocsparselt_datatype    type,
-                                rocsparse_order         order)
+                                rocsparselt_order       order)
     {
         if(mtype == rocsparselt_matrix_type_structured)
             this->m_status = rocsparselt_structured_descr_init(handle,
@@ -141,7 +141,7 @@ public:
 
     ~rocsparselt_local_mat_descr()
     {
-        if(this->m_status == rocsparse_status_success)
+        if(this->m_status == rocsparselt_status_success)
             rocsparselt_mat_descr_destroy(this->m_descr);
     }
 
@@ -150,7 +150,7 @@ public:
     rocsparselt_local_mat_descr& operator=(const rocsparselt_local_mat_descr&) = delete;
     rocsparselt_local_mat_descr& operator=(rocsparselt_local_mat_descr&&) = delete;
 
-    rocsparse_status status()
+    rocsparselt_status status()
     {
         return m_status;
     }
@@ -171,12 +171,12 @@ public:
 class rocsparselt_local_matmul_descr
 {
     rocsparselt_matmul_descr m_descr  = nullptr;
-    rocsparse_status         m_status = rocsparse_status_not_initialized;
+    rocsparselt_status       m_status = rocsparselt_status_not_initialized;
 
 public:
     rocsparselt_local_matmul_descr(rocsparselt_handle       handle,
-                                   rocsparse_operation      opA,
-                                   rocsparse_operation      opB,
+                                   rocsparselt_operation    opA,
+                                   rocsparselt_operation    opB,
                                    rocsparselt_mat_descr    matA,
                                    rocsparselt_mat_descr    matB,
                                    rocsparselt_mat_descr    matC,
@@ -189,7 +189,7 @@ public:
 
     ~rocsparselt_local_matmul_descr()
     {
-        if(this->m_status == rocsparse_status_success)
+        if(this->m_status == rocsparselt_status_success)
             rocsparselt_matmul_descr_destroy(this->m_descr);
     }
 
@@ -198,7 +198,7 @@ public:
     rocsparselt_local_matmul_descr& operator=(const rocsparselt_local_matmul_descr&) = delete;
     rocsparselt_local_matmul_descr& operator=(rocsparselt_local_matmul_descr&&) = delete;
 
-    rocsparse_status status()
+    rocsparselt_status status()
     {
         return m_status;
     }
@@ -219,7 +219,7 @@ public:
 class rocsparselt_local_matmul_alg_selection
 {
     rocsparselt_matmul_alg_selection m_alg_sel;
-    rocsparse_status                 m_status = rocsparse_status_not_initialized;
+    rocsparselt_status               m_status = rocsparselt_status_not_initialized;
 
 public:
     rocsparselt_local_matmul_alg_selection(rocsparselt_handle       handle,
@@ -233,7 +233,7 @@ public:
 
     ~rocsparselt_local_matmul_alg_selection()
     {
-        if(this->m_status == rocsparse_status_success)
+        if(this->m_status == rocsparselt_status_success)
             rocsparselt_matmul_alg_selection_destroy(this->m_alg_sel);
     }
 
@@ -244,7 +244,7 @@ public:
     rocsparselt_local_matmul_alg_selection& operator=(rocsparselt_local_matmul_alg_selection&&)
         = delete;
 
-    rocsparse_status status()
+    rocsparselt_status status()
     {
         return m_status;
     }
@@ -264,7 +264,7 @@ public:
 class rocsparselt_local_matmul_plan
 {
     rocsparselt_matmul_plan m_plan;
-    rocsparse_status        m_status = rocsparse_status_not_initialized;
+    rocsparselt_status      m_status = rocsparselt_status_not_initialized;
 
 public:
     rocsparselt_local_matmul_plan(rocsparselt_handle               handle,
@@ -279,7 +279,7 @@ public:
 
     ~rocsparselt_local_matmul_plan()
     {
-        if(this->m_status == rocsparse_status_success)
+        if(this->m_status == rocsparselt_status_success)
             rocsparselt_matmul_plan_destroy(this->m_plan);
     }
 
@@ -288,7 +288,7 @@ public:
     rocsparselt_local_matmul_plan& operator=(const rocsparselt_local_matmul_plan&) = delete;
     rocsparselt_local_matmul_plan& operator=(rocsparselt_local_matmul_plan&&) = delete;
 
-    rocsparse_status status()
+    rocsparselt_status status()
     {
         return this->m_status;
     }

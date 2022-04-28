@@ -85,46 +85,46 @@ constexpr const char* rocsparselt_compute_type_string(rocsparselt_compute_type t
     return "invalid";
 }
 
-constexpr const char* rocsparselt_transpose_letter(rocsparse_operation op)
+constexpr const char* rocsparselt_transpose_letter(rocsparselt_operation op)
 {
     switch(op)
     {
-    case rocsparse_operation_none:
+    case rocsparselt_operation_none:
         return "N";
-    case rocsparse_operation_transpose:
+    case rocsparselt_operation_transpose:
         return "T";
-    case rocsparse_operation_conjugate_transpose:
+    case rocsparselt_operation_conjugate_transpose:
         return "C";
     }
     return "invalid";
 }
-// Convert rocsparse_status to string
-static const char* rocsparse_status_to_string(rocsparse_status status)
+// Convert rocsparselt_status to string
+static const char* rocsparselt_status_to_string(rocsparselt_status status)
 {
 #define CASE(x) \
     case x:     \
         return #x
     switch(status)
     {
-        CASE(rocsparse_status_success);
-        CASE(rocsparse_status_invalid_handle);
-        CASE(rocsparse_status_not_implemented);
-        CASE(rocsparse_status_invalid_pointer);
-        CASE(rocsparse_status_invalid_size);
-        CASE(rocsparse_status_memory_error);
-        CASE(rocsparse_status_internal_error);
-        CASE(rocsparse_status_invalid_value);
-        CASE(rocsparse_status_arch_mismatch);
-        CASE(rocsparse_status_zero_pivot);
-        CASE(rocsparse_status_not_initialized);
-        CASE(rocsparse_status_type_mismatch);
-        CASE(rocsparse_status_requires_sorted_storage);
-        CASE(rocsparse_status_continue);
+        CASE(rocsparselt_status_success);
+        CASE(rocsparselt_status_invalid_handle);
+        CASE(rocsparselt_status_not_implemented);
+        CASE(rocsparselt_status_invalid_pointer);
+        CASE(rocsparselt_status_invalid_size);
+        CASE(rocsparselt_status_memory_error);
+        CASE(rocsparselt_status_internal_error);
+        CASE(rocsparselt_status_invalid_value);
+        CASE(rocsparselt_status_arch_mismatch);
+        CASE(rocsparselt_status_zero_pivot);
+        CASE(rocsparselt_status_not_initialized);
+        CASE(rocsparselt_status_type_mismatch);
+        CASE(rocsparselt_status_requires_sorted_storage);
+        CASE(rocsparselt_status_continue);
     }
 #undef CASE
     // We don't use default: so that the compiler warns us if any valid enums are missing
-    // from our switch. If the value is not a valid rocsparse_status, we return this string.
-    return "<undefined rocsparse_status value>";
+    // from our switch. If the value is not a valid rocsparselt_status, we return this string.
+    return "<undefined rocsparselt_status value>";
 }
 template <typename>
 static constexpr char rocsparselt_precision_string[] = "invalid";
@@ -145,21 +145,8 @@ static constexpr char rocsparselt_precision_string<int32_t>[] = "i32_r";
 template <>
 static constexpr char rocsparselt_precision_string<uint32_t>[] = "u32_r";
 
-// Return the leftmost significant bit position
-#if defined(rocsparse_ILP64)
-static inline rocsparse_int rocsparse_clz(rocsparse_int n)
-{
-    return 64 - __builtin_clzll(n);
-}
-#else
-static inline rocsparse_int rocsparse_clz(rocsparse_int n)
-{
-    return 32 - __builtin_clz(n);
-}
-#endif
-
 // if trace logging is turned on with
-// (handle->layer_mode & rocsparse_layer_mode_log_trace) == true
+// (handle->layer_mode & rocsparselt_layer_mode_log_trace) == true
 // then
 // log_function will call log_arguments to log function
 // arguments with a comma separator
@@ -168,7 +155,7 @@ void log_trace(rocsparselt_handle handle, H head, Ts&&... xs)
 {
     if(nullptr != handle)
     {
-        if(handle->layer_mode & rocsparse_layer_mode_log_trace)
+        if(handle->layer_mode & rocsparselt_layer_mode_log_trace)
         {
             std::string comma_separator = ",";
 
@@ -179,7 +166,7 @@ void log_trace(rocsparselt_handle handle, H head, Ts&&... xs)
 }
 
 // if bench logging is turned on with
-// (handle->layer_mode & rocsparse_layer_mode_log_bench) == true
+// (handle->layer_mode & rocsparselt_layer_mode_log_bench) == true
 // then
 // log_bench will call log_arguments to log a string that
 // can be input to the executable rocsparselt-bench.
@@ -188,7 +175,7 @@ void log_bench(rocsparselt_handle handle, H head, std::string precision, Ts&&...
 {
     if(nullptr != handle)
     {
-        if(handle->layer_mode & rocsparse_layer_mode_log_bench)
+        if(handle->layer_mode & rocsparselt_layer_mode_log_bench)
         {
             std::string space_separator = " ";
 
@@ -209,7 +196,7 @@ template <typename T>
 T log_trace_scalar_value(rocsparselt_handle handle, const T* value)
 {
     T host;
-    if(value && handle->pointer_mode == rocsparse_pointer_mode_device)
+    if(value && handle->pointer_mode == rocsparselt_pointer_mode_device)
     {
         hipMemcpy(&host, value, sizeof(host), hipMemcpyDeviceToHost);
         value = &host;
@@ -230,7 +217,7 @@ template <typename T>
 T log_bench_scalar_value(rocsparselt_handle handle, const T* value)
 {
     T host;
-    if(value && handle->pointer_mode == rocsparse_pointer_mode_device)
+    if(value && handle->pointer_mode == rocsparselt_pointer_mode_device)
     {
         hipMemcpy(&host, value, sizeof(host), hipMemcpyDeviceToHost);
         value = &host;
@@ -290,30 +277,30 @@ std::string replaceX(std::string input_string)
 // These macros can be redefined if the developer includes src/include/debug.h
 //
 #define ROCSPARSE_DEBUG_VERBOSE(msg__) (void)0
-#define ROCSPARSE_RETURN_STATUS(token__) return rocsparse_status_##token__
+#define ROCSPARSE_RETURN_STATUS(token__) return rocsparselt_status_##token__
 
-// Convert the current C++ exception to rocsparse_status
+// Convert the current C++ exception to rocsparselt_status
 // This allows extern "C" functions to return this function in a catch(...) block
-// while converting all C++ exceptions to an equivalent rocsparse_status here
-inline rocsparse_status exception_to_rocsparse_status(std::exception_ptr e
-                                                      = std::current_exception())
+// while converting all C++ exceptions to an equivalent rocsparselt_status here
+inline rocsparselt_status exception_to_rocsparselt_status(std::exception_ptr e
+                                                          = std::current_exception())
 try
 {
     if(e)
         std::rethrow_exception(e);
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
-catch(const rocsparse_status& status)
+catch(const rocsparselt_status& status)
 {
     return status;
 }
 catch(const std::bad_alloc&)
 {
-    return rocsparse_status_memory_error;
+    return rocsparselt_status_memory_error;
 }
 catch(...)
 {
-    return rocsparse_status_internal_error;
+    return rocsparselt_status_internal_error;
 }
 
 // For host scalars
@@ -443,26 +430,14 @@ struct floating_traits
     using data_t = T;
 };
 
-template <>
-struct floating_traits<rocsparse_float_complex>
-{
-    using data_t = float;
-};
-
-template <>
-struct floating_traits<rocsparse_double_complex>
-{
-    using data_t = double;
-};
-
 template <typename T>
 using floating_data_t = typename floating_traits<T>::data_t;
 
 // for internal use during testing, fetch arch name
 ROCSPARSELT_EXPORT std::string rocsparselt_internal_get_arch_name();
 
-extern "C" ROCSPARSELT_EXPORT rocsparse_status rocsparselt_get_version(rocsparselt_handle handle,
-                                                                       int*               version);
+extern "C" ROCSPARSELT_EXPORT rocsparselt_status rocsparselt_get_version(rocsparselt_handle handle,
+                                                                         int* version);
 
 /*********************************************************************************************************
  * \brief The main structure for Numerical checking to detect numerical abnormalities such as NaN/zero/Inf

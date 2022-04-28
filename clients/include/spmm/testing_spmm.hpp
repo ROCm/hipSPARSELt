@@ -81,8 +81,8 @@ void testing_spmm_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const rocsparse_operation transA = rocsparse_operation_none;
-    const rocsparse_operation transB = rocsparse_operation_none;
+    const rocsparselt_operation transA = rocsparselt_operation_none;
+    const rocsparselt_operation transB = rocsparselt_operation_none;
 
     // allocate memory on device
     device_vector<Ti> dA(safe_size / 2);
@@ -95,14 +95,19 @@ void testing_spmm_bad_arg(const Arguments& arg)
     CHECK_DEVICE_ALLOCATION(dD.memcheck());
 
     rocsparselt_local_handle    handle{arg};
-    rocsparselt_local_mat_descr matA(
-        rocsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, rocsparse_order_column);
+    rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
+                                     handle,
+                                     M,
+                                     K,
+                                     lda,
+                                     arg.a_type,
+                                     rocsparselt_order_column);
     rocsparselt_local_mat_descr matB(
-        rocsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, rocsparse_order_column);
+        rocsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, rocsparselt_order_column);
     rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparse_order_column);
+        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
     rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparse_order_column);
+        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
     rocsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
     rocsparselt_local_matmul_alg_selection alg_sel(handle, matmul, rocsparselt_matmul_alg_default);
@@ -116,43 +121,43 @@ void testing_spmm_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(nullptr, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparse_status_invalid_handle);
+        rocsparselt_status_invalid_handle);
 
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, nullptr, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparse_status_invalid_handle);
+        rocsparselt_status_invalid_handle);
 
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, nullptr, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparse_status_invalid_pointer);
+        rocsparselt_status_invalid_pointer);
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, &alpha, nullptr, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparse_status_invalid_pointer);
+        rocsparselt_status_invalid_pointer);
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, &alpha, dA, nullptr, &beta, dC, dD, workspace, &stream, 1),
-        rocsparse_status_invalid_pointer);
+        rocsparselt_status_invalid_pointer);
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, &alpha, dA, dB, nullptr, dC, dD, workspace, &stream, 1),
-        rocsparse_status_invalid_pointer);
+        rocsparselt_status_invalid_pointer);
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, nullptr, dD, workspace, &stream, 1),
-        rocsparse_status_invalid_pointer);
+        rocsparselt_status_invalid_pointer);
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, dC, nullptr, workspace, &stream, 1),
-        rocsparse_status_invalid_pointer);
+        rocsparselt_status_invalid_pointer);
 
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, -1),
-        rocsparse_status_invalid_value);
+        rocsparselt_status_invalid_value);
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, nullptr, 1),
-        rocsparse_status_invalid_value);
+        rocsparselt_status_invalid_value);
 
     workspace_size = 1;
     rocsparselt_local_matmul_plan plan2(handle, matmul, alg_sel, workspace_size);
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_matmul(handle, plan2, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 0),
-        rocsparse_status_invalid_value);
+        rocsparselt_status_invalid_value);
 }
 
 template <typename Ti,
@@ -161,8 +166,8 @@ template <typename Ti,
           rocsparselt_batch_type btype = rocsparselt_batch_type::none>
 void testing_spmm(const Arguments& arg)
 {
-    rocsparse_operation transA = char2rocsparse_operation(arg.transA);
-    rocsparse_operation transB = char2rocsparse_operation(arg.transB);
+    rocsparselt_operation transA = char2rocsparselt_operation(arg.transA);
+    rocsparselt_operation transB = char2rocsparselt_operation(arg.transB);
 
     using Talpha = float;
 
@@ -184,13 +189,13 @@ void testing_spmm(const Arguments& arg)
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
-    int64_t A_row = transA == rocsparse_operation_none ? M : K;
-    int64_t A_col = transA == rocsparse_operation_none ? K : M;
-    int64_t B_row = transB == rocsparse_operation_none ? K : N;
-    int64_t B_col = transB == rocsparse_operation_none ? N : K;
+    int64_t A_row = transA == rocsparselt_operation_none ? M : K;
+    int64_t A_col = transA == rocsparselt_operation_none ? K : M;
+    int64_t B_row = transB == rocsparselt_operation_none ? K : N;
+    int64_t B_col = transB == rocsparselt_operation_none ? N : K;
 
-    int64_t stride_1_a = transA == rocsparse_operation_none ? 1 : lda;
-    int64_t stride_2_a = transA == rocsparse_operation_none ? lda : 1;
+    int64_t stride_1_a = transA == rocsparselt_operation_none ? 1 : lda;
+    int64_t stride_2_a = transA == rocsparselt_operation_none ? lda : 1;
 
     constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
     constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
@@ -206,37 +211,37 @@ void testing_spmm(const Arguments& arg)
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     rocsparse_order_column);
+                                     rocsparselt_order_column);
     rocsparselt_local_mat_descr matB(rocsparselt_matrix_type_dense,
                                      handle,
                                      B_row,
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     rocsparse_order_column);
+                                     rocsparselt_order_column);
     rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparse_order_column);
+        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
     rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparse_order_column);
+        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
 
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
     bool invalid_size_c = ldc < M;
     if(invalid_size_a)
     {
-        EXPECT_ROCSPARSELT_STATUS(matA.status(), rocsparse_status_invalid_size);
+        EXPECT_ROCSPARSELT_STATUS(matA.status(), rocsparselt_status_invalid_size);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_ROCSPARSELT_STATUS(matB.status(), rocsparse_status_invalid_size);
+        EXPECT_ROCSPARSELT_STATUS(matB.status(), rocsparselt_status_invalid_size);
 
         return;
     }
     if(invalid_size_c)
     {
-        EXPECT_ROCSPARSELT_STATUS(matC.status(), rocsparse_status_invalid_size);
+        EXPECT_ROCSPARSELT_STATUS(matC.status(), rocsparselt_status_invalid_size);
 
         return;
     }
@@ -246,19 +251,19 @@ void testing_spmm(const Arguments& arg)
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matA, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matB, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matC, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matD, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
     }
 
     if(do_strided_batched)
@@ -266,19 +271,19 @@ void testing_spmm(const Arguments& arg)
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(int64_t)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(int64_t)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(int64_t)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_mat_descr_set_attribute(
                 handle, matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(int64_t)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
     }
 
     rocsparselt_local_matmul_descr matmul(
@@ -294,14 +299,14 @@ void testing_spmm(const Arguments& arg)
                                                    rocsparselt_matmul_activation_relu_upperbound,
                                                    &arg.activation_arg2,
                                                    sizeof(float)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_matmul_descr_set_attribute(handle,
                                                    matmul,
                                                    rocsparselt_matmul_activation_relu_threshold,
                                                    &arg.activation_arg1,
                                                    sizeof(float)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
     case rocsparselt_activation_type::relu:
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_matmul_descr_set_attribute(handle,
@@ -309,7 +314,7 @@ void testing_spmm(const Arguments& arg)
                                                    rocsparselt_matmul_activation_relu,
                                                    &activation_on,
                                                    sizeof(activation_on)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         break;
     case rocsparselt_activation_type::gelu:
         EXPECT_ROCSPARSELT_STATUS(
@@ -318,7 +323,7 @@ void testing_spmm(const Arguments& arg)
                                                    rocsparselt_matmul_activation_gelu,
                                                    &activation_on,
                                                    sizeof(activation_on)),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         break;
     default:
         activation_on = 0;
@@ -333,7 +338,7 @@ void testing_spmm(const Arguments& arg)
     rocsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
     EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
-                              rocsparse_status_success);
+                              rocsparselt_status_success);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
@@ -435,10 +440,10 @@ void testing_spmm(const Arguments& arg)
     }
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_smfmac_prune(handle, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparse_status_success);
+        rocsparselt_status_success);
 
     EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
-                              rocsparse_status_success);
+                              rocsparselt_status_success);
 
     if(arg.unit_check || arg.norm_check)
     {
@@ -447,7 +452,7 @@ void testing_spmm(const Arguments& arg)
         EXPECT_ROCSPARSELT_STATUS(
             rocsparselt_matmul(
                 handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
-            rocsparse_status_success);
+            rocsparselt_status_success);
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
         {
@@ -574,7 +579,7 @@ void testing_spmm(const Arguments& arg)
                                                          dWorkspace,
                                                          &stream,
                                                          1),
-                                      rocsparse_status_success);
+                                      rocsparselt_status_success);
         }
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
@@ -591,7 +596,7 @@ void testing_spmm(const Arguments& arg)
                                                          dWorkspace,
                                                          &stream,
                                                          1),
-                                      rocsparse_status_success);
+                                      rocsparselt_status_success);
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
         auto flops    = gemm_gflop_count<float>(M, N, K);

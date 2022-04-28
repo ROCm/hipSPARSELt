@@ -35,7 +35,7 @@ extern "C" {
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status
+rocsparselt_status
     rocsparselt_matmul_get_workspace(const rocsparselt_handle               handle,
                                      const rocsparselt_matmul_alg_selection algSelection,
                                      size_t*                                workspaceSize)
@@ -44,46 +44,46 @@ rocsparse_status
     // Check if handle is valid
     if(handle == nullptr || algSelection == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
     if(workspaceSize == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
 
     {
         //TODO
         *workspaceSize = 0;
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
-rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
-                                         const rocsparselt_matmul_plan plan,
-                                         const void*                   alpha,
-                                         const void*                   d_A,
-                                         const void*                   d_B,
-                                         const void*                   beta,
-                                         const void*                   d_C,
-                                         void*                         d_D,
-                                         void*                         workspace,
-                                         hipStream_t*                  streams,
-                                         int32_t                       numStreams,
-                                         bool                          search = false)
+rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
+                                           const rocsparselt_matmul_plan plan,
+                                           const void*                   alpha,
+                                           const void*                   d_A,
+                                           const void*                   d_B,
+                                           const void*                   beta,
+                                           const void*                   d_C,
+                                           void*                         d_D,
+                                           void*                         workspace,
+                                           hipStream_t*                  streams,
+                                           int32_t                       numStreams,
+                                           bool                          search = false)
 {
     // Check if handle is valid
     if(handle == nullptr || plan == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
     if(alpha == nullptr || beta == nullptr || d_A == nullptr || d_B == nullptr || d_C == nullptr
        || d_D == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
 
     if(workspace == nullptr && plan->workspace_size != 0)
@@ -91,24 +91,24 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
         rocsparselt_cerr << "The parameter number 9 (workspace) had an illegal value: "
                             "expected a device memroy with "
                          << plan->workspace_size << " bytes, but current is nullptr" << std::endl;
-        return rocsparse_status_invalid_value;
+        return rocsparselt_status_invalid_value;
     }
 
     if(numStreams < 0)
     {
         rocsparselt_cerr << "The parameter number 11 (numStreams) had an illegal value: "
                          << numStreams << std::endl;
-        return rocsparse_status_invalid_value;
+        return rocsparselt_status_invalid_value;
     }
     else if(streams == nullptr && numStreams > 0)
     {
         rocsparselt_cerr << "The parameter number 10 (streams) had an illegal value: nullptr"
                          << std::endl;
-        return rocsparse_status_invalid_value;
+        return rocsparselt_status_invalid_value;
     }
 
-    rocsparse_operation      opA          = plan->matmul_descr->op_A;
-    rocsparse_operation      opB          = plan->matmul_descr->op_B;
+    rocsparselt_operation    opA          = plan->matmul_descr->op_A;
+    rocsparselt_operation    opB          = plan->matmul_descr->op_B;
     rocsparselt_compute_type compute_type = plan->matmul_descr->compute_type;
 
     // matrix A
@@ -121,9 +121,9 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     int64_t              batch_stride_a = 0;
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
     plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
-    int64_t c_batch_stride_a = (batch_stride_a == 0                 ? 0
-                                : (opA == rocsparse_operation_none) ? c_lda * c_k_a
-                                                                    : c_lda * num_cols_a);
+    int64_t c_batch_stride_a = (batch_stride_a == 0                   ? 0
+                                : (opA == rocsparselt_operation_none) ? c_lda * c_k_a
+                                                                      : c_lda * num_cols_a);
 
     // matrix B
     int64_t              num_rows_b     = plan->matmul_descr->matrix_B->m;
@@ -177,13 +177,13 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     int64_t m, n, k;
     auto    status
         = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
-    if(status != rocsparse_status_success)
+    if(status != rocsparselt_status_success)
         return status;
 
-    int64_t c_num_cols_a    = (opA == rocsparse_operation_none ? c_k_a : num_cols_a);
+    int64_t c_num_cols_a    = (opA == rocsparselt_operation_none ? c_k_a : num_cols_a);
     int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
         c_num_cols_a, c_lda, (batch_stride_a == 0 ? 1 : num_batches_a), type_a);
-    if(status != rocsparse_status_success)
+    if(status != rocsparselt_status_success)
         return status;
 
     const unsigned char* metadata = reinterpret_cast<const unsigned char*>(d_A) + metadata_offset;
@@ -196,7 +196,7 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
         numStreams, &config_id, config_max_id, search_iterations
 
     status = rocsparselt_spmm_template(EX_PARM);
-    if(search && status == rocsparse_status_success)
+    if(search && status == rocsparselt_status_success)
     {
         plan->alg_selection->attributes[rocsparselt_matmul_alg_config_id].set(&config_id);
     }
@@ -206,17 +206,17 @@ rocsparse_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul(const rocsparselt_handle      handle,
-                                    const rocsparselt_matmul_plan plan,
-                                    const void*                   alpha,
-                                    const void*                   d_A,
-                                    const void*                   d_B,
-                                    const void*                   beta,
-                                    const void*                   d_C,
-                                    void*                         d_D,
-                                    void*                         workspace,
-                                    hipStream_t*                  streams,
-                                    int32_t                       numStreams)
+rocsparselt_status rocsparselt_matmul(const rocsparselt_handle      handle,
+                                      const rocsparselt_matmul_plan plan,
+                                      const void*                   alpha,
+                                      const void*                   d_A,
+                                      const void*                   d_B,
+                                      const void*                   beta,
+                                      const void*                   d_C,
+                                      void*                         d_D,
+                                      void*                         workspace,
+                                      hipStream_t*                  streams,
+                                      int32_t                       numStreams)
 
 {
     return rocsparselt_matmul_impl(
@@ -226,17 +226,17 @@ rocsparse_status rocsparselt_matmul(const rocsparselt_handle      handle,
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul_search(const rocsparselt_handle      handle,
-                                           const rocsparselt_matmul_plan plan,
-                                           const void*                   alpha,
-                                           const void*                   d_A,
-                                           const void*                   d_B,
-                                           const void*                   beta,
-                                           const void*                   d_C,
-                                           void*                         d_D,
-                                           void*                         workspace,
-                                           hipStream_t*                  streams,
-                                           int32_t                       numStreams)
+rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle      handle,
+                                             const rocsparselt_matmul_plan plan,
+                                             const void*                   alpha,
+                                             const void*                   d_A,
+                                             const void*                   d_B,
+                                             const void*                   beta,
+                                             const void*                   d_C,
+                                             void*                         d_D,
+                                             void*                         workspace,
+                                             hipStream_t*                  streams,
+                                             int32_t                       numStreams)
 
 {
     return rocsparselt_matmul_impl(

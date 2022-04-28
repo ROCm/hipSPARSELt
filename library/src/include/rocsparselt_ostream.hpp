@@ -408,7 +408,7 @@ public:
 
     // rocsparselt_operation output
     friend rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream& os,
-                                                    rocsparse_operation           trans)
+                                                    rocsparselt_operation         trans)
 
     {
         return os << rocsparselt_transpose_letter(trans);
@@ -424,9 +424,9 @@ public:
 
     // rocsparselt_status output
     friend rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream& os,
-                                                    rocsparse_status              status)
+                                                    rocsparselt_status            status)
     {
-        os.m_os << rocsparse_status_to_string(status);
+        os.m_os << rocsparselt_status_to_string(status);
         return os;
     }
 

@@ -51,7 +51,7 @@ inline rocsparselt_status rocsparselt_return_status_trace(const char*        fun
                                                           const int          line,
                                                           rocsparselt_status status)
 {
-    if(rocsparse_status_success != status)
+    if(rocsparselt_status_success != status)
     {
         std::cerr << s_rocsparselt_debug_str << std::endl
                   << s_rocsparselt_debug_str << "invalid status" << std::endl

@@ -27,40 +27,40 @@
 #include <hip/hip_runtime_api.h>
 
 /*******************************************************************************
- * \brief convert hipError_t to rocsparse_status
+ * \brief convert hipError_t to rocsparselt_status
  * TODO - enumerate library calls to hip runtime, enumerate possible errors from
  * those calls
  ******************************************************************************/
-rocsparse_status get_rocsparselt_status_for_hip_status(hipError_t status)
+rocsparselt_status get_rocsparselt_status_for_hip_status(hipError_t status)
 {
     switch(status)
     {
     // success
     case hipSuccess:
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
 
     // internal hip memory allocation
     case hipErrorMemoryAllocation:
     case hipErrorLaunchOutOfResources:
-        return rocsparse_status_memory_error;
+        return rocsparselt_status_memory_error;
 
     // user-allocated hip memory
     case hipErrorInvalidDevicePointer: // hip memory
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
 
     // user-allocated device, stream, event
     case hipErrorInvalidDevice:
     case hipErrorInvalidResourceHandle:
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
 
     // library using hip incorrectly
     case hipErrorInvalidValue:
-        return rocsparse_status_internal_error;
+        return rocsparselt_status_internal_error;
 
     // hip runtime failing
     case hipErrorNoDevice: // no hip devices
     case hipErrorUnknown:
     default:
-        return rocsparse_status_internal_error;
+        return rocsparselt_status_internal_error;
     }
 }

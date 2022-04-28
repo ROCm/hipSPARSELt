@@ -44,12 +44,12 @@ extern "C" {
  * to all subsequent library function calls.
  * It should be destroyed at the end using rocsparselt_destroy().
  *******************************************************************************/
-rocsparse_status rocsparselt_init(rocsparselt_handle* handle)
+rocsparselt_status rocsparselt_init(rocsparselt_handle* handle)
 {
     // Check if handle is valid
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
@@ -60,22 +60,22 @@ rocsparse_status rocsparselt_init(rocsparselt_handle* handle)
             *handle = new _rocsparselt_handle();
             log_trace(*handle, "rocsparselt_init");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief destroy handle
  *******************************************************************************/
-rocsparse_status rocsparselt_destroy(const rocsparselt_handle handle)
+rocsparselt_status rocsparselt_destroy(const rocsparselt_handle handle)
 {
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
 
     log_trace(handle, "rocsparse_destroy");
@@ -84,11 +84,11 @@ rocsparse_status rocsparselt_destroy(const rocsparselt_handle handle)
     {
         delete handle;
     }
-    catch(const rocsparse_status& status)
+    catch(const rocsparselt_status& status)
     {
         return status;
     }
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 /********************************************************************************
@@ -98,23 +98,23 @@ rocsparse_status rocsparselt_destroy(const rocsparselt_handle handle)
  * to all subsequent library function calls that involve the matrix.
  * It should be destroyed at the end using rocsparselt_mat_descr_destroy().
  *******************************************************************************/
-rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
-                                              rocsparselt_mat_descr*   matDescr,
-                                              int64_t                  rows,
-                                              int64_t                  cols,
-                                              int64_t                  ld,
-                                              uint32_t                 alignment,
-                                              rocsparselt_datatype     valueType,
-                                              rocsparse_order          order)
+rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
+                                                rocsparselt_mat_descr*   matDescr,
+                                                int64_t                  rows,
+                                                int64_t                  cols,
+                                                int64_t                  ld,
+                                                uint32_t                 alignment,
+                                                rocsparselt_datatype     valueType,
+                                                rocsparselt_order        order)
 {
     // Check if matDescr is valid
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(matDescr == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
@@ -124,7 +124,7 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
         {
             auto status = validateMatrixArgs(
                 handle, rows, cols, ld, alignment, valueType, order, rocsparselt_matrix_type_dense);
-            if(status != rocsparse_status_success)
+            if(status != rocsparselt_status_success)
                 throw status;
 
             *matDescr              = new _rocsparselt_mat_descr();
@@ -141,11 +141,11 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
             (*matDescr)->attributes[rocsparselt_mat_num_batches].set(&num_batches);
             log_trace(handle, "rocsparselt_dense_descr_init");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
@@ -156,25 +156,25 @@ rocsparse_status rocsparselt_dense_descr_init(const rocsparselt_handle handle,
  * to all subsequent library function calls that involve the matrix.
  * It should be destroyed at the end using rocsparselt_mat_descr_destroy().
  *******************************************************************************/
-rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle handle,
-                                                   rocsparselt_mat_descr*   matDescr,
-                                                   int64_t                  rows,
-                                                   int64_t                  cols,
-                                                   int64_t                  ld,
-                                                   uint32_t                 alignment,
-                                                   rocsparselt_datatype     valueType,
-                                                   rocsparse_order          order,
-                                                   rocsparselt_sparsity     sparsity)
+rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle handle,
+                                                     rocsparselt_mat_descr*   matDescr,
+                                                     int64_t                  rows,
+                                                     int64_t                  cols,
+                                                     int64_t                  ld,
+                                                     uint32_t                 alignment,
+                                                     rocsparselt_datatype     valueType,
+                                                     rocsparselt_order        order,
+                                                     rocsparselt_sparsity     sparsity)
 
 {
     // Check if matDescr is valid
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(matDescr == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
@@ -190,7 +190,7 @@ rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle hand
                                              valueType,
                                              order,
                                              rocsparselt_matrix_type_structured);
-            if(status != rocsparse_status_success)
+            if(status != rocsparselt_status_success)
                 throw status;
 
             *matDescr              = new _rocsparselt_mat_descr();
@@ -208,64 +208,64 @@ rocsparse_status rocsparselt_structured_descr_init(const rocsparselt_handle hand
             (*matDescr)->attributes[rocsparselt_mat_num_batches].set(&num_batches);
             log_trace(handle, "rocsparselt_structured_descr_init");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief destroy matrix descriptor
  *******************************************************************************/
-rocsparse_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr matDescr)
+rocsparselt_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr matDescr)
 {
     if(matDescr == nullptr)
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     // Destruct
     try
     {
         delete matDescr;
     }
-    catch(const rocsparse_status& status)
+    catch(const rocsparselt_status& status)
     {
         return status;
     }
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 /********************************************************************************
  * \brief sets the value of the specified attribute belonging to matrix descriptor
  * such as number of batches and their stride.
  *******************************************************************************/
-rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle        handle,
-                                                     rocsparselt_mat_descr           matDescr,
-                                                     rocsparselt_mat_descr_attribute matAttribute,
-                                                     const void*                     data,
-                                                     size_t                          dataSize)
+rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle        handle,
+                                                       rocsparselt_mat_descr           matDescr,
+                                                       rocsparselt_mat_descr_attribute matAttribute,
+                                                       const void*                     data,
+                                                       size_t                          dataSize)
 
 {
     if(handle == nullptr || matDescr == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
         // Allocate
         try
         {
-            rocsparse_status status;
+            rocsparselt_status status;
             switch(matAttribute)
             {
             case rocsparselt_mat_num_batches:
             {
                 if((status = validateSetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 const int* num_batches = reinterpret_cast<const int*>(data);
                 if(*num_batches < 1)
@@ -273,14 +273,14 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
                     rocsparselt_cerr
                         << "The number of batches must be greater or equal to 1, current: "
                         << *num_batches << std::endl;
-                    return rocsparse_status_invalid_value;
+                    return rocsparselt_status_invalid_value;
                 }
                 break;
             }
             case rocsparselt_mat_batch_stride:
             {
                 if((status = validateSetAttributeDataSize<int64_t>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 const int64_t* batch_stride = reinterpret_cast<const int64_t*>(data);
                 if(*batch_stride != 0)
@@ -291,7 +291,7 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
                         rocsparselt_cerr << "The batch stride must be 0 or at least cols * ld ("
                                          << expected_batch_stride << "), current: " << *batch_stride
                                          << std::endl;
-                        return rocsparse_status_invalid_value;
+                        return rocsparselt_status_invalid_value;
                     }
                 }
                 break;
@@ -300,11 +300,11 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
             matDescr->attributes[matAttribute].set(data, dataSize);
             log_trace(handle, "rocsparselt_mat_descr_set_attribute");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
@@ -312,79 +312,79 @@ rocsparse_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle   
  * \brief sets the value of the specified attribute belonging to matrix descriptor
  * such as number of batches and their stride.
  *******************************************************************************/
-rocsparse_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle        handle,
-                                                     const rocsparselt_mat_descr     matDescr,
-                                                     rocsparselt_mat_descr_attribute matAttribute,
-                                                     void*                           data,
-                                                     size_t                          dataSize)
+rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle        handle,
+                                                       const rocsparselt_mat_descr     matDescr,
+                                                       rocsparselt_mat_descr_attribute matAttribute,
+                                                       void*                           data,
+                                                       size_t                          dataSize)
 {
     // Check if matmulDescr is valid
     if(handle == nullptr || matDescr == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
         try
         {
-            rocsparse_status status;
+            rocsparselt_status status;
             switch(matAttribute)
             {
             case rocsparselt_mat_num_batches:
             {
                 if((status = validateGetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
             }
             case rocsparselt_mat_batch_stride:
             {
                 if((status = validateGetAttributeDataSize<int64_t>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
             }
             default:
-                return rocsparse_status_invalid_value;
+                return rocsparselt_status_invalid_value;
             }
             if(matDescr->attributes[matAttribute].get(data, dataSize) == 0)
             {
-                return rocsparse_status_internal_error;
+                return rocsparselt_status_internal_error;
             }
             log_trace(handle, "rocsparselt_mat_descr_get_attribute");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
-                                               rocsparselt_matmul_descr* matmulDescr,
-                                               rocsparse_operation       opA,
-                                               rocsparse_operation       opB,
-                                               rocsparselt_mat_descr     matA,
-                                               rocsparselt_mat_descr     matB,
-                                               rocsparselt_mat_descr     matC,
-                                               rocsparselt_mat_descr     matD,
-                                               rocsparselt_compute_type  computeType)
+rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
+                                                 rocsparselt_matmul_descr* matmulDescr,
+                                                 rocsparselt_operation     opA,
+                                                 rocsparselt_operation     opB,
+                                                 rocsparselt_mat_descr     matA,
+                                                 rocsparselt_mat_descr     matB,
+                                                 rocsparselt_mat_descr     matC,
+                                                 rocsparselt_mat_descr     matD,
+                                                 rocsparselt_compute_type  computeType)
 {
     // Check if matmulDescr is valid
     if(handle == nullptr || matA == nullptr || matB == nullptr || matC == nullptr
        || matD == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(matmulDescr == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
@@ -416,14 +416,14 @@ rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
                                                   matB->m_type,
                                                   matC->m_type,
                                                   matD->m_type);
-            if(status != rocsparse_status_success)
+            if(status != rocsparselt_status_success)
                 return status;
 
             int64_t m, n, k;
             //don't need to check the status here, since which was done in validateMatmulDescrArgs().
             getOriginalSizes(opA, opB, matA->m, matA->n, matB->m, matB->n, m, n, k);
             matA->c_k  = k / 2;
-            matA->c_ld = (opA == rocsparse_operation_transpose ? matA->c_k : m);
+            matA->c_ld = (opA == rocsparselt_operation_transpose ? matA->c_k : m);
 
             *matmulDescr                 = new _rocsparselt_matmul_descr();
             (*matmulDescr)->op_A         = opA;
@@ -435,40 +435,40 @@ rocsparse_status rocsparselt_matmul_descr_init(const rocsparselt_handle  handle,
             (*matmulDescr)->compute_type = computeType;
             log_trace(handle, "rocsparselt_matmul_descr_init");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief destroy matrix multiplication descriptor
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr matmulDescr)
+rocsparselt_status rocsparselt_matmul_descr_destroy(const rocsparselt_matmul_descr matmulDescr)
 {
     if(matmulDescr == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     // Destruct
     try
     {
         delete matmulDescr;
     }
-    catch(const rocsparse_status& status)
+    catch(const rocsparselt_status& status)
     {
         return status;
     }
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 /********************************************************************************
  * \brief sets the value of the specified attribute belonging to matrix multiplication
  * descriptor.
  *******************************************************************************/
-rocsparse_status
+rocsparselt_status
     rocsparselt_matmul_descr_set_attribute(const rocsparselt_handle           handle,
                                            rocsparselt_matmul_descr           matmulDescr,
                                            rocsparselt_matmul_descr_attribute matmulAttribute,
@@ -478,42 +478,42 @@ rocsparse_status
     // Check if matmulDescr is valid
     if(handle == nullptr || matmulDescr == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
         rocsparselt_cerr << "The parameter number 4 (data) cannot be NULL" << std::endl;
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
         // Allocate
         try
         {
-            rocsparse_status status;
+            rocsparselt_status status;
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
                 if((status = validateSetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 matmulDescr->activation_relu = *(reinterpret_cast<const int*>(data));
                 break;
             case rocsparselt_matmul_activation_relu_upperbound:
                 if((status = validateSetAttributeDataSize<float>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 matmulDescr->activation_relu_upperbound = *(reinterpret_cast<const float*>(data));
                 break;
             case rocsparselt_matmul_activation_relu_threshold:
                 if((status = validateSetAttributeDataSize<float>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 matmulDescr->activation_relu_threshold = *(reinterpret_cast<const float*>(data));
                 break;
             case rocsparselt_matmul_activation_gelu:
                 if((status = validateSetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 matmulDescr->activation_gelu = *(reinterpret_cast<const int*>(data));
                 break;
@@ -523,7 +523,7 @@ rocsparse_status
                 auto excpected_size = rocsparselt_datatype_bytes(matmulDescr->matrix_D.type)
                                       * matmulDescr->matrix_D.m;
                 if((status = validateSetAttributeDataSize<void>(dataSize, excpected_size))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 matmulDescr->bias_pointer.set(data, dataSize);
 
@@ -532,7 +532,7 @@ rocsparse_status
             case rocsparselt_matmul_bias_stride:
             {
                 if((status = validateSetAttributeDataSize<int64_t>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 const int64_t* bias_stride = reinterpret_cast<const int64_t*>(data);
                 if(*bias_stride != 0 && *bias_stride < matmulDescr->matrix_D.m)
@@ -541,22 +541,22 @@ rocsparse_status
                                         "of the output matrix (D) ("
                                      << matmulDescr->matrix_D.m << "), current: " << *bias_stride
                                      << std::endl;
-                    return rocsparse_status_invalid_value;
+                    return rocsparselt_status_invalid_value;
                 }
                 matmulDescr->bias_stride = *bias_stride;
                 break;
             }
 #endif
             default:
-                return rocsparse_status_not_implemented;
+                return rocsparselt_status_not_implemented;
             }
             log_trace(handle, "rocsparselt_matmul_descr_set_attribute");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
@@ -564,7 +564,7 @@ rocsparse_status
  * \brief sets the value of the specified attribute belonging to matrix descriptor
  * such as number of batches and their stride.
  *******************************************************************************/
-rocsparse_status
+rocsparselt_status
     rocsparselt_matmul_descr_get_attribute(const rocsparselt_handle           handle,
                                            rocsparselt_matmul_descr           matmulDescr,
                                            rocsparselt_matmul_descr_attribute matmulAttribute,
@@ -576,40 +576,40 @@ rocsparse_status
     // Check if matmulDescr is valid
     if(handle || matmulDescr == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
         try
         {
-            rocsparse_status status;
+            rocsparselt_status status;
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
                 if((status = validateGetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 *(reinterpret_cast<int*>(data)) = matmulDescr->activation_relu;
                 break;
             case rocsparselt_matmul_activation_relu_upperbound:
                 if((status = validateGetAttributeDataSize<float>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 *(reinterpret_cast<float*>(data)) = matmulDescr->activation_relu_upperbound;
                 break;
             case rocsparselt_matmul_activation_relu_threshold:
                 if((status = validateGetAttributeDataSize<float>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 *(reinterpret_cast<float*>(data)) = matmulDescr->activation_relu_threshold;
                 break;
             case rocsparselt_matmul_activation_gelu:
                 if((status = validateGetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 *(reinterpret_cast<int*>(data)) = matmulDescr->activation_gelu;
                 break;
@@ -617,35 +617,35 @@ rocsparse_status
             case rocsparselt_matmul_bias_pointer:
                 if((status = validateGetAttributeDataSize<void>(dataSize,
                                                                 matmulDescr->bias_pointer.length()))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 if(matmulDescr->bias_pointer.get(data, dataSize) == 0)
-                    return rocsparse_status_internal_error;
+                    return rocsparselt_status_internal_error;
                 break;
             case rocsparselt_matmul_bias_stride:
                 if((status = validateGetAttributeDataSize<int64_t>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 *(reinterpret_cast<int64_t*>(data)) = matmulDescr->bias_stride;
                 break;
 #endif
             default:
-                return rocsparse_status_not_implemented;
+                return rocsparselt_status_not_implemented;
             }
             log_trace(handle, "rocsparselt_matmul_descr_get_attribute");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status
+rocsparselt_status
     rocsparselt_matmul_alg_selection_init(const rocsparselt_handle          handle,
                                           rocsparselt_matmul_alg_selection* algSelection,
                                           const rocsparselt_matmul_descr    matmulDescr,
@@ -654,11 +654,11 @@ rocsparse_status
     // Check if algSelection is valid
     if(handle == nullptr || matmulDescr == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(algSelection == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
@@ -693,7 +693,7 @@ rocsparse_status
             {
                 delete(*algSelection);
                 rocsparselt_cerr << "There are no solutions for this problem size" << std::endl;
-                return rocsparse_status_not_implemented;
+                return rocsparselt_status_not_implemented;
             }
             (*algSelection)->attributes[rocsparselt_matmul_alg_config_max_id].set(&config_max_id);
             const int config_id = 0;
@@ -704,23 +704,23 @@ rocsparse_status
                 .set(&search_iterations);
             log_trace(handle, "rocsparselt_matmul_alg_selection_init");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief destroy matrix multiplication descriptor
  *******************************************************************************/
-rocsparse_status
+rocsparselt_status
     rocsparselt_matmul_alg_selection_destroy(const rocsparselt_matmul_alg_selection algSelection)
 {
     if(algSelection == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
 
     // Destruct
@@ -728,43 +728,44 @@ rocsparse_status
     {
         delete algSelection;
     }
-    catch(const rocsparse_status& status)
+    catch(const rocsparselt_status& status)
     {
         return status;
     }
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle         handle,
-                                                      rocsparselt_matmul_alg_selection algSelection,
-                                                      rocsparselt_matmul_alg_attribute attribute,
-                                                      const void*                      data,
-                                                      size_t                           dataSize)
+rocsparselt_status
+    rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle         handle,
+                                         rocsparselt_matmul_alg_selection algSelection,
+                                         rocsparselt_matmul_alg_attribute attribute,
+                                         const void*                      data,
+                                         size_t                           dataSize)
 {
     // Check if algSelection is valid
     if(handle == nullptr || algSelection == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else
     {
         // Allocate
         try
         {
-            rocsparse_status status;
+            rocsparselt_status status;
             switch(attribute)
             {
             case rocsparselt_matmul_alg_config_id:
             {
                 if((status = validateSetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
 
                 int config_max_id;
@@ -776,7 +777,7 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
                     rocsparselt_cerr << "The value of rocsparselt_matmul_alg_config_id data"
                                      << config_id << "is out of the range [0, "
                                      << (config_max_id - 1) << "]" << std::endl;
-                    return rocsparse_status_invalid_value;
+                    return rocsparselt_status_invalid_value;
                 }
                 break;
             }
@@ -784,12 +785,12 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
             {
                 rocsparselt_cerr << "rocsparselt_matmul_alg_config_max_id is only for query."
                                  << std::endl;
-                return rocsparse_status_invalid_value;
+                return rocsparselt_status_invalid_value;
             }
             case rocsparselt_matmul_search_iterations:
             {
                 if((status = validateSetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
                 const int* search_iterations = reinterpret_cast<const int*>(data);
                 if(*search_iterations < 1)
@@ -797,7 +798,7 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
                     rocsparselt_cerr
                         << "The search iterations must be greater or equal to 1, current: "
                         << *search_iterations << std::endl;
-                    return rocsparse_status_invalid_value;
+                    return rocsparselt_status_invalid_value;
                 }
                 break;
             }
@@ -805,42 +806,43 @@ rocsparse_status rocsparselt_matmul_alg_set_attribute(const rocsparselt_handle  
             algSelection->attributes[attribute].set(data, dataSize);
             log_trace(handle, "rocsparselt_matmul_alg_set_attribute");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle         handle,
-                                                      rocsparselt_matmul_alg_selection algSelection,
-                                                      rocsparselt_matmul_alg_attribute attribute,
-                                                      void*                            data,
-                                                      size_t                           dataSize)
+rocsparselt_status
+    rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle         handle,
+                                         rocsparselt_matmul_alg_selection algSelection,
+                                         rocsparselt_matmul_alg_attribute attribute,
+                                         void*                            data,
+                                         size_t                           dataSize)
 
 {
     // Check if matmulDescr is valid
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr || algSelection == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else if(dataSize <= 0)
     {
-        return rocsparse_status_invalid_value;
+        return rocsparselt_status_invalid_value;
     }
     else
     {
         try
         {
-            rocsparse_status status;
+            rocsparselt_status status;
             switch(attribute)
             {
             case rocsparselt_matmul_alg_config_id:
@@ -848,44 +850,44 @@ rocsparse_status rocsparselt_matmul_alg_get_attribute(const rocsparselt_handle  
             case rocsparselt_matmul_search_iterations:
             {
                 if((status = validateGetAttributeDataSize<int>(dataSize))
-                   != rocsparse_status_success)
+                   != rocsparselt_status_success)
                     return status;
             }
             }
             if(algSelection->attributes[attribute].get(data, dataSize) == 0)
-                return rocsparse_status_internal_error;
+                return rocsparselt_status_internal_error;
             log_trace(handle, "rocsparselt_matmul_alg_get_attribute");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle               handle,
-                                              rocsparselt_matmul_plan*               plan,
-                                              const rocsparselt_matmul_descr         matmulDescr,
-                                              const rocsparselt_matmul_alg_selection algSelection,
-                                              size_t                                 workspaceSize)
+rocsparselt_status rocsparselt_matmul_plan_init(const rocsparselt_handle               handle,
+                                                rocsparselt_matmul_plan*               plan,
+                                                const rocsparselt_matmul_descr         matmulDescr,
+                                                const rocsparselt_matmul_alg_selection algSelection,
+                                                size_t workspaceSize)
 
 {
     // Check if plan is valid
     if(handle == nullptr || matmulDescr == nullptr || algSelection == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     else if(plan == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
     else if(workspaceSize < 0)
     {
-        return rocsparse_status_invalid_size;
+        return rocsparselt_status_invalid_size;
     }
     else
     {
@@ -903,7 +905,7 @@ rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle          
             {
                 rocsparselt_cerr << " number of batches of matrics A,B,C,D must be the same"
                                  << std::endl;
-                return rocsparse_status_invalid_size;
+                return rocsparselt_status_invalid_size;
             }
 
             *plan                   = new _rocsparselt_matmul_plan();
@@ -912,33 +914,33 @@ rocsparse_status rocsparselt_matmul_plan_init(const rocsparselt_handle          
             (*plan)->workspace_size = workspaceSize;
             log_trace(handle, "rocsparselt_matmul_plan_init");
         }
-        catch(const rocsparse_status& status)
+        catch(const rocsparselt_status& status)
         {
             return status;
         }
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief destroy matrix multiplication plan descriptor
  *******************************************************************************/
-rocsparse_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan plan)
+rocsparselt_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan plan)
 {
     if(plan == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     // Destruct
     try
     {
         delete plan;
     }
-    catch(const rocsparse_status& status)
+    catch(const rocsparselt_status& status)
     {
         return status;
     }
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 /********************************************************************************
@@ -947,35 +949,35 @@ rocsparse_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan p
  * version / 100 % 1000 = minor version
  * version / 100000     = major version
  *******************************************************************************/
-rocsparse_status rocsparselt_get_version(rocsparselt_handle handle, int* version)
+rocsparselt_status rocsparselt_get_version(rocsparselt_handle handle, int* version)
 {
     // Check if handle is valid
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
     *version = ROCSPARSELT_VERSION_MAJOR * 100000 + ROCSPARSELT_VERSION_MINOR * 100
                + ROCSPARSELT_VERSION_PATCH;
 
     log_trace(handle, "rocsparselt_get_version", *version);
 
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 /********************************************************************************
  * \brief Get rocSPARSELt git revision
  *******************************************************************************/
-rocsparse_status rocsparselt_get_git_rev(rocsparselt_handle handle, char* rev)
+rocsparselt_status rocsparselt_get_git_rev(rocsparselt_handle handle, char* rev)
 {
     // Check if handle is valid
     if(handle == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
 
     if(rev == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
 
     static constexpr char v[] = TO_STR(ROCSPARSELT_VERSION_TWEAK);
@@ -984,7 +986,7 @@ rocsparse_status rocsparselt_get_git_rev(rocsparselt_handle handle, char* rev)
 
     log_trace(handle, "rocsparselt_get_git_rev", rev);
 
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 #ifdef __cplusplus
