@@ -54,12 +54,12 @@
 #define BATCH_COUNT 10
 
 template <typename Ti, typename Tc>
-inline float norm2(Ti a, Ti b)
+inline float norm1(Ti a, Ti b)
 {
     auto ac = static_cast<Tc>(a);
     auto bc = static_cast<Tc>(b);
 
-    return static_cast<Tc>(sqrt(ac * ac + bc * bc));
+    return static_cast<Tc>(abs(ac) + abs(bc));
 }
 
 template <typename Ti, typename Tc>
@@ -83,18 +83,18 @@ void prune_strip(const Ti* in,
                     pos[k] = b * stride_b + i * stride1 + (j + k) * stride2;
                 }
 
-                auto max_norm2 = static_cast<Tc>(-1.0f);
+                auto max_norm1 = static_cast<Tc>(-1.0f);
                 int  pos_a, pos_b;
                 for(int a = 0; a < 4; a++)
                 {
                     for(int b = a + 1; b < 4; b++)
                     {
-                        auto norm2_v = norm2<Ti, Tc>(in[pos[a]], in[pos[b]]);
-                        if(norm2_v > max_norm2)
+                        auto norm1_v = norm1<Ti, Tc>(in[pos[a]], in[pos[b]]);
+                        if(norm1_v > max_norm1)
                         {
                             pos_a     = a;
                             pos_b     = b;
-                            max_norm2 = norm2_v;
+                            max_norm1 = norm1_v;
                         }
                     }
                 }
@@ -460,6 +460,12 @@ void run(int64_t              m,
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
+        handle, matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matA, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
 

@@ -92,11 +92,11 @@ __global__ void prune_check_kernel(const Ti* in,
 }
 
 template <typename Ti, typename Tc>
-__host__ __device__ inline Tc norm2(Ti a, Ti b)
+__host__ __device__ inline Tc norm1(Ti a, Ti b)
 {
     Tc ac = static_cast<Tc>(a);
     Tc bc = static_cast<Tc>(b);
-    return static_cast<Tc>(sqrt(ac * ac + bc * bc));
+    return static_cast<Tc>(abs(ac) + abs(bc));
 }
 
 template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J, bool InPlace>
@@ -146,7 +146,7 @@ __global__ void prune_strip_kernel(const Ti* in,
                     values[k] = in[pos];
             }
 
-            auto max_norm2 = static_cast<Tc>(-1.0);
+            auto max_norm1 = static_cast<Tc>(-1.0);
             int  pos_a = 0, pos_b = 0;
 
 #pragma unroll
@@ -154,12 +154,12 @@ __global__ void prune_strip_kernel(const Ti* in,
             {
                 for(int b = a + 1; b < 4; b++)
                 {
-                    auto norm2_v = norm2<Ti, Tc>(values[a], values[b]);
-                    if(norm2_v > max_norm2)
+                    auto norm1_v = norm1<Ti, Tc>(values[a], values[b]);
+                    if(norm1_v > max_norm1)
                     {
                         pos_a     = a;
                         pos_b     = b;
-                        max_norm2 = norm2_v;
+                        max_norm1 = norm1_v;
                     }
                 }
             }
@@ -172,86 +172,6 @@ __global__ void prune_strip_kernel(const Ti* in,
                     out[pos] = static_cast<Ti>(0.0f);
                 else if constexpr(!InPlace)
                     out[pos] = values[k];
-            }
-        }
-    }
-}
-
-template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J, bool InPlace>
-__global__ void prune_strip_kernel2(const Ti* in,
-                                    Ti*       out,
-                                    int64_t   m,
-                                    int64_t   n,
-                                    int64_t   stride1,
-                                    int64_t   stride2,
-                                    int       num_batches,
-                                    int64_t   batch_stride,
-                                    int64_t   sizes)
-{
-    constexpr unsigned int MT0I = SG0I * TT0I;
-    constexpr unsigned int MT1J = SG1J * TT1J;
-
-    unsigned int serial = hc_get_workitem_id(0);
-    unsigned int sg0I   = serial % SG0I;
-    unsigned int sg1J   = serial / SG0I;
-    unsigned int stride = sg0I * stride1 + sg1J * 4 * stride2;
-
-    unsigned int wg0I    = hc_get_group_id(0);
-    unsigned int wg1J    = hc_get_group_id(1);
-    unsigned int batchId = hc_get_group_id(2);
-
-    if((MT1J * wg1J + sg1J * TT1J) >= n || (MT0I * wg0I + sg0I * TT0I) >= m)
-        return;
-
-    unsigned int wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
-    unsigned int b_stride  = batchId * batch_stride;
-
-    unsigned int globalReadOffset = b_stride + wg_stride + stride;
-
-    for(int i = 0; i < TT0I; i++)
-    {
-        for(int j = 0; j < TT1J; j += 4)
-        {
-            unsigned int offset = globalReadOffset + i * stride1 + j * stride2;
-            Ti           values[4];
-            Tc           square_values[] = {static_cast<Tc>(0.0f),
-                                  static_cast<Tc>(0.0f),
-                                  static_cast<Tc>(0.0f),
-                                  static_cast<Tc>(0.0f)};
-            int          idxs[2];
-#pragma unroll
-            for(int k = 0; k < 4; k++)
-            {
-                unsigned int pos = offset + k * stride2;
-                values[k]        = static_cast<Ti>(0.0f);
-                if(pos < sizes)
-                    values[k] = in[pos];
-                Tc value_tc      = static_cast<Tc>(values[k]);
-                square_values[k] = value_tc * value_tc;
-
-                if(square_values[k] > square_values[idxs[0]])
-                {
-                    idxs[1] = idxs[0];
-                    idxs[0] = k;
-                }
-                else if(square_values[k] > square_values[idxs[1]])
-                {
-                    idxs[1] = k;
-                }
-            }
-
-#pragma unroll
-            for(int k = 0; k < 4; k++)
-            {
-                unsigned int pos = offset + k * stride2;
-                if(k != idxs[0] && k != idxs[1])
-                    out[pos] = static_cast<Ti>(0.0f);
-                else
-                {
-                    if constexpr(InPlace)
-                        continue;
-                    out[pos] = values[k];
-                }
             }
         }
     }
