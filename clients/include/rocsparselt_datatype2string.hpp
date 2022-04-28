@@ -19,15 +19,15 @@ enum class rocsparselt_initialization
 /* ============================================================================================ */
 /*  Convert rocsparselt constants to lapack char. */
 
-constexpr auto rocsparselt2char_operation(rocsparse_operation value)
+constexpr auto rocsparselt2char_operation(rocsparselt_operation value)
 {
     switch(value)
     {
-    case rocsparse_operation_none:
+    case rocsparselt_operation_none:
         return 'N';
-    case rocsparse_operation_transpose:
+    case rocsparselt_operation_transpose:
         return 'T';
-    case rocsparse_operation_conjugate_transpose:
+    case rocsparselt_operation_conjugate_transpose:
         return 'C';
     }
     return '\0';
@@ -90,21 +90,21 @@ inline rocsparselt_internal_ostream& operator<<(rocsparselt_internal_ostream& os
 /* ============================================================================================ */
 /*  Convert lapack char constants to rocsparselt type. */
 
-constexpr rocsparse_operation char2rocsparse_operation(char value)
+constexpr rocsparselt_operation char2rocsparselt_operation(char value)
 {
     switch(value)
     {
     case 'N':
     case 'n':
-        return rocsparse_operation_none;
+        return rocsparselt_operation_none;
     case 'T':
     case 't':
-        return rocsparse_operation_transpose;
+        return rocsparselt_operation_transpose;
     case 'C':
     case 'c':
-        return rocsparse_operation_conjugate_transpose;
+        return rocsparselt_operation_conjugate_transpose;
     default:
-        return static_cast<rocsparse_operation>(-1);
+        return static_cast<rocsparselt_operation>(-1);
     }
 }
 

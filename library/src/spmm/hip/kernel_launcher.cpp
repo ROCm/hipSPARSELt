@@ -135,7 +135,7 @@ namespace
         std::vector<size_t> strides_d = {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d};
 
         // If A is transposed, swap the free and bound dimensions and their ranks
-        if(prob.trans_a != rocsparse_operation_none)
+        if(prob.trans_a != rocsparselt_operation_none)
         {
             sizes_a[0] = ck;
             sizes_a[1] = prob.m;
@@ -155,7 +155,7 @@ namespace
         }
 
         // If B is transposed, swap the free and bound dimensions and their ranks
-        if(prob.trans_b != rocsparse_operation_none)
+        if(prob.trans_b != rocsparselt_operation_none)
         {
             sizes_b[0] = prob.n;
             sizes_b[1] = k;
@@ -639,13 +639,13 @@ namespace
  * by RocsparseltContractionProblem                                           *
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc>
-rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                                       int*                                             config_id,
-                                       const int config_max_id,
-                                       const int search_iterations)
+rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
+                                         int*                                             config_id,
+                                         const int config_max_id,
+                                         const int search_iterations)
 {
-    rocsparse_status status  = rocsparse_status_internal_error;
-    size_t           max_cid = 0;
+    rocsparselt_status status  = rocsparselt_status_internal_error;
+    size_t             max_cid = 0;
     try
     {
         std::shared_ptr<hipDeviceProp_t> deviceProp;
@@ -665,7 +665,7 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
         {
             rocsparselt_internal_ostream msg;
             print_once(msg << "\nrocsparselt error: No solution found for " << prob);
-            status = rocsparse_status_not_implemented;
+            status = rocsparselt_status_not_implemented;
         }
         else
         {
@@ -700,7 +700,7 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
                 hipEventDestroy(startEvent);
                 hipEventDestroy(stopEvent);
             }
-            status = rocsparse_status_success;
+            status = rocsparselt_status_success;
         }
     }
     catch(const std::exception& e)
@@ -723,10 +723,10 @@ rocsparse_status runContractionProblem(const RocsparseltContractionProblem<Ti, T
  * initSolutions used to initialize specific type's solutions at the early stage.               *
  * ****************************************************************************/
 template <typename Ti, typename To, typename Tc>
-rocsparse_status initSolutions(rocsparselt_handle  handle,
-                               rocsparse_operation opA,
-                               rocsparse_operation opB,
-                               int*                kernel_counts)
+rocsparselt_status initSolutions(rocsparselt_handle    handle,
+                                 rocsparselt_operation opA,
+                                 rocsparselt_operation opB,
+                                 int*                  kernel_counts)
 {
     std::shared_ptr<hipDeviceProp_t> deviceProp;
     auto&                            adapter = get_adapter(&deviceProp, handle->device);
@@ -734,12 +734,12 @@ rocsparse_status initSolutions(rocsparselt_handle  handle,
 
     *kernel_counts = adapter.getKernelCounts(str);
     if(*kernel_counts <= 0)
-        return rocsparse_status_not_implemented;
+        return rocsparselt_status_not_implemented;
 
     KernelParams* solution = adapter.getKernelParams(str);
     for(int i = 0; i < *kernel_counts; i++)
         adapter.loadCodeObject(solution[i].SolutionNameMin);
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
 /***************************************************************
@@ -766,19 +766,19 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
  ******************************************************************************/
 #define GENERATE_DEFINITIONS(Ti, To, Tc, Ca)                                           \
     template <>                                                                        \
-    std::string generate_kernel_category_str<Ti, To, Tc>(rocsparse_operation opA,      \
-                                                         rocsparse_operation opB)      \
+    std::string generate_kernel_category_str<Ti, To, Tc>(rocsparselt_operation opA,    \
+                                                         rocsparselt_operation opB)    \
     {                                                                                  \
         std::string str = #Ca;                                                         \
-        str += (opA == rocsparse_operation_none ? "N" : "T");                          \
+        str += (opA == rocsparselt_operation_none ? "N" : "T");                        \
         str += "_";                                                                    \
-        str += (opB == rocsparse_operation_none ? "N" : "T");                          \
+        str += (opB == rocsparselt_operation_none ? "N" : "T");                        \
         return str;                                                                    \
     }                                                                                  \
-    template rocsparse_status runContractionProblem<Ti, To, Tc>(                       \
+    template rocsparselt_status runContractionProblem<Ti, To, Tc>(                     \
         const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int); \
-    template rocsparse_status initSolutions<Ti, To, Tc>(                               \
-        rocsparselt_handle, rocsparse_operation, rocsparse_operation, int*);
+    template rocsparselt_status initSolutions<Ti, To, Tc>(                             \
+        rocsparselt_handle, rocsparselt_operation, rocsparselt_operation, int*);
 
 GENERATE_DEFINITIONS(rocsparselt_half, rocsparselt_half, float, "4_4_0")
 GENERATE_DEFINITIONS(rocsparselt_bfloat16, rocsparselt_bfloat16, float, "7_7_0")

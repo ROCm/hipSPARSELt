@@ -16,8 +16,8 @@
 
 // gemm
 template <typename Ti, typename To, typename Tc>
-void cblas_gemm(rocsparse_operation    transA,
-                rocsparse_operation    transB,
+void cblas_gemm(rocsparselt_operation  transA,
+                rocsparselt_operation  transB,
                 int64_t                m,
                 int64_t                n,
                 int64_t                k,

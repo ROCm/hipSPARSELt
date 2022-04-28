@@ -138,25 +138,25 @@ __global__ void compress_kernel(const Ti*      in,
 }
 
 template <typename Ti>
-rocsparse_status rocsparselt_smfmac_compress_template(const rocsparselt_handle handle,
-                                                      int64_t                  m,
-                                                      int64_t                  n,
-                                                      int64_t                  stride0,
-                                                      int64_t                  stride1,
-                                                      int                      batch_stride,
-                                                      int64_t                  c_stride0,
-                                                      int64_t                  c_stride1,
-                                                      int                      c_batch_stride,
-                                                      int64_t                  m_stride0,
-                                                      int64_t                  m_stride1,
-                                                      int64_t                  m_batch_stride,
-                                                      int                      num_batches,
-                                                      rocsparse_operation      op,
-                                                      rocsparse_order          order,
-                                                      const Ti*                d_in,
-                                                      Ti*                      d_out,
-                                                      unsigned char*           d_metadata,
-                                                      hipStream_t              stream)
+rocsparselt_status rocsparselt_smfmac_compress_template(const rocsparselt_handle handle,
+                                                        int64_t                  m,
+                                                        int64_t                  n,
+                                                        int64_t                  stride0,
+                                                        int64_t                  stride1,
+                                                        int                      batch_stride,
+                                                        int64_t                  c_stride0,
+                                                        int64_t                  c_stride1,
+                                                        int                      c_batch_stride,
+                                                        int64_t                  m_stride0,
+                                                        int64_t                  m_stride1,
+                                                        int64_t                  m_batch_stride,
+                                                        int                      num_batches,
+                                                        rocsparselt_operation    op,
+                                                        rocsparselt_order        order,
+                                                        const Ti*                d_in,
+                                                        Ti*                      d_out,
+                                                        unsigned char*           d_metadata,
+                                                        hipStream_t              stream)
 {
     constexpr int SG0I = 16;
     constexpr int SG1J = 2;
@@ -190,29 +190,29 @@ rocsparse_status rocsparselt_smfmac_compress_template(const rocsparselt_handle h
                        num_batches * batch_stride,
                        num_batches * c_batch_stride,
                        num_batches * m_batch_stride);
-    return rocsparse_status_success;
+    return rocsparselt_status_success;
 }
 
-rocsparse_status rocsparselt_smfmac_compress_impl(const rocsparselt_handle handle,
-                                                  int64_t                  m,
-                                                  int64_t                  n,
-                                                  int64_t                  stride0,
-                                                  int64_t                  stride1,
-                                                  int                      batch_stride,
-                                                  int64_t                  c_stride0,
-                                                  int64_t                  c_stride1,
-                                                  int                      c_batch_stride,
-                                                  int64_t                  m_stride0,
-                                                  int64_t                  m_stride1,
-                                                  int64_t                  m_batch_stride,
-                                                  int                      num_batches,
-                                                  rocsparse_operation      op,
-                                                  rocsparse_order          order,
-                                                  const void*              d_in,
-                                                  void*                    d_out,
-                                                  unsigned char*           d_metadata,
-                                                  rocsparselt_datatype     in_type,
-                                                  hipStream_t              stream)
+rocsparselt_status rocsparselt_smfmac_compress_impl(const rocsparselt_handle handle,
+                                                    int64_t                  m,
+                                                    int64_t                  n,
+                                                    int64_t                  stride0,
+                                                    int64_t                  stride1,
+                                                    int                      batch_stride,
+                                                    int64_t                  c_stride0,
+                                                    int64_t                  c_stride1,
+                                                    int                      c_batch_stride,
+                                                    int64_t                  m_stride0,
+                                                    int64_t                  m_stride1,
+                                                    int64_t                  m_batch_stride,
+                                                    int                      num_batches,
+                                                    rocsparselt_operation    op,
+                                                    rocsparselt_order        order,
+                                                    const void*              d_in,
+                                                    void*                    d_out,
+                                                    unsigned char*           d_metadata,
+                                                    rocsparselt_datatype     in_type,
+                                                    hipStream_t              stream)
 {
 #define COMPRESS_PARAMS(T)                                                                         \
     handle, m, n, stride0, stride1, batch_stride, c_stride0, c_stride1, c_batch_stride, m_stride0, \
@@ -230,7 +230,7 @@ rocsparse_status rocsparselt_smfmac_compress_impl(const rocsparselt_handle handl
     case rocsparselt_datatype_i8_r:
         return rocsparselt_smfmac_compress_template<int8_t>(COMPRESS_PARAMS(int8_t));
     default:
-        return rocsparse_status_not_implemented;
+        return rocsparselt_status_not_implemented;
     }
 }
 
@@ -241,21 +241,21 @@ extern "C" {
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle      handle,
-                                                    const rocsparselt_matmul_plan plan,
-                                                    size_t*                       compressedSize)
+rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle      handle,
+                                                      const rocsparselt_matmul_plan plan,
+                                                      size_t*                       compressedSize)
 
 {
     // Check if handle is valid
     if(handle == nullptr || plan == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
     if(compressedSize == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
 
     {
@@ -273,10 +273,10 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
         }
         else
         {
-            return rocsparse_status_not_implemented;
+            return rocsparselt_status_not_implemented;
         }
 
-        num_cols = plan->matmul_descr->op_A == rocsparse_operation_none ? matrix->c_k : matrix->n;
+        num_cols = plan->matmul_descr->op_A == rocsparselt_operation_none ? matrix->c_k : matrix->n;
         c_ld     = matrix->c_ld;
         type     = matrix->type;
         matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
@@ -293,30 +293,30 @@ rocsparse_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle    
 
         *compressedSize = c_ld * num_cols / 4 * num_batches + metadata_offset;
         log_trace(handle, "rocsparselt_smfmac_compressed_size");
-        return rocsparse_status_success;
+        return rocsparselt_status_success;
     }
 }
 
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handle,
-                                             const rocsparselt_matmul_plan plan,
-                                             const void*                   d_dense,
-                                             void*                         d_compressed,
-                                             hipStream_t                   stream)
+rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle      handle,
+                                               const rocsparselt_matmul_plan plan,
+                                               const void*                   d_dense,
+                                               void*                         d_compressed,
+                                               hipStream_t                   stream)
 
 {
     // Check if handle is valid
     if(handle == nullptr || plan == nullptr)
     {
-        return rocsparse_status_invalid_handle;
+        return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
     if(d_dense == nullptr || d_compressed == nullptr)
     {
-        return rocsparse_status_invalid_pointer;
+        return rocsparselt_status_invalid_pointer;
     }
 
     rocsparselt_mat_descr matrix;
@@ -324,18 +324,18 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
     if(plan->matmul_descr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         matrix = plan->matmul_descr->matrix_A;
     else
-        return rocsparse_status_not_implemented;
+        return rocsparselt_status_not_implemented;
 
     log_trace(handle, "rocsparselt_smfmac_compress");
 
-    rocsparse_operation opA = plan->matmul_descr->op_A;
-    int64_t             ld  = matrix->ld;
+    rocsparselt_operation opA = plan->matmul_descr->op_A;
+    int64_t               ld  = matrix->ld;
 
     int64_t o_m, o_n;
     int64_t stride0, stride1, c_stride0, c_stride1, m_stride0, m_stride1;
     int64_t c_batch_stride, m_batch_stride;
 
-    if(opA == rocsparse_operation_transpose)
+    if(opA == rocsparselt_operation_transpose)
     {
         o_m            = matrix->n;
         o_n            = matrix->m;
@@ -362,7 +362,7 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
         m_batch_stride = m_stride0 * o_m;
     }
 
-    rocsparse_order      order = matrix->order;
+    rocsparselt_order    order = matrix->order;
     rocsparselt_datatype type  = matrix->type;
 
     int     num_batches  = 1;
@@ -376,7 +376,8 @@ rocsparse_status rocsparselt_smfmac_compress(const rocsparselt_handle      handl
         batch_stride = matrix->n * ld;
     }
 
-    auto num_cols = plan->matmul_descr->op_A == rocsparse_operation_none ? matrix->c_k : matrix->n;
+    auto num_cols
+        = plan->matmul_descr->op_A == rocsparselt_operation_none ? matrix->c_k : matrix->n;
     unsigned char* d_metadata = reinterpret_cast<unsigned char*>(d_compressed)
                                 + rocsparselt_metadata_offset_in_compressed_matrix(
                                     num_cols, matrix->c_ld, num_batches, type);

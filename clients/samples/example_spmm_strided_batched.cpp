@@ -26,24 +26,24 @@
 #endif
 
 #ifndef CHECK_ROCSPARSE_ERROR
-#define CHECK_ROCSPARSE_ERROR(error)                              \
-    if(error != rocsparse_status_success)                         \
-    {                                                             \
-        fprintf(stderr, "rocSPARSELt error(Err=%d) : ", error);   \
-        if(error == rocsparse_status_invalid_handle)              \
-            fprintf(stderr, "rocsparse_status_invalid_handle");   \
-        if(error == rocsparse_status_not_implemented)             \
-            fprintf(stderr, " rocsparse_status_not_implemented"); \
-        if(error == rocsparse_status_invalid_pointer)             \
-            fprintf(stderr, "rocsparse_status_invalid_pointer");  \
-        if(error == rocsparse_status_invalid_size)                \
-            fprintf(stderr, "rocsparse_status_invalid_size");     \
-        if(error == rocsparse_status_memory_error)                \
-            fprintf(stderr, "rocsparse_status_memory_error");     \
-        if(error == rocsparse_status_internal_error)              \
-            fprintf(stderr, "rocsparse_status_internal_error");   \
-        fprintf(stderr, "\n");                                    \
-        exit(EXIT_FAILURE);                                       \
+#define CHECK_ROCSPARSE_ERROR(error)                                \
+    if(error != rocsparselt_status_success)                         \
+    {                                                               \
+        fprintf(stderr, "rocSPARSELt error(Err=%d) : ", error);     \
+        if(error == rocsparselt_status_invalid_handle)              \
+            fprintf(stderr, "rocsparselt_status_invalid_handle");   \
+        if(error == rocsparselt_status_not_implemented)             \
+            fprintf(stderr, " rocsparselt_status_not_implemented"); \
+        if(error == rocsparselt_status_invalid_pointer)             \
+            fprintf(stderr, "rocsparselt_status_invalid_pointer");  \
+        if(error == rocsparselt_status_invalid_size)                \
+            fprintf(stderr, "rocsparselt_status_invalid_size");     \
+        if(error == rocsparselt_status_memory_error)                \
+            fprintf(stderr, "rocsparselt_status_memory_error");     \
+        if(error == rocsparselt_status_internal_error)              \
+            fprintf(stderr, "rocsparselt_status_internal_error");   \
+        fprintf(stderr, "\n");                                      \
+        exit(EXIT_FAILURE);                                         \
     }
 #endif
 
@@ -238,26 +238,26 @@ static void show_usage(char* argv[])
               << std::endl;
 }
 
-static int parse_arguments(int                  argc,
-                           char*                argv[],
-                           int64_t&             m,
-                           int64_t&             n,
-                           int64_t&             k,
-                           int64_t&             lda,
-                           int64_t&             ldb,
-                           int64_t&             ldc,
-                           int64_t&             ldd,
-                           int64_t&             stride_a,
-                           int64_t&             stride_b,
-                           int64_t&             stride_c,
-                           int64_t&             stride_d,
-                           int&                 batch_count,
-                           float&               alpha,
-                           float&               beta,
-                           rocsparse_operation& trans_a,
-                           rocsparse_operation& trans_b,
-                           bool&                header,
-                           bool&                verbose)
+static int parse_arguments(int                    argc,
+                           char*                  argv[],
+                           int64_t&               m,
+                           int64_t&               n,
+                           int64_t&               k,
+                           int64_t&               lda,
+                           int64_t&               ldb,
+                           int64_t&               ldc,
+                           int64_t&               ldd,
+                           int64_t&               stride_a,
+                           int64_t&               stride_b,
+                           int64_t&               stride_c,
+                           int64_t&               stride_d,
+                           int&                   batch_count,
+                           float&                 alpha,
+                           float&                 beta,
+                           rocsparselt_operation& trans_a,
+                           rocsparselt_operation& trans_b,
+                           bool&                  header,
+                           bool&                  verbose)
 {
     if(argc >= 2)
     {
@@ -340,11 +340,11 @@ static int parse_arguments(int                  argc,
                     ++i;
                     if(strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0)
                     {
-                        trans_a = rocsparse_operation_none;
+                        trans_a = rocsparselt_operation_none;
                     }
                     else if(strncmp(argv[i], "T", 1) == 0 || strncmp(argv[i], "t", 1) == 0)
                     {
-                        trans_a = rocsparse_operation_transpose;
+                        trans_a = rocsparselt_operation_transpose;
                     }
                     else
                     {
@@ -358,11 +358,11 @@ static int parse_arguments(int                  argc,
                     ++i;
                     if(strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0)
                     {
-                        trans_b = rocsparse_operation_none;
+                        trans_b = rocsparselt_operation_none;
                     }
                     else if(strncmp(argv[i], "T", 1) == 0 || strncmp(argv[i], "t", 1) == 0)
                     {
-                        trans_b = rocsparse_operation_transpose;
+                        trans_b = rocsparselt_operation_transpose;
                     }
                     else
                     {
@@ -389,38 +389,38 @@ static int parse_arguments(int                  argc,
     return EXIT_SUCCESS;
 }
 
-bool bad_argument(rocsparse_operation trans_a,
-                  rocsparse_operation trans_b,
-                  int64_t             m,
-                  int64_t             n,
-                  int64_t             k,
-                  int64_t             lda,
-                  int64_t             ldb,
-                  int64_t             ldc,
-                  int64_t             ldd,
-                  int64_t             stride_a,
-                  int64_t             stride_b,
-                  int64_t             stride_c,
-                  int64_t             stride_d,
-                  int64_t             batch_count)
+bool bad_argument(rocsparselt_operation trans_a,
+                  rocsparselt_operation trans_b,
+                  int64_t               m,
+                  int64_t               n,
+                  int64_t               k,
+                  int64_t               lda,
+                  int64_t               ldb,
+                  int64_t               ldc,
+                  int64_t               ldd,
+                  int64_t               stride_a,
+                  int64_t               stride_b,
+                  int64_t               stride_c,
+                  int64_t               stride_d,
+                  int64_t               batch_count)
 {
     bool argument_error = false;
-    if((trans_a == rocsparse_operation_none) && (lda < m))
+    if((trans_a == rocsparselt_operation_none) && (lda < m))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << lda << " < " << m << std::endl;
     }
-    if((trans_a == rocsparse_operation_transpose) && (lda < k))
+    if((trans_a == rocsparselt_operation_transpose) && (lda < k))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << lda << " < " << k << std::endl;
     }
-    if((trans_b == rocsparse_operation_none) && (ldb < k))
+    if((trans_b == rocsparselt_operation_none) && (ldb < k))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << k << std::endl;
     }
-    if((trans_b == rocsparse_operation_transpose) && (ldb < n))
+    if((trans_b == rocsparselt_operation_transpose) && (ldb < n))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << n << std::endl;
@@ -489,8 +489,8 @@ void initialize_a_b_c(std::vector<rocsparselt_half>& ha,
 int main(int argc, char* argv[])
 {
     // initialize parameters with default values
-    rocsparse_operation trans_a = rocsparse_operation_none;
-    rocsparse_operation trans_b = rocsparse_operation_transpose;
+    rocsparselt_operation trans_a = rocsparselt_operation_none;
+    rocsparselt_operation trans_b = rocsparselt_operation_transpose;
 
     // invalid int and float for rocsparselt spmm int and float arguments
     int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
@@ -544,17 +544,17 @@ int main(int argc, char* argv[])
     if(k == invalid_int64)
         k = DIM3;
     if(lda == invalid_int64)
-        lda = trans_a == rocsparse_operation_none ? m : k;
+        lda = trans_a == rocsparselt_operation_none ? m : k;
     if(ldb == invalid_int64)
-        ldb = trans_b == rocsparse_operation_none ? k : n;
+        ldb = trans_b == rocsparselt_operation_none ? k : n;
     if(ldc == invalid_int64)
         ldc = m;
     if(ldd == invalid_int64)
         ldd = m;
     if(stride_a == invalid_int64)
-        stride_a = trans_a == rocsparse_operation_none ? lda * k : lda * m;
+        stride_a = trans_a == rocsparselt_operation_none ? lda * k : lda * m;
     if(stride_b == invalid_int64)
-        stride_b = trans_b == rocsparse_operation_none ? ldb * n : ldb * k;
+        stride_b = trans_b == rocsparselt_operation_none ? ldb * n : ldb * k;
     if(stride_c == invalid_int64)
         stride_c = ldc * n;
     if(stride_d == invalid_int64)
@@ -595,7 +595,7 @@ int main(int argc, char* argv[])
     int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
     int64_t row_a, col_a, row_b, col_b, row_c, col_c;
     int     size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
-    if(trans_a == rocsparse_operation_none)
+    if(trans_a == rocsparselt_operation_none)
     {
         std::cout << "N";
         row_a      = m;
@@ -613,7 +613,7 @@ int main(int argc, char* argv[])
         a_stride_2 = 1;
         size_a1    = lda * m;
     }
-    if(trans_b == rocsparse_operation_none)
+    if(trans_b == rocsparselt_operation_none)
     {
         std::cout << "N, ";
         row_b      = k;
@@ -660,7 +660,7 @@ int main(int argc, char* argv[])
     if(verbose)
     {
         printf("\n");
-        if(trans_a == rocsparse_operation_none)
+        if(trans_a == rocsparselt_operation_none)
         {
             print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda, stride_a_r);
         }
@@ -668,7 +668,7 @@ int main(int argc, char* argv[])
         {
             print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1, stride_a_r);
         }
-        if(trans_b == rocsparse_operation_none)
+        if(trans_b == rocsparselt_operation_none)
         {
             print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb, stride_b_r);
         }
@@ -714,14 +714,32 @@ int main(int argc, char* argv[])
                                                             lda,
                                                             16,
                                                             rocsparselt_datatype_f16_r,
-                                                            rocsparse_order_column,
+                                                            rocsparselt_order_column,
                                                             rocsparselt_sparsity_50_percent));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matB, row_b, col_b, ldb, 16, rocsparselt_datatype_f16_r, rocsparse_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matC, row_c, col_c, ldc, 16, rocsparselt_datatype_f16_r, rocsparse_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(
-        handle, &matD, row_c, col_c, ldd, 16, rocsparselt_datatype_f16_r, rocsparse_order_column));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(handle,
+                                                       &matB,
+                                                       row_b,
+                                                       col_b,
+                                                       ldb,
+                                                       16,
+                                                       rocsparselt_datatype_f16_r,
+                                                       rocsparselt_order_column));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(handle,
+                                                       &matC,
+                                                       row_c,
+                                                       col_c,
+                                                       ldc,
+                                                       16,
+                                                       rocsparselt_datatype_f16_r,
+                                                       rocsparselt_order_column));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(handle,
+                                                       &matD,
+                                                       row_c,
+                                                       col_c,
+                                                       ldd,
+                                                       16,
+                                                       rocsparselt_datatype_f16_r,
+                                                       rocsparselt_order_column));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
         handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
@@ -810,7 +828,7 @@ int main(int argc, char* argv[])
             hipMemcpy(&h_compressed[0], d_compressed, compressed_size, hipMemcpyDeviceToHost));
 
         auto batch_count_c = stride_a == 0 ? 1 : batch_count;
-        if(trans_a == rocsparse_operation_none)
+        if(trans_a == rocsparselt_operation_none)
         {
             print_strided_batched(
                 "ha_prune calculated, N ", &h_prune[0], m, k, batch_count, 1, lda, stride_a_r);

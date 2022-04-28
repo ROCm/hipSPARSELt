@@ -119,9 +119,9 @@ double get_time_us_no_sync(void)
 /*  device query and print out their ID and name; return number of compute-capable devices. */
 int64_t query_device_property()
 {
-    int              device_count;
-    rocsparse_status status = (rocsparse_status)hipGetDeviceCount(&device_count);
-    if(status != rocsparse_status_success)
+    int                device_count;
+    rocsparselt_status status = (rocsparselt_status)hipGetDeviceCount(&device_count);
+    if(status != rocsparselt_status_success)
     {
         rocsparselt_cerr << "Query device error: cannot get device count" << std::endl;
         return -1;
@@ -141,9 +141,9 @@ int64_t query_device_property()
         if(i >= device_count)
             break;
 
-        hipDeviceProp_t  props;
-        rocsparse_status status = (rocsparse_status)hipGetDeviceProperties(&props, i);
-        if(status != rocsparse_status_success)
+        hipDeviceProp_t    props;
+        rocsparselt_status status = (rocsparselt_status)hipGetDeviceProperties(&props, i);
+        if(status != rocsparselt_status_success)
         {
             rocsparselt_cerr << "Query device error: cannot get device ID " << i << "'s property"
                              << std::endl;
@@ -180,8 +180,8 @@ int64_t query_device_property()
 /*  set current device to device_id */
 void set_device(int64_t device_id)
 {
-    rocsparse_status status = (rocsparse_status)hipSetDevice(device_id);
-    if(status != rocsparse_status_success)
+    rocsparselt_status status = (rocsparselt_status)hipSetDevice(device_id);
+    if(status != rocsparselt_status_success)
     {
         rocsparselt_cerr << "Set device error: cannot set device ID " << device_id
                          << ", there may not be such device ID" << std::endl;
@@ -195,8 +195,8 @@ void set_device(int64_t device_id)
 rocsparselt_local_handle::rocsparselt_local_handle()
 {
     auto status = rocsparselt_init(&m_handle);
-    if(status != rocsparse_status_success)
-        throw std::runtime_error(rocsparse_status_to_string(status));
+    if(status != rocsparselt_status_success)
+        throw std::runtime_error(rocsparselt_status_to_string(status));
 
 #ifdef GOOGLE_TEST
     if(t_set_stream_callback)

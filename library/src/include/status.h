@@ -30,8 +30,8 @@
 #include <hip/hip_runtime_api.h>
 
 /*******************************************************************************
- * \brief convert hipError_t to rocsparse_status
+ * \brief convert hipError_t to rocsparselt_status
  ******************************************************************************/
-rocsparse_status get_rocsparselt_status_for_hip_status(hipError_t status);
+rocsparselt_status get_rocsparselt_status_for_hip_status(hipError_t status);
 
 #endif // STATUS_H

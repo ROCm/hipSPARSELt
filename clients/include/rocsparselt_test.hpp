@@ -59,7 +59,7 @@
     {                                                         \
         volatile bool signal_or_exception = true;             \
         /* Use status__ in case STATUS contains "status" */   \
-        rocsparse_status status__;                            \
+        rocsparselt_status status__;                          \
         catch_signals_and_exceptions_as_failures([&] {        \
             status__            = (STATUS);                   \
             signal_or_exception = false;                      \
@@ -67,21 +67,21 @@
         if(signal_or_exception)                               \
             return;                                           \
         { /* localize status for ASSERT_EQ message */         \
-            rocsparse_status status_ = status__;              \
+            rocsparselt_status status_ = status__;            \
             ASSERT_EQ(status_, EXPECT); /* prints "status" */ \
         }                                                     \
     } while(0)
 
 #else // GOOGLE_TEST
 
-inline void rocsparselt_expect_status(rocsparse_status status, rocsparse_status expect)
+inline void rocsparselt_expect_status(rocsparselt_status status, rocsparselt_status expect)
 {
     if(status != expect)
     {
         rocsparselt_cerr << "rocSPARSELt status error: Expected "
-                         << rocsparse_status_to_string(expect) << ", received "
-                         << rocsparse_status_to_string(status) << std::endl;
-        if(expect == rocsparse_status_success)
+                         << rocsparselt_status_to_string(expect) << ", received "
+                         << rocsparselt_status_to_string(status) << std::endl;
+        if(expect == rocsparselt_status_success)
             exit(EXIT_FAILURE);
     }
 }
@@ -109,7 +109,8 @@ inline void rocsparselt_expect_status(rocsparse_status status, rocsparse_status 
 
 #endif // GOOGLE_TEST
 
-#define CHECK_ROCSPARSELT_ERROR2(STATUS) EXPECT_ROCSPARSELT_STATUS(STATUS, rocsparse_status_success)
+#define CHECK_ROCSPARSELT_ERROR2(STATUS) \
+    EXPECT_ROCSPARSELT_STATUS(STATUS, rocsparselt_status_success)
 #define CHECK_ROCSPARSELT_ERROR(STATUS) CHECK_ROCSPARSELT_ERROR2(STATUS)
 
 #ifdef GOOGLE_TEST

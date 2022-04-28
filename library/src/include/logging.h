@@ -137,18 +137,6 @@ struct log_arg
         os_ << separator_ << x;
     }
 
-    /// Overload () operator for rocsparse_float_complex.
-    void operator()(const rocsparse_float_complex complex_value) const
-    {
-        os_ << separator_ << std::real(complex_value) << separator_ << std::imag(complex_value);
-    }
-
-    /// Overload () operator for rocsparse_double_complex.
-    void operator()(const rocsparse_double_complex complex_value) const
-    {
-        os_ << separator_ << std::real(complex_value) << separator_ << std::imag(complex_value);
-    }
-
 private:
     std::ostream& os_; ///< Output stream.
     std::string&  separator_; ///< Separator: output preceding argument.

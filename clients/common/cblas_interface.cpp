@@ -9,12 +9,12 @@
 
 // gemm
 template <>
-void cblas_gemm<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(rocsparse_operation transA,
-                                                                   rocsparse_operation transB,
-                                                                   int64_t             m,
-                                                                   int64_t             n,
-                                                                   int64_t             k,
-                                                                   float               alpha,
+void cblas_gemm<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(rocsparselt_operation transA,
+                                                                   rocsparselt_operation transB,
+                                                                   int64_t               m,
+                                                                   int64_t               n,
+                                                                   int64_t               k,
+                                                                   float                 alpha,
                                                                    const rocsparselt_bfloat16* A,
                                                                    int64_t                     lda,
                                                                    const rocsparselt_bfloat16* B,
@@ -27,8 +27,8 @@ void cblas_gemm<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(rocsparse_ope
     // cblas does not support rocsparselt_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparse_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparse_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
+    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -62,8 +62,8 @@ void cblas_gemm<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(rocsparse_ope
 }
 
 template <>
-void cblas_gemm<rocsparselt_bfloat16, float, float>(rocsparse_operation         transA,
-                                                    rocsparse_operation         transB,
+void cblas_gemm<rocsparselt_bfloat16, float, float>(rocsparselt_operation       transA,
+                                                    rocsparselt_operation       transB,
                                                     int64_t                     m,
                                                     int64_t                     n,
                                                     int64_t                     k,
@@ -80,8 +80,8 @@ void cblas_gemm<rocsparselt_bfloat16, float, float>(rocsparse_operation         
     // cblas does not support rocsparselt_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparse_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparse_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
+    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -110,8 +110,8 @@ void cblas_gemm<rocsparselt_bfloat16, float, float>(rocsparse_operation         
 }
 
 template <>
-void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparse_operation     transA,
-                                                           rocsparse_operation     transB,
+void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparselt_operation   transA,
+                                                           rocsparselt_operation   transB,
                                                            int64_t                 m,
                                                            int64_t                 n,
                                                            int64_t                 k,
@@ -128,8 +128,8 @@ void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparse_operation  
     // cblas does not support rocsparselt_half, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparse_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparse_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
+    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -178,8 +178,8 @@ void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparse_operation  
 }
 
 template <>
-void cblas_gemm<rocsparselt_half, float, float>(rocsparse_operation     transA,
-                                                rocsparse_operation     transB,
+void cblas_gemm<rocsparselt_half, float, float>(rocsparselt_operation   transA,
+                                                rocsparselt_operation   transB,
                                                 int64_t                 m,
                                                 int64_t                 n,
                                                 int64_t                 k,
@@ -196,8 +196,8 @@ void cblas_gemm<rocsparselt_half, float, float>(rocsparse_operation     transA,
     // cblas does not support rocsparselt_half, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparse_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparse_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
+    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -237,20 +237,20 @@ void cblas_gemm<rocsparselt_half, float, float>(rocsparse_operation     transA,
 }
 
 template <>
-void cblas_gemm<int8_t, int8_t, float>(rocsparse_operation transA,
-                                       rocsparse_operation transB,
-                                       int64_t             m,
-                                       int64_t             n,
-                                       int64_t             k,
-                                       float               alpha,
-                                       const int8_t*       A,
-                                       int64_t             lda,
-                                       const int8_t*       B,
-                                       int64_t             ldb,
-                                       float               beta,
-                                       int8_t*             C,
-                                       int64_t             ldc,
-                                       bool                alt)
+void cblas_gemm<int8_t, int8_t, float>(rocsparselt_operation transA,
+                                       rocsparselt_operation transB,
+                                       int64_t               m,
+                                       int64_t               n,
+                                       int64_t               k,
+                                       float                 alpha,
+                                       const int8_t*         A,
+                                       int64_t               lda,
+                                       const int8_t*         B,
+                                       int64_t               ldb,
+                                       float                 beta,
+                                       int8_t*               C,
+                                       int64_t               ldc,
+                                       bool                  alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
     // 32-bit integer operations can be represented accurately with double-precision
@@ -258,8 +258,8 @@ void cblas_gemm<int8_t, int8_t, float>(rocsparse_operation transA,
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
 
-    size_t const sizeA = ((transA == rocsparse_operation_none) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == rocsparse_operation_none) ? n : k) * size_t(ldb);
+    size_t const sizeA = ((transA == rocsparselt_operation_none) ? k : m) * size_t(lda);
+    size_t const sizeB = ((transB == rocsparselt_operation_none) ? n : k) * size_t(ldb);
     size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
@@ -300,20 +300,20 @@ void cblas_gemm<int8_t, int8_t, float>(rocsparse_operation transA,
 }
 
 template <>
-void cblas_gemm<int8_t, float, float>(rocsparse_operation transA,
-                                      rocsparse_operation transB,
-                                      int64_t             m,
-                                      int64_t             n,
-                                      int64_t             k,
-                                      float               alpha,
-                                      const int8_t*       A,
-                                      int64_t             lda,
-                                      const int8_t*       B,
-                                      int64_t             ldb,
-                                      float               beta,
-                                      float*              C,
-                                      int64_t             ldc,
-                                      bool                alt)
+void cblas_gemm<int8_t, float, float>(rocsparselt_operation transA,
+                                      rocsparselt_operation transB,
+                                      int64_t               m,
+                                      int64_t               n,
+                                      int64_t               k,
+                                      float                 alpha,
+                                      const int8_t*         A,
+                                      int64_t               lda,
+                                      const int8_t*         B,
+                                      int64_t               ldb,
+                                      float                 beta,
+                                      float*                C,
+                                      int64_t               ldc,
+                                      bool                  alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
     // 32-bit integer operations can be represented accurately with double-precision
@@ -321,8 +321,8 @@ void cblas_gemm<int8_t, float, float>(rocsparse_operation transA,
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
 
-    size_t const sizeA = ((transA == rocsparse_operation_none) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == rocsparse_operation_none) ? n : k) * size_t(ldb);
+    size_t const sizeA = ((transA == rocsparselt_operation_none) ? k : m) * size_t(lda);
+    size_t const sizeB = ((transB == rocsparselt_operation_none) ? n : k) * size_t(ldb);
     size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);

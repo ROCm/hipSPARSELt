@@ -52,21 +52,21 @@ _rocsparselt_handle::_rocsparselt_handle()
     char* str_layer_mode;
     if((str_layer_mode = getenv("ROCSPARSELT_LAYER")) == NULL)
     {
-        layer_mode = rocsparse_layer_mode_none;
+        layer_mode = rocsparselt_layer_mode_none;
     }
     else
     {
-        layer_mode = (rocsparse_layer_mode)(atoi(str_layer_mode));
+        layer_mode = (rocsparselt_layer_mode)(atoi(str_layer_mode));
     }
 
     // Open log file
-    if(layer_mode & rocsparse_layer_mode_log_trace)
+    if(layer_mode & rocsparselt_layer_mode_log_trace)
     {
         open_log_stream(&log_trace_os, &log_trace_ofs, "ROCSPARSELT_LOG_TRACE_PATH");
     }
 
     // Open log_bench file
-    if(layer_mode & rocsparse_layer_mode_log_bench)
+    if(layer_mode & rocsparselt_layer_mode_log_bench)
     {
         open_log_stream(&log_bench_os, &log_bench_ofs, "ROCSPARSELT_LOG_BENCH_PATH");
     }
