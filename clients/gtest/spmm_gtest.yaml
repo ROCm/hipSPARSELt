@@ -398,9 +398,6 @@ Tests:
   K: 128
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  activation_type: [ none, relu, clippedrelu, gelu]
-  activation_arg1 : 1.0
-  activation_arg2 : 3.0
 
 - name: spmm_256
   category: pre_checkin
@@ -500,4 +497,31 @@ Tests:
     - { M: 1024, N: 1024, K: 1024 }
   alpha: [ 0.0, 0.5, 1.0 ]
   beta:  [ 0.0, 0.5, 1.0 ]
+
+- name: spmm_128_activation
+  category: pre_checkin
+  function:
+    spmm: *real_precisions
+  M: 128
+  N: 128
+  K: 128
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+  activation_type: [ none, relu, gelu, abs, leakyrelu, sigmoid, tanh]
+  activation_arg1 : [-1.0, 0.0, 0.5, 1.0]
+  activation_arg2 : [-1.0, 0.0, 0.5, 1.0, 3.0]
+
+- name: spmm_128_activation_clippedrelu
+  category: pre_checkin
+  function:
+    spmm: *real_precisions
+  M: 128
+  N: 128
+  K: 128
+  alpha_beta: *alpha_beta_range
+  transA_transB: *transA_transB_range
+  activation_type: clippedrelu
+  activation_arg1 : [-1.0, 0.0, 0.5]
+  activation_arg2 : [-1.0, 0.0, 0.5, 1.0, 3.0]
+
 ...

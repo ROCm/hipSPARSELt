@@ -21,14 +21,23 @@
 #include <omp.h>
 
 template <typename Ti, typename To, typename Tact, typename F>
-void activation(Ti* in, To* out, Tact arg1, Tact arg2, F& func)
+void activation(int64_t m, int64_t n, int64_t ld, Ti* in, To* out, Tact arg1, Tact arg2, F& func)
 {
-    auto in_Tact = static_cast<Tact>(*in);
-    *out         = static_cast<To>(func(in_Tact, arg1, arg2));
+    for(int i = 0; i < m; i++)
+    {
+#pragma omp parallel for
+        for(int j = 0; j < n; j++)
+        {
+            auto pos     = j * ld + i;
+            auto in_Tact = static_cast<Tact>(*(in + pos));
+            *(out + pos) = static_cast<To>(func(in_Tact, arg1, arg2));
+        }
+    }
 }
 
 template <typename Tact, typename F>
-void activation(int8_t* in, int8_t* out, Tact arg1, Tact arg2, F& func)
+void activation(
+    int64_t m, int64_t n, int64_t ld, int8_t* in, int8_t* out, Tact arg1, Tact arg2, F& func)
 {
     auto saturate = [](Tact val) {
         auto _val = std::nearbyint(static_cast<double>(val));
@@ -36,36 +45,64 @@ void activation(int8_t* in, int8_t* out, Tact arg1, Tact arg2, F& func)
         return _val;
     };
 
-    auto in_Tact = static_cast<Tact>(*in);
-    auto o       = saturate(func(in_Tact, arg1, arg2));
-    *out         = static_cast<int8_t>(o);
+    for(int i = 0; i < m; i++)
+    {
+#pragma omp parallel for
+        for(int j = 0; j < n; j++)
+        {
+            auto pos     = j * ld + i;
+            auto in_Tact = static_cast<Tact>(*(in + pos));
+            auto o       = saturate(func(in_Tact, arg1, arg2));
+            *(out + pos) = static_cast<int8_t>(o);
+        }
+    }
 }
 
-auto _relu
-    = [](auto in, auto /*arg1*/, auto /*arg2*/) { return std::max(0.0f, static_cast<float>(in)); };
-
-auto _clippedrelu = [](auto in, auto arg1, auto arg2) {
-    if(in > arg1)
-        return std::min(in, arg2);
-    else
-        return 0.0f;
+auto _relu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
+    return static_cast<decltype(in)>(std::max(static_cast<decltype(in)>(0), in));
 };
 
-auto _gelu = [](auto in, auto /*arg1*/, auto /*arg2*/) {
+auto _clippedrelu = [](auto in, auto arg1, auto arg2) -> decltype(in) {
+    if(in > arg1)
+        return static_cast<decltype(in)>(std::min(in, arg2));
+    else
+        return static_cast<decltype(in)>(0);
+};
+
+auto _gelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
     using Tc = float;
 
     constexpr auto k0    = static_cast<Tc>(0.7978845608028654);
     constexpr auto k1    = static_cast<Tc>(0.044715);
     Tc             in_Tc = static_cast<Tc>(in);
 
-    auto multiply = [](Tc a, Tc b) { return static_cast<Tc>(a * b); };
+    return static_cast<decltype(in)>(
+        0.5f * (in_Tc * (1.f + std::tanh(k0 * (in_Tc * (1.f + k1 * (in_Tc * in_Tc)))))));
+};
 
-    // float(0.5 * x * (1 + tanh(k0 * x * (1 + k1 * x * x))));
-    auto tmp = static_cast<Tc>(1) + multiply(k1, multiply(in_Tc, in_Tc));
-    tmp      = multiply(k0, multiply(in_Tc, tmp));
-    tmp      = static_cast<Tc>(1) + static_cast<Tc>(tanh(tmp));
-    tmp      = multiply(static_cast<Tc>(0.5f), multiply(in_Tc, tmp));
-    return tmp;
+auto _abs = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
+    return static_cast<decltype(in)>(std::abs(static_cast<float>(in)));
+};
+
+auto _leakyrelu = [](auto in, auto arg1, auto /*arg2*/) -> decltype(in) {
+    if(in > static_cast<decltype(in)>(0))
+        return in;
+    else
+        return in * arg1;
+};
+
+auto _sigmoid = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
+    using Tc = float;
+    Tc in_Tc = static_cast<Tc>(in);
+    return static_cast<decltype(in)>(1.f / (1.f + std::exp(-in_Tc)));
+};
+
+auto _tanh = [](auto in, auto arg1, auto arg2) -> decltype(in) {
+    using Tc   = float;
+    Tc in_Tc   = static_cast<Tc>(in);
+    Tc arg1_Tc = static_cast<Tc>(arg1);
+    Tc arg2_Tc = static_cast<Tc>(arg2);
+    return static_cast<decltype(in)>(std::tanh(in_Tc * arg1_Tc) * arg2_Tc);
 };
 
 template <typename Ti, typename To, typename Tc>
@@ -325,6 +362,63 @@ void testing_spmm(const Arguments& arg)
                                                    sizeof(activation_on)),
             rocsparselt_status_success);
         break;
+    case rocsparselt_activation_type::abs:
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_abs,
+                                                   &activation_on,
+                                                   sizeof(activation_on)),
+            rocsparselt_status_success);
+        break;
+    case rocsparselt_activation_type::leakyrelu:
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_leakyrelu,
+                                                   &activation_on,
+                                                   sizeof(activation_on)),
+            rocsparselt_status_success);
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_leakyrelu_alpha,
+                                                   &arg.activation_arg1,
+                                                   sizeof(float)),
+            rocsparselt_status_success);
+        break;
+    case rocsparselt_activation_type::sigmoid:
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_sigmoid,
+                                                   &activation_on,
+                                                   sizeof(activation_on)),
+            rocsparselt_status_success);
+        break;
+    case rocsparselt_activation_type::tanh:
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_tanh,
+                                                   &activation_on,
+                                                   sizeof(activation_on)),
+            rocsparselt_status_success);
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_tanh_alpha,
+                                                   &arg.activation_arg1,
+                                                   sizeof(float)),
+            rocsparselt_status_success);
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_matmul_descr_set_attribute(handle,
+                                                   matmul,
+                                                   rocsparselt_matmul_activation_tanh_beta,
+                                                   &arg.activation_arg2,
+                                                   sizeof(float)),
+            rocsparselt_status_success);
+        break;
     default:
         activation_on = 0;
         break;
@@ -459,6 +553,8 @@ void testing_spmm(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
+#define activation_param \
+    M, N, ldd, hD_gold_act + pos, hD_gold + pos, arg.activation_arg1, arg.activation_arg2
         for(int i = 0; i < num_batches; i++)
         {
             if(activation_on)
@@ -477,40 +573,32 @@ void testing_spmm(const Arguments& arg)
                                                hD_gold_act + stride_d * i,
                                                ldd,
                                                false);
-                for(int j = 0; j < M; j++)
+                auto pos = stride_d * i;
+                switch(arg.activation_type)
                 {
-#pragma omp parallel for
-                    for(int k = 0; k < N; k++)
-                    {
-                        auto pos = stride_d * i + k * ldd + j;
-
-                        switch(arg.activation_type)
-                        {
-                        case rocsparselt_activation_type::clippedrelu:
-                            activation(hD_gold_act + pos,
-                                       hD_gold + pos,
-                                       arg.activation_arg1,
-                                       arg.activation_arg2,
-                                       ::_clippedrelu);
-                            break;
-                        case rocsparselt_activation_type::gelu:
-                            activation(hD_gold_act + pos,
-                                       hD_gold + pos,
-                                       arg.activation_arg1,
-                                       arg.activation_arg2,
-                                       ::_gelu);
-                            break;
-                        case rocsparselt_activation_type::relu:
-                            activation(hD_gold_act + pos,
-                                       hD_gold + pos,
-                                       arg.activation_arg1,
-                                       arg.activation_arg2,
-                                       ::_relu);
-                            break;
-                        default:
-                            break;
-                        }
-                    }
+                case rocsparselt_activation_type::clippedrelu:
+                    activation(activation_param, ::_clippedrelu);
+                    break;
+                case rocsparselt_activation_type::gelu:
+                    activation(activation_param, ::_gelu);
+                    break;
+                case rocsparselt_activation_type::relu:
+                    activation(activation_param, ::_relu);
+                    break;
+                case rocsparselt_activation_type::abs:
+                    activation(activation_param, ::_abs);
+                    break;
+                case rocsparselt_activation_type::leakyrelu:
+                    activation(activation_param, ::_leakyrelu);
+                    break;
+                case rocsparselt_activation_type::sigmoid:
+                    activation(activation_param, ::_sigmoid);
+                    break;
+                case rocsparselt_activation_type::tanh:
+                    activation(activation_param, ::_tanh);
+                    break;
+                default:
+                    continue;
                 }
             }
 
@@ -610,6 +698,18 @@ void testing_spmm(const Arguments& arg)
             break;
         case rocsparselt_activation_type::gelu:
             flops += gelu_gflop_count<float>(M, N);
+            break;
+        case rocsparselt_activation_type::abs:
+            flops += abs_gflop_count<float>(M, N);
+            break;
+        case rocsparselt_activation_type::leakyrelu:
+            flops += leakyrelu_gflop_count<float>(M, N);
+            break;
+        case rocsparselt_activation_type::sigmoid:
+            flops += sigmoid_gflop_count<float>(M, N);
+            break;
+        case rocsparselt_activation_type::tanh:
+            flops += tanh_gflop_count<float>(M, N);
             break;
         default:
             break;

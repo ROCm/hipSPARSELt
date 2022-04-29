@@ -269,7 +269,16 @@ typedef enum rocsparselt_matmul_descr_attribute_
     rocsparselt_matmul_bias_pointer
     = 4, /**< Bias pointer. The bias vector size must equal to the number of rows of the output matrix (D). */
     rocsparselt_matmul_bias_stride
-    = 5 /**< Bias stride between consecutive bias vectors. 0 means broadcast the first bias vector. */
+    = 5, /**< Bias stride between consecutive bias vectors. 0 means broadcast the first bias vector. */
+    rocsparselt_matmul_activation_abs       = 6, /**< ABS activation function. */
+    rocsparselt_matmul_activation_leakyrelu = 7, /**< LeakyReLU activation function. */
+    rocsparselt_matmul_activation_leakyrelu_alpha
+    = 8, /** Alpha value of the LeakyReLU activation function. */
+    rocsparselt_matmul_activation_sigmoid = 9, /** Sigmoid activation function. */
+    rocsparselt_matmul_activation_tanh    = 10, /**< Tanh activation function. */
+    rocsparselt_matmul_activation_tanh_alpha
+    = 11, /** Alpha value of the Tanh activation function. */
+    rocsparselt_matmul_activation_tanh_beta = 12, /** Beta value of the Tanh activation function. */
 } rocsparselt_matmul_descr_attribute;
 
 /*! \ingroup types_module

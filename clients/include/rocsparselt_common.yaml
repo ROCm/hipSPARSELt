@@ -24,9 +24,14 @@ Datatypes:
       bases: [ c_int ]
       attr:
         none: 0
+        abs: 1
         clippedrelu: 2
         gelu: 3
+        leakyrelu: 4
         relu: 5
+        sigmoid: 6
+        tanh: 7
+
 
 
 Common threads and streams: &common_threads_streams

@@ -152,11 +152,35 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     plan->matmul_descr->matrix_D->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_d);
 
     // activation
-    int   act_relu            = plan->matmul_descr->activation_relu;
-    float act_relu_upperbound = plan->matmul_descr->activation_relu_upperbound;
-    float act_relu_threshold  = plan->matmul_descr->activation_relu_threshold;
-    int   act_gelu            = plan->matmul_descr->activation_gelu;
-    void* bias_vector         = nullptr;
+    rocsparselt_activation_type act_type    = rocsparselt_activation_type::none;
+    float                       act_args[2] = {0.0f, 0.0f};
+    if(plan->matmul_descr->activation_relu)
+    {
+        act_args[0] = plan->matmul_descr->activation_relu_threshold;
+        act_args[1] = plan->matmul_descr->activation_relu_upperbound;
+        if(act_args[0] == 0 && act_args[1] == std::numeric_limits<float>::infinity())
+            act_type = rocsparselt_activation_type::relu;
+        else
+            act_type = rocsparselt_activation_type::clippedrelu;
+    }
+    else if(plan->matmul_descr->activation_gelu)
+        act_type = rocsparselt_activation_type::gelu;
+    else if(plan->matmul_descr->activation_abs)
+        act_type = rocsparselt_activation_type::abs;
+    else if(plan->matmul_descr->activation_leakyrelu)
+    {
+        act_type    = rocsparselt_activation_type::leakyrelu;
+        act_args[0] = plan->matmul_descr->activation_leakyrelu_alpha;
+    }
+    else if(plan->matmul_descr->activation_sigmoid)
+        act_type = rocsparselt_activation_type::sigmoid;
+    else if(plan->matmul_descr->activation_tanh)
+    {
+        act_type    = rocsparselt_activation_type::tanh;
+        act_args[0] = plan->matmul_descr->activation_tanh_alpha;
+        act_args[1] = plan->matmul_descr->activation_tanh_beta;
+    }
+    void* bias_vector = nullptr;
     plan->matmul_descr->bias_pointer.get(&bias_vector);
     int64_t bias_stride = plan->matmul_descr->bias_stride;
 
@@ -191,9 +215,9 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
 #define EX_PARM                                                                                  \
     handle, opA, opB, m, n, k, alpha, d_A, type_a, c_lda, c_batch_stride_a, 0, d_B, type_b, ldb, \
         batch_stride_b, 0, beta, d_C, type_c, ldc, batch_stride_c, 0, d_D, type_d, ldd,          \
-        batch_stride_d, 0, num_batches_a, true, compute_type, true, metadata, act_relu,          \
-        act_relu_upperbound, act_relu_threshold, act_gelu, bias_vector, bias_stride, streams,    \
-        numStreams, &config_id, config_max_id, search_iterations
+        batch_stride_d, 0, num_batches_a, true, compute_type, true, metadata, act_type,          \
+        act_args[0], act_args[1], bias_vector, bias_stride, streams, numStreams, &config_id,     \
+        config_max_id, search_iterations
 
     status = rocsparselt_spmm_template(EX_PARM);
     if(search && status == rocsparselt_status_success)

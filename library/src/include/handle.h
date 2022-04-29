@@ -191,6 +191,13 @@ struct _rocsparselt_matmul_descr
         , activation_relu_upperbound(rhs.activation_relu_upperbound)
         , activation_relu_threshold(rhs.activation_relu_threshold)
         , activation_gelu(rhs.activation_gelu)
+        , activation_abs(rhs.activation_abs)
+        , activation_leakyrelu(rhs.activation_leakyrelu)
+        , activation_leakyrelu_alpha(rhs.activation_leakyrelu_alpha)
+        , activation_sigmoid(rhs.activation_sigmoid)
+        , activation_tanh(rhs.activation_tanh)
+        , activation_tanh_alpha(rhs.activation_tanh_alpha)
+        , activation_tanh_beta(rhs.activation_tanh_beta)
         , bias_stride(rhs.bias_stride)
     {
         matrix_A     = rhs.matrix_A->clone();
@@ -238,6 +245,13 @@ struct _rocsparselt_matmul_descr
     float                  activation_relu_upperbound = std::numeric_limits<float>::infinity();
     float                  activation_relu_threshold  = 0.0f;
     int                    activation_gelu            = 0;
+    int                    activation_abs             = 0;
+    int                    activation_leakyrelu       = 0;
+    float                  activation_leakyrelu_alpha = 1.0f;
+    int                    activation_sigmoid         = 0;
+    int                    activation_tanh            = 0;
+    float                  activation_tanh_alpha      = 1.0f;
+    float                  activation_tanh_beta       = 1.0f;
     _rocsparselt_attribute bias_pointer;
     int64_t                bias_stride = 0;
 

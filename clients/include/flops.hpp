@@ -33,11 +33,35 @@ constexpr double relu_gflop_count(int64_t m, int64_t n)
 template <typename T>
 constexpr double clippedrelu_gflop_count(int64_t m, int64_t n)
 {
-    return (m * n) / 1e9;
+    return 2 * (m * n) / 1e9;
 }
 
 template <typename T>
 constexpr double gelu_gflop_count(int64_t m, int64_t n)
 {
     return (9.0 * m * n) / 1e9;
+}
+
+template <typename T>
+constexpr double abs_gflop_count(int64_t m, int64_t n)
+{
+    return (m * n) / 1e9;
+}
+
+template <typename T>
+constexpr double leakyrelu_gflop_count(int64_t m, int64_t n)
+{
+    return 2 * (m * n) / 1e9;
+}
+
+template <typename T>
+constexpr double sigmoid_gflop_count(int64_t m, int64_t n)
+{
+    return 3 * (m * n) / 1e9;
+}
+
+template <typename T>
+constexpr double tanh_gflop_count(int64_t m, int64_t n)
+{
+    return 3 * (m * n) / 1e9;
 }
