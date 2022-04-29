@@ -769,7 +769,8 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
     std::string generate_kernel_category_str<Ti, To, Tc>(rocsparselt_operation opA,    \
                                                          rocsparselt_operation opB)    \
     {                                                                                  \
-        std::string str = #Ca;                                                         \
+        std::string str = Ca;                                                          \
+        str += "_";                                                                    \
         str += (opA == rocsparselt_operation_none ? "N" : "T");                        \
         str += "_";                                                                    \
         str += (opB == rocsparselt_operation_none ? "N" : "T");                        \
