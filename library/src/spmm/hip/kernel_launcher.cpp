@@ -296,39 +296,18 @@ namespace
         if((act_type != rocsparselt_activation_type::none) && kernel.ActivationFused
            && (!kernel.GlobalAccumulation))
         {
-            rocsparselt_activation_type act_type = rocsparselt_activation_type::none;
-            float                       act0     = prob.act_relu_threshold;
-            float                       act1     = prob.act_relu_upperbound;
-            if(prob.act_relu != 0)
-            {
-                if(prob.act_relu_upperbound == std::numeric_limits<float>::infinity()
-                   && prob.act_relu_threshold == 0)
-                {
-                    act_type = rocsparselt_activation_type::relu;
-                    //relu not using these arguments.
-                    act0 = 0.0f;
-                    act1 = std::numeric_limits<float>::infinity();
-                }
-                else
-                {
-                    act_type = rocsparselt_activation_type::clippedrelu;
-                }
-            }
-            else if(prob.act_gelu != 0)
-                act_type = rocsparselt_activation_type::gelu;
-
             if(kernel.ActivationHPA)
             {
                 //same as the alpha/beta type.
-                ki.args.append<float>("activation_0", act0);
-                ki.args.append<float>("activation_1", act1);
+                ki.args.append<float>("activation_0", prob.act_arg0);
+                ki.args.append<float>("activation_1", prob.act_arg1);
             }
             else
             {
-                ki.args.append<To>("activation_0", static_cast<To>(act0));
-                ki.args.append<To>("activation_1", static_cast<To>(act1));
+                ki.args.append<To>("activation_0", static_cast<To>(prob.act_arg0));
+                ki.args.append<To>("activation_1", static_cast<To>(prob.act_arg1));
             }
-            ki.args.append<uint32_t>("activationType", static_cast<uint32_t>(act_type));
+            ki.args.append<uint32_t>("activationType", static_cast<uint32_t>(prob.act_type));
         }
 
         size_t startStrideCD = kernel.UseInitialStridesCD ? 0 : 1;

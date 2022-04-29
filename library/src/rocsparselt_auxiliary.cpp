@@ -490,32 +490,67 @@ rocsparselt_status
         // Allocate
         try
         {
+
             rocsparselt_status status;
+
+            auto assign_data = [&](auto* val) {
+                using val_type = typename std::remove_pointer<decltype(val)>::type;
+                if((status = validateSetAttributeDataSize<val_type>(dataSize))
+                   != rocsparselt_status_success)
+                    return;
+                *val   = *(reinterpret_cast<const val_type*>(data));
+                status = rocsparselt_status_success;
+            };
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
-                if((status = validateSetAttributeDataSize<int>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                matmulDescr->activation_relu = *(reinterpret_cast<const int*>(data));
+                assign_data(&matmulDescr->activation_relu);
                 break;
             case rocsparselt_matmul_activation_relu_upperbound:
-                if((status = validateSetAttributeDataSize<float>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                matmulDescr->activation_relu_upperbound = *(reinterpret_cast<const float*>(data));
+                assign_data(&matmulDescr->activation_relu_upperbound);
                 break;
             case rocsparselt_matmul_activation_relu_threshold:
-                if((status = validateSetAttributeDataSize<float>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                matmulDescr->activation_relu_threshold = *(reinterpret_cast<const float*>(data));
+                assign_data(&matmulDescr->activation_relu_threshold);
                 break;
             case rocsparselt_matmul_activation_gelu:
-                if((status = validateSetAttributeDataSize<int>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                matmulDescr->activation_gelu = *(reinterpret_cast<const int*>(data));
+                assign_data(&matmulDescr->activation_gelu);
+                break;
+            case rocsparselt_matmul_activation_abs:
+                assign_data(&matmulDescr->activation_abs);
+                break;
+            case rocsparselt_matmul_activation_leakyrelu:
+                assign_data(&matmulDescr->activation_leakyrelu);
+                break;
+            case rocsparselt_matmul_activation_leakyrelu_alpha:
+                assign_data(&matmulDescr->activation_leakyrelu_alpha);
+                break;
+            case rocsparselt_matmul_activation_sigmoid:
+                assign_data(&matmulDescr->activation_sigmoid);
+                if(matmulDescr->activation_sigmoid
+                   && matmulDescr->matrix_D->type == rocsparselt_datatype_i8_r)
+                {
+                    rocsparselt_cerr << "Sigmoid activation function is not support for int8"
+                                     << std::endl;
+                    matmulDescr->activation_sigmoid = 0;
+                    return rocsparselt_status_not_implemented;
+                }
+                break;
+            case rocsparselt_matmul_activation_tanh:
+                assign_data(&matmulDescr->activation_tanh);
+                if(matmulDescr->activation_tanh
+                   && matmulDescr->matrix_D->type == rocsparselt_datatype_i8_r)
+                {
+                    rocsparselt_cerr << "Tanh activation function is not support for int8"
+                                     << std::endl;
+                    matmulDescr->activation_tanh = 0;
+                    return rocsparselt_status_not_implemented;
+                }
+                break;
+            case rocsparselt_matmul_activation_tanh_alpha:
+                assign_data(&matmulDescr->activation_tanh_alpha);
+                break;
+            case rocsparselt_matmul_activation_tanh_beta:
+                assign_data(&matmulDescr->activation_tanh_beta);
                 break;
 #if ENABLE_BIAS
             case rocsparselt_matmul_bias_pointer:
@@ -550,6 +585,8 @@ rocsparselt_status
             default:
                 return rocsparselt_status_not_implemented;
             }
+            if(status != rocsparselt_status_success)
+                return status;
             log_trace(handle, "rocsparselt_matmul_descr_set_attribute");
         }
         catch(const rocsparselt_status& status)
@@ -586,32 +623,51 @@ rocsparselt_status
     {
         try
         {
+
             rocsparselt_status status;
+
+            auto retrive_data = [&](auto val) {
+                if((status = validateGetAttributeDataSize<decltype(val)>(dataSize))
+                   != rocsparselt_status_success)
+                    return;
+                *(reinterpret_cast<decltype(val)*>(data)) = val;
+                status                                    = rocsparselt_status_success;
+            };
+
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
-                if((status = validateGetAttributeDataSize<int>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                *(reinterpret_cast<int*>(data)) = matmulDescr->activation_relu;
-                break;
-            case rocsparselt_matmul_activation_relu_upperbound:
-                if((status = validateGetAttributeDataSize<float>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                *(reinterpret_cast<float*>(data)) = matmulDescr->activation_relu_upperbound;
-                break;
-            case rocsparselt_matmul_activation_relu_threshold:
-                if((status = validateGetAttributeDataSize<float>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                *(reinterpret_cast<float*>(data)) = matmulDescr->activation_relu_threshold;
+                retrive_data(matmulDescr->activation_relu);
                 break;
             case rocsparselt_matmul_activation_gelu:
-                if((status = validateGetAttributeDataSize<int>(dataSize))
-                   != rocsparselt_status_success)
-                    return status;
-                *(reinterpret_cast<int*>(data)) = matmulDescr->activation_gelu;
+                retrive_data(matmulDescr->activation_gelu);
+                break;
+            case rocsparselt_matmul_activation_relu_upperbound:
+                retrive_data(matmulDescr->activation_relu_upperbound);
+                break;
+            case rocsparselt_matmul_activation_relu_threshold:
+                retrive_data(matmulDescr->activation_relu_threshold);
+                break;
+            case rocsparselt_matmul_activation_abs:
+                retrive_data(matmulDescr->activation_abs);
+                break;
+            case rocsparselt_matmul_activation_leakyrelu:
+                retrive_data(matmulDescr->activation_leakyrelu);
+                break;
+            case rocsparselt_matmul_activation_leakyrelu_alpha:
+                retrive_data(matmulDescr->activation_leakyrelu_alpha);
+                break;
+            case rocsparselt_matmul_activation_sigmoid:
+                retrive_data(matmulDescr->activation_sigmoid);
+                break;
+            case rocsparselt_matmul_activation_tanh:
+                retrive_data(matmulDescr->activation_tanh);
+                break;
+            case rocsparselt_matmul_activation_tanh_alpha:
+                retrive_data(matmulDescr->activation_tanh_alpha);
+                break;
+            case rocsparselt_matmul_activation_tanh_beta:
+                retrive_data(matmulDescr->activation_tanh_beta);
                 break;
 #if ENABLE_BIAS
             case rocsparselt_matmul_bias_pointer:
@@ -632,6 +688,8 @@ rocsparselt_status
             default:
                 return rocsparselt_status_not_implemented;
             }
+            if(status != rocsparselt_status_success)
+                return status;
             log_trace(handle, "rocsparselt_matmul_descr_get_attribute");
         }
         catch(const rocsparselt_status& status)

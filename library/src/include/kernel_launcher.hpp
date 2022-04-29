@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "activation.hpp"
 #include "handle.h"
 #include "tuple_helper.hpp"
 #include "utility.hpp"
@@ -152,53 +153,51 @@ struct RocsparseltContractionProblem
     bool                 sparseA;
     const unsigned char* metadata;
 
-    int         act_relu;
-    float       act_relu_upperbound;
-    float       act_relu_threshold;
-    int         act_gelu;
-    const void* bias_vector;
-    int64_t     bias_stride;
+    rocsparselt_activation_type act_type;
+    float                       act_arg0;
+    float                       act_arg1;
+    const void*                 bias_vector;
+    int64_t                     bias_stride;
 
     hipStream_t* streams;
     int32_t      numStreams;
 
     // gemm
     // gemm_strided_batched
-    RocsparseltContractionProblem(rocsparselt_handle    handle,
-                                  rocsparselt_operation trans_a,
-                                  rocsparselt_operation trans_b,
-                                  int64_t               m,
-                                  int64_t               n,
-                                  int64_t               k,
-                                  const float*          alpha,
-                                  const Ti*             A,
-                                  const Ti* const*      batch_A,
-                                  int64_t               ld_a,
-                                  int64_t               batch_stride_a,
-                                  int64_t               offset_a,
-                                  const Ti*             B,
-                                  const Ti* const*      batch_B,
-                                  int64_t               ld_b,
-                                  int64_t               batch_stride_b,
-                                  int64_t               offset_b,
-                                  const float*          beta,
-                                  To*                   C,
-                                  To* const*            batch_C,
-                                  int64_t               ld_c,
-                                  int64_t               batch_stride_c,
-                                  int64_t               offset_c,
-                                  int64_t               batch_count,
-                                  bool                  strided_batch,
-                                  bool                  sparseA,
-                                  const unsigned char*  metadata,
-                                  int                   act_relu,
-                                  float                 act_relu_upperbound,
-                                  float                 act_relu_threshold,
-                                  int                   act_gelu,
-                                  const void*           bias_vector,
-                                  int64_t               bias_stride,
-                                  hipStream_t*          streams,
-                                  int32_t               numStreams)
+    RocsparseltContractionProblem(rocsparselt_handle          handle,
+                                  rocsparselt_operation       trans_a,
+                                  rocsparselt_operation       trans_b,
+                                  int64_t                     m,
+                                  int64_t                     n,
+                                  int64_t                     k,
+                                  const float*                alpha,
+                                  const Ti*                   A,
+                                  const Ti* const*            batch_A,
+                                  int64_t                     ld_a,
+                                  int64_t                     batch_stride_a,
+                                  int64_t                     offset_a,
+                                  const Ti*                   B,
+                                  const Ti* const*            batch_B,
+                                  int64_t                     ld_b,
+                                  int64_t                     batch_stride_b,
+                                  int64_t                     offset_b,
+                                  const float*                beta,
+                                  To*                         C,
+                                  To* const*                  batch_C,
+                                  int64_t                     ld_c,
+                                  int64_t                     batch_stride_c,
+                                  int64_t                     offset_c,
+                                  int64_t                     batch_count,
+                                  bool                        strided_batch,
+                                  bool                        sparseA,
+                                  const unsigned char*        metadata,
+                                  rocsparselt_activation_type act_type,
+                                  float                       act_arg0,
+                                  float                       act_arg1,
+                                  const void*                 bias_vector,
+                                  int64_t                     bias_stride,
+                                  hipStream_t*                streams,
+                                  int32_t                     numStreams)
         : handle(handle)
         , trans_a(trans_a)
         , trans_b(trans_b)
@@ -235,10 +234,9 @@ struct RocsparseltContractionProblem
         , strided_batch(strided_batch)
         , sparseA(sparseA)
         , metadata(metadata)
-        , act_relu(act_relu)
-        , act_relu_upperbound(act_relu_upperbound)
-        , act_relu_threshold(act_relu_threshold)
-        , act_gelu(act_gelu)
+        , act_type(act_type)
+        , act_arg0(act_arg0)
+        , act_arg1(act_arg1)
         , bias_vector(bias_vector)
         , bias_stride(bias_stride)
         , streams(streams)
@@ -248,46 +246,45 @@ struct RocsparseltContractionProblem
 
     // gemm_ex
     // gemm_strided_batched_ex
-    RocsparseltContractionProblem(rocsparselt_handle    handle,
-                                  rocsparselt_operation trans_a,
-                                  rocsparselt_operation trans_b,
-                                  int64_t               m,
-                                  int64_t               n,
-                                  int64_t               k,
-                                  const float*          alpha,
-                                  const Ti*             A,
-                                  const Ti* const*      batch_A,
-                                  int64_t               ld_a,
-                                  int64_t               batch_stride_a,
-                                  int64_t               offset_a,
-                                  const Ti*             B,
-                                  const Ti* const*      batch_B,
-                                  int64_t               ld_b,
-                                  int64_t               batch_stride_b,
-                                  int64_t               offset_b,
-                                  const float*          beta,
-                                  const To*             C,
-                                  const To* const*      batch_C,
-                                  int64_t               ld_c,
-                                  int64_t               batch_stride_c,
-                                  int64_t               offset_c,
-                                  To*                   D,
-                                  To* const*            batch_D,
-                                  int64_t               ld_d,
-                                  int64_t               batch_stride_d,
-                                  int64_t               offset_d,
-                                  int64_t               batch_count,
-                                  bool                  strided_batch,
-                                  bool                  sparseA,
-                                  const unsigned char*  metadata,
-                                  int                   act_relu,
-                                  float                 act_relu_upperbound,
-                                  float                 act_relu_threshold,
-                                  int                   act_gelu,
-                                  const void*           bias_vector,
-                                  int64_t               bias_stride,
-                                  hipStream_t*          streams,
-                                  int32_t               numStreams)
+    RocsparseltContractionProblem(rocsparselt_handle          handle,
+                                  rocsparselt_operation       trans_a,
+                                  rocsparselt_operation       trans_b,
+                                  int64_t                     m,
+                                  int64_t                     n,
+                                  int64_t                     k,
+                                  const float*                alpha,
+                                  const Ti*                   A,
+                                  const Ti* const*            batch_A,
+                                  int64_t                     ld_a,
+                                  int64_t                     batch_stride_a,
+                                  int64_t                     offset_a,
+                                  const Ti*                   B,
+                                  const Ti* const*            batch_B,
+                                  int64_t                     ld_b,
+                                  int64_t                     batch_stride_b,
+                                  int64_t                     offset_b,
+                                  const float*                beta,
+                                  const To*                   C,
+                                  const To* const*            batch_C,
+                                  int64_t                     ld_c,
+                                  int64_t                     batch_stride_c,
+                                  int64_t                     offset_c,
+                                  To*                         D,
+                                  To* const*                  batch_D,
+                                  int64_t                     ld_d,
+                                  int64_t                     batch_stride_d,
+                                  int64_t                     offset_d,
+                                  int64_t                     batch_count,
+                                  bool                        strided_batch,
+                                  bool                        sparseA,
+                                  const unsigned char*        metadata,
+                                  rocsparselt_activation_type act_type,
+                                  float                       act_arg0,
+                                  float                       act_arg1,
+                                  const void*                 bias_vector,
+                                  int64_t                     bias_stride,
+                                  hipStream_t*                streams,
+                                  int32_t                     numStreams)
         : handle(handle)
         , trans_a(trans_a)
         , trans_b(trans_b)
@@ -324,10 +321,9 @@ struct RocsparseltContractionProblem
         , strided_batch(strided_batch)
         , sparseA(sparseA)
         , metadata(metadata)
-        , act_relu(act_relu)
-        , act_relu_upperbound(act_relu_upperbound)
-        , act_relu_threshold(act_relu_threshold)
-        , act_gelu(act_gelu)
+        , act_type(act_type)
+        , act_arg0(act_arg0)
+        , act_arg1(act_arg1)
         , bias_vector(bias_vector)
         , bias_stride(bias_stride)
         , streams(streams)
@@ -337,48 +333,47 @@ struct RocsparseltContractionProblem
 
     // gemm_ext2
     // gemm_strided_batched_ext2
-    RocsparseltContractionProblem(rocsparselt_handle   handle,
-                                  int64_t              m,
-                                  int64_t              n,
-                                  int64_t              k,
-                                  const float*         alpha,
-                                  const Ti*            A,
-                                  const Ti* const*     batch_A,
-                                  int64_t              row_stride_a,
-                                  int64_t              col_stride_a,
-                                  int64_t              batch_stride_a,
-                                  int64_t              offset_a,
-                                  const Ti*            B,
-                                  const Ti* const*     batch_B,
-                                  int64_t              row_stride_b,
-                                  int64_t              col_stride_b,
-                                  int64_t              batch_stride_b,
-                                  int64_t              offset_b,
-                                  const float*         beta,
-                                  const To*            C,
-                                  const To* const*     batch_C,
-                                  int64_t              row_stride_c,
-                                  int64_t              col_stride_c,
-                                  int64_t              batch_stride_c,
-                                  int64_t              offset_c,
-                                  To*                  D,
-                                  To* const*           batch_D,
-                                  int64_t              row_stride_d,
-                                  int64_t              col_stride_d,
-                                  int64_t              batch_stride_d,
-                                  int64_t              offset_d,
-                                  int64_t              batch_count,
-                                  bool                 strided_batch,
-                                  bool                 sparseA,
-                                  const unsigned char* metadata,
-                                  int                  act_relu,
-                                  float                act_relu_upperbound,
-                                  float                act_relu_threshold,
-                                  int                  act_gelu,
-                                  const void*          bias_vector,
-                                  int64_t              bias_stride,
-                                  hipStream_t*         streams,
-                                  int32_t              numStreams)
+    RocsparseltContractionProblem(rocsparselt_handle          handle,
+                                  int64_t                     m,
+                                  int64_t                     n,
+                                  int64_t                     k,
+                                  const float*                alpha,
+                                  const Ti*                   A,
+                                  const Ti* const*            batch_A,
+                                  int64_t                     row_stride_a,
+                                  int64_t                     col_stride_a,
+                                  int64_t                     batch_stride_a,
+                                  int64_t                     offset_a,
+                                  const Ti*                   B,
+                                  const Ti* const*            batch_B,
+                                  int64_t                     row_stride_b,
+                                  int64_t                     col_stride_b,
+                                  int64_t                     batch_stride_b,
+                                  int64_t                     offset_b,
+                                  const float*                beta,
+                                  const To*                   C,
+                                  const To* const*            batch_C,
+                                  int64_t                     row_stride_c,
+                                  int64_t                     col_stride_c,
+                                  int64_t                     batch_stride_c,
+                                  int64_t                     offset_c,
+                                  To*                         D,
+                                  To* const*                  batch_D,
+                                  int64_t                     row_stride_d,
+                                  int64_t                     col_stride_d,
+                                  int64_t                     batch_stride_d,
+                                  int64_t                     offset_d,
+                                  int64_t                     batch_count,
+                                  bool                        strided_batch,
+                                  bool                        sparseA,
+                                  const unsigned char*        metadata,
+                                  rocsparselt_activation_type act_type,
+                                  float                       act_arg0,
+                                  float                       act_arg1,
+                                  const void*                 bias_vector,
+                                  int64_t                     bias_stride,
+                                  hipStream_t*                streams,
+                                  int32_t                     numStreams)
         : handle(handle)
         , trans_a(rocsparselt_operation_none)
         , trans_b(rocsparselt_operation_none)
@@ -415,10 +410,9 @@ struct RocsparseltContractionProblem
         , strided_batch(strided_batch)
         , sparseA(sparseA)
         , metadata(metadata)
-        , act_relu(act_relu)
-        , act_relu_upperbound(act_relu_upperbound)
-        , act_relu_threshold(act_relu_threshold)
-        , act_gelu(act_gelu)
+        , act_type(act_type)
+        , act_arg0(act_arg0)
+        , act_arg1(act_arg1)
         , bias_vector(bias_vector)
         , bias_stride(bias_stride)
         , streams(streams)
@@ -486,14 +480,12 @@ struct RocsparseltContractionProblem
                             prob.batch_stride_c,
                             "stride_d",
                             prob.batch_stride_d,
-                            "relu",
-                            prob.act_relu,
-                            "relu_upperbound",
-                            prob.act_relu_upperbound,
-                            "relu_threshold",
-                            prob.act_relu_threshold,
-                            "gelu",
-                            prob.act_gelu,
+                            "activation",
+                            rocsparselt_activation_type_string(prob.act_type),
+                            "activation_argument_0",
+                            prob.act_arg0,
+                            "activation_argument_1",
+                            prob.act_arg1,
                             "bias_stride",
                             prob.bias_stride));
     };
