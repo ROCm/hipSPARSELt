@@ -353,16 +353,16 @@ rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle 
 /********************************************************************************
  * \brief prunes a dense matrix according to the specified algorithm.
  *******************************************************************************/
-rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle       handle,
-                                            const rocsparselt_matmul_descr matmulDescr,
-                                            const void*                    d_in,
-                                            void*                          d_out,
-                                            rocsparselt_prune_alg          pruneAlg,
-                                            hipStream_t                    stream)
+rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       handle,
+                                            const rocsparselt_matmul_descr* matmulDescr,
+                                            const void*                     d_in,
+                                            void*                           d_out,
+                                            rocsparselt_prune_alg           pruneAlg,
+                                            hipStream_t                     stream)
 
 {
     // Check if handle is valid
-    if(handle == nullptr || matmulDescr == nullptr)
+    if(handle == nullptr || matmulDescr == nullptr || *handle == nullptr)
     {
         return rocsparselt_status_invalid_handle;
     }
@@ -379,15 +379,17 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle       handl
         return rocsparselt_status_not_implemented;
     }
 
+    auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
+
     rocsparselt_mat_descr matrix;
     // Check if matrix A is a structured matrix
-    if(matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
-        matrix = matmulDescr->matrix_A;
+    if(_matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
+        matrix = _matmulDescr->matrix_A;
     else
         return rocsparselt_status_not_implemented;
 
-    rocsparselt_operation    opA          = matmulDescr->op_A;
-    rocsparselt_compute_type compute_type = matmulDescr->compute_type;
+    rocsparselt_operation    opA          = _matmulDescr->op_A;
+    rocsparselt_compute_type compute_type = _matmulDescr->compute_type;
 
     int64_t              o_m   = opA == rocsparselt_operation_transpose ? matrix->n : matrix->m;
     int64_t              o_n   = opA == rocsparselt_operation_transpose ? matrix->m : matrix->n;
@@ -410,7 +412,7 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle       handl
     int64_t stride0 = (opA == rocsparselt_operation_transpose) ? ld : 1;
     int64_t stride1 = (opA == rocsparselt_operation_transpose) ? 1 : ld;
 
-    return rocsparselt_smfmac_prune_impl(handle,
+    return rocsparselt_smfmac_prune_impl(*handle,
                                          o_m,
                                          o_n,
                                          stride0,
@@ -430,14 +432,14 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle       handl
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle       handle,
-                                                  const rocsparselt_matmul_descr matmulDescr,
-                                                  const void*                    d_in,
-                                                  int*                           d_out,
-                                                  hipStream_t                    stream)
+rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*       handle,
+                                                  const rocsparselt_matmul_descr* matmulDescr,
+                                                  const void*                     d_in,
+                                                  int*                            d_out,
+                                                  hipStream_t                     stream)
 {
     // Check if handle is valid
-    if(handle == nullptr || matmulDescr == nullptr)
+    if(handle == nullptr || matmulDescr == nullptr || *handle == nullptr)
     {
         return rocsparselt_status_invalid_handle;
     }
@@ -448,14 +450,16 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle      
         return rocsparselt_status_invalid_pointer;
     }
 
+    auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
+
     rocsparselt_mat_descr matrix;
     // Check if matrix A is a structured matrix
-    if(matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
-        matrix = matmulDescr->matrix_A;
+    if(_matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
+        matrix = _matmulDescr->matrix_A;
     else
         return rocsparselt_status_not_implemented;
 
-    rocsparselt_operation opA = matmulDescr->op_A;
+    rocsparselt_operation opA = _matmulDescr->op_A;
 
     int64_t              o_m   = opA == rocsparselt_operation_transpose ? matrix->n : matrix->m;
     int64_t              o_n   = opA == rocsparselt_operation_transpose ? matrix->m : matrix->n;
@@ -478,7 +482,7 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle      
     int64_t stride0 = (opA == rocsparselt_operation_transpose) ? ld : 1;
     int64_t stride1 = (opA == rocsparselt_operation_transpose) ? 1 : ld;
 
-    return rocsparselt_smfmac_prune_check_impl(handle,
+    return rocsparselt_smfmac_prune_check_impl(*handle,
                                                o_m,
                                                o_n,
                                                stride0,

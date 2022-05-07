@@ -226,5 +226,5 @@ rocsparselt_local_handle::~rocsparselt_local_handle()
 {
     if(m_memory)
         (hipFree)(m_memory);
-    rocsparselt_destroy(m_handle);
+    rocsparselt_destroy(&m_handle);
 }

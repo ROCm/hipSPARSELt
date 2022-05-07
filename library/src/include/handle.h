@@ -198,14 +198,14 @@ struct _rocsparselt_matmul_descr
         , activation_tanh(rhs.activation_tanh)
         , activation_tanh_alpha(rhs.activation_tanh_alpha)
         , activation_tanh_beta(rhs.activation_tanh_beta)
+        , bias_pointer(rhs.bias_pointer)
         , bias_stride(rhs.bias_stride)
     {
-        matrix_A     = rhs.matrix_A->clone();
-        matrix_B     = rhs.matrix_B->clone();
-        matrix_C     = rhs.matrix_C->clone();
-        matrix_D     = rhs.matrix_D->clone();
-        bias_pointer = rhs.bias_pointer;
-        own_by_us    = true;
+        matrix_A  = rhs.matrix_A->clone();
+        matrix_B  = rhs.matrix_B->clone();
+        matrix_C  = rhs.matrix_C->clone();
+        matrix_D  = rhs.matrix_D->clone();
+        own_by_us = true;
     };
 
     // destructor
@@ -218,12 +218,6 @@ struct _rocsparselt_matmul_descr
             delete matrix_C;
             delete matrix_D;
         }
-        bias_pointer.clear();
-    };
-
-    rocsparselt_matmul_descr clone()
-    {
-        return new _rocsparselt_matmul_descr(*this);
     };
 
     // operation applied to the matrix A
@@ -241,19 +235,19 @@ struct _rocsparselt_matmul_descr
     //
     rocsparselt_compute_type compute_type;
     //data of rocsparselt_matmul_descr_attribute
-    int                    activation_relu            = 0;
-    float                  activation_relu_upperbound = std::numeric_limits<float>::infinity();
-    float                  activation_relu_threshold  = 0.0f;
-    int                    activation_gelu            = 0;
-    int                    activation_abs             = 0;
-    int                    activation_leakyrelu       = 0;
-    float                  activation_leakyrelu_alpha = 1.0f;
-    int                    activation_sigmoid         = 0;
-    int                    activation_tanh            = 0;
-    float                  activation_tanh_alpha      = 1.0f;
-    float                  activation_tanh_beta       = 1.0f;
-    _rocsparselt_attribute bias_pointer;
-    int64_t                bias_stride = 0;
+    int     activation_relu            = 0;
+    float   activation_relu_upperbound = std::numeric_limits<float>::infinity();
+    float   activation_relu_threshold  = 0.0f;
+    int     activation_gelu            = 0;
+    int     activation_abs             = 0;
+    int     activation_leakyrelu       = 0;
+    float   activation_leakyrelu_alpha = 1.0f;
+    int     activation_sigmoid         = 0;
+    int     activation_tanh            = 0;
+    float   activation_tanh_alpha      = 1.0f;
+    float   activation_tanh_beta       = 1.0f;
+    float*  bias_pointer               = nullptr;
+    int64_t bias_stride                = 0;
 
 private:
     bool own_by_us = false;
@@ -270,17 +264,14 @@ struct _rocsparselt_matmul_alg_selection
     // constructor
     _rocsparselt_matmul_alg_selection(){};
     // destructor
-    ~_rocsparselt_matmul_alg_selection()
-    {
-        for(int i = 0; i < 3; i++)
-        {
-            attributes[i].clear();
-        }
-    };
+    ~_rocsparselt_matmul_alg_selection(){};
+
     //
     rocsparselt_matmul_alg alg;
     //data of rocsparselt_matmul_alg_attribute
-    _rocsparselt_attribute attributes[3];
+    int config_id         = 0;
+    int config_max_id     = 0;
+    int search_iterations = 10;
 };
 
 /********************************************************************************
@@ -299,9 +290,9 @@ struct _rocsparselt_matmul_plan
         delete matmul_descr;
     };
     //
-    rocsparselt_matmul_descr matmul_descr;
+    _rocsparselt_matmul_descr* matmul_descr;
     //
-    rocsparselt_matmul_alg_selection alg_selection;
+    _rocsparselt_matmul_alg_selection* alg_selection;
     //
     size_t workspace_size;
 };

@@ -707,7 +707,7 @@ int main(int argc, char* argv[])
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_init(&handle));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_structured_descr_init(handle,
+    CHECK_ROCSPARSE_ERROR(rocsparselt_structured_descr_init(&handle,
                                                             &matA,
                                                             row_a,
                                                             col_a,
@@ -716,7 +716,7 @@ int main(int argc, char* argv[])
                                                             rocsparselt_datatype_f16_r,
                                                             rocsparselt_order_column,
                                                             rocsparselt_sparsity_50_percent));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(handle,
+    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(&handle,
                                                        &matB,
                                                        row_b,
                                                        col_b,
@@ -724,7 +724,7 @@ int main(int argc, char* argv[])
                                                        16,
                                                        rocsparselt_datatype_f16_r,
                                                        rocsparselt_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(handle,
+    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(&handle,
                                                        &matC,
                                                        row_c,
                                                        col_c,
@@ -732,7 +732,7 @@ int main(int argc, char* argv[])
                                                        16,
                                                        rocsparselt_datatype_f16_r,
                                                        rocsparselt_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(handle,
+    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(&handle,
                                                        &matD,
                                                        row_c,
                                                        col_c,
@@ -742,45 +742,45 @@ int main(int argc, char* argv[])
                                                        rocsparselt_order_column));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(stride_a)));
+        &handle, &matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(stride_a)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(stride_b)));
+        &handle, &matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(stride_b)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(stride_c)));
+        &handle, &matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(stride_c)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(stride_d)));
+        &handle, &matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(stride_d)));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(
-        handle, &matmul, trans_a, trans_b, matA, matB, matC, matD, rocsparselt_compute_f32));
+        &handle, &matmul, trans_a, trans_b, &matA, &matB, &matC, &matD, rocsparselt_compute_f32));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_selection_init(
-        handle, &alg_sel, matmul, rocsparselt_matmul_alg_default));
+        &handle, &alg_sel, &matmul, rocsparselt_matmul_alg_default));
 
-    CHECK_ROCSPARSE_ERROR(
-        rocsparselt_smfmac_prune(handle, matmul, da, da_p, rocsparselt_prune_smfmac_strip, stream));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_prune(
+        &handle, &matmul, da, da_p, rocsparselt_prune_smfmac_strip, stream));
 
     size_t workspace_size, compressed_size;
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(&handle, &alg_sel, &workspace_size));
 
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_matmul_plan_init(handle, &plan, matmul, alg_sel, workspace_size));
+        rocsparselt_matmul_plan_init(&handle, &plan, &matmul, &alg_sel, workspace_size));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compressed_size(&handle, &plan, &compressed_size));
 
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(handle, plan, da_p, d_compressed, stream));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(&handle, &plan, da_p, d_compressed, stream));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul(handle,
-                                             plan,
+    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul(&handle,
+                                             &plan,
                                              &alpha,
                                              d_compressed,
                                              db,
@@ -902,14 +902,12 @@ int main(int argc, char* argv[])
     CHECK_HIP_ERROR(hipFree(dc));
     CHECK_HIP_ERROR(hipFree(dd));
     CHECK_HIP_ERROR(hipFree(d_compressed));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_plan_destroy(plan));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_selection_destroy(alg_sel));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_destroy(matmul));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matA));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matB));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matC));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matD));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_destroy(handle));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_plan_destroy(&plan));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matA));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matB));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matC));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matD));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_destroy(&handle));
 
     return EXIT_SUCCESS;
 }

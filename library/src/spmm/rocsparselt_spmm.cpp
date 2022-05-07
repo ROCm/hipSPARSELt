@@ -36,13 +36,13 @@ extern "C" {
  * \brief
  *******************************************************************************/
 rocsparselt_status
-    rocsparselt_matmul_get_workspace(const rocsparselt_handle               handle,
-                                     const rocsparselt_matmul_alg_selection algSelection,
-                                     size_t*                                workspaceSize)
+    rocsparselt_matmul_get_workspace(const rocsparselt_handle*               handle,
+                                     const rocsparselt_matmul_alg_selection* algSelection,
+                                     size_t*                                 workspaceSize)
 
 {
     // Check if handle is valid
-    if(handle == nullptr || algSelection == nullptr)
+    if(handle == nullptr || algSelection == nullptr || *handle == nullptr)
     {
         return rocsparselt_status_invalid_handle;
     }
@@ -180,23 +180,13 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
         act_args[0] = plan->matmul_descr->activation_tanh_alpha;
         act_args[1] = plan->matmul_descr->activation_tanh_beta;
     }
-    void* bias_vector = nullptr;
-    plan->matmul_descr->bias_pointer.get(&bias_vector);
+    float*  bias_vector = plan->matmul_descr->bias_pointer;
     int64_t bias_stride = plan->matmul_descr->bias_stride;
 
     // algorithm selection
-    int config_id         = 0;
-    int config_max_id     = 0;
-    int search_iterations = search ? 10 : 0; //default
-    plan->alg_selection->attributes[rocsparselt_matmul_alg_config_max_id].get(&config_max_id);
-
-    if(search)
-    {
-        plan->alg_selection->attributes[rocsparselt_matmul_search_iterations].get(
-            &search_iterations);
-    }
-    else
-        plan->alg_selection->attributes[rocsparselt_matmul_alg_config_id].get(&config_id);
+    int config_id         = plan->alg_selection->config_id;
+    int config_max_id     = plan->alg_selection->config_max_id;
+    int search_iterations = search ? plan->alg_selection->search_iterations : 0; //default
 
     int64_t m, n, k;
     auto    status
@@ -222,7 +212,7 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
     status = rocsparselt_spmm_template(EX_PARM);
     if(search && status == rocsparselt_status_success)
     {
-        plan->alg_selection->attributes[rocsparselt_matmul_alg_config_id].set(&config_id);
+        plan->alg_selection->config_max_id = config_id;
     }
     return status;
 }
@@ -230,41 +220,50 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle      handle,
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparselt_status rocsparselt_matmul(const rocsparselt_handle      handle,
-                                      const rocsparselt_matmul_plan plan,
-                                      const void*                   alpha,
-                                      const void*                   d_A,
-                                      const void*                   d_B,
-                                      const void*                   beta,
-                                      const void*                   d_C,
-                                      void*                         d_D,
-                                      void*                         workspace,
-                                      hipStream_t*                  streams,
-                                      int32_t                       numStreams)
+rocsparselt_status rocsparselt_matmul(const rocsparselt_handle*      handle,
+                                      const rocsparselt_matmul_plan* plan,
+                                      const void*                    alpha,
+                                      const void*                    d_A,
+                                      const void*                    d_B,
+                                      const void*                    beta,
+                                      const void*                    d_C,
+                                      void*                          d_D,
+                                      void*                          workspace,
+                                      hipStream_t*                   streams,
+                                      int32_t                        numStreams)
 
 {
+    if(handle == nullptr || plan == nullptr)
+    {
+        return rocsparselt_status_invalid_handle;
+    }
+
     return rocsparselt_matmul_impl(
-        handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams);
+        *handle, *plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams);
 }
 
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle      handle,
-                                             const rocsparselt_matmul_plan plan,
-                                             const void*                   alpha,
-                                             const void*                   d_A,
-                                             const void*                   d_B,
-                                             const void*                   beta,
-                                             const void*                   d_C,
-                                             void*                         d_D,
-                                             void*                         workspace,
-                                             hipStream_t*                  streams,
-                                             int32_t                       numStreams)
+rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle*      handle,
+                                             const rocsparselt_matmul_plan* plan,
+                                             const void*                    alpha,
+                                             const void*                    d_A,
+                                             const void*                    d_B,
+                                             const void*                    beta,
+                                             const void*                    d_C,
+                                             void*                          d_D,
+                                             void*                          workspace,
+                                             hipStream_t*                   streams,
+                                             int32_t                        numStreams)
 
 {
+    if(handle == nullptr || plan == nullptr)
+    {
+        return rocsparselt_status_invalid_handle;
+    }
     return rocsparselt_matmul_impl(
-        handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams, true);
+        *handle, *plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams, true);
 }
 
 #ifdef __cplusplus
