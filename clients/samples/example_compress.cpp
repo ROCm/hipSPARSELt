@@ -148,11 +148,11 @@ void compress(const Ti*      in,
 }
 
 template <typename T>
-void test_prune_check(rocsparselt_handle       handle,
-                      rocsparselt_matmul_descr matmul,
-                      T*                       d,
-                      hipStream_t              stream,
-                      bool                     expected)
+void test_prune_check(rocsparselt_handle*       handle,
+                      rocsparselt_matmul_descr* matmul,
+                      T*                        d,
+                      hipStream_t               stream,
+                      bool                      expected)
 {
     int* d_valid;
     int  h_valid = 0;
@@ -665,7 +665,7 @@ void run(int64_t               m,
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_init(&handle));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_structured_descr_init(handle,
+    CHECK_ROCSPARSE_ERROR(rocsparselt_structured_descr_init(&handle,
                                                             &matA,
                                                             row,
                                                             col,
@@ -675,37 +675,44 @@ void run(int64_t               m,
                                                             rocsparselt_order_column,
                                                             rocsparselt_sparsity_50_percent));
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_dense_descr_init(handle, &matB, n, m, n, 16, type, rocsparselt_order_column));
+        rocsparselt_dense_descr_init(&handle, &matB, n, m, n, 16, type, rocsparselt_order_column));
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_dense_descr_init(handle, &matC, m, m, m, 16, type, rocsparselt_order_column));
+        rocsparselt_dense_descr_init(&handle, &matC, m, m, m, 16, type, rocsparselt_order_column));
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_dense_descr_init(handle, &matD, m, m, m, 16, type, rocsparselt_order_column));
+        rocsparselt_dense_descr_init(&handle, &matD, m, m, m, 16, type, rocsparselt_order_column));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matA, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
+        &handle, &matA, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matB, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
+        &handle, &matB, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matC, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
+        &handle, &matC, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
+        &handle, &matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
     CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        handle, matD, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
+        &handle, &matD, rocsparselt_mat_batch_stride, &stride, sizeof(stride)));
 
     auto compute_type
         = type == rocsparselt_datatype_i8_r ? rocsparselt_compute_i32 : rocsparselt_compute_f32;
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(
-        handle, &matmul, trans, rocsparselt_operation_none, matA, matB, matC, matD, compute_type));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(&handle,
+                                                        &matmul,
+                                                        trans,
+                                                        rocsparselt_operation_none,
+                                                        &matA,
+                                                        &matB,
+                                                        &matC,
+                                                        &matD,
+                                                        compute_type));
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_prune(
-        handle, matmul, d, d_test, rocsparselt_prune_smfmac_strip, stream));
+        &handle, &matmul, d, d_test, rocsparselt_prune_smfmac_strip, stream));
     hipStreamSynchronize(stream);
 
     CHECK_HIP_ERROR(hipMemcpy(hp_test.data(), d_test, sizeof(T) * size, hipMemcpyDeviceToHost));
@@ -716,18 +723,18 @@ void run(int64_t               m,
             "hp_test calculated", &hp_test[0], m, n, batch_count, stride_1, stride_2, stride);
     }
 
-    test_prune_check<T>(handle, matmul, d_test, stream, true);
+    test_prune_check<T>(&handle, &matmul, d_test, stream, true);
 
     CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_selection_init(
-        handle, &alg_sel, matmul, rocsparselt_matmul_alg_default));
+        &handle, &alg_sel, &matmul, rocsparselt_matmul_alg_default));
 
     size_t workspace_size, compressed_size;
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(&handle, &alg_sel, &workspace_size));
 
     CHECK_ROCSPARSE_ERROR(
-        rocsparselt_matmul_plan_init(handle, &plan, matmul, alg_sel, workspace_size));
+        rocsparselt_matmul_plan_init(&handle, &plan, &matmul, &alg_sel, workspace_size));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compressed_size(&handle, &plan, &compressed_size));
 
     printf("compressed_size = %ld\n", compressed_size);
 
@@ -735,7 +742,8 @@ void run(int64_t               m,
     std::vector<T> hp_gold(compressed_size / sizeof(T));
     std::vector<T> hp_compressed(compressed_size / sizeof(T));
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(handle, plan, d_test, d_compressed, stream));
+    CHECK_ROCSPARSE_ERROR(
+        rocsparselt_smfmac_compress(&handle, &plan, d_test, d_compressed, stream));
     hipStreamSynchronize(stream);
     CHECK_HIP_ERROR(
         hipMemcpy(hp_compressed.data(), d_compressed, compressed_size, hipMemcpyDeviceToHost));
@@ -837,12 +845,12 @@ void run(int64_t               m,
     CHECK_HIP_ERROR(hipFree(d));
     CHECK_HIP_ERROR(hipFree(d_test));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_destroy(matmul));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matA));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matB));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matC));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(matD));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_destroy(handle));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_plan_destroy(&plan));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matA));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matB));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matC));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matD));
+    CHECK_ROCSPARSE_ERROR(rocsparselt_destroy(&handle));
 }
 
 int main(int argc, char* argv[])

@@ -636,8 +636,8 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
         if(config_max_id != max_cid)
         {
-            rocsparselt_cerr << "config_max_id is out of range (" << max_cid
-                             << ") used this value to instead." << std::endl;
+            rocsparselt_cerr << "config_max_id (" << config_max_id << ") is out of range ("
+                             << max_cid << ") used this value to instead." << std::endl;
         }
 
         if(!max_cid)

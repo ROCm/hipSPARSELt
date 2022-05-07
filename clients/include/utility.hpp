@@ -105,6 +105,14 @@ public:
     {
         return m_handle;
     }
+    operator rocsparselt_handle*()
+    {
+        return &m_handle;
+    }
+    operator const rocsparselt_handle*() const
+    {
+        return &m_handle;
+    }
 };
 
 /* ============================================================================================ */
@@ -116,16 +124,16 @@ class rocsparselt_local_mat_descr
     static constexpr int  alignment = 16;
 
 public:
-    rocsparselt_local_mat_descr(rocsparselt_matrix_type mtype,
-                                rocsparselt_handle      handle,
-                                int64_t                 row,
-                                int64_t                 col,
-                                int64_t                 ld,
-                                rocsparselt_datatype    type,
-                                rocsparselt_order       order)
+    rocsparselt_local_mat_descr(rocsparselt_matrix_type  mtype,
+                                const rocsparselt_handle handle,
+                                int64_t                  row,
+                                int64_t                  col,
+                                int64_t                  ld,
+                                rocsparselt_datatype     type,
+                                rocsparselt_order        order)
     {
         if(mtype == rocsparselt_matrix_type_structured)
-            this->m_status = rocsparselt_structured_descr_init(handle,
+            this->m_status = rocsparselt_structured_descr_init(&handle,
                                                                &this->m_descr,
                                                                row,
                                                                col,
@@ -136,13 +144,13 @@ public:
                                                                rocsparselt_sparsity_50_percent);
         else
             this->m_status = rocsparselt_dense_descr_init(
-                handle, &this->m_descr, row, col, ld, this->alignment, type, order);
+                &handle, &this->m_descr, row, col, ld, this->alignment, type, order);
     }
 
     ~rocsparselt_local_mat_descr()
     {
         if(this->m_status == rocsparselt_status_success)
-            rocsparselt_mat_descr_destroy(this->m_descr);
+            rocsparselt_mat_descr_destroy(&this->m_descr);
     }
 
     rocsparselt_local_mat_descr(const rocsparselt_local_mat_descr&) = delete;
@@ -164,34 +172,38 @@ public:
     {
         return m_descr;
     }
+    operator rocsparselt_mat_descr*()
+    {
+        return &m_descr;
+    }
+    operator const rocsparselt_mat_descr*() const
+    {
+        return &m_descr;
+    }
 };
 
 /* ============================================================================================ */
 /*! \brief  local matrix multiplication descriptor which is automatically created and destroyed  */
 class rocsparselt_local_matmul_descr
 {
-    rocsparselt_matmul_descr m_descr  = nullptr;
+    rocsparselt_matmul_descr m_descr;
     rocsparselt_status       m_status = rocsparselt_status_not_initialized;
 
 public:
-    rocsparselt_local_matmul_descr(rocsparselt_handle       handle,
-                                   rocsparselt_operation    opA,
-                                   rocsparselt_operation    opB,
-                                   rocsparselt_mat_descr    matA,
-                                   rocsparselt_mat_descr    matB,
-                                   rocsparselt_mat_descr    matC,
-                                   rocsparselt_mat_descr    matD,
-                                   rocsparselt_compute_type compute_type)
+    rocsparselt_local_matmul_descr(const rocsparselt_handle    handle,
+                                   rocsparselt_operation       opA,
+                                   rocsparselt_operation       opB,
+                                   const rocsparselt_mat_descr matA,
+                                   const rocsparselt_mat_descr matB,
+                                   const rocsparselt_mat_descr matC,
+                                   const rocsparselt_mat_descr matD,
+                                   rocsparselt_compute_type    compute_type)
     {
         this->m_status = rocsparselt_matmul_descr_init(
-            handle, &this->m_descr, opA, opB, matA, matB, matC, matD, compute_type);
+            &handle, &this->m_descr, opA, opB, &matA, &matB, &matC, &matD, compute_type);
     }
 
-    ~rocsparselt_local_matmul_descr()
-    {
-        if(this->m_status == rocsparselt_status_success)
-            rocsparselt_matmul_descr_destroy(this->m_descr);
-    }
+    ~rocsparselt_local_matmul_descr() {}
 
     rocsparselt_local_matmul_descr(const rocsparselt_local_matmul_descr&) = delete;
     rocsparselt_local_matmul_descr(rocsparselt_local_matmul_descr&&)      = delete;
@@ -212,6 +224,14 @@ public:
     {
         return m_descr;
     }
+    operator rocsparselt_matmul_descr*()
+    {
+        return &m_descr;
+    }
+    operator const rocsparselt_matmul_descr*() const
+    {
+        return &m_descr;
+    }
 };
 
 /* ================================================================================================================= */
@@ -222,20 +242,16 @@ class rocsparselt_local_matmul_alg_selection
     rocsparselt_status               m_status = rocsparselt_status_not_initialized;
 
 public:
-    rocsparselt_local_matmul_alg_selection(rocsparselt_handle       handle,
-                                           rocsparselt_matmul_descr matmul,
-                                           rocsparselt_matmul_alg   alg)
+    rocsparselt_local_matmul_alg_selection(const rocsparselt_handle        handle,
+                                           const rocsparselt_matmul_descr* matmul,
+                                           rocsparselt_matmul_alg          alg)
     {
 
         this->m_status
-            = rocsparselt_matmul_alg_selection_init(handle, &this->m_alg_sel, matmul, alg);
+            = rocsparselt_matmul_alg_selection_init(&handle, &this->m_alg_sel, matmul, alg);
     }
 
-    ~rocsparselt_local_matmul_alg_selection()
-    {
-        if(this->m_status == rocsparselt_status_success)
-            rocsparselt_matmul_alg_selection_destroy(this->m_alg_sel);
-    }
+    ~rocsparselt_local_matmul_alg_selection() {}
 
     rocsparselt_local_matmul_alg_selection(const rocsparselt_local_matmul_alg_selection&) = delete;
     rocsparselt_local_matmul_alg_selection(rocsparselt_local_matmul_alg_selection&&)      = delete;
@@ -257,6 +273,14 @@ public:
     {
         return m_alg_sel;
     }
+    operator rocsparselt_matmul_alg_selection*()
+    {
+        return &m_alg_sel;
+    }
+    operator const rocsparselt_matmul_alg_selection*() const
+    {
+        return &m_alg_sel;
+    }
 };
 
 /* ================================================================================================================= */
@@ -267,20 +291,20 @@ class rocsparselt_local_matmul_plan
     rocsparselt_status      m_status = rocsparselt_status_not_initialized;
 
 public:
-    rocsparselt_local_matmul_plan(rocsparselt_handle               handle,
-                                  rocsparselt_matmul_descr         matmul,
-                                  rocsparselt_matmul_alg_selection alg_sel,
-                                  size_t                           workspace_size)
+    rocsparselt_local_matmul_plan(const rocsparselt_handle                handle,
+                                  const rocsparselt_matmul_descr*         matmul,
+                                  const rocsparselt_matmul_alg_selection* alg_sel,
+                                  size_t                                  workspace_size)
     {
 
         this->m_status
-            = rocsparselt_matmul_plan_init(handle, &this->m_plan, matmul, alg_sel, workspace_size);
+            = rocsparselt_matmul_plan_init(&handle, &this->m_plan, matmul, alg_sel, workspace_size);
     }
 
     ~rocsparselt_local_matmul_plan()
     {
         if(this->m_status == rocsparselt_status_success)
-            rocsparselt_matmul_plan_destroy(this->m_plan);
+            rocsparselt_matmul_plan_destroy(&this->m_plan);
     }
 
     rocsparselt_local_matmul_plan(const rocsparselt_local_matmul_plan&) = delete;
@@ -300,6 +324,14 @@ public:
     operator const rocsparselt_matmul_plan&() const
     {
         return m_plan;
+    }
+    operator rocsparselt_matmul_plan*()
+    {
+        return &m_plan;
+    }
+    operator const rocsparselt_matmul_plan*() const
+    {
+        return &m_plan;
     }
 };
 

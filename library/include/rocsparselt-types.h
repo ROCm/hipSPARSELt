@@ -68,7 +68,10 @@ typedef struct _rocsparselt_mat_descr* rocsparselt_mat_descr;
  *  the description of the matrix multiplication operation.
  *  It is initialized with \ref rocsparselt_matmul_descr_init function.
  */
-typedef struct _rocsparselt_matmul_descr* rocsparselt_matmul_descr;
+typedef struct
+{
+    uint8_t data[11024];
+} rocsparselt_matmul_descr;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication algorithm.
@@ -76,7 +79,10 @@ typedef struct _rocsparselt_matmul_descr* rocsparselt_matmul_descr;
  *  \details
  *  It is initialized with \ref rocsparselt_matmul_alg_selection_init function.
  */
-typedef struct _rocsparselt_matmul_alg_selection* rocsparselt_matmul_alg_selection;
+typedef struct
+{
+    uint8_t data[11024];
+} rocsparselt_matmul_alg_selection;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication execution plan
