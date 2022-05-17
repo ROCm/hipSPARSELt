@@ -16,6 +16,10 @@ rocSPARSELt provides general matrix-matrix operations for sparse computation imp
   - ReLU
   - ClippedReLU (ReLU with uppoer bound and threshold setting)
   - GeLU
+  - Abs
+  - LeakyReLU
+  - Sigmoid
+  - Tanh
 
 ## On Going Feature Development
 - Add support for Mixed-precision computation
@@ -24,11 +28,7 @@ rocSPARSELt provides general matrix-matrix operations for sparse computation imp
 - Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
 - Add support for prune alogright - prune_tile_method
 - New APIs for compression and pruning decoupled from rocsparselt_matmul_plan
-- New activation functions
-  - Abs
-  - LeakyReLU
-  - Sigmoid
-  - Tanh
+
 ## Documentation
 The latest rocSPARSELt documentation and API description can be found [here](doc/rocSPARSELt_api_v0.1.docx) or downloaded as [pdf](doc/rocSPARSELt_api_v0.1.pdf).
 
