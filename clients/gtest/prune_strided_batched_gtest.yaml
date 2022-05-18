@@ -10,11 +10,6 @@ Definitions:
 
   - &alpha_beta_range
     - { alpha:  1.0, beta:  0.0 }
-    - { alpha: -2.0, beta: -3.0 }
-    - { alpha:  0.0, beta:  1.0 }
-
-  - &alpha_beta_range_small
-    - { alpha: 2, alphai: 2, beta: -1.0, betai: 2.0 }
 
 Tests:
 - name: prune_strided_batched_small
