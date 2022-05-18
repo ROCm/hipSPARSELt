@@ -250,9 +250,14 @@ inline T random_hpl_generator()
 template <>
 inline int8_t random_hpl_generator()
 {
+    auto saturate = [](double val) {
+        auto _val = std::nearbyint(val);
+        _val      = _val > 127.f ? 127.f : _val < -128.f ? -128.f : _val;
+        return _val;
+    };
 
     return static_cast<int8_t>(
-        std::uniform_real_distribution<double>(-1.0, 1.0)(t_rocsparselt_rng));
+        saturate(std::uniform_real_distribution<double>(-1.0, 1.0)(t_rocsparselt_rng)));
 }
 
 // for rocsparselt_bfloat16, generate float, and convert to rocsparselt_bfloat16
