@@ -84,6 +84,23 @@ namespace
                      << rocsparselt_datatype2string(arg.d_type)
                      << rocsparselt_computetype2string(arg.compute_type);
 
+                if(arg.activation_type != rocsparselt_activation_type::none)
+                {
+                    name << '_' << rocsparselt_activation_type_string(arg.activation_type);
+                    switch(arg.activation_type)
+                    {
+                    case rocsparselt_activation_type::clippedrelu:
+                    case rocsparselt_activation_type::tanh:
+                        name << '_' << arg.activation_arg1 << '_' << arg.activation_arg2;
+                        break;
+                    case rocsparselt_activation_type::leakyrelu:
+                        name << '_' << arg.activation_arg1;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.alpha << '_'
