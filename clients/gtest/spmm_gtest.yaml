@@ -505,19 +505,36 @@ Tests:
   M: 128
   N: 128
   K: 128
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
-  activation_type: [ none, relu, gelu, abs, sigmoid]
+  transA: N
+  transB: N
+  alpha: 1
+  beta: 0
+  activation_type: [ none, relu, gelu, abs]
+
+- name: spmm_128_activation_sigmoid
+  category: pre_checkin
+  function:
+    spmm: *activation_sigmoid_tanh_precisions
+  M: 128
+  N: 128
+  K: 128
+  transA: N
+  transB: N
+  alpha: 1
+  beta: 0
+  activation_type: [sigmoid]
 
 - name: spmm_128_activation_tanh
   category: pre_checkin
   function:
-    spmm: *real_precisions
+    spmm: *activation_sigmoid_tanh_precisions
   M: 128
   N: 128
   K: 128
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
+  transA: N
+  transB: N
+  alpha: 1
+  beta: 0
   activation_type: [tanh]
   activation_arg1 : [-1.0, 0.0, 0.5, 1.0]
   activation_arg2 : [-1.0, 0.0, 0.5, 1.0, 3.0]
@@ -529,8 +546,10 @@ Tests:
   M: 128
   N: 128
   K: 128
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
+  transA: N
+  transB: N
+  alpha: 1
+  beta: 0
   activation_type: [leakyrelu]
   activation_arg1 : [-1.0, 0.0, 0.5, 1.0]
 
@@ -541,8 +560,10 @@ Tests:
   M: 128
   N: 128
   K: 128
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
+  transA: N
+  transB: N
+  alpha: 1
+  beta: 0
   activation_type: clippedrelu
   activation_arg1 : [-1.0, 0.0, 0.5]
   activation_arg2 : [-1.0, 0.0, 0.5, 1.0, 3.0]

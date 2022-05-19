@@ -49,6 +49,10 @@ Real precisions: &real_precisions
   - &hpa_int8_precision
     { a_type:  i8_r, b_type:  i8_r, c_type: i8_r, d_type: i8_r, compute_type: i32 }
 
+acvation_sigmoid_tanh precisions: &activation_sigmoid_tanh_precisions
+  - *hpa_half_precision
+  - *hpa_bf16_precision
+
 # The Arguments struct passed directly to C++. See rocsparselt_arguments.hpp.
 # The order of the entries is significant, so it can't simply be a dictionary.
 # The types on the RHS are eval'd for Python-recognized types including ctypes
