@@ -23,27 +23,16 @@
 template <typename Ti, typename To, typename Tact, typename F>
 void activation(int64_t m, int64_t n, int64_t ld, Ti* in, To* out, Tact arg1, Tact arg2, F& func)
 {
-    for(int i = 0; i < m; i++)
-    {
-#pragma omp parallel for
-        for(int j = 0; j < n; j++)
-        {
-            auto pos     = j * ld + i;
-            auto in_Tact = static_cast<Tact>(*(in + pos));
-            *(out + pos) = static_cast<To>(func(in_Tact, arg1, arg2));
-        }
-    }
-}
-
-template <typename Tact, typename F>
-void activation(
-    int64_t m, int64_t n, int64_t ld, int8_t* in, int8_t* out, Tact arg1, Tact arg2, F& func)
-{
-    auto saturate = [](Tact val) {
+    auto saturate_i8 = [](Tact val) {
         auto _val = std::nearbyint(static_cast<double>(val));
         _val      = _val > 127.f ? 127.f : _val < -128.f ? -128.f : _val;
-        return _val;
+        return static_cast<To>(_val);
     };
+
+    auto saturate_o = [](Tact val) { return static_cast<To>(val); };
+
+    To (*saturate)(Tact val);
+    saturate = std::is_same<int8_t, To>() ? saturate_i8 : saturate_o;
 
     for(int i = 0; i < m; i++)
     {
@@ -52,8 +41,7 @@ void activation(
         {
             auto pos     = j * ld + i;
             auto in_Tact = static_cast<Tact>(*(in + pos));
-            auto o       = saturate(func(in_Tact, arg1, arg2));
-            *(out + pos) = static_cast<int8_t>(o);
+            *(out + pos) = saturate(func(in_Tact, arg1, arg2));
         }
     }
 }
