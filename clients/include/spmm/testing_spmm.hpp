@@ -618,17 +618,7 @@ void testing_spmm(const Arguments& arg)
 
         if(arg.unit_check)
         {
-            if(std::is_same<To, rocsparselt_half>{} && K > 10000)
-            {
-                // For large K, rocsparse_half tends to diverge proportional to K
-                // Tolerance is slightly greater than 1 / 1024.0
-                const double tol = K * sum_error_tolerance<To>;
-                near_check_general<To>(M, N, ldd, stride_d, hD_gold, hD_1, num_batches, tol);
-            }
-            else
-            {
-                unit_check_general<To>(M, N, ldd, stride_d, hD_gold, hD_1, num_batches);
-            }
+            unit_check_general<To>(M, N, ldd, stride_d, hD_gold, hD_1, num_batches);
         }
 
         if(arg.norm_check)

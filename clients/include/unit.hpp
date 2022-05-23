@@ -53,8 +53,30 @@
                     }                                                                 \
     } while(0)
 
-#define ASSERT_HALF_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
-#define ASSERT_BF16_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
+//#define ASSERT_HALF_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
+//#define ASSERT_BF16_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
+
+#define ASSERT_HALF_EQ(a, b)                                    \
+    do                                                          \
+    {                                                           \
+        rocsparselt_half absA    = (a > 0) ? a : -a;            \
+        rocsparselt_half absB    = (b > 0) ? b : -b;            \
+        rocsparselt_half absDiff = (a - b > 0) ? a - b : b - a; \
+        ASSERT_TRUE(absDiff / (absA + absB + 1) < 0.01);        \
+    } while(0)
+
+#define ASSERT_BF16_EQ(a, b)                                                                       \
+    do                                                                                             \
+    {                                                                                              \
+        const rocsparselt_bfloat16 bf16A    = static_cast<rocsparselt_bfloat16>(a);                \
+        const rocsparselt_bfloat16 bf16B    = static_cast<rocsparselt_bfloat16>(b);                \
+        const rocsparselt_bfloat16 bf16Zero = static_cast<rocsparselt_bfloat16>(0.0f);             \
+        const rocsparselt_bfloat16 bf16One  = static_cast<rocsparselt_bfloat16>(1.0f);             \
+        rocsparselt_bfloat16       absA     = (bf16A > bf16Zero) ? bf16A : -bf16A;                 \
+        rocsparselt_bfloat16       absB     = (bf16B > bf16Zero) ? bf16B : -bf16B;                 \
+        rocsparselt_bfloat16 absDiff = (bf16A - bf16B > bf16Zero) ? bf16A - bf16B : bf16B - bf16A; \
+        ASSERT_TRUE(absDiff / (absA + absB + bf16One) < static_cast<rocsparselt_bfloat16>(0.1f));  \
+    } while(0)
 
 // Compare float to rocsparselt_bfloat16
 // Allow the rocsparselt_bfloat16 to match the rounded or truncated value of float
