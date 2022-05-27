@@ -76,7 +76,7 @@ __global__ void prune_check_kernel(const Ti* in,
                 int64_t pos = globalReadOffset + offset + k * stride2;
                 if(pos < sizes)
                 {
-                    if(in[pos] > 0)
+                    if(in[pos] != static_cast<Ti>(0.0))
                     {
                         nz++;
                     }
