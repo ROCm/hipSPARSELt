@@ -115,6 +115,22 @@ __host__ __device__ inline Tc norm1(Ti a, Ti b, Ti c, Ti d, Ti e, Ti f, Ti g, Ti
                            + abs(hc));
 }
 
+template <typename T, bool InPlace, typename = void>
+__host__ __device__ inline void prune_if(bool prune, T* a, T b)
+{
+    if(prune)
+        *a = static_cast<T>(0.0f);
+    else
+        *a = b;
+}
+
+template <typename T, bool InPlace, std::enable_if_t<InPlace>>
+__host__ __device__ inline void prune_if(bool prune, T* a, T b)
+{
+    if(prune)
+        *a = static_cast<T>(0.0f);
+}
+
 template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J, bool InPlace>
 __global__ void prune_strip_kernel(const Ti* in,
                                    Ti*       out,
@@ -184,10 +200,7 @@ __global__ void prune_strip_kernel(const Ti* in,
             for(int k = 0; k < 4; k++)
             {
                 int64_t pos = offset + k * stride2;
-                if(k != pos_a && k != pos_b)
-                    out[pos] = static_cast<Ti>(0.0f);
-                else if constexpr(!InPlace)
-                    out[pos] = values[k];
+                prune_if<Ti, InPlace>(k != pos_a && k != pos_b, &out[pos], values[k]);
             }
         }
     }
@@ -307,14 +320,10 @@ __global__ void prune_tile_kernel(const Ti* in,
                     if((wg_pos_x + i + x) < m && (wg_pos_y + j + y) < n)
                     {
                         int64_t pos = globalReadOffset + (i + x) * stride1 + (j + y) * stride2;
-                        if(pos_patterns[max_norm_idx + x * 2] == y
-                           || pos_patterns[max_norm_idx + x * 2 + 1] == y)
-                        {
-                            if constexpr(!InPlace)
-                                out[pos] = value[x * 4 + y];
-                        }
-                        else
-                            out[pos] = static_cast<Ti>(0.0f);
+                        prune_if<Ti, InPlace>(pos_patterns[max_norm_idx + x * 2] != y
+                                                  && pos_patterns[max_norm_idx + x * 2 + 1] != y,
+                                              &out[pos],
+                                              value[x * 4 + y]);
                     }
                 }
             }
