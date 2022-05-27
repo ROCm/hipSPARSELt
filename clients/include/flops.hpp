@@ -17,6 +17,12 @@ constexpr double prune_strip_gflop_count(int64_t m, int64_t n)
     return (m * n) / 4.0 * 6 * 3 / 1e9;
 }
 
+template <typename T>
+constexpr double prune_tile_gflop_count(int64_t m, int64_t n)
+{
+    return (m * n) / 16.0 * 90 * (8 + 7) / 1e9;
+}
+
 /* \brief floating point counts of GEMM */
 template <typename T>
 constexpr double gemm_gflop_count(int64_t m, int64_t n, int64_t k)
