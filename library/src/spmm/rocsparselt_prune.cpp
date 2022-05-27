@@ -26,6 +26,7 @@
 #include "rocsparselt.h"
 //#include "utility.hpp"
 
+#include "rocsparselt_ostream.hpp"
 #include <hip/hip_runtime_api.h>
 
 template <typename Ti, int SG0I, int SG1J, int TT0I, int TT1J>
@@ -97,6 +98,21 @@ __host__ __device__ inline Tc norm1(Ti a, Ti b)
     Tc ac = static_cast<Tc>(a);
     Tc bc = static_cast<Tc>(b);
     return static_cast<Tc>(abs(ac) + abs(bc));
+}
+
+template <typename Ti, typename Tc>
+__host__ __device__ inline Tc norm1(Ti a, Ti b, Ti c, Ti d, Ti e, Ti f, Ti g, Ti h)
+{
+    auto ac = static_cast<Tc>(a);
+    auto bc = static_cast<Tc>(b);
+    auto cc = static_cast<Tc>(c);
+    auto dc = static_cast<Tc>(d);
+    auto ec = static_cast<Tc>(e);
+    auto fc = static_cast<Tc>(f);
+    auto gc = static_cast<Tc>(g);
+    auto hc = static_cast<Tc>(h);
+    return static_cast<Tc>(abs(ac) + abs(bc) + abs(cc) + abs(dc) + abs(ec) + abs(fc) + abs(gc)
+                           + abs(hc));
 }
 
 template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J, bool InPlace>
@@ -177,6 +193,135 @@ __global__ void prune_strip_kernel(const Ti* in,
     }
 }
 
+template <typename Ti, typename Tc, int SG0I, int SG1J, int TT0I, int TT1J, bool InPlace>
+__global__ void prune_tile_kernel(const Ti* in,
+                                  Ti*       out,
+                                  int64_t   m,
+                                  int64_t   n,
+                                  int64_t   stride1,
+                                  int64_t   stride2,
+                                  int       num_batches,
+                                  int64_t   batch_stride,
+                                  int64_t   sizes)
+{
+    constexpr unsigned int MT0I = SG0I * TT0I;
+    constexpr unsigned int MT1J = SG1J * TT1J;
+
+    unsigned int serial = hc_get_workitem_id(0);
+    unsigned int sg0I   = serial % SG0I;
+    unsigned int sg1J   = serial / SG0I;
+    int64_t      stride = sg0I * TT0I * stride1 + sg1J * TT1J * stride2;
+
+    unsigned int wg0I    = hc_get_group_id(0);
+    unsigned int wg1J    = hc_get_group_id(1);
+    unsigned int batchId = hc_get_group_id(2);
+
+    const int64_t wg_pos_x = MT0I * wg0I + sg0I * TT0I;
+    const int64_t wg_pos_y = MT1J * wg1J + sg1J * TT1J;
+    if((wg_pos_y) >= n || (wg_pos_x) >= m)
+        return;
+
+    int64_t wg_stride = MT1J * wg1J * stride2 + MT0I * wg0I * stride1;
+    int64_t b_stride  = batchId * batch_stride;
+
+    int64_t globalReadOffset = b_stride + wg_stride + stride;
+
+    // 90 patterns, that pick 2 elements from each row and column from a 4x4 tile, total pick 8 elements.
+    // the first pattern: 0, 2, 0, 2, 1, 3, 1, 3 => ROW#(COL#,COL#) = 0(0,2), 1(0,2), 2(1,3), 3(1,3)
+    __constant__ static uint8_t pos_patterns[90 * 4 * 2] = {
+        0, 2, 0, 2, 1, 3, 1, 3, 0, 2, 0, 3, 1, 3, 1, 2, 0, 2, 0, 3, 1, 2, 1, 3, 0, 2, 0, 1, 1, 3,
+        2, 3, 0, 2, 0, 1, 2, 3, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 3, 1, 2, 0, 2, 1, 3,
+        0, 1, 2, 3, 0, 2, 1, 3, 1, 3, 0, 2, 0, 2, 1, 3, 1, 2, 0, 3, 0, 2, 1, 3, 2, 3, 0, 1, 0, 2,
+        1, 2, 0, 3, 1, 3, 0, 2, 1, 2, 1, 3, 0, 3, 0, 2, 2, 3, 0, 1, 1, 3, 0, 2, 2, 3, 1, 3, 0, 1,
+        0, 3, 0, 2, 1, 3, 1, 2, 0, 3, 0, 2, 1, 2, 1, 3, 0, 3, 0, 3, 1, 2, 1, 2, 0, 3, 0, 1, 1, 2,
+        2, 3, 0, 3, 0, 1, 2, 3, 1, 2, 0, 3, 1, 3, 0, 2, 1, 2, 0, 3, 1, 3, 1, 2, 0, 2, 0, 3, 1, 2,
+        0, 2, 1, 3, 0, 3, 1, 2, 0, 3, 1, 2, 0, 3, 1, 2, 0, 1, 2, 3, 0, 3, 1, 2, 1, 3, 0, 2, 0, 3,
+        1, 2, 1, 2, 0, 3, 0, 3, 1, 2, 2, 3, 0, 1, 0, 3, 2, 3, 0, 1, 1, 2, 0, 3, 2, 3, 1, 2, 0, 1,
+        0, 1, 0, 2, 1, 3, 2, 3, 0, 1, 0, 2, 2, 3, 1, 3, 0, 1, 0, 3, 1, 2, 2, 3, 0, 1, 0, 3, 2, 3,
+        1, 2, 0, 1, 0, 1, 2, 3, 2, 3, 0, 1, 1, 3, 0, 2, 2, 3, 0, 1, 1, 3, 2, 3, 0, 2, 0, 1, 1, 2,
+        0, 3, 2, 3, 0, 1, 1, 2, 2, 3, 0, 3, 0, 1, 2, 3, 0, 2, 1, 3, 0, 1, 2, 3, 0, 3, 1, 2, 0, 1,
+        2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 1, 3, 0, 2, 0, 1, 2, 3, 1, 2, 0, 3, 0, 1, 2, 3, 2, 3, 0, 1,
+        1, 3, 0, 2, 0, 2, 1, 3, 1, 3, 0, 2, 0, 3, 1, 2, 1, 3, 0, 2, 0, 1, 2, 3, 1, 3, 0, 2, 1, 3,
+        0, 2, 1, 3, 0, 2, 1, 2, 0, 3, 1, 3, 0, 2, 2, 3, 0, 1, 1, 3, 0, 3, 0, 2, 1, 2, 1, 3, 0, 3,
+        1, 2, 0, 2, 1, 3, 0, 1, 0, 2, 2, 3, 1, 3, 0, 1, 2, 3, 0, 2, 1, 3, 1, 3, 0, 2, 0, 2, 1, 3,
+        1, 2, 0, 2, 0, 3, 1, 3, 1, 2, 0, 3, 0, 2, 1, 3, 2, 3, 0, 2, 0, 1, 1, 3, 2, 3, 0, 1, 0, 2,
+        1, 2, 0, 2, 0, 3, 1, 3, 1, 2, 0, 2, 1, 3, 0, 3, 1, 2, 0, 3, 0, 2, 1, 3, 1, 2, 0, 3, 0, 3,
+        1, 2, 1, 2, 0, 3, 0, 1, 2, 3, 1, 2, 0, 3, 1, 3, 0, 2, 1, 2, 0, 3, 1, 2, 0, 3, 1, 2, 0, 3,
+        2, 3, 0, 1, 1, 2, 0, 1, 0, 3, 2, 3, 1, 2, 0, 1, 2, 3, 0, 3, 1, 2, 1, 3, 0, 2, 0, 3, 1, 2,
+        1, 3, 0, 3, 0, 2, 1, 2, 1, 2, 0, 3, 0, 3, 1, 2, 2, 3, 0, 3, 0, 1, 1, 2, 2, 3, 0, 1, 0, 3,
+        2, 3, 0, 2, 0, 1, 1, 3, 2, 3, 0, 2, 1, 3, 0, 1, 2, 3, 0, 3, 0, 1, 1, 2, 2, 3, 0, 3, 1, 2,
+        0, 1, 2, 3, 0, 1, 0, 2, 1, 3, 2, 3, 0, 1, 0, 3, 1, 2, 2, 3, 0, 1, 0, 1, 2, 3, 2, 3, 0, 1,
+        1, 3, 0, 2, 2, 3, 0, 1, 1, 2, 0, 3, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 1, 3, 0, 2, 0, 1, 2, 3,
+        1, 3, 0, 1, 0, 2, 2, 3, 1, 2, 0, 3, 0, 1, 2, 3, 1, 2, 0, 1, 0, 3, 2, 3, 2, 3, 0, 1, 0, 1,
+    };
+
+    Ti value[16];
+    Tc norm_res[90];
+
+    for(int i = 0; i < TT0I; i += 4)
+    {
+        for(int j = 0; j < TT1J; j += 4)
+        {
+
+            for(int x = 0; x < 4; x++)
+            {
+#pragma unroll
+                for(int y = 0; y < 4; y++)
+                {
+                    if((wg_pos_x + i + x) < m && (wg_pos_y + j + y) < n)
+                    {
+                        int64_t pos      = globalReadOffset + (i + x) * stride1 + (j + y) * stride2;
+                        value[x * 4 + y] = in[pos];
+                    }
+                    else
+                        value[x * 4 + y] = static_cast<Ti>(0.0f);
+                }
+            }
+
+            int max_norm_idx = 0;
+            Tc  max_norm     = static_cast<Tc>(-1.f);
+#pragma unroll
+            for(int pi = 0; pi < 90; pi++)
+            {
+                int offset   = pi * 8;
+                norm_res[pi] = norm1<Ti, Tc>(value[pos_patterns[offset]],
+                                             value[pos_patterns[offset + 1]],
+                                             value[1 * 4 + pos_patterns[offset + 2]],
+                                             value[1 * 4 + pos_patterns[offset + 3]],
+                                             value[2 * 4 + pos_patterns[offset + 4]],
+                                             value[2 * 4 + pos_patterns[offset + 5]],
+                                             value[3 * 4 + pos_patterns[offset + 6]],
+                                             value[3 * 4 + pos_patterns[offset + 7]]);
+                if(max_norm < norm_res[pi])
+                {
+                    max_norm     = norm_res[pi];
+                    max_norm_idx = pi * 8;
+                }
+            }
+
+            for(int x = 0; x < 4; x++)
+            {
+#pragma unroll
+                for(int y = 0; y < 4; y++)
+                {
+                    if((wg_pos_x + i + x) < m && (wg_pos_y + j + y) < n)
+                    {
+                        int64_t pos = globalReadOffset + (i + x) * stride1 + (j + y) * stride2;
+                        if(pos_patterns[max_norm_idx + x * 2] == y
+                           || pos_patterns[max_norm_idx + x * 2 + 1] == y)
+                        {
+                            if constexpr(!InPlace)
+                                out[pos] = value[x * 4 + y];
+                        }
+                        else
+                            out[pos] = static_cast<Ti>(0.0f);
+                    }
+                }
+            }
+        }
+    }
+}
+
 template <typename Ti, typename Tc>
 rocsparselt_status rocsparselt_smfmac_prune_template(const rocsparselt_handle handle,
                                                      int64_t                  m,
@@ -192,18 +337,18 @@ rocsparselt_status rocsparselt_smfmac_prune_template(const rocsparselt_handle ha
                                                      rocsparselt_prune_alg    pruneAlg,
                                                      hipStream_t              stream)
 {
-    constexpr int SG0I = 16;
-    constexpr int SG1J = 4;
-    constexpr int TT0I = 1;
-    constexpr int TT1J = 4;
-    constexpr int MT0I = SG0I * TT0I;
-    constexpr int MT1J = SG1J * TT1J;
-
-    int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
-    int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
-
     if(pruneAlg == rocsparselt_prune_smfmac_strip)
     {
+        constexpr int SG0I = 16;
+        constexpr int SG1J = 4;
+        constexpr int TT0I = 1;
+        constexpr int TT1J = 4;
+        constexpr int MT0I = SG0I * TT0I;
+        constexpr int MT1J = SG1J * TT1J;
+
+        int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
+        int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
+
         void (*func)(const Ti* in,
                      Ti*       out,
                      int64_t   m,
@@ -217,6 +362,47 @@ rocsparselt_status rocsparselt_smfmac_prune_template(const rocsparselt_handle ha
             func = prune_strip_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J, true>;
         else
             func = prune_strip_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J, false>;
+        hipLaunchKernelGGL(func, /* compute kernel*/
+                           dim3(block_x, block_y, num_batches),
+                           dim3(SG0I * SG1J),
+                           0 /*dynamic shared*/,
+                           stream,
+                           d_in,
+                           d_out,
+                           m,
+                           n,
+                           stride0,
+                           stride1,
+                           num_batches,
+                           batch_stride,
+                           num_batches * batch_stride);
+        return rocsparselt_status_success;
+    }
+    else if(pruneAlg == rocsparselt_prune_smfmac_tile)
+    {
+        constexpr int SG0I = 4;
+        constexpr int SG1J = 4;
+        constexpr int TT0I = 4;
+        constexpr int TT1J = 4;
+        constexpr int MT0I = SG0I * TT0I;
+        constexpr int MT1J = SG1J * TT1J;
+
+        int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
+        int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
+
+        void (*func)(const Ti* in,
+                     Ti*       out,
+                     int64_t   m,
+                     int64_t   n,
+                     int64_t   stride1,
+                     int64_t   stride2,
+                     int       num_batches,
+                     int64_t   batch_stride,
+                     int64_t   sizes);
+        if(d_in == d_out)
+            func = prune_tile_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J, true>;
+        else
+            func = prune_tile_kernel<Ti, Tc, SG0I, SG1J, TT0I, TT1J, false>;
         hipLaunchKernelGGL(func, /* compute kernel*/
                            dim3(block_x, block_y, num_batches),
                            dim3(SG0I * SG1J),
@@ -374,7 +560,7 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       hand
     }
 
     // Check if prune alg is valid
-    if(pruneAlg != rocsparselt_prune_smfmac_strip)
+    if(pruneAlg != rocsparselt_prune_smfmac_strip && pruneAlg != rocsparselt_prune_smfmac_tile)
     {
         return rocsparselt_status_not_implemented;
     }

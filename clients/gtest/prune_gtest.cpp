@@ -74,7 +74,7 @@ namespace
             switch(arg.prune_algo)
             {
             case rocsparselt_prune_smfmac_tile:
-                name << "title";
+                name << "tile";
                 break;
             case rocsparselt_prune_smfmac_strip:
                 name << "strip";

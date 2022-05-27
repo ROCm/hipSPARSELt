@@ -33,6 +33,7 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_medium
   category: pre_checkin
@@ -41,6 +42,7 @@ Tests:
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_medium_alt
   category: pre_checkin
@@ -51,6 +53,7 @@ Tests:
   alpha: 1
   beta: 0
   initialization: special
+  prune_algo: [ 0, 1 ]
 
 - name: prune_medium_HMM
   category: HMM
@@ -62,6 +65,7 @@ Tests:
   alpha: 1
   beta: 1
   HMM: true
+  prune_algo: [ 0, 1 ]
 
 - name: prune_chunk
   category: pre_checkin
@@ -71,8 +75,7 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 2
   beta: 3
-
-# Split *int8_half_single_precisions into *int8 and *half_single_precisions. Since int8 has flags 0,1
+  prune_algo: [ 0, 1 ]
 
 - name: prune_deepbench
   category: nightly
@@ -81,6 +84,7 @@ Tests:
   matrix_size: *deepbench_sizes
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_deepbench_alt
   category: nightly
@@ -92,6 +96,7 @@ Tests:
   flags: 4
   initialization: special
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_deepbench_large_int8
   category: nightly
@@ -101,6 +106,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   transA: T
   transB: N
+  prune_algo: [ 0, 1 ]
 
 - name: resnet50_fwd
   category: nightly
@@ -111,6 +117,7 @@ Tests:
   matrix_size: *resnet50_fwd_sizes
   alpha: 1
   beta: 0
+  prune_algo: [ 0, 1 ]
 
 - name: resnet50_fwd_alt
   category: nightly
@@ -122,6 +129,7 @@ Tests:
   alpha: 1
   beta: 0
   initialization: special
+  prune_algo: [ 0, 1 ]
 
 - name: resnet50_bwdwrw
   category: nightly
@@ -132,6 +140,7 @@ Tests:
   matrix_size: *resnet50_bwdwrw_sizes
   alpha: 1
   beta: 1
+  prune_algo: [ 0, 1 ]
 
 - name: resnet50_bwddata
   category: nightly
@@ -142,6 +151,7 @@ Tests:
   matrix_size: *resnet50_bwddata_sizes
   alpha: 1
   beta: 0
+  prune_algo: [ 0, 1 ]
 
 - name: inception4_fwd
   category: nightly
@@ -152,6 +162,7 @@ Tests:
   matrix_size: *inception4_fwd_sizes
   alpha: 1
   beta: 0
+  prune_algo: [ 0, 1 ]
 
 - name: inception4_bwdwrw
   category: nightly
@@ -162,6 +173,7 @@ Tests:
   matrix_size: *inception4_bwdwrw_sizes
   alpha: 1
   beta: 1
+  prune_algo: [ 0, 1 ]
 
 - name: inception4_bwddata
   category: nightly
@@ -172,6 +184,7 @@ Tests:
   matrix_size: *inception4_bwddata_sizes
   alpha: 1
   beta: 0
+  prune_algo: [ 0, 1 ]
 
 - name: ctest_bwdwrw
   category: nightly
@@ -182,6 +195,7 @@ Tests:
   alpha: 1
   beta: 1
   matrix_size: *ctest_bwdwrw_sizes
+  prune_algo: [ 0, 1 ]
 
 - name: ctest_fwd
   category: nightly
@@ -192,6 +206,7 @@ Tests:
   alpha: 1
   beta: 0
   matrix_size: *ctest_fwd_sizes
+  prune_algo: [ 0, 1 ]
 
 - name: prune_8
   category: quick
@@ -202,6 +217,7 @@ Tests:
   K: 8
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_9_12
   category: pre_checkin
@@ -212,6 +228,7 @@ Tests:
   K: 8
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_13_16
   category: pre_checkin
@@ -222,6 +239,7 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_17_20
   category: pre_checkin
@@ -232,6 +250,7 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_20_23
   category: pre_checkin
@@ -242,6 +261,7 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_24_27
   category: pre_checkin
@@ -252,6 +272,7 @@ Tests:
   K: 24
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_28_31
   category: pre_checkin
@@ -262,6 +283,7 @@ Tests:
   K: 24
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_32
   category: pre_checkin
@@ -272,6 +294,7 @@ Tests:
   K: 32
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_32_9_129
   category: nightly
@@ -282,6 +305,7 @@ Tests:
   K: 32
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_48
   category: pre_checkin
@@ -292,6 +316,7 @@ Tests:
   K: 48
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_48_9_129
   category: nightly
@@ -302,6 +327,7 @@ Tests:
   K: 48
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_64
   category: pre_checkin
@@ -312,6 +338,7 @@ Tests:
   K: 64
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_64_9_129
   category: nightly
@@ -322,6 +349,7 @@ Tests:
   K: [16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128]
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_64_8
   category: quick
@@ -332,6 +360,7 @@ Tests:
   K: 8
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_8_64
   category: quick
@@ -342,6 +371,7 @@ Tests:
   K: 64
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_69_alias
   category: pre_checkin
@@ -353,6 +383,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   c_noalias_d: [false, true]
+  prune_algo: [ 0, 1 ]
 
 - name: prune_96
   category: pre_checkin
@@ -363,6 +394,7 @@ Tests:
   K: 96
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_128
   category: pre_checkin
@@ -373,6 +405,7 @@ Tests:
   K: 128
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_256
   category: pre_checkin
@@ -383,6 +416,7 @@ Tests:
   K: 256
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_256_9_12_16
   category: pre_checkin
@@ -393,6 +427,7 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_13_16_256_8
   category: pre_checkin
@@ -403,6 +438,7 @@ Tests:
   K: 8
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_9_12_13_16_256
   category: pre_checkin
@@ -414,6 +450,7 @@ Tests:
   K: 256
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_512
   category: pre_checkin
@@ -424,6 +461,7 @@ Tests:
   K: 512
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_1024
   category: nightly
@@ -434,6 +472,7 @@ Tests:
   K: 1024
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_ldd
   category: quick
@@ -443,6 +482,7 @@ Tests:
   c_noalias_d: [false, true]
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  prune_algo: [ 0, 1 ]
 
 - name: prune_bf16
   category: quick
@@ -459,17 +499,5 @@ Tests:
     - { M: 4096, N: 4096, K: 4096 }
     - { M:  960, N: 1024, K: 1024 }
     - { M: 3840, N: 4096, K: 4096 }
-
-- name: prune_small2
-  category: pre_checkin
-  transA: N
-  transB: N
-  function:
-    prune: *real_precisions
-  matrix_size:
-    - { M:  512, N:  512, K:  512 }
-    - { M: 960,  N: 1024, K: 1024 }
-    - { M: 1024, N: 1024, K: 1024 }
-  alpha: [ 0.0, 0.5, 1.0 ]
-  beta:  [ 0.0, 0.5, 1.0 ]
+  prune_algo: [ 0, 1 ]
 ...

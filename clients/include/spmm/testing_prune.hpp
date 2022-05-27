@@ -14,14 +14,30 @@
 #include "rocsparselt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
+#include <omp.h>
 
 template <typename Ti, typename Tc>
-inline float norm1(Ti a, Ti b)
+inline Tc norm1(Ti a, Ti b)
 {
     auto ac = static_cast<Tc>(a);
     auto bc = static_cast<Tc>(b);
 
     return static_cast<Tc>(abs(ac) + abs(bc));
+}
+
+template <typename Ti, typename Tc>
+inline Tc norm1(Ti a, Ti b, Ti c, Ti d, Ti e, Ti f, Ti g, Ti h)
+{
+    auto ac = static_cast<Tc>(a);
+    auto bc = static_cast<Tc>(b);
+    auto cc = static_cast<Tc>(c);
+    auto dc = static_cast<Tc>(d);
+    auto ec = static_cast<Tc>(e);
+    auto fc = static_cast<Tc>(f);
+    auto gc = static_cast<Tc>(g);
+    auto hc = static_cast<Tc>(h);
+    return static_cast<Tc>(abs(ac) + abs(bc) + abs(cc) + abs(dc) + abs(ec) + abs(fc) + abs(gc)
+                           + abs(hc));
 }
 
 template <typename Ti, typename Tc>
@@ -75,6 +91,187 @@ void prune_strip(const Ti* in,
         }
 }
 
+typedef std::pair<int, int> pos_t;
+
+// clang-format off
+const static pos_t pos_patterns[90][4] = {
+    {pos_t(0, 2), pos_t(0, 2), pos_t(1, 3), pos_t(1, 3)},  //ROW#(COL#,COL#), 0(0,2), 1(0,2), 2(1,3), 3(1,3)
+    {pos_t(0, 2), pos_t(0, 3), pos_t(1, 3), pos_t(1, 2)},
+    {pos_t(0, 2), pos_t(0, 3), pos_t(1, 2), pos_t(1, 3)},
+    {pos_t(0, 2), pos_t(0, 1), pos_t(1, 3), pos_t(2, 3)},
+    {pos_t(0, 2), pos_t(0, 1), pos_t(2, 3), pos_t(1, 3)},
+    {pos_t(0, 2), pos_t(1, 3), pos_t(0, 2), pos_t(1, 3)},
+    {pos_t(0, 2), pos_t(1, 3), pos_t(0, 3), pos_t(1, 2)},
+    {pos_t(0, 2), pos_t(1, 3), pos_t(0, 1), pos_t(2, 3)},
+    {pos_t(0, 2), pos_t(1, 3), pos_t(1, 3), pos_t(0, 2)},
+    {pos_t(0, 2), pos_t(1, 3), pos_t(1, 2), pos_t(0, 3)},
+    {pos_t(0, 2), pos_t(1, 3), pos_t(2, 3), pos_t(0, 1)},
+    {pos_t(0, 2), pos_t(1, 2), pos_t(0, 3), pos_t(1, 3)},
+    {pos_t(0, 2), pos_t(1, 2), pos_t(1, 3), pos_t(0, 3)},
+    {pos_t(0, 2), pos_t(2, 3), pos_t(0, 1), pos_t(1, 3)},
+    {pos_t(0, 2), pos_t(2, 3), pos_t(1, 3), pos_t(0, 1)},
+    {pos_t(0, 3), pos_t(0, 2), pos_t(1, 3), pos_t(1, 2)},
+    {pos_t(0, 3), pos_t(0, 2), pos_t(1, 2), pos_t(1, 3)},
+    {pos_t(0, 3), pos_t(0, 3), pos_t(1, 2), pos_t(1, 2)},
+    {pos_t(0, 3), pos_t(0, 1), pos_t(1, 2), pos_t(2, 3)},
+    {pos_t(0, 3), pos_t(0, 1), pos_t(2, 3), pos_t(1, 2)},
+    {pos_t(0, 3), pos_t(1, 3), pos_t(0, 2), pos_t(1, 2)},
+    {pos_t(0, 3), pos_t(1, 3), pos_t(1, 2), pos_t(0, 2)},
+    {pos_t(0, 3), pos_t(1, 2), pos_t(0, 2), pos_t(1, 3)},
+    {pos_t(0, 3), pos_t(1, 2), pos_t(0, 3), pos_t(1, 2)},
+    {pos_t(0, 3), pos_t(1, 2), pos_t(0, 1), pos_t(2, 3)},
+    {pos_t(0, 3), pos_t(1, 2), pos_t(1, 3), pos_t(0, 2)},
+    {pos_t(0, 3), pos_t(1, 2), pos_t(1, 2), pos_t(0, 3)},
+    {pos_t(0, 3), pos_t(1, 2), pos_t(2, 3), pos_t(0, 1)},
+    {pos_t(0, 3), pos_t(2, 3), pos_t(0, 1), pos_t(1, 2)},
+    {pos_t(0, 3), pos_t(2, 3), pos_t(1, 2), pos_t(0, 1)},
+    {pos_t(0, 1), pos_t(0, 2), pos_t(1, 3), pos_t(2, 3)},
+    {pos_t(0, 1), pos_t(0, 2), pos_t(2, 3), pos_t(1, 3)},
+    {pos_t(0, 1), pos_t(0, 3), pos_t(1, 2), pos_t(2, 3)},
+    {pos_t(0, 1), pos_t(0, 3), pos_t(2, 3), pos_t(1, 2)},
+    {pos_t(0, 1), pos_t(0, 1), pos_t(2, 3), pos_t(2, 3)},
+    {pos_t(0, 1), pos_t(1, 3), pos_t(0, 2), pos_t(2, 3)},
+    {pos_t(0, 1), pos_t(1, 3), pos_t(2, 3), pos_t(0, 2)},
+    {pos_t(0, 1), pos_t(1, 2), pos_t(0, 3), pos_t(2, 3)},
+    {pos_t(0, 1), pos_t(1, 2), pos_t(2, 3), pos_t(0, 3)},
+    {pos_t(0, 1), pos_t(2, 3), pos_t(0, 2), pos_t(1, 3)},
+    {pos_t(0, 1), pos_t(2, 3), pos_t(0, 3), pos_t(1, 2)},
+    {pos_t(0, 1), pos_t(2, 3), pos_t(0, 1), pos_t(2, 3)},
+    {pos_t(0, 1), pos_t(2, 3), pos_t(1, 3), pos_t(0, 2)},
+    {pos_t(0, 1), pos_t(2, 3), pos_t(1, 2), pos_t(0, 3)},
+    {pos_t(0, 1), pos_t(2, 3), pos_t(2, 3), pos_t(0, 1)},
+    {pos_t(1, 3), pos_t(0, 2), pos_t(0, 2), pos_t(1, 3)},
+    {pos_t(1, 3), pos_t(0, 2), pos_t(0, 3), pos_t(1, 2)},
+    {pos_t(1, 3), pos_t(0, 2), pos_t(0, 1), pos_t(2, 3)},
+    {pos_t(1, 3), pos_t(0, 2), pos_t(1, 3), pos_t(0, 2)},
+    {pos_t(1, 3), pos_t(0, 2), pos_t(1, 2), pos_t(0, 3)},
+    {pos_t(1, 3), pos_t(0, 2), pos_t(2, 3), pos_t(0, 1)},
+    {pos_t(1, 3), pos_t(0, 3), pos_t(0, 2), pos_t(1, 2)},
+    {pos_t(1, 3), pos_t(0, 3), pos_t(1, 2), pos_t(0, 2)},
+    {pos_t(1, 3), pos_t(0, 1), pos_t(0, 2), pos_t(2, 3)},
+    {pos_t(1, 3), pos_t(0, 1), pos_t(2, 3), pos_t(0, 2)},
+    {pos_t(1, 3), pos_t(1, 3), pos_t(0, 2), pos_t(0, 2)},
+    {pos_t(1, 3), pos_t(1, 2), pos_t(0, 2), pos_t(0, 3)},
+    {pos_t(1, 3), pos_t(1, 2), pos_t(0, 3), pos_t(0, 2)},
+    {pos_t(1, 3), pos_t(2, 3), pos_t(0, 2), pos_t(0, 1)},
+    {pos_t(1, 3), pos_t(2, 3), pos_t(0, 1), pos_t(0, 2)},
+    {pos_t(1, 2), pos_t(0, 2), pos_t(0, 3), pos_t(1, 3)},
+    {pos_t(1, 2), pos_t(0, 2), pos_t(1, 3), pos_t(0, 3)},
+    {pos_t(1, 2), pos_t(0, 3), pos_t(0, 2), pos_t(1, 3)},
+    {pos_t(1, 2), pos_t(0, 3), pos_t(0, 3), pos_t(1, 2)},
+    {pos_t(1, 2), pos_t(0, 3), pos_t(0, 1), pos_t(2, 3)},
+    {pos_t(1, 2), pos_t(0, 3), pos_t(1, 3), pos_t(0, 2)},
+    {pos_t(1, 2), pos_t(0, 3), pos_t(1, 2), pos_t(0, 3)},
+    {pos_t(1, 2), pos_t(0, 3), pos_t(2, 3), pos_t(0, 1)},
+    {pos_t(1, 2), pos_t(0, 1), pos_t(0, 3), pos_t(2, 3)},
+    {pos_t(1, 2), pos_t(0, 1), pos_t(2, 3), pos_t(0, 3)},
+    {pos_t(1, 2), pos_t(1, 3), pos_t(0, 2), pos_t(0, 3)},
+    {pos_t(1, 2), pos_t(1, 3), pos_t(0, 3), pos_t(0, 2)},
+    {pos_t(1, 2), pos_t(1, 2), pos_t(0, 3), pos_t(0, 3)},
+    {pos_t(1, 2), pos_t(2, 3), pos_t(0, 3), pos_t(0, 1)},
+    {pos_t(1, 2), pos_t(2, 3), pos_t(0, 1), pos_t(0, 3)},
+    {pos_t(2, 3), pos_t(0, 2), pos_t(0, 1), pos_t(1, 3)},
+    {pos_t(2, 3), pos_t(0, 2), pos_t(1, 3), pos_t(0, 1)},
+    {pos_t(2, 3), pos_t(0, 3), pos_t(0, 1), pos_t(1, 2)},
+    {pos_t(2, 3), pos_t(0, 3), pos_t(1, 2), pos_t(0, 1)},
+    {pos_t(2, 3), pos_t(0, 1), pos_t(0, 2), pos_t(1, 3)},
+    {pos_t(2, 3), pos_t(0, 1), pos_t(0, 3), pos_t(1, 2)},
+    {pos_t(2, 3), pos_t(0, 1), pos_t(0, 1), pos_t(2, 3)},
+    {pos_t(2, 3), pos_t(0, 1), pos_t(1, 3), pos_t(0, 2)},
+    {pos_t(2, 3), pos_t(0, 1), pos_t(1, 2), pos_t(0, 3)},
+    {pos_t(2, 3), pos_t(0, 1), pos_t(2, 3), pos_t(0, 1)},
+    {pos_t(2, 3), pos_t(1, 3), pos_t(0, 2), pos_t(0, 1)},
+    {pos_t(2, 3), pos_t(1, 3), pos_t(0, 1), pos_t(0, 2)},
+    {pos_t(2, 3), pos_t(1, 2), pos_t(0, 3), pos_t(0, 1)},
+    {pos_t(2, 3), pos_t(1, 2), pos_t(0, 1), pos_t(0, 3)},
+    {pos_t(2, 3), pos_t(2, 3), pos_t(0, 1), pos_t(0, 1)},
+};
+// clang-format on
+
+template <typename Ti, typename Tc>
+void prune_tile(const Ti* in,
+                Ti*       out,
+                int64_t   m,
+                int64_t   n,
+                int64_t   stride1,
+                int64_t   stride2,
+                int       num_batches,
+                int64_t   stride_b)
+{
+    for(int b = 0; b < num_batches; b++)
+#pragma omp parallel for
+        for(int i = 0; i < m; i += 4)
+        {
+#pragma omp parallel for
+            for(int j = 0; j < n; j += 4)
+            {
+
+                Ti value[16];
+                for(int x = 0; x < 4; x++)
+                {
+#pragma omp parallel for
+                    for(int y = 0; y < 4; y++)
+                    {
+                        int64_t pos = b * stride_b + (i + x) * stride1 + (j + y) * stride2;
+
+                        if((i + x) < m && (j + y) < n)
+                        {
+                            value[x * 4 + y] = in[pos];
+                        }
+                        else
+                            value[x * 4 + y] = static_cast<Ti>(0.0f);
+                    }
+                }
+
+                float norm_res[90];
+                int   max_norm_idx = 0;
+                float max_norm     = -1;
+
+#pragma omp parallel for
+                for(int pi = 0; pi < 90; pi++)
+                {
+                    auto pos_pattern = pos_patterns[pi];
+                    norm_res[pi]     = norm1<Ti, double>(value[pos_pattern[0].first],
+                                                     value[pos_pattern[0].second],
+                                                     value[1 * 4 + pos_pattern[1].first],
+                                                     value[1 * 4 + pos_pattern[1].second],
+                                                     value[2 * 4 + pos_pattern[2].first],
+                                                     value[2 * 4 + pos_pattern[2].second],
+                                                     value[3 * 4 + pos_pattern[3].first],
+                                                     value[3 * 4 + pos_pattern[3].second]);
+                }
+                for(int pi = 0; pi < 90; pi++)
+                {
+                    if(max_norm < norm_res[pi])
+                    {
+                        max_norm     = norm_res[pi];
+                        max_norm_idx = pi;
+                    }
+                }
+
+                auto pos_s = pos_patterns[max_norm_idx];
+                for(int x = 0; x < 4; x++)
+                {
+#pragma omp parallel for
+                    for(int y = 0; y < 4; y++)
+                    {
+                        if((i + x) < m && (j + y) < n)
+                        {
+                            int64_t pos = b * stride_b + (i + x) * stride1 + (j + y) * stride2;
+                            if(pos_s[x].first == y || pos_s[x].second == y)
+                            {
+                                if(in != out)
+                                    out[pos] = in[pos];
+                            }
+                            else
+                                out[pos] = static_cast<Ti>(0.0f);
+                        }
+                    }
+                }
+            }
+        }
+}
+
 template <typename Ti, typename To, typename Tc>
 void testing_prune_bad_arg(const Arguments& arg)
 {
@@ -122,11 +319,6 @@ void testing_prune_bad_arg(const Arguments& arg)
         rocsparselt_smfmac_prune(handle, nullptr, dA, dA, rocsparselt_prune_smfmac_strip, stream),
         rocsparselt_status_invalid_handle);
 
-    //TODO tile should be supported.
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune(handle, matmul, dA, dA, rocsparselt_prune_smfmac_tile, stream),
-        rocsparselt_status_not_implemented);
-
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_smfmac_prune(
             handle, matmul, dA, nullptr, rocsparselt_prune_smfmac_strip, stream),
@@ -145,14 +337,20 @@ template <typename Ti,
 void testing_prune(const Arguments& arg)
 {
     rocsparselt_prune_alg prune_algo = rocsparselt_prune_alg(arg.prune_algo);
-    if(prune_algo != rocsparselt_prune_smfmac_strip)
-        return;
 
     constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
     constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
 
-    auto prune_cpu
-        = prune_algo == rocsparselt_prune_smfmac_strip ? prune_strip<Ti, float> : nullptr;
+    void (*prune_cpu)(const Ti* in,
+                      Ti*       out,
+                      int64_t   m,
+                      int64_t   n,
+                      int64_t   stride1,
+                      int64_t   stride2,
+                      int       num_batches,
+                      int64_t   stride_b);
+    prune_cpu
+        = prune_algo == rocsparselt_prune_smfmac_strip ? prune_strip<Ti, Tc> : prune_tile<Ti, Tc>;
 
     rocsparselt_operation transA = char2rocsparselt_operation(arg.transA);
     rocsparselt_operation transB = char2rocsparselt_operation(arg.transB);
@@ -313,6 +511,19 @@ void testing_prune(const Arguments& arg)
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_pruned));
 
+        //print_strided_batched("device", hA_1.data(), M, K, num_batches, stride_1_a, stride_2_a, stride_a);
+
+        device_vector<int> d_valid(1, 1, HMM);
+        int                h_valid = 0;
+        //check the pruned matrix is sparisty 50 or not.
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_smfmac_prune_check(handle, matmul, dA_pruned, d_valid, stream),
+            rocsparselt_status_success);
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
+        hipStreamSynchronize(stream);
+        CHECK_SUCCESS(h_valid == 0);
+
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
         {
@@ -340,17 +551,6 @@ void testing_prune(const Arguments& arg)
             rocsparselt_error
                 = unit_check_diff<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
         }
-
-        device_vector<int> d_valid(1, 1, HMM);
-        int                h_valid = 0;
-        //check the pruned matrix is sparisty 50 or not.
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_prune_check(handle, matmul, dA_pruned, d_valid, stream),
-            rocsparselt_status_success);
-        CHECK_HIP_ERROR(
-            hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
-        hipStreamSynchronize(stream);
-        CHECK_SUCCESS(h_valid == 0);
     }
 
     if(arg.timing)
@@ -374,11 +574,15 @@ void testing_prune(const Arguments& arg)
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
+        double (*gflop_count)(int64_t m, int64_t n);
+        gflop_count = (prune_algo == rocsparselt_prune_smfmac_strip) ? prune_strip_gflop_count<Ti>
+                                                                     : prune_tile_gflop_count<Ti>;
+
         ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_lda, e_stride_a, e_batch_count>{}
             .log_args<float>(rocsparselt_cout,
                              arg,
                              gpu_time_used,
-                             prune_strip_gflop_count<Ti>(M, K),
+                             gflop_count(M, K),
                              ArgumentLogging::NA_value,
                              cpu_time_used,
                              rocsparselt_error);
