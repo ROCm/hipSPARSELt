@@ -213,6 +213,7 @@ template <typename Ti,
           int  TT0I,
           int  TT1J,
           int  PATTERNS_COUNT,
+          int  THREADS_PER_SG,
           int  PATTERNS_PER_THREAD,
           bool InPlace>
 __global__ void prune_tile_kernel(const Ti* in,
@@ -263,8 +264,8 @@ __global__ void prune_tile_kernel(const Ti* in,
 
     unsigned int serial = hc_get_workitem_id(
         0); //total has SG0I * SG1J * (PATTERNS_COUNT / PATTERNS_PER_THREAD) threads.
-    unsigned int serial_g  = serial / (PATTERNS_COUNT / PATTERNS_PER_THREAD); //work idx of MT
-    unsigned int serial_gt = serial % (PATTERNS_COUNT / PATTERNS_PER_THREAD); //thread idx in MT
+    unsigned int serial_g  = serial / THREADS_PER_SG; //work idx of MT
+    unsigned int serial_gt = serial % THREADS_PER_SG; //thread idx in MT
     unsigned int sg0I      = serial_g % SG0I;
     unsigned int sg1J      = serial_g / SG0I;
     int64_t      stride    = sg0I * TT0I * stride1 + sg1J * TT1J * stride2;
@@ -294,7 +295,6 @@ __global__ void prune_tile_kernel(const Ti* in,
         {
 
             // read 4x4 from the in matrix.
-            if(serial_gt < 16)
             {
                 if((wg_pos_x + i + x) < m && (wg_pos_y + j + y) < n)
                 {
@@ -302,7 +302,9 @@ __global__ void prune_tile_kernel(const Ti* in,
                     value[value_offset + serial_gt] = in[pos];
                 }
                 else
+                {
                     value[value_offset + serial_gt] = static_cast<Ti>(0.0f);
+                }
             }
             __syncthreads();
 
@@ -310,8 +312,10 @@ __global__ void prune_tile_kernel(const Ti* in,
 #pragma unroll PATTERNS_PER_THREAD
             for(int k = 0; k < PATTERNS_PER_THREAD; k++)
             {
-                auto offset             = serial_gt + k * (PATTERNS_COUNT / PATTERNS_PER_THREAD);
-                auto pos_pattern_offset = offset * 8;
+                auto offset = serial_gt + k * THREADS_PER_SG;
+                if(offset >= PATTERNS_COUNT)
+                    goto NORM1_CACULATED;
+                auto pos_pattern_offset            = offset * 8;
                 norm_res[norm_res_offset + offset] = norm1<Ti, Tc>(
                     value[value_offset + pos_patterns[pos_pattern_offset]],
                     value[value_offset + pos_patterns[pos_pattern_offset + 1]],
@@ -322,6 +326,7 @@ __global__ void prune_tile_kernel(const Ti* in,
                     value[value_offset + 3 * 4 + pos_patterns[pos_pattern_offset + 6]],
                     value[value_offset + 3 * 4 + pos_patterns[pos_pattern_offset + 7]]);
             }
+        NORM1_CACULATED:
             __syncthreads();
 
             // find the pattern who has the largest norm1 value
@@ -340,7 +345,6 @@ __global__ void prune_tile_kernel(const Ti* in,
             __syncthreads();
 
             // write 4x4 to the out matrix.
-            if(serial_gt < 16)
             {
                 if((wg_pos_x + i + x) < m && (wg_pos_y + j + y) < n)
                 {
@@ -415,14 +419,16 @@ rocsparselt_status rocsparselt_smfmac_prune_template(const rocsparselt_handle ha
     }
     else if(pruneAlg == rocsparselt_prune_smfmac_tile)
     {
-        constexpr int SG0I                = 4;
-        constexpr int SG1J                = 4;
-        constexpr int TT0I                = 4;
-        constexpr int TT1J                = 4;
-        constexpr int MT0I                = SG0I * TT0I;
-        constexpr int MT1J                = SG1J * TT1J;
-        constexpr int PATTERNS_PER_THREAD = 5; // PATTERNS_COUNT / PATTERNS_PER_THREAD must >=16
-        constexpr int PATTERNS_COUNT      = 90;
+        constexpr int SG0I           = 4;
+        constexpr int SG1J           = 4;
+        constexpr int TT0I           = 4;
+        constexpr int TT1J           = 4;
+        constexpr int MT0I           = SG0I * TT0I;
+        constexpr int MT1J           = SG1J * TT1J;
+        constexpr int PATTERNS_COUNT = 90; // 90 pre-gernated pattens.
+        constexpr int THREADS_PER_SG = 16; // fix at 16
+        constexpr int PATTERNS_PER_THREAD
+            = PATTERNS_COUNT / THREADS_PER_SG + (PATTERNS_COUNT % THREADS_PER_SG != 0 ? 1 : 0);
 
         int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
         int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
@@ -444,6 +450,7 @@ rocsparselt_status rocsparselt_smfmac_prune_template(const rocsparselt_handle ha
                                      TT0I,
                                      TT1J,
                                      PATTERNS_COUNT,
+                                     THREADS_PER_SG,
                                      PATTERNS_PER_THREAD,
                                      true>;
         else
@@ -454,11 +461,12 @@ rocsparselt_status rocsparselt_smfmac_prune_template(const rocsparselt_handle ha
                                      TT0I,
                                      TT1J,
                                      PATTERNS_COUNT,
+                                     THREADS_PER_SG,
                                      PATTERNS_PER_THREAD,
                                      false>;
         hipLaunchKernelGGL(func, /* compute kernel*/
                            dim3(block_x, block_y, num_batches),
-                           dim3(SG0I * SG1J * PATTERNS_COUNT / PATTERNS_PER_THREAD),
+                           dim3(SG0I * SG1J * THREADS_PER_SG),
                            0 /*dynamic shared*/,
                            stream,
                            d_in,
