@@ -51,8 +51,10 @@ void prune_strip(const Ti* in,
                  int64_t   stride_b)
 {
     for(int b = 0; b < num_batches; b++)
+#pragma omp parallel for
         for(int i = 0; i < m; i++)
         {
+#pragma omp parallel for
             for(int j = 0; j < n; j += 4)
             {
                 size_t pos[4];
