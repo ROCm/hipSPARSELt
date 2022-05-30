@@ -46,6 +46,15 @@ Tests:
   batch_count: [ 3 ]
   prune_algo: [ 0, 1 ]
 
+- name: prune2_strided_batched_medium
+  category: pre_checkin
+  function:
+    prune_strided_batched: *real_precisions
+  matrix_size: *strided_batched_medium_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha_beta: *alpha_beta_range
+  batch_count: [ 3 ]
+
 - name: prune_strided_batched_medium_alt
   category: pre_checkin
   function:

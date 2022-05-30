@@ -313,6 +313,7 @@ void testing_prune_bad_arg(const Arguments& arg)
 
     hipStream_t stream = nullptr;
 
+    // test version 1
     EXPECT_ROCSPARSELT_STATUS(
         rocsparselt_smfmac_prune(nullptr, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
         rocsparselt_status_invalid_handle);
@@ -330,6 +331,48 @@ void testing_prune_bad_arg(const Arguments& arg)
         rocsparselt_smfmac_prune(
             handle, matmul, nullptr, dA, rocsparselt_prune_smfmac_strip, stream),
         rocsparselt_status_invalid_pointer);
+
+    // test version 2
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_prune2(
+            nullptr, matA, true, transA, dA, dA, rocsparselt_prune_smfmac_strip, stream),
+        rocsparselt_status_invalid_handle);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_prune2(
+            handle, nullptr, true, transA, dA, dA, rocsparselt_prune_smfmac_strip, stream),
+        rocsparselt_status_invalid_handle);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_prune2(
+            handle, matA, false, transA, dA, dA, rocsparselt_prune_smfmac_strip, stream),
+        rocsparselt_status_not_implemented);
+
+    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_prune2(handle,
+                                                        matA,
+                                                        true,
+                                                        rocsparselt_operation_conjugate_transpose,
+                                                        dA,
+                                                        dA,
+                                                        rocsparselt_prune_smfmac_strip,
+                                                        stream),
+                              rocsparselt_status_invalid_value);
+
+    //TODO tile should be supported.
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_prune2(
+            handle, matA, true, transA, dA, dA, rocsparselt_prune_smfmac_tile, stream),
+        rocsparselt_status_not_implemented);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_prune2(
+            handle, matA, true, transA, dA, nullptr, rocsparselt_prune_smfmac_strip, stream),
+        rocsparselt_status_invalid_pointer);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_prune2(
+            handle, matA, true, transA, nullptr, dA, rocsparselt_prune_smfmac_strip, stream),
+        rocsparselt_status_invalid_pointer);
 }
 
 template <typename Ti,
@@ -338,6 +381,11 @@ template <typename Ti,
           rocsparselt_batch_type btype = rocsparselt_batch_type::none>
 void testing_prune(const Arguments& arg)
 {
+    int run_version = 1;
+
+    if(strstr(arg.name, "prune2") != nullptr)
+        run_version = 2;
+
     rocsparselt_prune_alg prune_algo = rocsparselt_prune_alg(arg.prune_algo);
 
     constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
@@ -506,9 +554,15 @@ void testing_prune(const Arguments& arg)
 
     if(arg.unit_check || arg.norm_check)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_prune(handle, matmul, dA, dA_pruned, prune_algo, stream),
-            rocsparselt_status_success);
+        if(run_version == 1)
+            EXPECT_ROCSPARSELT_STATUS(
+                rocsparselt_smfmac_prune(handle, matmul, dA, dA_pruned, prune_algo, stream),
+                rocsparselt_status_success);
+        else if(run_version == 2)
+            EXPECT_ROCSPARSELT_STATUS(
+                rocsparselt_smfmac_prune2(
+                    handle, matA, true, transA, dA, dA_pruned, prune_algo, stream),
+                rocsparselt_status_success);
 
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_pruned));

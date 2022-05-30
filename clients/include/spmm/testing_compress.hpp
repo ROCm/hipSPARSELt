@@ -204,6 +204,7 @@ void testing_compress_bad_arg(const Arguments& arg)
 
     rocsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
+    // test version 1
     EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(nullptr, plan, &compressed_size),
                               rocsparselt_status_invalid_handle);
     EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, nullptr, &compressed_size),
@@ -230,6 +231,43 @@ void testing_compress_bad_arg(const Arguments& arg)
 
     EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(handle, plan, dA_1, nullptr, stream),
                               rocsparselt_status_invalid_pointer);
+
+    // test version 2
+    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size2(nullptr, matA, &compressed_size),
+                              rocsparselt_status_invalid_handle);
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_compressed_size2(handle, nullptr, &compressed_size),
+        rocsparselt_status_invalid_handle);
+    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size2(handle, matA, nullptr),
+                              rocsparselt_status_invalid_pointer);
+
+    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size2(handle, matA, &compressed_size),
+                              rocsparselt_status_success);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_compress2(nullptr, matA, true, transA, dA, dA_1, stream),
+        rocsparselt_status_invalid_handle);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_compress2(handle, nullptr, true, transA, dA, dA_1, stream),
+        rocsparselt_status_invalid_handle);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_compress2(handle, matA, false, transA, dA, dA_1, stream),
+        rocsparselt_status_not_implemented);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_compress2(
+            handle, matA, true, rocsparselt_operation_conjugate_transpose, dA, dA_1, stream),
+        rocsparselt_status_invalid_value);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_compress2(handle, matA, true, transA, nullptr, dA_1, stream),
+        rocsparselt_status_invalid_pointer);
+
+    EXPECT_ROCSPARSELT_STATUS(
+        rocsparselt_smfmac_compress2(handle, matA, true, transA, dA_1, nullptr, stream),
+        rocsparselt_status_invalid_pointer);
 }
 
 template <typename Ti,
@@ -238,6 +276,10 @@ template <typename Ti,
           rocsparselt_batch_type btype = rocsparselt_batch_type::none>
 void testing_compress(const Arguments& arg)
 {
+    int run_version = 1;
+    if(strstr(arg.name, "compress2") != nullptr)
+        run_version = 2;
+
     rocsparselt_operation transA = char2rocsparselt_operation(arg.transA);
     rocsparselt_operation transB = char2rocsparselt_operation(arg.transB);
 
@@ -353,9 +395,18 @@ void testing_compress(const Arguments& arg)
 
     rocsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
-                              rocsparselt_status_success);
-
+    if(run_version == 1)
+    {
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
+            rocsparselt_status_success);
+    }
+    else if(run_version == 2)
+    {
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_smfmac_compressed_size2(handle, matA, &compressed_size),
+            rocsparselt_status_success);
+    }
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy     = arg.unit_check || arg.norm_check ? size_A : 0;
     const size_t size_A_compressed_copy = arg.unit_check || arg.norm_check ? compressed_size : 0;
@@ -394,9 +445,27 @@ void testing_compress(const Arguments& arg)
 
     // copy data from CPU to device
     CHECK_HIP_ERROR(dA.transfer_from(hA));
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune(handle, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_success);
+
+    if(run_version == 1)
+    {
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
+            rocsparselt_status_success);
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_smfmac_prune(
+                handle, matmul, dA, dA, rocsparselt_prune_alg(arg.prune_algo), stream),
+            rocsparselt_status_success);
+    }
+    else if(run_version == 2)
+    {
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_smfmac_compressed_size2(handle, matA, &compressed_size),
+            rocsparselt_status_success);
+        EXPECT_ROCSPARSELT_STATUS(
+            rocsparselt_smfmac_prune2(
+                handle, matA, true, transA, dA, dA, rocsparselt_prune_alg(arg.prune_algo), stream),
+            rocsparselt_status_success);
+    }
 
     if(arg.unit_check || arg.norm_check)
     {
@@ -419,9 +488,14 @@ void testing_compress(const Arguments& arg)
         hipStreamSynchronize(stream);
         hA_pruned.transfer_from(dA);
 
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
-            rocsparselt_status_success);
+        if(run_version == 1)
+            EXPECT_ROCSPARSELT_STATUS(
+                rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
+                rocsparselt_status_success);
+        else if(run_version == 2)
+            EXPECT_ROCSPARSELT_STATUS(
+                rocsparselt_smfmac_compress2(handle, matA, true, transA, dA, dA_compressd, stream),
+                rocsparselt_status_success);
 
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_compressd));
