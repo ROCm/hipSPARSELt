@@ -26,8 +26,6 @@ rocSPARSELt provides general matrix-matrix operations for sparse computation imp
   - <span style="color:green">FP8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
   - <span style="color:green">BF8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
 - Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
-- Add support for prune alogright - prune_tile_method
-- New APIs for compression and pruning decoupled from rocsparselt_matmul_plan
 
 ## Documentation
 The latest rocSPARSELt documentation and API description can be found [here](doc/rocSPARSELt_api_v0.1.docx) or downloaded as [pdf](doc/rocSPARSELt_api_v0.1.pdf).
