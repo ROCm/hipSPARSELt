@@ -24,6 +24,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocsparselt.h"
+#include "rocsparselt_ostream.hpp"
 //#include "utility.hpp"
 
 #include "rocsparselt_ostream.hpp"
@@ -530,26 +531,39 @@ extern "C" {
 #endif
 
 rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle,
-                                                 int64_t                  m,
-                                                 int64_t                  n,
-                                                 int64_t                  stride0,
-                                                 int64_t                  stride1,
-                                                 int                      num_batches,
-                                                 int64_t                  batch_stride,
+                                                 rocsparselt_mat_descr    matrix,
                                                  rocsparselt_operation    op,
-                                                 rocsparselt_order        order,
                                                  const void*              d_in,
                                                  void*                    d_out,
-                                                 rocsparselt_datatype     in_type,
-                                                 rocsparselt_compute_type compute_type,
                                                  rocsparselt_prune_alg    pruneAlg,
                                                  hipStream_t              stream)
 {
+    int64_t              m     = op == rocsparselt_operation_transpose ? matrix->n : matrix->m;
+    int64_t              n     = op == rocsparselt_operation_transpose ? matrix->m : matrix->n;
+    int64_t              ld    = matrix->ld;
+    rocsparselt_order    order = matrix->order;
+    rocsparselt_datatype type  = matrix->type;
+
+    int     num_batches  = 1;
+    int64_t batch_stride = 0;
+    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
+    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+
+    //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
+    if(batch_stride == 0) //boardcast case.
+    {
+        num_batches  = 1;
+        batch_stride = matrix->n * ld;
+    }
+
+    int64_t stride0 = (op == rocsparselt_operation_transpose) ? ld : 1;
+    int64_t stride1 = (op == rocsparselt_operation_transpose) ? 1 : ld;
+
 #define PRUNE_PARAMS(T)                                                   \
     handle, m, n, stride0, stride1, num_batches, batch_stride, op, order, \
         reinterpret_cast<const T*>(d_in), reinterpret_cast<T*>(d_out), pruneAlg, stream
 
-    switch(in_type)
+    switch(type)
     {
     case rocsparselt_datatype_f16_r:
         return rocsparselt_smfmac_prune_template<rocsparselt_half, float>(
@@ -565,24 +579,39 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle
 }
 
 rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle handle,
-                                                       int64_t                  m,
-                                                       int64_t                  n,
-                                                       int64_t                  stride0,
-                                                       int64_t                  stride1,
-                                                       int                      num_batches,
-                                                       int64_t                  batch_stride,
+                                                       rocsparselt_mat_descr    matrix,
                                                        rocsparselt_operation    op,
-                                                       rocsparselt_order        order,
                                                        const void*              d_in,
                                                        int*                     d_out,
-                                                       rocsparselt_datatype     in_type,
                                                        hipStream_t              stream)
 {
+
+    int64_t              m     = op == rocsparselt_operation_transpose ? matrix->n : matrix->m;
+    int64_t              n     = op == rocsparselt_operation_transpose ? matrix->m : matrix->n;
+    int64_t              ld    = matrix->ld;
+    rocsparselt_order    order = matrix->order;
+    rocsparselt_datatype type  = matrix->type;
+
+    int     num_batches  = 1;
+    int64_t batch_stride = 0;
+    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
+    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+
+    //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
+    if(batch_stride == 0) //boardcast case.
+    {
+        num_batches  = 1;
+        batch_stride = matrix->n * ld;
+    }
+
+    int64_t stride0 = (op == rocsparselt_operation_transpose) ? ld : 1;
+    int64_t stride1 = (op == rocsparselt_operation_transpose) ? 1 : ld;
+
 #define PRUNE_CHECK_PARAMS(T)                                             \
     handle, m, n, stride0, stride1, num_batches, batch_stride, op, order, \
         reinterpret_cast<const T*>(d_in), d_out, stream
 
-    switch(in_type)
+    switch(type)
     {
     case rocsparselt_datatype_f16_r:
         return rocsparselt_smfmac_prune_check_template<rocsparselt_half>(
@@ -635,45 +664,55 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       hand
     else
         return rocsparselt_status_not_implemented;
 
-    rocsparselt_operation    opA          = _matmulDescr->op_A;
-    rocsparselt_compute_type compute_type = _matmulDescr->compute_type;
+    log_trace(*handle, "rocsparselt_smfmac_prune");
+    return rocsparselt_smfmac_prune_impl(
+        *handle, matrix, _matmulDescr->op_A, d_in, d_out, pruneAlg, stream);
+}
 
-    int64_t              o_m   = opA == rocsparselt_operation_transpose ? matrix->n : matrix->m;
-    int64_t              o_n   = opA == rocsparselt_operation_transpose ? matrix->m : matrix->n;
-    int64_t              ld    = matrix->ld;
-    rocsparselt_order    order = matrix->order;
-    rocsparselt_datatype type  = matrix->type;
-
-    int     num_batches  = 1;
-    int64_t batch_stride = 0;
-    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
-    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
-
-    //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
-    if(batch_stride == 0) //boardcast case.
+/********************************************************************************
+ * \brief prunes a dense matrix according to the specified algorithm.
+ *******************************************************************************/
+rocsparselt_status rocsparselt_smfmac_prune2(const rocsparselt_handle*    handle,
+                                             const rocsparselt_mat_descr* sparseMatDescr,
+                                             int                          isSparseA,
+                                             rocsparselt_operation        op,
+                                             const void*                  d_in,
+                                             void*                        d_out,
+                                             rocsparselt_prune_alg        pruneAlg,
+                                             hipStream_t                  stream)
+{
+    // Check if handle is valid
+    if(handle == nullptr || sparseMatDescr == nullptr || *handle == nullptr
+       || *sparseMatDescr == nullptr)
     {
-        num_batches  = 1;
-        batch_stride = matrix->n * ld;
+        return rocsparselt_status_invalid_handle;
     }
 
-    int64_t stride0 = (opA == rocsparselt_operation_transpose) ? ld : 1;
-    int64_t stride1 = (opA == rocsparselt_operation_transpose) ? 1 : ld;
+    // Check if pointer is valid
+    if(d_in == nullptr || d_out == nullptr)
+    {
+        return rocsparselt_status_invalid_pointer;
+    }
 
-    return rocsparselt_smfmac_prune_impl(*handle,
-                                         o_m,
-                                         o_n,
-                                         stride0,
-                                         stride1,
-                                         num_batches,
-                                         batch_stride,
-                                         opA,
-                                         order,
-                                         d_in,
-                                         d_out,
-                                         type,
-                                         compute_type,
-                                         pruneAlg,
-                                         stream);
+    if(!isSparseA)
+        return rocsparselt_status_not_implemented;
+
+    if(op != rocsparselt_operation_none && op != rocsparselt_operation_transpose)
+        return rocsparselt_status_invalid_value;
+
+    // Check if prune alg is valid
+    if(pruneAlg != rocsparselt_prune_smfmac_strip && pruneAlg != rocsparselt_prune_smfmac_tile)
+    {
+        return rocsparselt_status_not_implemented;
+    }
+
+    rocsparselt_mat_descr matrix = *sparseMatDescr;
+    // Check if matrix A is a structured matrix
+    if(matrix->m_type != rocsparselt_matrix_type_structured)
+        return rocsparselt_status_not_implemented;
+
+    log_trace(*handle, "rocsparselt_smfmac_prune2");
+    return rocsparselt_smfmac_prune_impl(*handle, matrix, op, d_in, d_out, pruneAlg, stream);
 }
 
 /********************************************************************************
@@ -706,42 +745,48 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*     
     else
         return rocsparselt_status_not_implemented;
 
-    rocsparselt_operation opA = _matmulDescr->op_A;
+    log_trace(*handle, "rocsparselt_smfmac_prune_check");
+    return rocsparselt_smfmac_prune_check_impl(
+        *handle, matrix, _matmulDescr->op_A, d_in, d_out, stream);
+}
 
-    int64_t              o_m   = opA == rocsparselt_operation_transpose ? matrix->n : matrix->m;
-    int64_t              o_n   = opA == rocsparselt_operation_transpose ? matrix->m : matrix->n;
-    int64_t              ld    = matrix->ld;
-    rocsparselt_order    order = matrix->order;
-    rocsparselt_datatype type  = matrix->type;
-
-    int     num_batches  = 1;
-    int64_t batch_stride = 0;
-    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
-    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
-
-    //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
-    if(batch_stride == 0) //boardcast case.
+/********************************************************************************
+ * \brief
+ *******************************************************************************/
+rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    handle,
+                                                   const rocsparselt_mat_descr* sparseMatDescr,
+                                                   int                          isSparseA,
+                                                   rocsparselt_operation        op,
+                                                   const void*                  d_in,
+                                                   int*                         d_out,
+                                                   hipStream_t                  stream)
+{
+    // Check if handle is valid
+    if(handle == nullptr || sparseMatDescr == nullptr || *handle == nullptr
+       || *sparseMatDescr == nullptr)
     {
-        num_batches  = 1;
-        batch_stride = matrix->n * ld;
+        return rocsparselt_status_invalid_handle;
     }
 
-    int64_t stride0 = (opA == rocsparselt_operation_transpose) ? ld : 1;
-    int64_t stride1 = (opA == rocsparselt_operation_transpose) ? 1 : ld;
+    if(!isSparseA)
+        return rocsparselt_status_not_implemented;
 
-    return rocsparselt_smfmac_prune_check_impl(*handle,
-                                               o_m,
-                                               o_n,
-                                               stride0,
-                                               stride1,
-                                               num_batches,
-                                               batch_stride,
-                                               opA,
-                                               order,
-                                               d_in,
-                                               d_out,
-                                               type,
-                                               stream);
+    if(op != rocsparselt_operation_none && op != rocsparselt_operation_transpose)
+        return rocsparselt_status_invalid_value;
+
+    // Check if pointer is valid
+    if(d_in == nullptr || d_out == nullptr)
+    {
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    rocsparselt_mat_descr matrix = *sparseMatDescr;
+    // Check if matrix A is a structured matrix
+    if(matrix->m_type != rocsparselt_matrix_type_structured)
+        return rocsparselt_status_not_implemented;
+
+    log_trace(*handle, "rocsparselt_smfmac_prune_check2");
+    return rocsparselt_smfmac_prune_check_impl(*handle, matrix, op, d_in, d_out, stream);
 }
 
 #ifdef __cplusplus

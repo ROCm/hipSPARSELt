@@ -43,6 +43,15 @@ Tests:
   alpha_beta: *alpha_beta_range
   batch_count: [ 3 ]
 
+- name: compress2_strided_batched_medium
+  category: pre_checkin
+  function:
+    compress_strided_batched: *real_precisions
+  matrix_size: *strided_batched_medium_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha_beta: *alpha_beta_range
+  batch_count: [ 3 ]
+
 - name: compress_strided_batched_medium_alt
   category: pre_checkin
   function:

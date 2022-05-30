@@ -169,9 +169,9 @@ struct _rocsparselt_mat_descr
 
     // info of compressed matrix, will be auto filled at rocsparselt_matmul_descr_init().
     // numbeer of k after compressed.
-    int64_t c_k;
+    int64_t c_k = -1;
     // leading dimension of compressed matrix.
-    int64_t c_ld;
+    int64_t c_ld = -1;
 };
 
 /********************************************************************************

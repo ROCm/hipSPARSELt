@@ -211,7 +211,7 @@ rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle*      hand
  *  stream      HIP stream for the computation.
  *
  *  \retval     rocsparselt_status_success the operation completed successfully.
- *  \retval     rocsparselt_status_invalid_handle the library context was not initialized.
+ *  \retval     rocsparselt_status_invalid_handle \p handle or \p matmulDescr is invalid.
  *  \retval     rocsparselt_status_invalid_pointer \p d_in, \p d_out pointer is invalid.
  *  \retval     rocsparselt_status_not_implemented the problem or \p pruneAlg is not support
  */
@@ -222,6 +222,47 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       hand
                                             void*                           d_out,
                                             rocsparselt_prune_alg           pruneAlg,
                                             hipStream_t                     stream);
+
+/*! \ingroup spmm_module
+ *  \brief Purnes a dense matrix.
+ *
+ *  \details
+ *  \p rocsparselt_smfmac_prune2 prunes a dense matrix d_in according to the specified
+ *  algorithm pruneAlg, \ref rocsparselt_prune_smfmac_tile or \ref rocsparselt_prune_smfmac_strip.
+ *
+ *  \note
+ o	The function requires no extra storage.
+ *
+ *  \note
+ *  This function supports asynchronous execution with respect to stream.
+ *
+ *  @param[out]
+ *  d_out       pointer to the pruned matrix.
+ *
+ *  @param[in]
+ *  handle         rocsparselt library handle
+ *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  isSparseA      specify if the structured (sparse) matrix is in the first position (matA or matB) (Currently, only support matA)
+ *  op             operation that will be applied to the structured (sparse) matrix in the multiplication
+ *  d_in           pointer to the dense matrix.
+ *  pruneAlg       pruning algorithm.
+ *  stream         HIP stream for the computation.
+ *
+ *  \retval     rocsparselt_status_success the operation completed successfully.
+ *  \retval     rocsparselt_status_invalid_handle \p handle or \p sparseMatDescr is invalid.
+ *  \retval     rocsparselt_status_invalid_pointer \p d_in, \p d_out pointer is invalid.
+ *  \retval     rocsparselt_status_invalid_value \p op is invalid.
+ *  \retval     rocsparselt_status_not_implemented the problem or \p pruneAlg is not support
+ */
+ROCSPARSELT_EXPORT
+rocsparselt_status rocsparselt_smfmac_prune2(const rocsparselt_handle*    handle,
+                                             const rocsparselt_mat_descr* sparseMatDescr,
+                                             int                          isSparseA,
+                                             rocsparselt_operation        op,
+                                             const void*                  d_in,
+                                             void*                        d_out,
+                                             rocsparselt_prune_alg        pruneAlg,
+                                             hipStream_t                  stream);
 
 /*! \ingroup spmm_module
  *  \brief checks the correctness of the pruning structure for a given matrix.
@@ -251,6 +292,39 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*     
                                                   const void*                     d_in,
                                                   int*                            d_valid,
                                                   hipStream_t                     stream);
+/*! \ingroup spmm_module
+ *  \brief checks the correctness of the pruning structure for a given matrix.
+ *
+ *  \details
+ *  \p rocsparselt_smfmac_prune_check2 checks the correctness of the pruning structure for a given matrix.
+ *  Contents in the given matrix must be sparsity 2:4.
+ *
+ *
+ *  @param[out]
+ *  d_valid     validation results (0 correct, 1 wrong).
+ *
+ *  @param[in]
+ *  handle         rocsparselt library handle
+ *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  isSparseA      specify if the structured (sparse) matrix is in the first position (matA or matB) (Currently, only support matA)
+ *  op             operation that will be applied to the structured (sparse) matrix in the multiplication
+ *  d_in           pointer to the matrix to check.
+ *  stream         HIP stream for the computation.
+ *
+ *  \retval     rocsparselt_status_success the operation completed successfully.
+ *  \retval     rocsparselt_status_invalid_handle \p handle or \p sparseMatDescr is invalid.
+ *  \retval     rocsparselt_status_invalid_pointer \p d_in, \p d_valid pointer is invalid.
+ *  \retval     rocsparselt_status_invalid_value \p op is invalid.
+ *  \retval     rocsparselt_status_not_implemented the problem is not support
+ */
+ROCSPARSELT_EXPORT
+rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    handle,
+                                                   const rocsparselt_mat_descr* sparseMatDescr,
+                                                   int                          isSparseA,
+                                                   rocsparselt_operation        op,
+                                                   const void*                  d_in,
+                                                   int*                         d_valid,
+                                                   hipStream_t                  stream);
 
 /*! \ingroup spmm_module
  *  \brief provide the size of the compressed matrix.
@@ -276,6 +350,31 @@ ROCSPARSELT_EXPORT
 rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle*      handle,
                                                       const rocsparselt_matmul_plan* plan,
                                                       size_t* compressedSize);
+
+/*! \ingroup spmm_module
+ *  \brief provide the size of the compressed matrix.
+ *
+ *  \details
+ *  \p rocsparselt_smfmac_compressed_size provides the size of the compressed matrix
+ *  to be allocated before calling rocsparselt_smfmac_compress()
+ *
+ *
+ *  @param[out]
+ *  compressedSize     size in bytes of the compressed matrix.
+ *
+ *  @param[in]
+ *  handle             rocsparselt library handle
+ *  sparseMatDescr structured(sparse) matrix descriptor.
+ *
+ *  \retval     rocsparselt_status_success the operation completed successfully.
+ *  \retval     rocsparselt_status_invalid_handle \p handle or \p sparseMatDescr is invalid.
+ *  \retval     rocsparselt_status_invalid_pointer \p compressedSize pointer is invalid.
+ *  \retval     rocsparselt_status_not_implemented the problem is not support
+ */
+ROCSPARSELT_EXPORT
+rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*    handle,
+                                                       const rocsparselt_mat_descr* sparseMatDescr,
+                                                       size_t*                      compressedSize);
 
 /*! \ingroup spmm_module
  *  \brief compresses a dense matrix to structured matrix.
@@ -305,6 +404,41 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
                                                const void*                    d_dense,
                                                void*                          d_compressed,
                                                hipStream_t                    stream);
+
+/*! \ingroup spmm_module
+ *  \brief compresses a dense matrix to structured matrix.
+ *
+ *  \details
+ *  \p rocsparselt_smfmac_compress2 compresses a dense matrix d_dense.
+ *  The compressed matrix is intended to be used as the first/second operand A/B
+ *  in the rocsparselt_matmul() function.
+ *
+ *  @param[out]
+ *  d_compressed   compressed matrix and metadata
+ *
+ *  @param[in]
+ *  handle         handle to the rocsparselt library context queue.
+ *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  isSparseA      specify if the structured (sparse) matrix is in the first position (matA or matB) (Currently, only support matA)
+ *  op             operation that will be applied to the structured (sparse) matrix in the multiplication
+ *  d_dense        pointer to the dense matrix.
+ *  stream         HIP stream for the computation.
+ *
+ *  \retval     rocsparselt_status_success the operation completed successfully.
+ *  \retval     rocsparselt_status_invalid_handle \p handle or \p sparseMatDescr is invalid.
+ *  \retval     rocsparselt_status_invalid_pointer \p d_dense or \p d_compressed pointer is invalid.
+ *  \retval     rocsparselt_status_invalid_value \p op is invalid.
+ *  \retval     rocsparselt_status_not_implemented the problem is not support
+ */
+ROCSPARSELT_EXPORT
+rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    handle,
+                                                const rocsparselt_mat_descr* sparseMatDescr,
+                                                int                          isSparseA,
+                                                rocsparselt_operation        op,
+                                                const void*                  d_dense,
+                                                void*                        d_compressed,
+                                                hipStream_t                  stream);
+
 #ifdef __cplusplus
 }
 #endif
