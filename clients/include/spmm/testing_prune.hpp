@@ -274,6 +274,64 @@ void prune_tile(const Ti* in,
         }
 }
 
+template <typename Ti, typename Tc>
+void tile_4x4_norm1(const Ti* in,
+                    Tc*       out,
+                    int64_t   m,
+                    int64_t   n,
+                    int64_t   stride1,
+                    int64_t   stride2,
+                    int       num_batches,
+                    int64_t   stride_b)
+{
+    constexpr Tc TC_ZERO = static_cast<Tc>(0);
+    for(int b = 0; b < num_batches; b++)
+#pragma omp parallel for
+        for(int i = 0; i < m; i += 4)
+        {
+#pragma omp parallel for
+            for(int j = 0; j < n; j += 4)
+            {
+
+                Tc value = TC_ZERO;
+                for(int x = 0; x < 4; x++)
+                {
+#pragma omp parallel for
+                    for(int y = 0; y < 4; y++)
+                    {
+                        int64_t pos = b * stride_b + (i + x) * stride1 + (j + y) * stride2;
+
+                        if((i + x) < m && (j + y) < n)
+                        {
+                            Tc tmp = static_cast<Tc>(in[pos]);
+                            value += (tmp >= TC_ZERO ? tmp : -tmp);
+                        }
+                    }
+                }
+                for(int x = 0; x < 4; x++)
+                {
+#pragma omp parallel for
+                    for(int y = 0; y < 4; y++)
+                    {
+                        int64_t pos = b * stride_b + (i + x) * stride1 + (j + y) * stride2;
+
+                        if((i + x) < m && (j + y) < n)
+                        {
+                            if(x == 0 && y == 0)
+                            {
+                                out[pos] = value;
+                            }
+                            else
+                            {
+                                out[pos] = TC_ZERO;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+}
+
 template <typename Ti, typename To, typename Tc>
 void testing_prune_bad_arg(const Arguments& arg)
 {
@@ -515,8 +573,9 @@ void testing_prune(const Arguments& arg)
     rocsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
-    const size_t size_A      = stride_a == 0 ? A_col * lda : num_batches * stride_a;
-    const size_t size_A_copy = arg.unit_check || arg.norm_check ? size_A : 0;
+    const size_t size_A           = stride_a == 0 ? A_col * lda : num_batches * stride_a;
+    const size_t size_A_copy      = arg.unit_check || arg.norm_check ? size_A : 0;
+    const size_t size_A_norm_copy = prune_algo == rocsparselt_prune_smfmac_tile ? size_A_copy : 0;
 
     // allocate memory on device
     device_vector<Ti> dA(size_A, 1, HMM);
@@ -525,9 +584,11 @@ void testing_prune(const Arguments& arg)
     CHECK_DEVICE_ALLOCATION(dA_pruned.memcheck());
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
-    host_vector<Ti> hA(size_A);
-    host_vector<Ti> hA_gold(size_A_copy);
-    host_vector<Ti> hA_1(size_A_copy);
+    host_vector<Ti>    hA(size_A);
+    host_vector<Ti>    hA_gold(size_A_copy);
+    host_vector<Ti>    hA_1(size_A_copy);
+    host_vector<float> hA_gold_norm(size_A_norm_copy);
+    host_vector<float> hA_1_norm(size_A_norm_copy);
 
     rocsparselt_seedrand();
 
@@ -596,16 +657,39 @@ void testing_prune(const Arguments& arg)
         //releasing already used host memory
         hA = host_vector<Ti>();
 
-        // check host error and norm
-        if(arg.unit_check)
+        if(prune_algo == rocsparselt_prune_smfmac_tile)
         {
-            unit_check_general<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
-        }
+            tile_4x4_norm1<Ti, float>(
+                hA_1, hA_1_norm, M, K, stride_1_a, stride_2_a, num_batches, stride_a);
+            tile_4x4_norm1<Ti, float>(
+                hA_gold, hA_gold_norm, M, K, stride_1_a, stride_2_a, num_batches, stride_a);
 
-        if(arg.norm_check)
+            // check host error and norm
+            if(arg.unit_check)
+            {
+                unit_check_general<float>(
+                    A_row, A_col, lda, stride_a, hA_gold_norm, hA_1_norm, num_batches);
+            }
+
+            if(arg.norm_check)
+            {
+                rocsparselt_error = unit_check_diff<float>(
+                    A_row, A_col, lda, stride_a, hA_gold_norm, hA_1_norm, num_batches);
+            }
+        }
+        else if(prune_algo == rocsparselt_prune_smfmac_strip)
         {
-            rocsparselt_error
-                = unit_check_diff<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
+            // check host error and norm
+            if(arg.unit_check)
+            {
+                unit_check_general<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
+            }
+
+            if(arg.norm_check)
+            {
+                rocsparselt_error
+                    = unit_check_diff<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
+            }
         }
     }
 
