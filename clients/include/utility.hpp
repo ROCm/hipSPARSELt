@@ -1,12 +1,33 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #pragma once
 
-#include "../../library/src/include/utility.hpp"
-#include "rocsparselt.h"
-#include "rocsparselt_vector.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_vector.hpp"
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
@@ -18,7 +39,7 @@
  * \brief provide common utilities
  */
 
-// We use rocsparselt_cout and rocsparselt_cerr instead of std::cout, std::cerr, stdout and stderr,
+// We use hipsparselt_cout and hipsparselt_cerr instead of std::cout, std::cerr, stdout and stderr,
 // for thread-safe IO.
 //
 // All stdio and std::ostream functions related to stdout and stderr are poisoned, as are
@@ -26,16 +47,16 @@
 //
 // This must come after the header #includes above, to avoid poisoning system headers.
 //
-// This is only enabled for rocsparselt-test and rocsparselt-bench.
+// This is only enabled for hipsparselt-test and hipsparselt-bench.
 //
 // If you are here because of a poisoned identifier error, here is the rationale for each
 // included identifier:
 //
-// cout, stdout: rocsparselt_cout should be used instead, for thread-safe and atomic line buffering
-// cerr, stderr: rocsparselt_cerr should be used instead, for thread-safe and atomic line buffering
+// cout, stdout: hipsparselt_cout should be used instead, for thread-safe and atomic line buffering
+// cerr, stderr: hipsparselt_cerr should be used instead, for thread-safe and atomic line buffering
 // clog: C++ stream which should not be used
 // gets: Always unsafe; buffer-overflows; removed from later versions of the language; use fgets
-// puts, putchar, fputs, printf, fprintf, vprintf, vfprintf: Use rocsparselt_cout or rocsparselt_cerr
+// puts, putchar, fputs, printf, fprintf, vprintf, vfprintf: Use hipsparselt_cout or hipsparselt_cerr
 // sprintf, vsprintf: Possible buffer overflows; us snprintf or vsnprintf instead
 // strerror: Thread-unsafe; use snprintf / dprintf with %m or strerror_* alternatives
 // strsignal: Thread-unsafe; use sys_siglist[signal] instead
@@ -45,16 +66,16 @@
 // putenv: Use setenv instead
 // clearenv, fcloseall, ecvt, fcvt: Miscellaneous thread-unsafe functions
 // sleep: Might interact with signals by using alarm(); use nanosleep() instead
-// abort: Does not abort as cleanly as rocsparselt_abort, and can be caught by a signal handler
+// abort: Does not abort as cleanly as hipsparselt_abort, and can be caught by a signal handler
 
-#if defined(GOOGLE_TEST) || defined(ROCSPARSELT_BENCH)
+#if defined(GOOGLE_TEST) || defined(HIPSPARSELT_BENCH)
 #undef stdout
 #undef stderr
 #pragma GCC poison cout cerr clog stdout stderr gets puts putchar fputs fprintf printf sprintf    \
     vfprintf vprintf vsprintf perror strerror strtok gmtime ctime asctime localtime tmpnam putenv \
         clearenv fcloseall ecvt fcvt sleep abort strsignal
 #else
-// Suppress warnings about hipMalloc(), hipFree() except in rocsparselt-test and rocsparselt-bench
+// Suppress warnings about hipMalloc(), hipFree() except in hipsparselt-test and hipsparselt-bench
 #undef hipMalloc
 #undef hipFree
 #endif
@@ -70,7 +91,7 @@
 #define TOO_MANY_DEVICES_STRING_GTEST "Succeeded\n" TOO_MANY_DEVICES_STRING
 #define HMM_NOT_SUPPORTED_GTEST "Succeeded\n" HMM_NOT_SUPPORTED
 
-enum class rocsparselt_batch_type
+enum class hipsparselt_batch_type
 {
     none = 0,
     batched,
@@ -79,104 +100,110 @@ enum class rocsparselt_batch_type
 
 /* ============================================================================================ */
 /*! \brief  local handle which is automatically created and destroyed  */
-class rocsparselt_local_handle
+class hipsparselt_local_handle
 {
-    rocsparselt_handle m_handle;
-    void*              m_memory = nullptr;
+    hipsparseLtHandle_t m_handle;
+    void*               m_memory = nullptr;
 
 public:
-    rocsparselt_local_handle();
+    hipsparselt_local_handle();
 
-    explicit rocsparselt_local_handle(const Arguments& arg);
+    explicit hipsparselt_local_handle(const Arguments& arg);
 
-    ~rocsparselt_local_handle();
+    ~hipsparselt_local_handle();
 
-    rocsparselt_local_handle(const rocsparselt_local_handle&) = delete;
-    rocsparselt_local_handle(rocsparselt_local_handle&&)      = delete;
-    rocsparselt_local_handle& operator=(const rocsparselt_local_handle&) = delete;
-    rocsparselt_local_handle& operator=(rocsparselt_local_handle&&) = delete;
+    hipsparselt_local_handle(const hipsparselt_local_handle&) = delete;
+    hipsparselt_local_handle(hipsparselt_local_handle&&)      = delete;
+    hipsparselt_local_handle& operator=(const hipsparselt_local_handle&) = delete;
+    hipsparselt_local_handle& operator=(hipsparselt_local_handle&&) = delete;
 
-    // Allow rocsparselt_local_handle to be used anywhere rocsparselt_handle is expected
-    operator rocsparselt_handle&()
+    // Allow hipsparselt_local_handle to be used anywhere hipsparseLtHandle_t is expected
+    operator hipsparseLtHandle_t&()
     {
         return m_handle;
     }
-    operator const rocsparselt_handle&() const
+    operator const hipsparseLtHandle_t&() const
     {
         return m_handle;
     }
-    operator rocsparselt_handle*()
+    operator hipsparseLtHandle_t*()
     {
         return &m_handle;
     }
-    operator const rocsparselt_handle*() const
+    operator const hipsparseLtHandle_t*() const
     {
         return &m_handle;
     }
 };
 
+typedef enum hipsparselt_matrix_type_
+{
+    hipsparselt_matrix_type_dense      = 0, /**< dense matrix type. */
+    hipsparselt_matrix_type_structured = 1, /**< structured matrix type. */
+} hipsparselt_matrix_type;
+
 /* ============================================================================================ */
 /*! \brief  local matrix descriptor which is automatically created and destroyed  */
-class rocsparselt_local_mat_descr
+class hipsparselt_local_mat_descr
 {
-    rocsparselt_mat_descr m_descr;
-    rocsparselt_status    m_status  = rocsparselt_status_not_initialized;
-    static constexpr int  alignment = 16;
+    hipsparseLtMatDescriptor_t m_descr;
+    hipsparseLtStatus_t        m_status  = HIPSPARSELT_STATUS_NOT_INITIALIZED;
+    static constexpr int       alignment = 16;
 
 public:
-    rocsparselt_local_mat_descr(rocsparselt_matrix_type  mtype,
-                                const rocsparselt_handle handle,
-                                int64_t                  row,
-                                int64_t                  col,
-                                int64_t                  ld,
-                                rocsparselt_datatype     type,
-                                rocsparselt_order        order)
+    hipsparselt_local_mat_descr(hipsparselt_matrix_type    mtype,
+                                const hipsparseLtHandle_t* handle,
+                                int64_t                    row,
+                                int64_t                    col,
+                                int64_t                    ld,
+                                hipsparseLtDatatype_t      type,
+                                hipsparseLtOrder_t         order)
     {
-        if(mtype == rocsparselt_matrix_type_structured)
-            this->m_status = rocsparselt_structured_descr_init(&handle,
-                                                               &this->m_descr,
-                                                               row,
-                                                               col,
-                                                               ld,
-                                                               this->alignment,
-                                                               type,
-                                                               order,
-                                                               rocsparselt_sparsity_50_percent);
+        if(mtype == hipsparselt_matrix_type_structured)
+            this->m_status = hipsparseLtStructuredDescriptorInit(handle,
+                                                                 &this->m_descr,
+                                                                 row,
+                                                                 col,
+                                                                 ld,
+                                                                 this->alignment,
+                                                                 type,
+                                                                 order,
+                                                                 HIPSPARSELT_SPARSITY_50_PERCENT);
         else
-            this->m_status = rocsparselt_dense_descr_init(
-                &handle, &this->m_descr, row, col, ld, this->alignment, type, order);
+            this->m_status = hipsparseLtDenseDescriptorInit(
+                handle, &this->m_descr, row, col, ld, this->alignment, type, order);
     }
 
-    ~rocsparselt_local_mat_descr()
+    ~hipsparselt_local_mat_descr()
     {
-        if(this->m_status == rocsparselt_status_success)
-            rocsparselt_mat_descr_destroy(&this->m_descr);
+        if(this->m_status == HIPSPARSELT_STATUS_SUCCESS)
+            hipsparseLtMatDescriptorDestroy(&this->m_descr);
     }
 
-    rocsparselt_local_mat_descr(const rocsparselt_local_mat_descr&) = delete;
-    rocsparselt_local_mat_descr(rocsparselt_local_mat_descr&&)      = delete;
-    rocsparselt_local_mat_descr& operator=(const rocsparselt_local_mat_descr&) = delete;
-    rocsparselt_local_mat_descr& operator=(rocsparselt_local_mat_descr&&) = delete;
+    hipsparselt_local_mat_descr(const hipsparselt_local_mat_descr&) = delete;
+    hipsparselt_local_mat_descr(hipsparselt_local_mat_descr&&)      = delete;
+    hipsparselt_local_mat_descr& operator=(const hipsparselt_local_mat_descr&) = delete;
+    hipsparselt_local_mat_descr& operator=(hipsparselt_local_mat_descr&&) = delete;
 
-    rocsparselt_status status()
+    hipsparseLtStatus_t status()
     {
         return m_status;
     }
 
-    // Allow rocsparselt_local_mat_descr to be used anywhere rocsparselt_mat_descr is expected
-    operator rocsparselt_mat_descr&()
+    // Allow hipsparselt_local_mat_descr to be used anywhere hipsparseLtMatDescriptor_t is expected
+    operator hipsparseLtMatDescriptor_t&()
     {
         return m_descr;
     }
-    operator const rocsparselt_mat_descr&() const
+    operator const hipsparseLtMatDescriptor_t&() const
     {
         return m_descr;
     }
-    operator rocsparselt_mat_descr*()
+    operator hipsparseLtMatDescriptor_t*()
     {
         return &m_descr;
     }
-    operator const rocsparselt_mat_descr*() const
+    operator const hipsparseLtMatDescriptor_t*() const
     {
         return &m_descr;
     }
@@ -184,51 +211,51 @@ public:
 
 /* ============================================================================================ */
 /*! \brief  local matrix multiplication descriptor which is automatically created and destroyed  */
-class rocsparselt_local_matmul_descr
+class hipsparselt_local_matmul_descr
 {
-    rocsparselt_matmul_descr m_descr;
-    rocsparselt_status       m_status = rocsparselt_status_not_initialized;
+    hipsparseLtMatmulDescriptor_t m_descr;
+    hipsparseLtStatus_t           m_status = HIPSPARSELT_STATUS_NOT_INITIALIZED;
 
 public:
-    rocsparselt_local_matmul_descr(const rocsparselt_handle    handle,
-                                   rocsparselt_operation       opA,
-                                   rocsparselt_operation       opB,
-                                   const rocsparselt_mat_descr matA,
-                                   const rocsparselt_mat_descr matB,
-                                   const rocsparselt_mat_descr matC,
-                                   const rocsparselt_mat_descr matD,
-                                   rocsparselt_compute_type    compute_type)
+    hipsparselt_local_matmul_descr(const hipsparseLtHandle_t*        handle,
+                                   hipsparseLtOperation_t            opA,
+                                   hipsparseLtOperation_t            opB,
+                                   const hipsparseLtMatDescriptor_t* matA,
+                                   const hipsparseLtMatDescriptor_t* matB,
+                                   const hipsparseLtMatDescriptor_t* matC,
+                                   const hipsparseLtMatDescriptor_t* matD,
+                                   hipsparseLtComputetype_t          compute_type)
     {
-        this->m_status = rocsparselt_matmul_descr_init(
-            &handle, &this->m_descr, opA, opB, &matA, &matB, &matC, &matD, compute_type);
+        this->m_status = hipsparseLtMatmulDescriptorInit(
+            handle, &this->m_descr, opA, opB, matA, matB, matC, matD, compute_type);
     }
 
-    ~rocsparselt_local_matmul_descr() {}
+    ~hipsparselt_local_matmul_descr() {}
 
-    rocsparselt_local_matmul_descr(const rocsparselt_local_matmul_descr&) = delete;
-    rocsparselt_local_matmul_descr(rocsparselt_local_matmul_descr&&)      = delete;
-    rocsparselt_local_matmul_descr& operator=(const rocsparselt_local_matmul_descr&) = delete;
-    rocsparselt_local_matmul_descr& operator=(rocsparselt_local_matmul_descr&&) = delete;
+    hipsparselt_local_matmul_descr(const hipsparselt_local_matmul_descr&) = delete;
+    hipsparselt_local_matmul_descr(hipsparselt_local_matmul_descr&&)      = delete;
+    hipsparselt_local_matmul_descr& operator=(const hipsparselt_local_matmul_descr&) = delete;
+    hipsparselt_local_matmul_descr& operator=(hipsparselt_local_matmul_descr&&) = delete;
 
-    rocsparselt_status status()
+    hipsparseLtStatus_t status()
     {
         return m_status;
     }
 
-    // Allow rocsparselt_local_matmul_descr to be used anywhere rocsparselt_matmul_descr is expected
-    operator rocsparselt_matmul_descr&()
+    // Allow hipsparselt_local_matmul_descr to be used anywhere hipsparseLtMatmulDescriptor_t is expected
+    operator hipsparseLtMatmulDescriptor_t&()
     {
         return m_descr;
     }
-    operator const rocsparselt_matmul_descr&() const
+    operator const hipsparseLtMatmulDescriptor_t&() const
     {
         return m_descr;
     }
-    operator rocsparselt_matmul_descr*()
+    operator hipsparseLtMatmulDescriptor_t*()
     {
         return &m_descr;
     }
-    operator const rocsparselt_matmul_descr*() const
+    operator const hipsparseLtMatmulDescriptor_t*() const
     {
         return &m_descr;
     }
@@ -236,48 +263,47 @@ public:
 
 /* ================================================================================================================= */
 /*! \brief  local matrix multiplication algorithm selection descriptor which is automatically created and destroyed  */
-class rocsparselt_local_matmul_alg_selection
+class hipsparselt_local_matmul_alg_selection
 {
-    rocsparselt_matmul_alg_selection m_alg_sel;
-    rocsparselt_status               m_status = rocsparselt_status_not_initialized;
+    hipsparseLtMatmulAlgSelection_t m_alg_sel;
+    hipsparseLtStatus_t             m_status = HIPSPARSELT_STATUS_NOT_INITIALIZED;
 
 public:
-    rocsparselt_local_matmul_alg_selection(const rocsparselt_handle        handle,
-                                           const rocsparselt_matmul_descr* matmul,
-                                           rocsparselt_matmul_alg          alg)
+    hipsparselt_local_matmul_alg_selection(const hipsparseLtHandle_t*           handle,
+                                           const hipsparseLtMatmulDescriptor_t* matmul,
+                                           hipsparseLtMatmulAlg_t               alg)
     {
 
-        this->m_status
-            = rocsparselt_matmul_alg_selection_init(&handle, &this->m_alg_sel, matmul, alg);
+        this->m_status = hipsparseLtMatmulAlgSelectionInit(handle, &this->m_alg_sel, matmul, alg);
     }
 
-    ~rocsparselt_local_matmul_alg_selection() {}
+    ~hipsparselt_local_matmul_alg_selection() {}
 
-    rocsparselt_local_matmul_alg_selection(const rocsparselt_local_matmul_alg_selection&) = delete;
-    rocsparselt_local_matmul_alg_selection(rocsparselt_local_matmul_alg_selection&&)      = delete;
-    rocsparselt_local_matmul_alg_selection& operator=(const rocsparselt_local_matmul_alg_selection&)
+    hipsparselt_local_matmul_alg_selection(const hipsparselt_local_matmul_alg_selection&) = delete;
+    hipsparselt_local_matmul_alg_selection(hipsparselt_local_matmul_alg_selection&&)      = delete;
+    hipsparselt_local_matmul_alg_selection& operator=(const hipsparselt_local_matmul_alg_selection&)
         = delete;
-    rocsparselt_local_matmul_alg_selection& operator=(rocsparselt_local_matmul_alg_selection&&)
+    hipsparselt_local_matmul_alg_selection& operator=(hipsparselt_local_matmul_alg_selection&&)
         = delete;
 
-    rocsparselt_status status()
+    hipsparseLtStatus_t status()
     {
         return m_status;
     }
 
-    operator rocsparselt_matmul_alg_selection&()
+    operator hipsparseLtMatmulAlgSelection_t&()
     {
         return m_alg_sel;
     }
-    operator const rocsparselt_matmul_alg_selection&() const
+    operator const hipsparseLtMatmulAlgSelection_t&() const
     {
         return m_alg_sel;
     }
-    operator rocsparselt_matmul_alg_selection*()
+    operator hipsparseLtMatmulAlgSelection_t*()
     {
         return &m_alg_sel;
     }
-    operator const rocsparselt_matmul_alg_selection*() const
+    operator const hipsparseLtMatmulAlgSelection_t*() const
     {
         return &m_alg_sel;
     }
@@ -285,51 +311,51 @@ public:
 
 /* ================================================================================================================= */
 /*! \brief  local matrix multiplication plan descriptor which is automatically created and destroyed  */
-class rocsparselt_local_matmul_plan
+class hipsparselt_local_matmul_plan
 {
-    rocsparselt_matmul_plan m_plan;
-    rocsparselt_status      m_status = rocsparselt_status_not_initialized;
+    hipsparseLtMatmulPlan_t m_plan;
+    hipsparseLtStatus_t     m_status = HIPSPARSELT_STATUS_NOT_INITIALIZED;
 
 public:
-    rocsparselt_local_matmul_plan(const rocsparselt_handle                handle,
-                                  const rocsparselt_matmul_descr*         matmul,
-                                  const rocsparselt_matmul_alg_selection* alg_sel,
-                                  size_t                                  workspace_size)
+    hipsparselt_local_matmul_plan(const hipsparseLtHandle_t*             handle,
+                                  const hipsparseLtMatmulDescriptor_t*   matmul,
+                                  const hipsparseLtMatmulAlgSelection_t* alg_sel,
+                                  size_t                                 workspace_size)
     {
 
         this->m_status
-            = rocsparselt_matmul_plan_init(&handle, &this->m_plan, matmul, alg_sel, workspace_size);
+            = hipsparseLtMatmulPlanInit(handle, &this->m_plan, matmul, alg_sel, workspace_size);
     }
 
-    ~rocsparselt_local_matmul_plan()
+    ~hipsparselt_local_matmul_plan()
     {
-        if(this->m_status == rocsparselt_status_success)
-            rocsparselt_matmul_plan_destroy(&this->m_plan);
+        if(this->m_status == HIPSPARSELT_STATUS_SUCCESS)
+            hipsparseLtMatmulPlanDestroy(&this->m_plan);
     }
 
-    rocsparselt_local_matmul_plan(const rocsparselt_local_matmul_plan&) = delete;
-    rocsparselt_local_matmul_plan(rocsparselt_local_matmul_plan&&)      = delete;
-    rocsparselt_local_matmul_plan& operator=(const rocsparselt_local_matmul_plan&) = delete;
-    rocsparselt_local_matmul_plan& operator=(rocsparselt_local_matmul_plan&&) = delete;
+    hipsparselt_local_matmul_plan(const hipsparselt_local_matmul_plan&) = delete;
+    hipsparselt_local_matmul_plan(hipsparselt_local_matmul_plan&&)      = delete;
+    hipsparselt_local_matmul_plan& operator=(const hipsparselt_local_matmul_plan&) = delete;
+    hipsparselt_local_matmul_plan& operator=(hipsparselt_local_matmul_plan&&) = delete;
 
-    rocsparselt_status status()
+    hipsparseLtStatus_t status()
     {
         return this->m_status;
     }
 
-    operator rocsparselt_matmul_plan&()
+    operator hipsparseLtMatmulPlan_t&()
     {
         return m_plan;
     }
-    operator const rocsparselt_matmul_plan&() const
+    operator const hipsparseLtMatmulPlan_t&() const
     {
         return m_plan;
     }
-    operator rocsparselt_matmul_plan*()
+    operator hipsparseLtMatmulPlan_t*()
     {
         return &m_plan;
     }
-    operator const rocsparselt_matmul_plan*() const
+    operator const hipsparseLtMatmulPlan_t*() const
     {
         return &m_plan;
     }
@@ -344,7 +370,7 @@ void set_device(int64_t device_id);
 
 /* ============================================================================================ */
 /*  timing: HIP only provides very limited timers function clock() and not general;
-            rocsparselt sync CPU and device and use more accurate CPU timer*/
+            hipsparselt sync CPU and device and use more accurate CPU timer*/
 
 /*! \brief  CPU Timer(in microsecond): synchronize with the default device and return wall time */
 double get_time_us_sync_device();
@@ -357,11 +383,11 @@ double get_time_us_no_sync();
 
 /* ============================================================================================ */
 // Return path of this executable
-std::string rocsparselt_exepath();
+std::string hipsparselt_exepath();
 
 /* ============================================================================================ */
 // Temp directory rooted random path
-std::string rocsparselt_tempname();
+std::string hipsparselt_tempname();
 
 /* ============================================================================================ */
 /* Read environment variable */
@@ -374,27 +400,27 @@ size_t strided_batched_matrix_size(int rows, int cols, int lda, int64_t stride, 
 /* ============================================================================================ */
 /*! \brief  Debugging purpose, print out CPU and GPU result matrix, not valid in complex number  */
 template <typename T>
-inline void rocsparselt_print_matrix(
+inline void hipsparselt_print_matrix(
     std::vector<T> CPU_result, std::vector<T> GPU_result, size_t m, size_t n, size_t lda)
 {
     for(size_t i = 0; i < m; i++)
         for(size_t j = 0; j < n; j++)
         {
-            rocsparselt_cout << "matrix  col " << i << ", row " << j
+            hipsparselt_cout << "matrix  col " << i << ", row " << j
                              << ", CPU result=" << CPU_result[j + i * lda]
                              << ", GPU result=" << GPU_result[j + i * lda] << "\n";
         }
 }
 
 template <typename T>
-void rocsparselt_print_matrix(const char* name, T* A, size_t m, size_t n, size_t lda)
+void hipsparselt_print_matrix(const char* name, T* A, size_t m, size_t n, size_t lda)
 {
-    rocsparselt_cout << "---------- " << name << " ----------\n";
+    hipsparselt_cout << "---------- " << name << " ----------\n";
     for(size_t i = 0; i < m; i++)
     {
         for(size_t j = 0; j < n; j++)
-            rocsparselt_cout << std::setprecision(0) << std::setw(5) << A[i + j * lda] << " ";
-        rocsparselt_cout << std::endl;
+            hipsparselt_cout << std::setprecision(0) << std::setw(5) << A[i + j * lda] << " ";
+        hipsparselt_cout << std::endl;
     }
 }
 
@@ -421,14 +447,14 @@ inline void regular_to_banded(
         // fill in bottom with random data to ensure we aren't using it.
         // for !upper, fill in bottom right triangle as well.
         for(int i = min1; i <= max1; i++)
-            rocsparselt_init<T>(AB + j * ldab + i, 1, 1, 1);
+            hipsparselt_init<T>(AB + j * ldab + i, 1, 1, 1);
 
         // for upper, fill in top left triangle with random data to ensure
         // we aren't using it.
         if(upper)
         {
             for(int i = 0; i < m; i++)
-                rocsparselt_init<T>(AB + j * ldab + i, 1, 1, 1);
+                hipsparselt_init<T>(AB + j * ldab + i, 1, 1, 1);
         }
     }
 }
@@ -487,7 +513,7 @@ void print_strided_batched(
     using Tp              = std::conditional_t<is_int, int32_t, float>;
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-    rocsparselt_cout << "---------- " << name << " ----------\n";
+    hipsparselt_cout << "---------- " << name << " ----------\n";
     int max_size = 128;
 
     for(int i3 = 0; i3 < n3 && i3 < max_size; i3++)
@@ -496,12 +522,12 @@ void print_strided_batched(
         {
             for(int i2 = 0; i2 < n2 && i2 < max_size; i2++)
             {
-                rocsparselt_cout << static_cast<Tp>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]) << "|";
+                hipsparselt_cout << static_cast<Tp>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]) << "|";
             }
-            rocsparselt_cout << "\n";
+            hipsparselt_cout << "\n";
         }
         if(i3 < (n3 - 1) && i3 < (max_size - 1))
-            rocsparselt_cout << "\n";
+            hipsparselt_cout << "\n";
     }
-    rocsparselt_cout << std::flush;
+    hipsparselt_cout << std::flush;
 }

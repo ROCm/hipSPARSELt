@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2021-2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,22 +30,21 @@ if(BUILD_VERBOSE)
   include(../cmake/Verbose.cmake)
 endif()
 
-# Configure a header file to pass the rocSPARSELt version
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/rocsparselt-version.h.in"
-               "${PROJECT_BINARY_DIR}/include/rocsparselt-version.h"
+# Configure a header file to pass the hipSPARSE version
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipsparselt-version.h.in"
+               "${PROJECT_BINARY_DIR}/include/hipsparselt-version.h"
 )
 
-# Public rocSPARSELt headers
-set(rocsparselt_headers_public
-  include/rocsparselt-auxiliary.h
-  include/rocsparselt-functions.h
-  include/rocsparselt-types.h
-  include/rocsparselt-bfloat16.h
-  include/rocsparselt.h
-   ${PROJECT_BINARY_DIR}/include/rocsparselt-version.h
+# Public hipSPARSE headers
+set(hipsparselt_headers_public
+  include/hipsparselt.h
+  ${PROJECT_BINARY_DIR}/include/hipsparselt-version.h
 )
 
-source_group("Header Files\\Public" FILES ${rocsparselt_headers_public})
+if(NOT BUILD_CUDA)
+    set(hipsparselt_headers_public ${hipsparselt_headers_public} include/hipsparselt-types.h include/hipsparselt-bfloat16.h)
+endif()
+source_group("Header Files\\Public" FILES ${hipsparselt_headers_public})
 
 include(GNUInstallDirs)
 
@@ -56,56 +55,95 @@ set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 # Include sources
 include(src/CMakeLists.txt)
 
-# Create rocSPARSELt library
-add_library(rocsparselt ${rocsparselt_source} ${rocsparselt_headers_public})
-add_library(roc::rocsparselt ALIAS rocsparselt)
+# Create hipSPARSELt library
+add_library(hipsparselt ${hipsparselt_source} ${hipsparselt_headers_public})
+add_library(roc::hipsparselt ALIAS hipsparselt)
 
-# Target compile options
-target_compile_options(rocsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
-target_compile_definitions(rocsparselt PRIVATE ROCM_USE_FLOAT16)
+# Target compile definitions
+if(NOT BUILD_CUDA)
+    target_compile_options(hipsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
+    target_compile_definitions(hipsparselt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
+else()
+    target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_NVCC__)
+endif()
+
+# Target compile features
+target_compile_features(hipsparselt PRIVATE cxx_nullptr)
 
 # Target include directories
-target_include_directories(rocsparselt
+target_include_directories(hipsparselt
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
-                                   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
-                                   $<BUILD_INTERFACE:${KERNEL_LAUNCHER_INC}>
-                           PUBLIC  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+                           PUBLIC  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
+                                   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+                                   $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
                                    $<INSTALL_INTERFACE:include>
 )
 
+if(BUILD_CUDA)
+target_include_directories(hipsparselt
+                           PUBLIC $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>
+)
+else()
+target_include_directories(hipsparselt
+                           PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/include>
+                                   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/src/include>
+)
+endif()
+
 # Target link libraries
-target_link_libraries(rocsparselt PRIVATE hip::device ${DL_LIB})
+if(NOT BUILD_CUDA)
+# Target link libraries
+  target_link_libraries(hipsparselt PRIVATE hip::device ${DL_LIB})
+else()
+  target_link_libraries(hipsparselt PRIVATE ${CUDA_cusparse_LIBRARY})
+endif()
+
 # Target properties
-rocm_set_soversion(rocsparselt ${rocsparselt_SOVERSION})
-set_target_properties(rocsparselt PROPERTIES CXX_VISIBILITY_PRESET "hidden" VISIBILITY_INLINES_HIDDEN ON)
-set_target_properties(rocsparselt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging")
-set_target_properties(rocsparselt PROPERTIES DEBUG_POSTFIX "-d")
+rocm_set_soversion(hipsparselt ${hipsparselt_SOVERSION})
+set_target_properties(hipsparselt PROPERTIES CXX_EXTENSIONS NO)
+set_target_properties(hipsparselt PROPERTIES CXX_VISIBILITY_PRESET "hidden" VISIBILITY_INLINES_HIDDEN ON)
+set_target_properties(hipsparselt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging")
+set_target_propertieS(hipsparselt PROPERTIES DEBUG_POSTFIX "-d")
+
+# TODO ??
+# Following boost conventions of prefixing 'lib' on static built libraries
+if(NOT BUILD_SHARED_LIBS)
+  set_target_properties(hipsparselt PROPERTIES PREFIX "lib")
+endif()
 
 # Generate export header
 include(GenerateExportHeader)
-generate_export_header(rocsparselt EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/rocsparselt-export.h)
+generate_export_header(hipsparselt EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/hipsparselt-export.h)
 
 # Install targets
-rocm_install_targets(TARGETS rocsparselt
+rocm_install_targets(TARGETS hipsparselt ${SPMM_KERNEL_LIBS}
                      INCLUDE
                        ${CMAKE_SOURCE_DIR}/library/include
                        ${CMAKE_BINARY_DIR}/include
-                     PREFIX rocsparselt
+                     PREFIX hipsparselt
 )
 
 # Export targets
-rocm_export_targets(TARGETS roc::rocsparselt
-                    PREFIX rocsparselt
-                    DEPENDS PACKAGE hip
-                    NAMESPACE roc::
-)
+if(NOT BUILD_CUDA)
+  rocm_export_targets(TARGETS roc::hipsparselt
+                      PREFIX hipsparselt
+                      DEPENDS PACKAGE hip
+                      NAMESPACE roc::)
+else()
+  rocm_export_targets(TARGETS roc::hipsparselt
+                      PREFIX hipsparselt
+                      NAMESPACE roc::)
+endif()
 
 # Symbolic links
-rocm_install_symlink_subdir(rocsparselt)
+rocm_install_symlink_subdir(hipsparselt)
+
+if(NOT BUILD_CUDA)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)")
+  set(CPACK_RPM_PACKAGE_REQUIRES "hip-rocclr >= 3.5.0")
+endif()
 
 # Package specific CPACK vars
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)")
-set(CPACK_RPM_PACKAGE_REQUIRES "hip-rocclr >= 3.5.0")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.md")
 
 if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
@@ -114,15 +152,18 @@ endif()
 
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include")
 
-# Package name
-set(package_name rocsparselt)
+if(NOT BUILD_CUDA)
+  set(package_name hipsparselt)
+else()
+  set(package_name hipsparselt-alt)
+endif()
 
-set(ROCSPARSELT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
+set(HIPSPARSELT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
 
 rocm_create_package(
   NAME ${package_name}
   DESCRIPTION "Radeon Open Compute SPARSE library with xDL supported"
-  MAINTAINER "rocSPARSElt Maintainer <vihuan@amd.com>"
+  MAINTAINER "hipSPARSELt Maintainer"
   LDCONFIG
-  LDCONFIG_DIR ${ROCSPARSELT_CONFIG_DIR}
+  LDCONFIG_DIR ${HIPSPARSELT_CONFIG_DIR}
 )

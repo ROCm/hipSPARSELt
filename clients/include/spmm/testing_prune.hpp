@@ -1,17 +1,39 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #pragma once
 
 #include "flops.hpp"
-#include "rocsparselt.h"
-#include "rocsparselt_datatype2string.hpp"
-#include "rocsparselt_init.hpp"
-#include "rocsparselt_math.hpp"
-#include "rocsparselt_random.hpp"
-#include "rocsparselt_test.hpp"
-#include "rocsparselt_vector.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_datatype2string.hpp"
+#include "hipsparselt_init.hpp"
+#include "hipsparselt_math.hpp"
+#include "hipsparselt_random.hpp"
+#include "hipsparselt_test.hpp"
+#include "hipsparselt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 #include <omp.h>
@@ -345,98 +367,80 @@ void testing_prune_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const rocsparselt_operation transA = rocsparselt_operation_none;
-    const rocsparselt_operation transB = rocsparselt_operation_none;
+    const hipsparseLtOperation_t transA = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+    const hipsparseLtOperation_t transB = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
 
     // allocate memory on device
     device_vector<Ti> dA(safe_size);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
 
-    rocsparselt_local_handle    handle{arg};
-    rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
+    hipsparselt_local_handle    handle{arg};
+    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
                                      M,
                                      K,
                                      lda,
                                      arg.a_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matB(
-        rocsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
-    rocsparselt_local_matmul_descr matmul(
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matB(
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
     hipStream_t stream = nullptr;
 
     // test version 1
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune(nullptr, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune(nullptr, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune(handle, nullptr, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune(handle, nullptr, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune(
-            handle, matmul, dA, nullptr, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune(handle, matmul, dA, nullptr, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune(
-            handle, matmul, nullptr, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune(handle, matmul, nullptr, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 
     // test version 2
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune2(
-            nullptr, matA, true, transA, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune2(
+            nullptr, matA, true, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune2(
-            handle, nullptr, true, transA, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune2(
+            handle, nullptr, true, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune2(
-            handle, matA, false, transA, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_not_implemented);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune2(
+            handle, matA, false, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_INTERNAL_ERROR);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_prune2(handle,
-                                                        matA,
-                                                        true,
-                                                        rocsparselt_operation_conjugate_transpose,
-                                                        dA,
-                                                        dA,
-                                                        rocsparselt_prune_smfmac_strip,
-                                                        stream),
-                              rocsparselt_status_invalid_value);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune2(
+            handle, matA, true, transA, dA, nullptr, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 
-    //TODO tile should be supported.
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune2(
-            handle, matA, true, transA, dA, dA, rocsparselt_prune_smfmac_tile, stream),
-        rocsparselt_status_not_implemented);
-
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune2(
-            handle, matA, true, transA, dA, nullptr, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_pointer);
-
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune2(
-            handle, matA, true, transA, nullptr, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune2(
+            handle, matA, true, transA, nullptr, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 }
 
 template <typename Ti,
           typename To,
           typename Tc,
-          rocsparselt_batch_type btype = rocsparselt_batch_type::none>
+          hipsparselt_batch_type btype = hipsparselt_batch_type::none>
 void testing_prune(const Arguments& arg)
 {
     int run_version = 1;
@@ -444,10 +448,10 @@ void testing_prune(const Arguments& arg)
     if(strstr(arg.name, "prune2") != nullptr)
         run_version = 2;
 
-    rocsparselt_prune_alg prune_algo = rocsparselt_prune_alg(arg.prune_algo);
+    hipsparseLtPruneAlg_t prune_algo = hipsparseLtPruneAlg_t(arg.prune_algo);
 
-    constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
-    constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
+    constexpr bool do_batched         = (btype == hipsparselt_batch_type::batched);
+    constexpr bool do_strided_batched = (btype == hipsparselt_batch_type::strided_batched);
 
     void (*prune_cpu)(const Ti* in,
                       Ti*       out,
@@ -458,10 +462,10 @@ void testing_prune(const Arguments& arg)
                       int       num_batches,
                       int64_t   stride_b);
     prune_cpu
-        = prune_algo == rocsparselt_prune_smfmac_strip ? prune_strip<Ti, Tc> : prune_tile<Ti, Tc>;
+        = prune_algo == HIPSPARSELT_PRUNE_SPMMA_STRIP ? prune_strip<Ti, Tc> : prune_tile<Ti, Tc>;
 
-    rocsparselt_operation transA = char2rocsparselt_operation(arg.transA);
-    rocsparselt_operation transB = char2rocsparselt_operation(arg.transB);
+    hipsparseLtOperation_t transA = char_to_hipsparselt_operation(arg.transA);
+    hipsparseLtOperation_t transB = char_to_hipsparselt_operation(arg.transB);
 
     int64_t M = arg.M;
     int64_t N = arg.N;
@@ -474,19 +478,19 @@ void testing_prune(const Arguments& arg)
 
     double gpu_time_used, cpu_time_used;
     gpu_time_used = cpu_time_used              = 0.0;
-    double                   rocsparselt_error = 0.0;
+    double                   hipsparselt_error = 0.0;
     bool                     HMM               = arg.HMM;
-    rocsparselt_local_handle handle{arg};
+    hipsparselt_local_handle handle{arg};
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
-    int64_t A_row = transA == rocsparselt_operation_none ? M : K;
-    int64_t A_col = transA == rocsparselt_operation_none ? K : M;
-    int64_t B_row = transB == rocsparselt_operation_none ? K : N;
-    int64_t B_col = transB == rocsparselt_operation_none ? N : K;
+    int64_t A_row = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? M : K;
+    int64_t A_col = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : M;
+    int64_t B_row = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : N;
+    int64_t B_col = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? N : K;
 
-    int64_t stride_1_a = transA == rocsparselt_operation_none ? 1 : lda;
-    int64_t stride_2_a = transA == rocsparselt_operation_none ? lda : 1;
+    int64_t stride_1_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? 1 : lda;
+    int64_t stride_2_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? lda : 1;
 
     int     num_batches = (do_batched || do_strided_batched ? arg.batch_count : 1);
     int64_t stride_a    = do_strided_batched ? arg.stride_a : lda * A_col;
@@ -494,24 +498,24 @@ void testing_prune(const Arguments& arg)
     int64_t stride_c    = do_strided_batched ? arg.stride_c : ldc * M;
     int64_t stride_d    = do_strided_batched ? arg.stride_c : ldd * M;
 
-    rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
+    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
                                      A_row,
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matB(rocsparselt_matrix_type_dense,
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matB(hipsparselt_matrix_type_dense,
                                      handle,
                                      B_row,
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
 
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
@@ -519,63 +523,63 @@ void testing_prune(const Arguments& arg)
     bool invalid_size_d = ldd < M;
     if(invalid_size_a)
     {
-        EXPECT_ROCSPARSELT_STATUS(matA.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matA.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_ROCSPARSELT_STATUS(matB.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matB.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_c)
     {
-        EXPECT_ROCSPARSELT_STATUS(matC.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matC.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_d)
     {
-        EXPECT_ROCSPARSELT_STATUS(matD.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matD.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
 
     if(do_batched || do_strided_batched)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matA, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matB, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matC, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matD, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matA, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matB, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matC, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matD, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
 
     if(do_strided_batched)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(int64_t)),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
 
-    rocsparselt_local_matmul_descr matmul(
+    hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
     const size_t size_A           = stride_a == 0 ? A_col * lda : num_batches * stride_a;
     const size_t size_A_copy      = arg.unit_check || arg.norm_check ? size_A : 0;
-    const size_t size_A_norm_copy = prune_algo == rocsparselt_prune_smfmac_tile ? size_A_copy : 0;
+    const size_t size_A_norm_copy = prune_algo == HIPSPARSELT_PRUNE_SPMMA_TILE ? size_A_copy : 0;
 
     // allocate memory on device
     device_vector<Ti> dA(size_A, 1, HMM);
@@ -590,24 +594,24 @@ void testing_prune(const Arguments& arg)
     host_vector<float> hA_gold_norm(size_A_norm_copy);
     host_vector<float> hA_1_norm(size_A_norm_copy);
 
-    rocsparselt_seedrand();
+    hipsparselt_seedrand();
 
     // Initial Data on CPU
-    if(arg.initialization == rocsparselt_initialization::rand_int)
+    if(arg.initialization == hipsparselt_initialization::rand_int)
     {
-        rocsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
-    else if(arg.initialization == rocsparselt_initialization::trig_float)
+    else if(arg.initialization == hipsparselt_initialization::trig_float)
     {
-        rocsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
-    else if(arg.initialization == rocsparselt_initialization::hpl)
+    else if(arg.initialization == hipsparselt_initialization::hpl)
     {
-        rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
-    else if(arg.initialization == rocsparselt_initialization::special)
+    else if(arg.initialization == hipsparselt_initialization::special)
     {
-        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
 
     // copy data from CPU to device
@@ -616,14 +620,14 @@ void testing_prune(const Arguments& arg)
     if(arg.unit_check || arg.norm_check)
     {
         if(run_version == 1)
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_prune(handle, matmul, dA, dA_pruned, prune_algo, stream),
-                rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
+                HIPSPARSELT_STATUS_SUCCESS);
         else if(run_version == 2)
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_prune2(
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMAPrune2(
                     handle, matA, true, transA, dA, dA_pruned, prune_algo, stream),
-                rocsparselt_status_success);
+                HIPSPARSELT_STATUS_SUCCESS);
 
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_pruned));
@@ -633,9 +637,9 @@ void testing_prune(const Arguments& arg)
         device_vector<int> d_valid(1, 1, HMM);
         int                h_valid = 0;
         //check the pruned matrix is sparisty 50 or not.
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_prune_check(handle, matmul, dA_pruned, d_valid, stream),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtSpMMAPruneCheck(handle, matmul, dA_pruned, d_valid, stream),
+            HIPSPARSELT_STATUS_SUCCESS);
         CHECK_HIP_ERROR(
             hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
         hipStreamSynchronize(stream);
@@ -657,7 +661,7 @@ void testing_prune(const Arguments& arg)
         //releasing already used host memory
         hA = host_vector<Ti>();
 
-        if(prune_algo == rocsparselt_prune_smfmac_tile)
+        if(prune_algo == HIPSPARSELT_PRUNE_SPMMA_TILE)
         {
             tile_4x4_norm1<Ti, float>(
                 hA_1, hA_1_norm, M, K, stride_1_a, stride_2_a, num_batches, stride_a);
@@ -673,11 +677,11 @@ void testing_prune(const Arguments& arg)
 
             if(arg.norm_check)
             {
-                rocsparselt_error = unit_check_diff<float>(
+                hipsparselt_error = unit_check_diff<float>(
                     A_row, A_col, lda, stride_a, hA_gold_norm, hA_1_norm, num_batches);
             }
         }
-        else if(prune_algo == rocsparselt_prune_smfmac_strip)
+        else if(prune_algo == HIPSPARSELT_PRUNE_SPMMA_STRIP)
         {
             // check host error and norm
             if(arg.unit_check)
@@ -687,7 +691,7 @@ void testing_prune(const Arguments& arg)
 
             if(arg.norm_check)
             {
-                rocsparselt_error
+                hipsparselt_error
                     = unit_check_diff<Ti>(A_row, A_col, lda, stride_a, hA_gold, hA_1, num_batches);
             }
         }
@@ -700,31 +704,31 @@ void testing_prune(const Arguments& arg)
 
         for(int i = 0; i < number_cold_calls; i++)
         {
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_prune(handle, matmul, dA, dA_pruned, prune_algo, stream),
-                rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
+                HIPSPARSELT_STATUS_SUCCESS);
         }
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
         {
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_prune(handle, matmul, dA, dA_pruned, prune_algo, stream),
-                rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
+                HIPSPARSELT_STATUS_SUCCESS);
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
         double (*gflop_count)(int64_t m, int64_t n);
-        gflop_count = (prune_algo == rocsparselt_prune_smfmac_strip) ? prune_strip_gflop_count<Ti>
-                                                                     : prune_tile_gflop_count<Ti>;
+        gflop_count = (prune_algo == HIPSPARSELT_PRUNE_SPMMA_STRIP) ? prune_strip_gflop_count<Ti>
+                                                                    : prune_tile_gflop_count<Ti>;
 
         ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_lda, e_stride_a, e_batch_count>{}
-            .log_args<float>(rocsparselt_cout,
+            .log_args<float>(hipsparselt_cout,
                              arg,
                              gpu_time_used,
                              gflop_count(M, K),
                              ArgumentLogging::NA_value,
                              cpu_time_used,
-                             rocsparselt_error);
+                             hipsparselt_error);
     }
 }

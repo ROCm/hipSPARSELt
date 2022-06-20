@@ -1,34 +1,56 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************/
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 #include "cblas_interface.hpp"
-#include "rocsparselt_vector.hpp"
+#include "hipsparselt_vector.hpp"
 #include "utility.hpp"
 #include <bitset>
 #include <omp.h>
 
 // gemm
 template <>
-void cblas_gemm<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(rocsparselt_operation transA,
-                                                                   rocsparselt_operation transB,
-                                                                   int64_t               m,
-                                                                   int64_t               n,
-                                                                   int64_t               k,
-                                                                   float                 alpha,
-                                                                   const rocsparselt_bfloat16* A,
-                                                                   int64_t                     lda,
-                                                                   const rocsparselt_bfloat16* B,
-                                                                   int64_t                     ldb,
-                                                                   float                       beta,
-                                                                   rocsparselt_bfloat16*       C,
-                                                                   int64_t                     ldc,
-                                                                   bool                        alt)
+void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseLtOperation_t     transA,
+                                                                 hipsparseLtOperation_t     transB,
+                                                                 int64_t                    m,
+                                                                 int64_t                    n,
+                                                                 int64_t                    k,
+                                                                 float                      alpha,
+                                                                 const hipsparseLtBfloat16* A,
+                                                                 int64_t                    lda,
+                                                                 const hipsparseLtBfloat16* B,
+                                                                 int64_t                    ldb,
+                                                                 float                      beta,
+                                                                 hipsparseLtBfloat16*       C,
+                                                                 int64_t                    ldc,
+                                                                 bool                       alt)
 {
-    // cblas does not support rocsparselt_bfloat16, so convert to higher precision float
+    // cblas does not support hipsparseLtBfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -41,7 +63,7 @@ void cblas_gemm<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(rocsparselt_o
         C_float[i] = static_cast<float>(C[i]);
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: rocsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
     cblas_sgemm(CblasColMajor,
                 static_cast<CBLAS_TRANSPOSE>(transA),
                 static_cast<CBLAS_TRANSPOSE>(transB),
@@ -58,30 +80,30 @@ void cblas_gemm<rocsparselt_bfloat16, rocsparselt_bfloat16, float>(rocsparselt_o
                 ldc);
 
     for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<rocsparselt_bfloat16>(C_float[i]);
+        C[i] = static_cast<hipsparseLtBfloat16>(C_float[i]);
 }
 
 template <>
-void cblas_gemm<rocsparselt_bfloat16, float, float>(rocsparselt_operation       transA,
-                                                    rocsparselt_operation       transB,
-                                                    int64_t                     m,
-                                                    int64_t                     n,
-                                                    int64_t                     k,
-                                                    float                       alpha,
-                                                    const rocsparselt_bfloat16* A,
-                                                    int64_t                     lda,
-                                                    const rocsparselt_bfloat16* B,
-                                                    int64_t                     ldb,
-                                                    float                       beta,
-                                                    float*                      C,
-                                                    int64_t                     ldc,
-                                                    bool                        alt)
+void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseLtOperation_t     transA,
+                                                   hipsparseLtOperation_t     transB,
+                                                   int64_t                    m,
+                                                   int64_t                    n,
+                                                   int64_t                    k,
+                                                   float                      alpha,
+                                                   const hipsparseLtBfloat16* A,
+                                                   int64_t                    lda,
+                                                   const hipsparseLtBfloat16* B,
+                                                   int64_t                    ldb,
+                                                   float                      beta,
+                                                   float*                     C,
+                                                   int64_t                    ldc,
+                                                   bool                       alt)
 {
-    // cblas does not support rocsparselt_bfloat16, so convert to higher precision float
+    // cblas does not support hipsparseLtBfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -92,7 +114,7 @@ void cblas_gemm<rocsparselt_bfloat16, float, float>(rocsparselt_operation       
         B_float[i] = static_cast<float>(B[i]);
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: rocsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
     cblas_sgemm(CblasColMajor,
                 static_cast<CBLAS_TRANSPOSE>(transA),
                 static_cast<CBLAS_TRANSPOSE>(transB),
@@ -110,26 +132,26 @@ void cblas_gemm<rocsparselt_bfloat16, float, float>(rocsparselt_operation       
 }
 
 template <>
-void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparselt_operation   transA,
-                                                           rocsparselt_operation   transB,
-                                                           int64_t                 m,
-                                                           int64_t                 n,
-                                                           int64_t                 k,
-                                                           float                   alpha,
-                                                           const rocsparselt_half* A,
-                                                           int64_t                 lda,
-                                                           const rocsparselt_half* B,
-                                                           int64_t                 ldb,
-                                                           float                   beta,
-                                                           rocsparselt_half*       C,
-                                                           int64_t                 ldc,
-                                                           bool                    alt)
+void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseLtOperation_t transA,
+                                                         hipsparseLtOperation_t transB,
+                                                         int64_t                m,
+                                                         int64_t                n,
+                                                         int64_t                k,
+                                                         float                  alpha,
+                                                         const hipsparseLtHalf* A,
+                                                         int64_t                lda,
+                                                         const hipsparseLtHalf* B,
+                                                         int64_t                ldb,
+                                                         float                  beta,
+                                                         hipsparseLtHalf*       C,
+                                                         int64_t                ldc,
+                                                         bool                   alt)
 {
-    // cblas does not support rocsparselt_half, so convert to higher precision float
+    // cblas does not support hipsparseLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -138,13 +160,13 @@ void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparselt_operation
     {
         for(size_t i = 0; i < sizeA; i++)
             A_float[i]
-                = rocsparselt_bfloat16(float(A[i]), rocsparselt_bfloat16::truncate_t::truncate);
+                = hipsparseLtBfloat16(float(A[i]), hipsparseLtBfloat16::truncate_t::truncate);
         for(size_t i = 0; i < sizeB; i++)
             B_float[i]
-                = rocsparselt_bfloat16(float(B[i]), rocsparselt_bfloat16::truncate_t::truncate);
+                = hipsparseLtBfloat16(float(B[i]), hipsparseLtBfloat16::truncate_t::truncate);
         for(size_t i = 0; i < sizeC; i++)
             C_float[i]
-                = rocsparselt_bfloat16(float(C[i]), rocsparselt_bfloat16::truncate_t::truncate);
+                = hipsparseLtBfloat16(float(C[i]), hipsparseLtBfloat16::truncate_t::truncate);
     }
     else
     {
@@ -157,7 +179,7 @@ void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparselt_operation
     }
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: rocsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
     cblas_sgemm(CblasColMajor,
                 static_cast<CBLAS_TRANSPOSE>(transA),
                 static_cast<CBLAS_TRANSPOSE>(transB),
@@ -174,30 +196,30 @@ void cblas_gemm<rocsparselt_half, rocsparselt_half, float>(rocsparselt_operation
                 ldc);
 
     for(size_t i = 0; i < sizeC; i++)
-        C[i] = rocsparselt_half(C_float[i]);
+        C[i] = hipsparseLtHalf(C_float[i]);
 }
 
 template <>
-void cblas_gemm<rocsparselt_half, float, float>(rocsparselt_operation   transA,
-                                                rocsparselt_operation   transB,
-                                                int64_t                 m,
-                                                int64_t                 n,
-                                                int64_t                 k,
-                                                float                   alpha,
-                                                const rocsparselt_half* A,
-                                                int64_t                 lda,
-                                                const rocsparselt_half* B,
-                                                int64_t                 ldb,
-                                                float                   beta,
-                                                float*                  C,
-                                                int64_t                 ldc,
-                                                bool                    alt)
+void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseLtOperation_t transA,
+                                               hipsparseLtOperation_t transB,
+                                               int64_t                m,
+                                               int64_t                n,
+                                               int64_t                k,
+                                               float                  alpha,
+                                               const hipsparseLtHalf* A,
+                                               int64_t                lda,
+                                               const hipsparseLtHalf* B,
+                                               int64_t                ldb,
+                                               float                  beta,
+                                               float*                 C,
+                                               int64_t                ldc,
+                                               bool                   alt)
 {
-    // cblas does not support rocsparselt_half, so convert to higher precision float
+    // cblas does not support hipsparseLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == rocsparselt_operation_none ? k : m) * size_t(lda);
-    size_t sizeB = (transB == rocsparselt_operation_none ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -205,10 +227,10 @@ void cblas_gemm<rocsparselt_half, float, float>(rocsparselt_operation   transA,
     {
         for(size_t i = 0; i < sizeA; i++)
             A_float[i]
-                = rocsparselt_bfloat16(float(A[i]), rocsparselt_bfloat16::truncate_t::truncate);
+                = hipsparseLtBfloat16(float(A[i]), hipsparseLtBfloat16::truncate_t::truncate);
         for(size_t i = 0; i < sizeB; i++)
             B_float[i]
-                = rocsparselt_bfloat16(float(B[i]), rocsparselt_bfloat16::truncate_t::truncate);
+                = hipsparseLtBfloat16(float(B[i]), hipsparseLtBfloat16::truncate_t::truncate);
     }
     else
     {
@@ -219,7 +241,7 @@ void cblas_gemm<rocsparselt_half, float, float>(rocsparselt_operation   transA,
     }
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: rocsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
     cblas_sgemm(CblasColMajor,
                 static_cast<CBLAS_TRANSPOSE>(transA),
                 static_cast<CBLAS_TRANSPOSE>(transB),
@@ -237,20 +259,20 @@ void cblas_gemm<rocsparselt_half, float, float>(rocsparselt_operation   transA,
 }
 
 template <>
-void cblas_gemm<int8_t, int8_t, float>(rocsparselt_operation transA,
-                                       rocsparselt_operation transB,
-                                       int64_t               m,
-                                       int64_t               n,
-                                       int64_t               k,
-                                       float                 alpha,
-                                       const int8_t*         A,
-                                       int64_t               lda,
-                                       const int8_t*         B,
-                                       int64_t               ldb,
-                                       float                 beta,
-                                       int8_t*               C,
-                                       int64_t               ldc,
-                                       bool                  alt)
+void cblas_gemm<int8_t, int8_t, float>(hipsparseLtOperation_t transA,
+                                       hipsparseLtOperation_t transB,
+                                       int64_t                m,
+                                       int64_t                n,
+                                       int64_t                k,
+                                       float                  alpha,
+                                       const int8_t*          A,
+                                       int64_t                lda,
+                                       const int8_t*          B,
+                                       int64_t                ldb,
+                                       float                  beta,
+                                       int8_t*                C,
+                                       int64_t                ldc,
+                                       bool                   alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
     // 32-bit integer operations can be represented accurately with double-precision
@@ -258,8 +280,8 @@ void cblas_gemm<int8_t, int8_t, float>(rocsparselt_operation transA,
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
 
-    size_t const sizeA = ((transA == rocsparselt_operation_none) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == rocsparselt_operation_none) ? n : k) * size_t(ldb);
+    size_t const sizeA = ((transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
+    size_t const sizeB = ((transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
     size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
@@ -300,20 +322,20 @@ void cblas_gemm<int8_t, int8_t, float>(rocsparselt_operation transA,
 }
 
 template <>
-void cblas_gemm<int8_t, float, float>(rocsparselt_operation transA,
-                                      rocsparselt_operation transB,
-                                      int64_t               m,
-                                      int64_t               n,
-                                      int64_t               k,
-                                      float                 alpha,
-                                      const int8_t*         A,
-                                      int64_t               lda,
-                                      const int8_t*         B,
-                                      int64_t               ldb,
-                                      float                 beta,
-                                      float*                C,
-                                      int64_t               ldc,
-                                      bool                  alt)
+void cblas_gemm<int8_t, float, float>(hipsparseLtOperation_t transA,
+                                      hipsparseLtOperation_t transB,
+                                      int64_t                m,
+                                      int64_t                n,
+                                      int64_t                k,
+                                      float                  alpha,
+                                      const int8_t*          A,
+                                      int64_t                lda,
+                                      const int8_t*          B,
+                                      int64_t                ldb,
+                                      float                  beta,
+                                      float*                 C,
+                                      int64_t                ldc,
+                                      bool                   alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
     // 32-bit integer operations can be represented accurately with double-precision
@@ -321,8 +343,8 @@ void cblas_gemm<int8_t, float, float>(rocsparselt_operation transA,
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
 
-    size_t const sizeA = ((transA == rocsparselt_operation_none) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == rocsparselt_operation_none) ? n : k) * size_t(ldb);
+    size_t const sizeA = ((transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
+    size_t const sizeB = ((transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
     size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);

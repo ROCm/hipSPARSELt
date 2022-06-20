@@ -1,7 +1,28 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
+/*******************************************************************************
  *
- * ************************************************************************ */
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 /* =====================================================================
     Google Near check: ASSERT_NEAR( elementof(A), elementof(B))
@@ -13,10 +34,10 @@
 
 #pragma once
 
-#include "rocsparselt.h"
-#include "rocsparselt_math.hpp"
-#include "rocsparselt_test.hpp"
-#include "rocsparselt_vector.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_math.hpp"
+#include "hipsparselt_test.hpp"
+#include "hipsparselt_vector.hpp"
 
 // Sum error tolerance for large sums. Multiplied by the number of items
 // in the sum to get an expected absolute error bound.
@@ -25,10 +46,10 @@ template <class T>
 static constexpr double sum_error_tolerance = 0.0;
 
 template <>
-static constexpr double sum_error_tolerance<rocsparselt_bfloat16> = 1 / 100.0;
+static constexpr double sum_error_tolerance<hipsparseLtBfloat16> = 1 / 100.0;
 
 template <>
-static constexpr double sum_error_tolerance<rocsparselt_half> = 1 / 900.0;
+static constexpr double sum_error_tolerance<hipsparseLtHalf> = 1 / 900.0;
 
 #ifndef GOOGLE_TEST
 #define NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, err, NEAR_ASSERT)
@@ -52,9 +73,9 @@ static constexpr double sum_error_tolerance<rocsparselt_half> = 1 / 900.0;
         for(size_t k = 0; k < batch_count; k++)                                               \
             for(size_t j = 0; j < N; j++)                                                     \
                 for(size_t i = 0; i < M; i++)                                                 \
-                    if(rocsparselt_isnan(hCPU[k][i + j * size_t(lda)]))                       \
+                    if(hipsparselt_isnan(hCPU[k][i + j * size_t(lda)]))                       \
                     {                                                                         \
-                        ASSERT_TRUE(rocsparselt_isnan(hGPU[k][i + j * size_t(lda)]));         \
+                        ASSERT_TRUE(hipsparselt_isnan(hGPU[k][i + j * size_t(lda)]));         \
                     }                                                                         \
                     else                                                                      \
                     {                                                                         \
@@ -91,23 +112,23 @@ inline void near_check_general(int64_t                        M,
 }
 
 template <>
-inline void near_check_general(int64_t                 M,
-                               int64_t                 N,
-                               int64_t                 lda,
-                               const rocsparselt_half* hCPU,
-                               const rocsparselt_half* hGPU,
-                               double                  abs_error)
+inline void near_check_general(int64_t                M,
+                               int64_t                N,
+                               int64_t                lda,
+                               const hipsparseLtHalf* hCPU,
+                               const hipsparseLtHalf* hGPU,
+                               double                 abs_error)
 {
     NEAR_CHECK(M, N, lda, 0, hCPU, hGPU, 1, abs_error, NEAR_ASSERT_HALF);
 }
 
 template <>
-inline void near_check_general<rocsparselt_bfloat16, float>(int64_t                     M,
-                                                            int64_t                     N,
-                                                            int64_t                     lda,
-                                                            const float*                hCPU,
-                                                            const rocsparselt_bfloat16* hGPU,
-                                                            double                      abs_error)
+inline void near_check_general<hipsparseLtBfloat16, float>(int64_t                    M,
+                                                           int64_t                    N,
+                                                           int64_t                    lda,
+                                                           const float*               hCPU,
+                                                           const hipsparseLtBfloat16* hGPU,
+                                                           double                     abs_error)
 {
     NEAR_CHECK(M, N, lda, 0, hCPU, hGPU, 1, abs_error, NEAR_ASSERT_BF16);
 }
@@ -126,27 +147,27 @@ inline void near_check_general(int64_t                        M,
 }
 
 template <>
-inline void near_check_general(int64_t                 M,
-                               int64_t                 N,
-                               int64_t                 lda,
-                               int64_t                 strideA,
-                               const rocsparselt_half* hCPU,
-                               const rocsparselt_half* hGPU,
-                               int64_t                 batch_count,
-                               double                  abs_error)
+inline void near_check_general(int64_t                M,
+                               int64_t                N,
+                               int64_t                lda,
+                               int64_t                strideA,
+                               const hipsparseLtHalf* hCPU,
+                               const hipsparseLtHalf* hGPU,
+                               int64_t                batch_count,
+                               double                 abs_error)
 {
     NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_HALF);
 }
 
 template <>
-inline void near_check_general<rocsparselt_bfloat16, float>(int64_t                     M,
-                                                            int64_t                     N,
-                                                            int64_t                     lda,
-                                                            int64_t                     strideA,
-                                                            const float*                hCPU,
-                                                            const rocsparselt_bfloat16* hGPU,
-                                                            int64_t                     batch_count,
-                                                            double                      abs_error)
+inline void near_check_general<hipsparseLtBfloat16, float>(int64_t                    M,
+                                                           int64_t                    N,
+                                                           int64_t                    lda,
+                                                           int64_t                    strideA,
+                                                           const float*               hCPU,
+                                                           const hipsparseLtBfloat16* hGPU,
+                                                           int64_t                    batch_count,
+                                                           double                     abs_error)
 {
     NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_BF16);
 }
@@ -164,25 +185,25 @@ void near_check_general(int64_t                                    M,
 }
 
 template <>
-inline void near_check_general(int64_t                             M,
-                               int64_t                             N,
-                               int64_t                             lda,
-                               const host_vector<rocsparselt_half> hCPU[],
-                               const host_vector<rocsparselt_half> hGPU[],
-                               int64_t                             batch_count,
-                               double                              abs_error)
+inline void near_check_general(int64_t                            M,
+                               int64_t                            N,
+                               int64_t                            lda,
+                               const host_vector<hipsparseLtHalf> hCPU[],
+                               const host_vector<hipsparseLtHalf> hGPU[],
+                               int64_t                            batch_count,
+                               double                             abs_error)
 {
     NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_HALF);
 }
 template <>
 inline void
-    near_check_general<rocsparselt_bfloat16, float>(int64_t                                 M,
-                                                    int64_t                                 N,
-                                                    int64_t                                 lda,
-                                                    const host_vector<float>                hCPU[],
-                                                    const host_vector<rocsparselt_bfloat16> hGPU[],
-                                                    int64_t batch_count,
-                                                    double  abs_error)
+    near_check_general<hipsparseLtBfloat16, float>(int64_t                                M,
+                                                   int64_t                                N,
+                                                   int64_t                                lda,
+                                                   const host_vector<float>               hCPU[],
+                                                   const host_vector<hipsparseLtBfloat16> hGPU[],
+                                                   int64_t batch_count,
+                                                   double  abs_error)
 {
     NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_BF16);
 }
@@ -200,26 +221,25 @@ inline void near_check_general(int64_t                              M,
 }
 
 template <>
-inline void near_check_general(int64_t                       M,
-                               int64_t                       N,
-                               int64_t                       lda,
-                               const rocsparselt_half* const hCPU[],
-                               const rocsparselt_half* const hGPU[],
-                               int64_t                       batch_count,
-                               double                        abs_error)
+inline void near_check_general(int64_t                      M,
+                               int64_t                      N,
+                               int64_t                      lda,
+                               const hipsparseLtHalf* const hCPU[],
+                               const hipsparseLtHalf* const hGPU[],
+                               int64_t                      batch_count,
+                               double                       abs_error)
 {
     NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_HALF);
 }
 
 template <>
-inline void
-    near_check_general<rocsparselt_bfloat16, float>(int64_t                           M,
-                                                    int64_t                           N,
-                                                    int64_t                           lda,
-                                                    const float* const                hCPU[],
-                                                    const rocsparselt_bfloat16* const hGPU[],
-                                                    int64_t                           batch_count,
-                                                    double                            abs_error)
+inline void near_check_general<hipsparseLtBfloat16, float>(int64_t                          M,
+                                                           int64_t                          N,
+                                                           int64_t                          lda,
+                                                           const float* const               hCPU[],
+                                                           const hipsparseLtBfloat16* const hGPU[],
+                                                           int64_t batch_count,
+                                                           double  abs_error)
 {
     NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_BF16);
 }

@@ -1,9 +1,30 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #include "utility.hpp"
-#include "../../library/src/include/handle.h"
 #include "d_vector.hpp"
 #include <chrono>
 #include <cstdlib>
@@ -26,7 +47,7 @@ namespace std
 
 /* ============================================================================================ */
 // Return path of this executable
-std::string rocsparselt_exepath()
+std::string hipsparselt_exepath()
 {
     std::string pathstr;
     char*       path = realpath("/proc/self/exe", 0);
@@ -45,9 +66,9 @@ std::string rocsparselt_exepath()
 
 /* ============================================================================================ */
 // Temp directory rooted random path
-std::string rocsparselt_tempname()
+std::string hipsparselt_tempname()
 {
-    char tmp[] = "/tmp/rocsparselt-XXXXXX";
+    char tmp[] = "/tmp/hipsparselt-XXXXXX";
     int  fd    = mkostemp(tmp, O_CLOEXEC);
     if(fd == -1)
     {
@@ -119,33 +140,33 @@ double get_time_us_no_sync(void)
 /*  device query and print out their ID and name; return number of compute-capable devices. */
 int64_t query_device_property()
 {
-    int                device_count;
-    rocsparselt_status status = (rocsparselt_status)hipGetDeviceCount(&device_count);
-    if(status != rocsparselt_status_success)
+    int                 device_count;
+    hipsparseLtStatus_t status = (hipsparseLtStatus_t)hipGetDeviceCount(&device_count);
+    if(status != HIPSPARSELT_STATUS_SUCCESS)
     {
-        rocsparselt_cerr << "Query device error: cannot get device count" << std::endl;
+        hipsparselt_cerr << "Query device error: cannot get device count" << std::endl;
         return -1;
     }
     else
     {
-        rocsparselt_cout << "Query device success: there are " << device_count << " devices"
+        hipsparselt_cout << "Query device success: there are " << device_count << " devices"
                          << std::endl;
     }
 
     for(int i = 0;; i++)
     {
-        rocsparselt_cout
+        hipsparselt_cout
             << "-------------------------------------------------------------------------------"
             << std::endl;
 
         if(i >= device_count)
             break;
 
-        hipDeviceProp_t    props;
-        rocsparselt_status status = (rocsparselt_status)hipGetDeviceProperties(&props, i);
-        if(status != rocsparselt_status_success)
+        hipDeviceProp_t     props;
+        hipsparseLtStatus_t status = (hipsparseLtStatus_t)hipGetDeviceProperties(&props, i);
+        if(status != HIPSPARSELT_STATUS_SUCCESS)
         {
-            rocsparselt_cerr << "Query device error: cannot get device ID " << i << "'s property"
+            hipsparselt_cerr << "Query device error: cannot get device ID " << i << "'s property"
                              << std::endl;
         }
         else
@@ -170,7 +191,7 @@ int64_t query_device_property()
                 props.sharedMemPerBlock / 1e3,
                 props.maxThreadsPerBlock,
                 props.warpSize);
-            rocsparselt_cout << buf;
+            hipsparselt_cout << buf;
         }
     }
 
@@ -180,10 +201,10 @@ int64_t query_device_property()
 /*  set current device to device_id */
 void set_device(int64_t device_id)
 {
-    rocsparselt_status status = (rocsparselt_status)hipSetDevice(device_id);
-    if(status != rocsparselt_status_success)
+    hipsparseLtStatus_t status = (hipsparseLtStatus_t)hipSetDevice(device_id);
+    if(status != HIPSPARSELT_STATUS_SUCCESS)
     {
-        rocsparselt_cerr << "Set device error: cannot set device ID " << device_id
+        hipsparselt_cerr << "Set device error: cannot set device ID " << device_id
                          << ", there may not be such device ID" << std::endl;
     }
 }
@@ -192,11 +213,11 @@ void set_device(int64_t device_id)
  * local handles *
  *****************/
 
-rocsparselt_local_handle::rocsparselt_local_handle()
+hipsparselt_local_handle::hipsparselt_local_handle()
 {
-    auto status = rocsparselt_init(&m_handle);
-    if(status != rocsparselt_status_success)
-        throw std::runtime_error(rocsparselt_status_to_string(status));
+    auto status = hipsparseLtInit(&m_handle);
+    if(status != HIPSPARSELT_STATUS_SUCCESS)
+        throw std::runtime_error(hipsparselt_status_to_string(status));
 
 #ifdef GOOGLE_TEST
     if(t_set_stream_callback)
@@ -207,8 +228,8 @@ rocsparselt_local_handle::rocsparselt_local_handle()
 #endif
 }
 
-rocsparselt_local_handle::rocsparselt_local_handle(const Arguments& arg)
-    : rocsparselt_local_handle()
+hipsparselt_local_handle::hipsparselt_local_handle(const Arguments& arg)
+    : hipsparselt_local_handle()
 {
 
     // If the test specifies user allocated workspace, allocate and use it
@@ -222,9 +243,9 @@ rocsparselt_local_handle::rocsparselt_local_handle(const Arguments& arg)
     d_vector_set_pad_length(arg.pad);
 }
 
-rocsparselt_local_handle::~rocsparselt_local_handle()
+hipsparselt_local_handle::~hipsparselt_local_handle()
 {
     if(m_memory)
         (hipFree)(m_memory);
-    rocsparselt_destroy(&m_handle);
+    hipsparseLtDestroy(&m_handle);
 }

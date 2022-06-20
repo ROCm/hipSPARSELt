@@ -1,23 +1,45 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #pragma once
 
-#include "rocsparselt.h"
-#include "rocsparselt_arguments.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_arguments.hpp"
 
 template <typename T>
-constexpr auto rocsparselt_type2datatype()
+constexpr auto hipsparselt_type2datatype()
 {
-    if(std::is_same<T, rocsparselt_half>{})
-        return rocsparselt_datatype_f16_r;
-    if(std::is_same<T, rocsparselt_bfloat16>{})
-        return rocsparselt_datatype_bf16_r;
+    if(std::is_same<T, hipsparseLtHalf>{})
+        return HIPSPARSELT_R_16F;
+    if(std::is_same<T, hipsparseLtBfloat16>{})
+        return HIPSPARSELT_R_16BF;
     if(std::is_same<T, char>{})
-        return rocsparselt_datatype_i8_r;
+        return HIPSPARSELT_R_8I;
 
-    return rocsparselt_datatype_f16_r; // testing purposes we default to f32 ex
+    return HIPSPARSELT_R_16F; // testing purposes we default to f32 ex
 }
 
 // ----------------------------------------------------------------------------
@@ -33,14 +55,14 @@ constexpr auto rocsparselt_type2datatype()
 // cases where the types are uniform, in which case one template type argument
 // is passed to TEST, and the rest are assumed to match the first.
 template <template <typename...> class TEST>
-auto rocsparselt_simple_dispatch(const Arguments& arg)
+auto hipsparselt_simple_dispatch(const Arguments& arg)
 {
     switch(arg.a_type)
     {
-    case rocsparselt_datatype_f16_r:
-        return TEST<rocsparselt_half>{}(arg);
-    case rocsparselt_datatype_bf16_r:
-        return TEST<rocsparselt_bfloat16>{}(arg);
+    case HIPSPARSELT_R_16F:
+        return TEST<hipsparseLtHalf>{}(arg);
+    case HIPSPARSELT_R_16BF:
+        return TEST<hipsparseLtBfloat16>{}(arg);
     default:
         return TEST<void>{}(arg);
     }
@@ -48,22 +70,22 @@ auto rocsparselt_simple_dispatch(const Arguments& arg)
 
 // gemm functions
 template <template <typename...> class TEST>
-auto rocsparselt_spmm_dispatch(const Arguments& arg)
+auto hipsparselt_spmm_dispatch(const Arguments& arg)
 {
     const auto Ti = arg.a_type, To = arg.c_type;
     auto       Tc = arg.compute_type;
 
     if(arg.b_type == Ti && arg.d_type == To)
     {
-        if(Ti == To && To == rocsparselt_datatype_f16_r && Tc == rocsparselt_compute_f32)
+        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSELT_COMPUTE_32F)
         {
-            return TEST<rocsparselt_half, rocsparselt_half, float>{}(arg);
+            return TEST<hipsparseLtHalf, hipsparseLtHalf, float>{}(arg);
         }
-        else if(Ti == To && To == rocsparselt_datatype_bf16_r && Tc == rocsparselt_compute_f32)
+        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSELT_COMPUTE_32F)
         {
-            return TEST<rocsparselt_bfloat16, rocsparselt_bfloat16, float>{}(arg);
+            return TEST<hipsparseLtBfloat16, hipsparseLtBfloat16, float>{}(arg);
         }
-        else if(Ti == To && To == rocsparselt_datatype_i8_r && Tc == rocsparselt_compute_i32)
+        else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSELT_COMPUTE_32I)
         {
             return TEST<int8_t, int8_t, int32_t>{}(arg);
         }

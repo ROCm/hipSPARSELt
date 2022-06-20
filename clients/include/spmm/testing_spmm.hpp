@@ -1,20 +1,42 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #pragma once
 
 #include "cblas_interface.hpp"
 #include "flops.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_datatype2string.hpp"
+#include "hipsparselt_init.hpp"
+#include "hipsparselt_math.hpp"
+#include "hipsparselt_random.hpp"
+#include "hipsparselt_test.hpp"
+#include "hipsparselt_vector.hpp"
 #include "near.hpp"
 #include "norm.hpp"
-#include "rocsparselt.h"
-#include "rocsparselt_datatype2string.hpp"
-#include "rocsparselt_init.hpp"
-#include "rocsparselt_math.hpp"
-#include "rocsparselt_random.hpp"
-#include "rocsparselt_test.hpp"
-#include "rocsparselt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
@@ -106,8 +128,8 @@ void testing_spmm_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const rocsparselt_operation transA = rocsparselt_operation_none;
-    const rocsparselt_operation transB = rocsparselt_operation_none;
+    const hipsparseLtOperation_t transA = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+    const hipsparseLtOperation_t transB = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
 
     // allocate memory on device
     device_vector<Ti> dA(safe_size / 2);
@@ -119,80 +141,80 @@ void testing_spmm_bad_arg(const Arguments& arg)
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
     CHECK_DEVICE_ALLOCATION(dD.memcheck());
 
-    rocsparselt_local_handle    handle{arg};
-    rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
+    hipsparselt_local_handle    handle{arg};
+    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
                                      M,
                                      K,
                                      lda,
                                      arg.a_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matB(
-        rocsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
-    rocsparselt_local_matmul_descr matmul(
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matB(
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
-    rocsparselt_local_matmul_alg_selection alg_sel(handle, matmul, rocsparselt_matmul_alg_default);
+    hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
     size_t                        workspace_size = 0;
-    rocsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
     void* workspace = nullptr;
     float alpha = 1.0, beta = 0.0;
 
     hipStream_t stream = nullptr;
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(nullptr, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(nullptr, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, nullptr, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, nullptr, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, nullptr, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparselt_status_invalid_pointer);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, &alpha, nullptr, dB, &beta, dC, dD, workspace, &stream, 1),
-        rocsparselt_status_invalid_pointer);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, &alpha, dA, nullptr, &beta, dC, dD, workspace, &stream, 1),
-        rocsparselt_status_invalid_pointer);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, &alpha, dA, dB, nullptr, dC, dD, workspace, &stream, 1),
-        rocsparselt_status_invalid_pointer);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, nullptr, dD, workspace, &stream, 1),
-        rocsparselt_status_invalid_pointer);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, dC, nullptr, workspace, &stream, 1),
-        rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, nullptr, dA, dB, &beta, dC, dD, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, &alpha, nullptr, dB, &beta, dC, dD, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, &alpha, dA, nullptr, &beta, dC, dD, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, &alpha, dA, dB, nullptr, dC, dD, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, nullptr, dD, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, dC, nullptr, workspace, &stream, 1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, -1),
-        rocsparselt_status_invalid_value);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, nullptr, 1),
-        rocsparselt_status_invalid_value);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, -1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, nullptr, 1),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 
     workspace_size = 1;
-    rocsparselt_local_matmul_plan plan2(handle, matmul, alg_sel, workspace_size);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_matmul(handle, plan2, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 0),
-        rocsparselt_status_invalid_value);
+    hipsparselt_local_matmul_plan plan2(handle, matmul, alg_sel, workspace_size);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtMatmul(handle, plan2, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 0),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 }
 
 template <typename Ti,
           typename To,
           typename Tc,
-          rocsparselt_batch_type btype = rocsparselt_batch_type::none>
+          hipsparselt_batch_type btype = hipsparselt_batch_type::none>
 void testing_spmm(const Arguments& arg)
 {
-    rocsparselt_operation transA = char2rocsparselt_operation(arg.transA);
-    rocsparselt_operation transB = char2rocsparselt_operation(arg.transB);
+    hipsparseLtOperation_t transA = char_to_hipsparselt_operation(arg.transA);
+    hipsparseLtOperation_t transB = char_to_hipsparselt_operation(arg.transB);
 
     using Talpha = float;
 
@@ -208,219 +230,219 @@ void testing_spmm(const Arguments& arg)
 
     double gpu_time_used, cpu_time_used;
     gpu_time_used = cpu_time_used              = 0.0;
-    double                   rocsparselt_error = 0.0;
+    double                   hipsparselt_error = 0.0;
     bool                     HMM               = arg.HMM;
-    rocsparselt_local_handle handle{arg};
+    hipsparselt_local_handle handle{arg};
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
-    int64_t A_row = transA == rocsparselt_operation_none ? M : K;
-    int64_t A_col = transA == rocsparselt_operation_none ? K : M;
-    int64_t B_row = transB == rocsparselt_operation_none ? K : N;
-    int64_t B_col = transB == rocsparselt_operation_none ? N : K;
+    int64_t A_row = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? M : K;
+    int64_t A_col = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : M;
+    int64_t B_row = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : N;
+    int64_t B_col = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? N : K;
 
-    int64_t stride_1_a = transA == rocsparselt_operation_none ? 1 : lda;
-    int64_t stride_2_a = transA == rocsparselt_operation_none ? lda : 1;
+    int64_t stride_1_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? 1 : lda;
+    int64_t stride_2_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? lda : 1;
 
-    constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
-    constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
+    constexpr bool do_batched         = (btype == hipsparselt_batch_type::batched);
+    constexpr bool do_strided_batched = (btype == hipsparselt_batch_type::strided_batched);
     int            num_batches        = (do_batched || do_strided_batched ? arg.batch_count : 1);
     int64_t        stride_a           = do_strided_batched ? arg.stride_a : lda * A_col;
     int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
     int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * M;
     int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * M;
 
-    rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
+    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
                                      A_row,
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matB(rocsparselt_matrix_type_dense,
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matB(hipsparselt_matrix_type_dense,
                                      handle,
                                      B_row,
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
 
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
     bool invalid_size_c = ldc < M;
     if(invalid_size_a)
     {
-        EXPECT_ROCSPARSELT_STATUS(matA.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matA.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_ROCSPARSELT_STATUS(matB.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matB.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_c)
     {
-        EXPECT_ROCSPARSELT_STATUS(matC.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matC.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
 
     if(do_batched || do_strided_batched)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matA, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matB, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matC, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matD, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matA, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matB, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matC, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matD, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
 
     if(do_strided_batched)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(int64_t)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(int64_t)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(int64_t)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(int64_t)),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(int64_t)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(int64_t)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(int64_t)),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
 
-    rocsparselt_local_matmul_descr matmul(
+    hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
     int activation_on = 1;
     switch(arg.activation_type)
     {
-    case rocsparselt_activation_type::clippedrelu:
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_relu_upperbound,
-                                                   &arg.activation_arg2,
-                                                   sizeof(float)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_relu_threshold,
-                                                   &arg.activation_arg1,
-                                                   sizeof(float)),
-            rocsparselt_status_success);
-    case rocsparselt_activation_type::relu:
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_relu,
-                                                   &activation_on,
-                                                   sizeof(activation_on)),
-            rocsparselt_status_success);
+    case hipsparselt_activation_type::clippedrelu:
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_RELU_UPPERBOUND,
+                                              &arg.activation_arg2,
+                                              sizeof(float)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_RELU_THRESHOLD,
+                                              &arg.activation_arg1,
+                                              sizeof(float)),
+            HIPSPARSELT_STATUS_SUCCESS);
+    case hipsparselt_activation_type::relu:
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_RELU,
+                                              &activation_on,
+                                              sizeof(activation_on)),
+            HIPSPARSELT_STATUS_SUCCESS);
         break;
-    case rocsparselt_activation_type::gelu:
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_gelu,
-                                                   &activation_on,
-                                                   sizeof(activation_on)),
-            rocsparselt_status_success);
+    case hipsparselt_activation_type::gelu:
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_GELU,
+                                              &activation_on,
+                                              sizeof(activation_on)),
+            HIPSPARSELT_STATUS_SUCCESS);
         break;
-    case rocsparselt_activation_type::abs:
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_abs,
-                                                   &activation_on,
-                                                   sizeof(activation_on)),
-            rocsparselt_status_success);
+    case hipsparselt_activation_type::abs:
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_ABS,
+                                              &activation_on,
+                                              sizeof(activation_on)),
+            HIPSPARSELT_STATUS_SUCCESS);
         break;
-    case rocsparselt_activation_type::leakyrelu:
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_leakyrelu,
-                                                   &activation_on,
-                                                   sizeof(activation_on)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_leakyrelu_alpha,
-                                                   &arg.activation_arg1,
-                                                   sizeof(float)),
-            rocsparselt_status_success);
+    case hipsparselt_activation_type::leakyrelu:
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_LEAKYRELU,
+                                              &activation_on,
+                                              sizeof(activation_on)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_LEAKYRELU_ALPHA,
+                                              &arg.activation_arg1,
+                                              sizeof(float)),
+            HIPSPARSELT_STATUS_SUCCESS);
         break;
-    case rocsparselt_activation_type::sigmoid:
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_sigmoid,
-                                                   &activation_on,
-                                                   sizeof(activation_on)),
-            rocsparselt_status_success);
+    case hipsparselt_activation_type::sigmoid:
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_SIGMOID,
+                                              &activation_on,
+                                              sizeof(activation_on)),
+            HIPSPARSELT_STATUS_SUCCESS);
         break;
-    case rocsparselt_activation_type::tanh:
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_tanh,
-                                                   &activation_on,
-                                                   sizeof(activation_on)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_tanh_alpha,
-                                                   &arg.activation_arg1,
-                                                   sizeof(float)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul_descr_set_attribute(handle,
-                                                   matmul,
-                                                   rocsparselt_matmul_activation_tanh_beta,
-                                                   &arg.activation_arg2,
-                                                   sizeof(float)),
-            rocsparselt_status_success);
+    case hipsparselt_activation_type::tanh:
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_TANH,
+                                              &activation_on,
+                                              sizeof(activation_on)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_TANH_ALPHA,
+                                              &arg.activation_arg1,
+                                              sizeof(float)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ACTIVATION_TANH_BETA,
+                                              &arg.activation_arg2,
+                                              sizeof(float)),
+            HIPSPARSELT_STATUS_SUCCESS);
         break;
     default:
         activation_on = 0;
         break;
     }
 
-    rocsparselt_local_matmul_alg_selection alg_sel(handle, matmul, rocsparselt_matmul_alg_default);
+    hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
     size_t workspace_size, compressed_size;
-    rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size);
+    hipsparseLtMatmulGetWorkspace(handle, alg_sel, &workspace_size);
 
-    rocsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
-                              rocsparselt_status_success);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
+                              HIPSPARSELT_STATUS_SUCCESS);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
@@ -454,52 +476,52 @@ void testing_spmm(const Arguments& arg)
     host_vector<Talpha> hD_gold_act(size_D_copy);
     host_vector<To>     hD_1(size_D_copy);
 
-    rocsparselt_seedrand();
+    hipsparselt_seedrand();
 
     // Initial Data on CPU
     if(arg.alpha_isnan<Tc>())
     {
-        rocsparselt_init_nan<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-        rocsparselt_init_nan<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
+        hipsparselt_init_nan<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_nan<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
     }
     else
     {
-        if(arg.initialization == rocsparselt_initialization::rand_int)
+        if(arg.initialization == hipsparselt_initialization::rand_int)
         {
-            rocsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-            rocsparselt_init_alternating_sign<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
+            hipsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+            hipsparselt_init_alternating_sign<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
         }
-        else if(arg.initialization == rocsparselt_initialization::trig_float)
+        else if(arg.initialization == hipsparselt_initialization::trig_float)
         {
-            rocsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-            rocsparselt_init_cos<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
+            hipsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+            hipsparselt_init_cos<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
         }
-        else if(arg.initialization == rocsparselt_initialization::hpl)
+        else if(arg.initialization == hipsparselt_initialization::hpl)
         {
-            rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-            rocsparselt_init_hpl<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
+            hipsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+            hipsparselt_init_hpl<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
         }
-        else if(arg.initialization == rocsparselt_initialization::special)
+        else if(arg.initialization == hipsparselt_initialization::special)
         {
-            rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, num_batches);
-            rocsparselt_init_alt_impl_small<Ti>(hB, B_row, B_col, ldb, num_batches);
+            hipsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, num_batches);
+            hipsparselt_init_alt_impl_small<Ti>(hB, B_row, B_col, ldb, num_batches);
         }
     }
 
     if(arg.beta_isnan<Tc>())
     {
-        rocsparselt_init_nan<To>(hC, M, N, ldc, stride_c, num_batches);
+        hipsparselt_init_nan<To>(hC, M, N, ldc, stride_c, num_batches);
     }
     else
     {
-        if(arg.initialization == rocsparselt_initialization::rand_int)
-            rocsparselt_init<To>(hC, M, N, ldc, stride_c, num_batches);
-        else if(arg.initialization == rocsparselt_initialization::trig_float)
-            rocsparselt_init_sin<To>(hC, M, N, ldc, stride_c, num_batches);
-        else if(arg.initialization == rocsparselt_initialization::hpl)
-            rocsparselt_init_hpl<To>(hC, M, N, ldc, stride_c, num_batches);
-        else if(arg.initialization == rocsparselt_initialization::special)
-            rocsparselt_init<To>(hC, M, N, ldc, stride_c, num_batches);
+        if(arg.initialization == hipsparselt_initialization::rand_int)
+            hipsparselt_init<To>(hC, M, N, ldc, stride_c, num_batches);
+        else if(arg.initialization == hipsparselt_initialization::trig_float)
+            hipsparselt_init_sin<To>(hC, M, N, ldc, stride_c, num_batches);
+        else if(arg.initialization == hipsparselt_initialization::hpl)
+            hipsparselt_init_hpl<To>(hC, M, N, ldc, stride_c, num_batches);
+        else if(arg.initialization == hipsparselt_initialization::special)
+            hipsparselt_init<To>(hC, M, N, ldc, stride_c, num_batches);
     }
 
     // copy data from CPU to device
@@ -520,21 +542,21 @@ void testing_spmm(const Arguments& arg)
             std::copy(hC.begin(), hC.end(), hD_gold.begin());
         }
     }
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_prune(handle, matmul, dA, dA, rocsparselt_prune_smfmac_strip, stream),
-        rocsparselt_status_success);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMAPrune(handle, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSELT_STATUS_SUCCESS);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
-                              rocsparselt_status_success);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
+                              HIPSPARSELT_STATUS_SUCCESS);
 
     if(arg.unit_check || arg.norm_check)
     {
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_matmul(
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatmul(
                 handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
-            rocsparselt_status_success);
+            HIPSPARSELT_STATUS_SUCCESS);
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
         {
@@ -564,25 +586,25 @@ void testing_spmm(const Arguments& arg)
                 auto pos = stride_d * i;
                 switch(arg.activation_type)
                 {
-                case rocsparselt_activation_type::clippedrelu:
+                case hipsparselt_activation_type::clippedrelu:
                     activation(activation_param, ::_clippedrelu);
                     break;
-                case rocsparselt_activation_type::gelu:
+                case hipsparselt_activation_type::gelu:
                     activation(activation_param, ::_gelu);
                     break;
-                case rocsparselt_activation_type::relu:
+                case hipsparselt_activation_type::relu:
                     activation(activation_param, ::_relu);
                     break;
-                case rocsparselt_activation_type::abs:
+                case hipsparselt_activation_type::abs:
                     activation(activation_param, ::_abs);
                     break;
-                case rocsparselt_activation_type::leakyrelu:
+                case hipsparselt_activation_type::leakyrelu:
                     activation(activation_param, ::_leakyrelu);
                     break;
-                case rocsparselt_activation_type::sigmoid:
+                case hipsparselt_activation_type::sigmoid:
                     activation(activation_param, ::_sigmoid);
                     break;
-                case rocsparselt_activation_type::tanh:
+                case hipsparselt_activation_type::tanh:
                     activation(activation_param, ::_tanh);
                     break;
                 default:
@@ -623,7 +645,7 @@ void testing_spmm(const Arguments& arg)
 
         if(arg.norm_check)
         {
-            rocsparselt_error = std::abs(
+            hipsparselt_error = std::abs(
                 norm_check_general<To>('F', M, N, ldd, stride_d, hD_gold, hD_1, num_batches));
         }
     }
@@ -634,59 +656,59 @@ void testing_spmm(const Arguments& arg)
         int number_hot_calls  = arg.iters;
         for(int i = 0; i < number_cold_calls; i++)
         {
-            EXPECT_ROCSPARSELT_STATUS(rocsparselt_matmul(handle,
-                                                         plan,
-                                                         &h_alpha,
-                                                         dA_compressd,
-                                                         dB,
-                                                         &h_beta,
-                                                         dC,
-                                                         dD,
-                                                         dWorkspace,
-                                                         &stream,
-                                                         1),
-                                      rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(hipsparseLtMatmul(handle,
+                                                        plan,
+                                                        &h_alpha,
+                                                        dA_compressd,
+                                                        dB,
+                                                        &h_beta,
+                                                        dC,
+                                                        dD,
+                                                        dWorkspace,
+                                                        &stream,
+                                                        1),
+                                      HIPSPARSELT_STATUS_SUCCESS);
         }
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
         {
-            EXPECT_ROCSPARSELT_STATUS(rocsparselt_matmul(handle,
-                                                         plan,
-                                                         &h_alpha,
-                                                         dA_compressd,
-                                                         dB,
-                                                         &h_beta,
-                                                         dC,
-                                                         dD,
-                                                         dWorkspace,
-                                                         &stream,
-                                                         1),
-                                      rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(hipsparseLtMatmul(handle,
+                                                        plan,
+                                                        &h_alpha,
+                                                        dA_compressd,
+                                                        dB,
+                                                        &h_beta,
+                                                        dC,
+                                                        dD,
+                                                        dWorkspace,
+                                                        &stream,
+                                                        1),
+                                      HIPSPARSELT_STATUS_SUCCESS);
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
         auto flops    = gemm_gflop_count<float>(M, N, K);
         switch(arg.activation_type)
         {
-        case rocsparselt_activation_type::relu:
+        case hipsparselt_activation_type::relu:
             flops += relu_gflop_count<float>(M, N);
             break;
-        case rocsparselt_activation_type::clippedrelu:
+        case hipsparselt_activation_type::clippedrelu:
             flops += clippedrelu_gflop_count<float>(M, N);
             break;
-        case rocsparselt_activation_type::gelu:
+        case hipsparselt_activation_type::gelu:
             flops += gelu_gflop_count<float>(M, N);
             break;
-        case rocsparselt_activation_type::abs:
+        case hipsparselt_activation_type::abs:
             flops += abs_gflop_count<float>(M, N);
             break;
-        case rocsparselt_activation_type::leakyrelu:
+        case hipsparselt_activation_type::leakyrelu:
             flops += leakyrelu_gflop_count<float>(M, N);
             break;
-        case rocsparselt_activation_type::sigmoid:
+        case hipsparselt_activation_type::sigmoid:
             flops += sigmoid_gflop_count<float>(M, N);
             break;
-        case rocsparselt_activation_type::tanh:
+        case hipsparselt_activation_type::tanh:
             flops += tanh_gflop_count<float>(M, N);
             break;
         default:
@@ -698,20 +720,20 @@ void testing_spmm(const Arguments& arg)
 #define argument_param argument_param_nb, e_batch_count
 
         if(do_batched || do_strided_batched)
-            ArgumentModel<argument_param>{}.log_args<float>(rocsparselt_cout,
+            ArgumentModel<argument_param>{}.log_args<float>(hipsparselt_cout,
                                                             arg,
                                                             gpu_time_used,
                                                             flops,
                                                             ArgumentLogging::NA_value,
                                                             cpu_time_used,
-                                                            rocsparselt_error);
+                                                            hipsparselt_error);
         else
-            ArgumentModel<argument_param_nb>{}.log_args<float>(rocsparselt_cout,
+            ArgumentModel<argument_param_nb>{}.log_args<float>(hipsparselt_cout,
                                                                arg,
                                                                gpu_time_used,
                                                                flops,
                                                                ArgumentLogging::NA_value,
                                                                cpu_time_used,
-                                                               rocsparselt_error);
+                                                               hipsparselt_error);
     }
 }

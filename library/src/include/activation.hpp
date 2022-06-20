@@ -25,11 +25,11 @@
  *******************************************************************************/
 
 #pragma once
-
+#include "hipsparselt-export.h"
 #include <iostream>
 #include <string>
 
-enum class rocsparselt_activation_type
+enum class hipsparselt_activation_type
 {
     none = 0,
     abs,
@@ -41,48 +41,50 @@ enum class rocsparselt_activation_type
     tanh,
     all,
     exp,
-    count
 };
 
-constexpr const rocsparselt_activation_type
-    string2rocsparselt_activation_type(const std::string& value)
+HIPSPARSELT_EXPORT
+constexpr const hipsparselt_activation_type
+    string_to_hipsparselt_activation_type(const std::string& value)
 {
-    return value == "none"          ? rocsparselt_activation_type::none
-           : value == "abs"         ? rocsparselt_activation_type::abs
-           : value == "clippedrelu" ? rocsparselt_activation_type::clippedrelu
-           : value == "gelu"        ? rocsparselt_activation_type::gelu
-           : value == "leakyrelu"   ? rocsparselt_activation_type::leakyrelu
-           : value == "relu"        ? rocsparselt_activation_type::relu
-           : value == "sigmoid"     ? rocsparselt_activation_type::sigmoid
-           : value == "tanh"        ? rocsparselt_activation_type::tanh
-           : value == "all"         ? rocsparselt_activation_type::all
-           : value == "exp"         ? rocsparselt_activation_type::exp
-                                    : static_cast<rocsparselt_activation_type>(-1);
+    return value == "none"          ? hipsparselt_activation_type::none
+           : value == "abs"         ? hipsparselt_activation_type::abs
+           : value == "clippedrelu" ? hipsparselt_activation_type::clippedrelu
+           : value == "gelu"        ? hipsparselt_activation_type::gelu
+           : value == "leakyrelu"   ? hipsparselt_activation_type::leakyrelu
+           : value == "relu"        ? hipsparselt_activation_type::relu
+           : value == "sigmoid"     ? hipsparselt_activation_type::sigmoid
+           : value == "tanh"        ? hipsparselt_activation_type::tanh
+           : value == "all"         ? hipsparselt_activation_type::all
+           : value == "exp"         ? hipsparselt_activation_type::exp
+                                    : static_cast<hipsparselt_activation_type>(-1);
 }
 
-constexpr const char* rocsparselt_activation_type_string(rocsparselt_activation_type type)
+// Convert hipsparselt_activation_type to string
+HIPSPARSELT_EXPORT
+constexpr const char* hipsparselt_activation_type_to_string(hipsparselt_activation_type type)
 {
     switch(type)
     {
-    case rocsparselt_activation_type::abs:
+    case hipsparselt_activation_type::abs:
         return "abs";
-    case rocsparselt_activation_type::clippedrelu:
+    case hipsparselt_activation_type::clippedrelu:
         return "clippedrelu";
-    case rocsparselt_activation_type::exp:
+    case hipsparselt_activation_type::exp:
         return "exp";
-    case rocsparselt_activation_type::gelu:
+    case hipsparselt_activation_type::gelu:
         return "gelu";
-    case rocsparselt_activation_type::leakyrelu:
+    case hipsparselt_activation_type::leakyrelu:
         return "leakyrelu";
-    case rocsparselt_activation_type::relu:
+    case hipsparselt_activation_type::relu:
         return "relu";
-    case rocsparselt_activation_type::sigmoid:
+    case hipsparselt_activation_type::sigmoid:
         return "sigmoid";
-    case rocsparselt_activation_type::tanh:
+    case hipsparselt_activation_type::tanh:
         return "tanh";
-    case rocsparselt_activation_type::all:
+    case hipsparselt_activation_type::all:
         return "all";
-    case rocsparselt_activation_type::none:
+    case hipsparselt_activation_type::none:
         return "none";
     default:
         return "invalid";

@@ -1,13 +1,35 @@
-/* ************************************************************************
- * Copyright (c) 2016-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #include "program_options.hpp"
 
-#include "rocsparselt.h"
-#include "rocsparselt_data.hpp"
-#include "rocsparselt_datatype2string.hpp"
-#include "rocsparselt_parse_data.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_data.hpp"
+#include "hipsparselt_datatype2string.hpp"
+#include "hipsparselt_parse_data.hpp"
 #include "type_dispatch.hpp"
 #include "utility.hpp"
 #include <algorithm>
@@ -49,7 +71,7 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
     auto match = map.find(arg.function);
     if(match == map.end())
         throw std::invalid_argument("Invalid combination --function "s + arg.function
-                                    + " --a_type "s + rocsparselt_datatype2string(arg.a_type)
+                                    + " --a_type "s + hipsparselt_datatype_to_string(arg.a_type)
                                     + msg);
     match->second(arg);
 }
@@ -57,7 +79,7 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
 // Template to dispatch testing_gemm_strided_batched_ex for performance tests
 // the test is marked invalid when (Ti, To, Tc) not in (H/H/S, B/B/S, I8/I8/32)
 template <typename Ti, typename To = Ti, typename Tc = To, typename = void>
-struct perf_sparse : rocsparselt_test_invalid
+struct perf_sparse : hipsparselt_test_invalid
 {
 };
 
@@ -68,26 +90,26 @@ struct perf_sparse<
     Tc,
     std::enable_if_t<
         (std::is_same<Ti, To>{}
-         && (std::is_same<Ti, rocsparselt_half>{} || std::is_same<Ti, rocsparselt_bfloat16>{})
+         && (std::is_same<Ti, hipsparseLtHalf>{} || std::is_same<Ti, hipsparseLtBfloat16>{})
          && std::is_same<Tc, float>{})
         || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})>>
-    : rocsparselt_test_valid
+    : hipsparselt_test_valid
 {
     void operator()(const Arguments& arg)
     {
         static const func_map map = {
             {"prune", testing_prune<Ti, To, Tc>},
-            {"prune_batched", testing_prune<Ti, To, Tc, rocsparselt_batch_type::batched>},
+            {"prune_batched", testing_prune<Ti, To, Tc, hipsparselt_batch_type::batched>},
             {"prune_strided_batched",
-             testing_prune<Ti, To, Tc, rocsparselt_batch_type::strided_batched>},
+             testing_prune<Ti, To, Tc, hipsparselt_batch_type::strided_batched>},
             {"compress", testing_compress<Ti, To, Tc>},
-            {"compress_batched", testing_compress<Ti, To, Tc, rocsparselt_batch_type::batched>},
+            {"compress_batched", testing_compress<Ti, To, Tc, hipsparselt_batch_type::batched>},
             {"compress_strided_batched",
-             testing_compress<Ti, To, Tc, rocsparselt_batch_type::strided_batched>},
+             testing_compress<Ti, To, Tc, hipsparselt_batch_type::strided_batched>},
             {"spmm", testing_spmm<Ti, To, Tc>},
-            {"spmm_batched", testing_spmm<Ti, To, Tc, rocsparselt_batch_type::batched>},
+            {"spmm_batched", testing_spmm<Ti, To, Tc, hipsparselt_batch_type::batched>},
             {"spmm_strided_batched",
-             testing_spmm<Ti, To, Tc, rocsparselt_batch_type::strided_batched>},
+             testing_spmm<Ti, To, Tc, hipsparselt_batch_type::strided_batched>},
         };
         run_function(map, arg);
     }
@@ -95,9 +117,9 @@ struct perf_sparse<
 
 int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, bool yaml = false)
 {
-    static int runOnce = (rocsparselt_initialize(), 0); // Initialize rocSPARSELt
+    static int runOnce = (hipsparseLtInitialize(), 0); // Initialize hipSPARSELt
 
-    rocsparselt_cout << std::setiosflags(std::ios::fixed)
+    hipsparselt_cout << std::setiosflags(std::ios::fixed)
                      << std::setprecision(7); // Set precision to 7 digits
 
     // disable unit_check in client benchmark, it is only used in gtest unit test
@@ -131,25 +153,25 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     int64_t min_ldd = arg.M;
     if(arg.lda < min_lda)
     {
-        rocsparselt_cout << "rocsparselt-bench INFO: lda < min_lda, set lda = " << min_lda
+        hipsparselt_cout << "hipsparselt-bench INFO: lda < min_lda, set lda = " << min_lda
                          << std::endl;
         arg.lda = min_lda;
     }
     if(arg.ldb < min_ldb)
     {
-        rocsparselt_cout << "rocsparselt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb
+        hipsparselt_cout << "hipsparselt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb
                          << std::endl;
         arg.ldb = min_ldb;
     }
     if(arg.ldc < min_ldc)
     {
-        rocsparselt_cout << "rocsparselt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc
+        hipsparselt_cout << "hipsparselt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc
                          << std::endl;
         arg.ldc = min_ldc;
     }
     if(arg.ldd < min_ldd)
     {
-        rocsparselt_cout << "rocsparselt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc
+        hipsparselt_cout << "hipsparselt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc
                          << std::endl;
         arg.ldd = min_ldd;
     }
@@ -157,25 +179,25 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     int64_t min_stride_d = arg.ldd * arg.N;
     if(!any_stride && arg.stride_c < min_stride_c)
     {
-        rocsparselt_cout << "rocsparselt-bench INFO: stride_c < min_stride_c, set stride_c = "
+        hipsparselt_cout << "hipsparselt-bench INFO: stride_c < min_stride_c, set stride_c = "
                          << min_stride_c << std::endl;
         arg.stride_c = min_stride_c;
     }
     if(!any_stride && arg.stride_d < min_stride_d)
     {
-        rocsparselt_cout << "rocsparselt-bench INFO: stride_d < min_stride_d, set stride_d = "
+        hipsparselt_cout << "hipsparselt-bench INFO: stride_d < min_stride_d, set stride_d = "
                          << min_stride_d << std::endl;
         arg.stride_d = min_stride_d;
     }
 
-    rocsparselt_spmm_dispatch<perf_sparse>(arg);
+    hipsparselt_spmm_dispatch<perf_sparse>(arg);
     return 0;
 }
 
-int rocsparselt_bench_datafile(const std::string& filter, bool any_stride)
+int hipsparselt_bench_datafile(const std::string& filter, bool any_stride)
 {
     int ret = 0;
-    for(Arguments arg : RocSparseLt_TestData())
+    for(Arguments arg : HipSparseLt_TestData())
         ret |= run_bench_test(arg, filter, any_stride, true);
     test_cleanup::cleanup();
     return ret;
@@ -189,7 +211,7 @@ void fix_batch(int argc, char* argv[])
         if(!strcmp(argv[i], "--batch"))
         {
             static int once
-                = (rocsparselt_cerr << argv[0]
+                = (hipsparselt_cerr << argv[0]
                                     << " warning: --batch is deprecated, and --batch_count "
                                        "should be used instead."
                                     << std::endl,
@@ -215,13 +237,13 @@ try
     std::string activation_type;
     int         device_id;
     int         flags             = 0;
-    bool        datafile          = rocsparselt_parse_data(argc, argv);
+    bool        datafile          = hipsparselt_parse_data(argc, argv);
     bool        log_function_name = false;
     bool        any_stride        = false;
 
     arg.init(); // set all defaults
 
-    options_description desc("rocsparselt-bench command line options");
+    options_description desc("hipsparselt-bench command line options");
     desc.add_options()
         // clang-format off
         ("sizem,m",
@@ -373,7 +395,7 @@ try
 
         ("workspace",
          value<size_t>(&arg.user_allocated_workspace)->default_value(0),
-         "Set fixed workspace memory size instead of using rocsparselt managed memory")
+         "Set fixed workspace memory size instead of using hipsparselt managed memory")
 
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
@@ -395,16 +417,16 @@ try
 
     if((argc <= 1 && !datafile) || vm.count("help"))
     {
-        rocsparselt_cout << desc << std::endl;
+        hipsparselt_cout << desc << std::endl;
         return 0;
     }
 
     if(vm.find("version") != vm.end())
     {
         int                      version;
-        rocsparselt_local_handle handle;
-        rocsparselt_get_version(handle, &version);
-        rocsparselt_cout << "rocSPARSELt version: " << version << std::endl;
+        hipsparselt_local_handle handle;
+        hipsparseLtGetVersion(handle, &version);
+        hipsparselt_cout << "hipSPARSELt version: " << version << std::endl;
         return 0;
     }
 
@@ -414,53 +436,52 @@ try
     // Device Query
     int64_t device_count = query_device_property();
 
-    rocsparselt_cout << std::endl;
+    hipsparselt_cout << std::endl;
     if(device_count <= device_id)
         throw std::invalid_argument("Invalid Device ID");
     set_device(device_id);
 
     if(datafile)
-        return rocsparselt_bench_datafile(filter, any_stride);
+        return hipsparselt_bench_datafile(filter, any_stride);
 
     // single bench run
 
     // validate arguments
 
     std::transform(precision.begin(), precision.end(), precision.begin(), ::tolower);
-    auto prec = string2rocsparselt_datatype(precision);
-    if(prec == static_cast<rocsparselt_datatype>(-1))
+    auto prec = string_to_hipsparselt_datatype(precision);
+    if(prec == static_cast<hipsparseLtDatatype_t>(-1))
         throw std::invalid_argument("Invalid value for --precision " + precision);
 
-    arg.a_type = a_type == "" ? prec : string2rocsparselt_datatype(a_type);
-    if(arg.a_type == static_cast<rocsparselt_datatype>(-1))
+    arg.a_type = a_type == "" ? prec : string_to_hipsparselt_datatype(a_type);
+    if(arg.a_type == static_cast<hipsparseLtDatatype_t>(-1))
         throw std::invalid_argument("Invalid value for --a_type " + a_type);
 
-    arg.b_type = b_type == "" ? prec : string2rocsparselt_datatype(b_type);
-    if(arg.b_type == static_cast<rocsparselt_datatype>(-1))
+    arg.b_type = b_type == "" ? prec : string_to_hipsparselt_datatype(b_type);
+    if(arg.b_type == static_cast<hipsparseLtDatatype_t>(-1))
         throw std::invalid_argument("Invalid value for --b_type " + b_type);
 
-    arg.c_type = c_type == "" ? prec : string2rocsparselt_datatype(c_type);
-    if(arg.c_type == static_cast<rocsparselt_datatype>(-1))
+    arg.c_type = c_type == "" ? prec : string_to_hipsparselt_datatype(c_type);
+    if(arg.c_type == static_cast<hipsparseLtDatatype_t>(-1))
         throw std::invalid_argument("Invalid value for --c_type " + c_type);
 
-    arg.d_type = d_type == "" ? prec : string2rocsparselt_datatype(d_type);
-    if(arg.d_type == static_cast<rocsparselt_datatype>(-1))
+    arg.d_type = d_type == "" ? prec : string_to_hipsparselt_datatype(d_type);
+    if(arg.d_type == static_cast<hipsparseLtDatatype_t>(-1))
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
-    bool is_float
-        = arg.a_type == rocsparselt_datatype_f16_r || arg.a_type == rocsparselt_datatype_bf16_r;
+    bool is_float    = arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF;
     arg.compute_type = compute_type == ""
-                           ? (is_float ? rocsparselt_compute_f32 : rocsparselt_compute_i32)
-                           : string2rocsparselt_compute_type(compute_type);
-    if(arg.compute_type == static_cast<rocsparselt_compute_type>(-1))
+                           ? (is_float ? HIPSPARSELT_COMPUTE_32F : HIPSPARSELT_COMPUTE_32I)
+                           : string_to_hipsparselt_computetype(compute_type);
+    if(arg.compute_type == static_cast<hipsparseLtComputetype_t>(-1))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
-    arg.initialization = string2rocsparselt_initialization(initialization);
-    if(arg.initialization == static_cast<rocsparselt_initialization>(-1))
+    arg.initialization = string2hipsparselt_initialization(initialization);
+    if(arg.initialization == static_cast<hipsparselt_initialization>(-1))
         throw std::invalid_argument("Invalid value for --initialization " + initialization);
 
-    arg.activation_type = string2rocsparselt_activation_type(activation_type);
-    if(arg.activation_type == static_cast<rocsparselt_activation_type>(-1))
+    arg.activation_type = string_to_hipsparselt_activation_type(activation_type);
+    if(arg.activation_type == static_cast<hipsparselt_activation_type>(-1))
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
 
     if(arg.M < 0)
@@ -478,6 +499,6 @@ try
 }
 catch(const std::invalid_argument& exp)
 {
-    rocsparselt_cerr << exp.what() << std::endl;
+    hipsparselt_cerr << exp.what() << std::endl;
     return -1;
 }

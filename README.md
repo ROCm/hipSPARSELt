@@ -1,57 +1,16 @@
-# rocSPARSELt
-rocSPARSELt provides general matrix-matrix operations for sparse computation implemented on top of AMD's Radeon Open eCosystem Platform [ROCm][] runtime and toolchains. rocSPARSELt is created using the [HIP][] programming language and optimized for AMD's latest discrete GPUs.
+# hipSPARSELt
+hipSPARSELt is a SPARSE marshalling library, with multiple supported backends. It sits between the application and a 'worker' SPARSE library, marshalling inputs into the backend library and marshalling results back to the application. hipSPARSELt exports an interface that does not require the client to change, regardless of the chosen backend. Currently, hipSPARSELt supports [rocSPARSELt](library/src/hcc_detial/rocsparselt) and [cuSPARSELt v0.2](https://docs.nvidia.com/cuda/cusparselt) as backends.
 
-## Key Features
-- AMD sparse MFMA matrix core support
-- Mixed-precision computation support:
-  - <span style="color:green">FP16</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
-  - <span style="color:green">BFLOAT16</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
-  - <span style="color:green">INT8</span> inpput/output, <span style="color:green">INT32</span> Matrix Core accumulate
-- Matrix pruning and compression functionalities
-- Auto-tuning functionality (see rocsparselt_matmul_search())
-- Batched Sparse Gemm support:
-  - Single sparse matrix / Multiple dense matrices (Broadcast)
-  - Multiple sparse and dense matrices
-- Activation function fuse in spmm kernel support:
-  - ReLU
-  - ClippedReLU (ReLU with uppoer bound and threshold setting)
-  - GeLU
-  - Abs
-  - LeakyReLU
-  - Sigmoid
-  - Tanh
+## Installing pre-built packages
+Download pre-built packages either from [ROCm's package servers](https://rocm.github.io/install.html#installing-from-amd-rocm-repositories) or by clicking the github releases tab and manually downloading, which could be newer. Release notes are available for each release on the releases tab.
+* `sudo apt update && sudo apt install hipsparselt`
+* (TDB - hipsparselt needs to be published to ROCm's package servers )
 
-## On Going Feature Development
-- Add support for Mixed-precision computation
-  - <span style="color:green">FP8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
-  - <span style="color:green">BF8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
-- Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
+## Quickstart hipSPARSELt build
 
-## Documentation
-The latest rocSPARSELt documentation and API description can be found [here](doc/rocSPARSELt_api_v0.1.docx) or downloaded as [pdf](doc/rocSPARSELt_api_v0.1.pdf).
-
-## Requirements
-* Git
-* CMake (3.5 or later)
-* AMD [ROCm] 5.0 platform or later
-
-Optional:
-* [GTest][]
-  * Required for tests.
-  * Use GTEST_ROOT to specify GTest location.
-  * If [GTest][] is not found, it will be downloaded and built automatically.
-
-## Quickstart rocSPARSELt build and install
-
-#### Install script
-You can build rocSPARSELt using the *install.sh* script
+### Bash helper build script
+The root of this repository has a helper bash script `install.sh` to build and install hipSPARSELt on Ubuntu with a single command.  It does not take a lot of options and hard-codes configuration that can be specified through invoking cmake directly, but it's a great way to get started quickly and can serve as an example of how to build/install. A few commands in the script need sudo access, so it may prompt you for a password.
 ```
-# Clone rocSPARSELt using git
-TBD
-
-# Go to rocSPARSELt directory
-cd rocSPARSELt
-
 # Run install.sh script
 # Command line options:
 #   -h|--help            - prints help message
@@ -60,63 +19,79 @@ cd rocSPARSELt
 #   -c|--clients         - build library clients too (combines with -i & -d)
 #   -g|--debug           - build with debug flag
 #   -k|--relwithdebinfo  - build with RelWithDebInfo
-./install.sh -dci
+
+./install.sh -dc
+```
+## Functions supported
+- ROCm
+   - AMD sparse MFMA matrix core support
+   - Mixed-precision computation support:
+     - <span style="color:green">FP16</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+     - <span style="color:green">BFLOAT16</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+     - <span style="color:green">INT8</span> inpput/output, <span style="color:green">INT32</span> Matrix Core accumulate
+   - Matrix pruning and compression functionalities
+   - Auto-tuning functionality (see hipsparseLtMatmulSearch())
+   - Batched Sparse Gemm support:
+     - Single sparse matrix / Multiple dense matrices (Broadcast)
+     - Multiple sparse and dense matrices
+   - Activation function fuse in spmm kernel support:
+     - ReLU
+     - ClippedReLU (ReLU with uppoer bound and threshold setting)
+     - GeLU
+     - Abs
+     - LeakyReLU
+     - Sigmoid
+     - Tanh
+   - On Going Feature Development
+     - Add support for Mixed-precision computation
+       - <span style="color:green">FP8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+       - <span style="color:green">BF8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
+     - Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
+- CUDA
+  - TBD, need to support cusparseLt v0.2
+
+## Documentation
+The latest hipSPARSELt documentation and API description can be found [here](doc/hipSPARSELt_api.docx) or downloaded as [pdf](doc/hipSPARSELt_api.pdf).
+
+## hipSPARSELt interface examples
+The hipSPARSELt interface is compatible with cuSPARSELt APIs. Porting a CUDA application which originally calls the cuSPARSELt API to an application calling hipSPARSELt API should be relatively straightforward. For example, the hipSPARSELt matmul interface is
+
+
+### matmul API
+
+```c
+hipsparseLtStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
+                                      const hipsparseLtMatmulPlan_t* plan,
+                                      const void*                    alpha,
+                                      const void*                    d_A,
+                                      const void*                    d_B,
+                                      const void*                    beta,
+                                      const void*                    d_C,
+                                      void*                          d_D,
+                                      void*                          workspace,
+                                      hipStream_t*                   streams,
+                                      int32_t                        numStreams);
+
 ```
 
-#### CMake
-All compiler specifications are determined automatically. The compilation process can be performed by
+hipSPARSELt assumes matrix A, B, C, D and workspace are allocated in GPU memory space filled with data. Users are responsible for copying data from/to the host and device memory.
+
+## Running tests and benchmark tool
+### Unit tests
+To run unit tests, hipSPARSELt has to be built with option -DBUILD_CLIENTS_TESTS=ON (or using ./install.sh -c)
 ```
-# Clone rocSPARSELt using git
-TBD
-
-# Go to rocSPARSELt directory, create and go to the build directory
-cd rocSPARSELt; mkdir -p build/release; cd build/release
-
-# Configure rocSPARSELt
-# Build options:
-#   BUILD_CLIENTS_TESTS      - build tests (OFF)
-#   BUILD_CLIENTS_BENCHMARKS - build benchmarks (OFF)
-#   BUILD_CLIENTS_SAMPLES    - build examples (ON)
-#   BUILD_VERBOSE            - verbose output (OFF)
-#   BUILD_SHARED_LIBS        - build rocSPARSELt as a shared library (ON)
-CXX=/opt/rocm/bin/hipcc cmake -DBUILD_CLIENTS_TESTS=ON ../..
-
-# Build
-make
-
-# Install
-[sudo] make install
-```
-
-## Unit tests
-To run unit tests, rocSPARSELt has to be built with option -DBUILD_CLIENTS_TESTS=ON.
-```
-# Go to rocSPARSELt build directory
-cd rocSPARSELt; cd build/release
+# Go to hipSPARSELt build directory
+cd hipSPARSELt; cd build/release
 
 # Run all tests
-./clients/staging/rocsparselt-test
+./clients/staging/hipsparselt-test
 ```
 
-## Benchmarks
-To run benchmarks, rocSPARSELt has to be built with option -DBUILD_CLIENTS_BENCHMARKS=ON.
+### Benchmarks
+To run benchmarks, hipSPARSELt has to be built with option -DBUILD_CLIENTS_BENCHMARKS=ON (or using ./install.sh -c).
 ```
-# Go to rocSPARSELt build directory
-cd rocSPARSELt/build/release
+# Go to hipSPARSELt build directory
+cd hipSPARSELt/build/release
 
 # Run benchmark, e.g.
-./clients/staging/rocsparselt-bench -f spmm -i 200
-###TBD
-```
-
-## Support
-Please use [the issue tracker][] for bugs and feature requests.
-
-## License
-The [license file][] can be found in the main repository.
-
-[ROCm]: https://github.com/RadeonOpenCompute/ROCm
-[HIP]: https://github.com/GPUOpen-ProfessionalCompute-Tools/HIP/
-[GTest]: https://github.com/google/googletest
-[the issue tracker]: TBD
-[license file]: TBD
+./clients/staging/hipsparselt-bench -f spmm -i 200 -m 256 -n 256 -k 256
