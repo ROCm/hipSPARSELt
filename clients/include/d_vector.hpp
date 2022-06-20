@@ -1,13 +1,35 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #pragma once
 
-#include "rocsparselt.h"
-#include "rocsparselt_arguments.hpp"
-#include "rocsparselt_init.hpp"
-#include "rocsparselt_test.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_arguments.hpp"
+#include "hipsparselt_init.hpp"
+#include "hipsparselt_test.hpp"
 #include "singletons.hpp"
 #include <cinttypes>
 
@@ -48,7 +70,7 @@ public:
         // Initialize m_guard with random data
         if(!m_init_guard)
         {
-            rocsparselt_init_nan(m_guard, MEM_MAX_GUARD_PAD);
+            hipsparselt_init_nan(m_guard, MEM_MAX_GUARD_PAD);
             m_init_guard = true;
         }
     }
@@ -68,7 +90,7 @@ public:
         T* d = nullptr;
         if(use_HMM ? hipMallocManaged(&d, m_bytes) : (hipMalloc)(&d, m_bytes) != hipSuccess)
         {
-            rocsparselt_cerr << "Error allocating " << m_bytes << " m_bytes (" << (m_bytes >> 30)
+            hipsparselt_cerr << "Error allocating " << m_bytes << " m_bytes (" << (m_bytes >> 30)
                              << " GB)" << std::endl;
 
             d = nullptr;

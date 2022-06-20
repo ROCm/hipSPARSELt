@@ -1,5 +1,5 @@
 ---
-include: rocsparselt_common.yaml
+include: hipsparselt_common.yaml
 include: known_bugs.yaml
 include: spmm_batched_common.yaml
 

@@ -1,10 +1,29 @@
 # ########################################################################
-# Copyright (c) 2016-2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022 Advanced Micro Devices, Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 # ########################################################################
 
 cmake_minimum_required( VERSION 3.16.8 )
 
-add_definitions(-D_ROCSPARSELT_INTERNAL_BFLOAT16_)
+add_definitions(-D_HIPSPARSELT_INTERNAL_BFLOAT16_)
 
 # This has to be initialized before the project() command appears
 # Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
@@ -12,15 +31,13 @@ if( NOT DEFINED CMAKE_CONFIGURATION_TYPES AND NOT DEFINED CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 endif()
 
-project( rocsparselt-clients LANGUAGES CXX C  )
+project( hipsparselt-clients LANGUAGES CXX C  )
 
 
 if( SKIP_LIBRARY )
-  include_directories(${ROCSPARSELT_LIBRARY_DIR}/include)
-  #include_directories(${ROCSPARSELT_LIBRARY_DIR}/include/internal)
+  include_directories(${HIPSPARSELT_LIBRARY_DIR}/include)
 else()
   include_directories(${CMAKE_BINARY_DIR}/include)
-  #include_directories(${CMAKE_BINARY_DIR}/include/internal)
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -50,8 +67,8 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 # This tells cmake to create a compile_commands.json file that can be used with clang tooling or vim
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
-if( NOT TARGET rocsparselt )
-  find_package( rocsparselt REQUIRED CONFIG PATHS ${ROCM_PATH}/rocsparselt /opt/rocm/rocsparselt ${ROCSPARSELT_LIBRARY_DIR})
+if( NOT TARGET hipsparselt )
+  find_package( hipsparselt REQUIRED CONFIG PATHS ${ROCM_PATH}/hipsparselt /opt/rocm/hipsparselt ${HIPSPARSELT_LIBRARY_DIR})
 endif( )
 
 # Hip headers required of all clients; clients use hip to allocate device memory
@@ -78,14 +95,14 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
   endif()
 
   # common source files used in subdirectories benchmarks and gtest thus ../common
-  set( rocsparselt_test_bench_common
+  set( hipsparselt_test_bench_common
       ../common/singletons.cpp
       ../common/utility.cpp
       ../common/cblas_interface.cpp
       ../common/argument_model.cpp
-      ../common/rocsparselt_parse_data.cpp
-      ../common/rocsparselt_arguments.cpp
-      ../common/rocsparselt_random.cpp
+      ../common/hipsparselt_parse_data.cpp
+      ../common/hipsparselt_arguments.cpp
+      ../common/hipsparselt_random.cpp
       ${BLIS_CPP}
     )
 
@@ -100,22 +117,22 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
 endif()
 
 
-set( ROCSPARSELT_COMMON "${PROJECT_BINARY_DIR}/staging/rocsparselt_common.yaml")
-add_custom_command( OUTPUT "${ROCSPARSELT_COMMON}"
-                    COMMAND ${CMAKE_COMMAND} -E copy include/rocsparselt_common.yaml "${ROCSPARSELT_COMMON}"
-                    DEPENDS include/rocsparselt_common.yaml
+set( HIPSPARSELT_COMMON "${PROJECT_BINARY_DIR}/staging/hipsparselt_common.yaml")
+add_custom_command( OUTPUT "${HIPSPARSELT_COMMON}"
+                    COMMAND ${CMAKE_COMMAND} -E copy include/hipsparselt_common.yaml "${HIPSPARSELT_COMMON}"
+                    DEPENDS include/hipsparselt_common.yaml
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 
-set( ROCSPARSELT_TEMPLATE "${PROJECT_BINARY_DIR}/staging/rocsparselt_template.yaml")
-add_custom_command( OUTPUT "${ROCSPARSELT_TEMPLATE}"
-                    COMMAND ${CMAKE_COMMAND} -E copy include/rocsparselt_template.yaml "${ROCSPARSELT_TEMPLATE}"
-                    DEPENDS include/rocsparselt_template.yaml
+set( HIPSPARSELT_TEMPLATE "${PROJECT_BINARY_DIR}/staging/hipsparselt_template.yaml")
+add_custom_command( OUTPUT "${HIPSPARSELT_TEMPLATE}"
+                    COMMAND ${CMAKE_COMMAND} -E copy include/hipsparselt_template.yaml "${HIPSPARSELT_TEMPLATE}"
+                    DEPENDS include/hipsparselt_template.yaml
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 
-set( ROCSPARSELT_GENTEST "${PROJECT_BINARY_DIR}/staging/rocsparselt_gentest.py")
-add_custom_command( OUTPUT "${ROCSPARSELT_GENTEST}"
-                    COMMAND ${CMAKE_COMMAND} -E copy common/rocsparselt_gentest.py "${ROCSPARSELT_GENTEST}"
-                    DEPENDS common/rocsparselt_gentest.py
+set( HIPSPARSELT_GENTEST "${PROJECT_BINARY_DIR}/staging/hipsparselt_gentest.py")
+add_custom_command( OUTPUT "${HIPSPARSELT_GENTEST}"
+                    COMMAND ${CMAKE_COMMAND} -E copy common/hipsparselt_gentest.py "${HIPSPARSELT_GENTEST}"
+                    DEPENDS common/hipsparselt_gentest.py
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 
-add_custom_target( rocsparselt-common DEPENDS "${ROCSPARSELT_COMMON}" "${ROCSPARSELT_TEMPLATE}" "${ROCSPARSELT_GENTEST}" )
+add_custom_target( hipsparselt-common DEPENDS "${HIPSPARSELT_COMMON}" "${HIPSPARSELT_TEMPLATE}" "${HIPSPARSELT_GENTEST}" )

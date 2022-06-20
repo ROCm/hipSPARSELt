@@ -1,17 +1,39 @@
-/* ************************************************************************
- * Copyright (c) 2018-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #pragma once
 
 #include "flops.hpp"
-#include "rocsparselt.h"
-#include "rocsparselt_datatype2string.hpp"
-#include "rocsparselt_init.hpp"
-#include "rocsparselt_math.hpp"
-#include "rocsparselt_random.hpp"
-#include "rocsparselt_test.hpp"
-#include "rocsparselt_vector.hpp"
+#include "hipsparselt.h"
+#include "hipsparselt_datatype2string.hpp"
+#include "hipsparselt_init.hpp"
+#include "hipsparselt_math.hpp"
+#include "hipsparselt_random.hpp"
+#include "hipsparselt_test.hpp"
+#include "hipsparselt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 
@@ -128,7 +150,7 @@ void compress(const Ti*      in,
 
                     if(m_idx > 4)
                     {
-                        rocsparselt_cerr << "Err - The given matrix is not a 2:4 sparse matrix"
+                        hipsparselt_cerr << "Err - The given matrix is not a 2:4 sparse matrix"
                                          << std::endl;
                         CHECK_SUCCESS(false);
                     }
@@ -174,114 +196,108 @@ void testing_compress_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const rocsparselt_operation transA = rocsparselt_operation_none;
-    const rocsparselt_operation transB = rocsparselt_operation_none;
+    const hipsparseLtOperation_t transA = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+    const hipsparseLtOperation_t transB = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
 
     // allocate memory on device
     device_vector<Ti> dA(safe_size);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
 
-    rocsparselt_local_handle    handle{arg};
-    rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
+    hipsparselt_local_handle    handle{arg};
+    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
                                      M,
                                      K,
                                      lda,
                                      arg.a_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matB(
-        rocsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
-    rocsparselt_local_matmul_descr matmul(
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matB(
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
-    rocsparselt_local_matmul_alg_selection alg_sel(handle, matmul, rocsparselt_matmul_alg_default);
+    hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
     size_t workspace_size, compressed_size;
-    rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size);
+    hipsparseLtMatmulGetWorkspace(handle, alg_sel, &workspace_size);
 
-    rocsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
     // test version 1
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(nullptr, plan, &compressed_size),
-                              rocsparselt_status_invalid_handle);
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, nullptr, &compressed_size),
-                              rocsparselt_status_invalid_handle);
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, plan, nullptr),
-                              rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(nullptr, plan, &compressed_size),
+                              HIPSPARSELT_STATUS_NOT_INITIALIZED);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(handle, nullptr, &compressed_size),
+                              HIPSPARSELT_STATUS_NOT_INITIALIZED);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, nullptr),
+                              HIPSPARSELT_STATUS_INVALID_VALUE);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
-                              rocsparselt_status_success);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
+                              HIPSPARSELT_STATUS_SUCCESS);
 
     device_vector<Ti> dA_1(compressed_size);
     CHECK_DEVICE_ALLOCATION(dA_1.memcheck());
 
     hipStream_t stream = nullptr;
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(nullptr, plan, dA, dA_1, stream),
-                              rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompress(nullptr, plan, dA, dA_1, stream),
+                              HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(handle, nullptr, dA, dA_1, stream),
-                              rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompress(handle, nullptr, dA, dA_1, stream),
+                              HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(handle, plan, nullptr, dA_1, stream),
-                              rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompress(handle, plan, nullptr, dA_1, stream),
+                              HIPSPARSELT_STATUS_INVALID_VALUE);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compress(handle, plan, dA_1, nullptr, stream),
-                              rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompress(handle, plan, dA_1, nullptr, stream),
+                              HIPSPARSELT_STATUS_INVALID_VALUE);
 
     // test version 2
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size2(nullptr, matA, &compressed_size),
-                              rocsparselt_status_invalid_handle);
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_compressed_size2(handle, nullptr, &compressed_size),
-        rocsparselt_status_invalid_handle);
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size2(handle, matA, nullptr),
-                              rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize2(nullptr, matA, &compressed_size),
+                              HIPSPARSELT_STATUS_NOT_INITIALIZED);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize2(handle, nullptr, &compressed_size),
+                              HIPSPARSELT_STATUS_NOT_INITIALIZED);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize2(handle, matA, nullptr),
+                              HIPSPARSELT_STATUS_INVALID_VALUE);
 
-    EXPECT_ROCSPARSELT_STATUS(rocsparselt_smfmac_compressed_size2(handle, matA, &compressed_size),
-                              rocsparselt_status_success);
+    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize2(handle, matA, &compressed_size),
+                              HIPSPARSELT_STATUS_SUCCESS);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_compress2(nullptr, matA, true, transA, dA, dA_1, stream),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMACompress2(nullptr, matA, true, transA, dA, dA_1, stream),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_compress2(handle, nullptr, true, transA, dA, dA_1, stream),
-        rocsparselt_status_invalid_handle);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMACompress2(handle, nullptr, true, transA, dA, dA_1, stream),
+        HIPSPARSELT_STATUS_NOT_INITIALIZED);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_compress2(handle, matA, false, transA, dA, dA_1, stream),
-        rocsparselt_status_not_implemented);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMACompress2(handle, matA, false, transA, dA, dA_1, stream),
+        HIPSPARSELT_STATUS_INTERNAL_ERROR);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_compress2(
-            handle, matA, true, rocsparselt_operation_conjugate_transpose, dA, dA_1, stream),
-        rocsparselt_status_invalid_value);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMACompress2(handle, matA, true, transA, nullptr, dA_1, stream),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_compress2(handle, matA, true, transA, nullptr, dA_1, stream),
-        rocsparselt_status_invalid_pointer);
-
-    EXPECT_ROCSPARSELT_STATUS(
-        rocsparselt_smfmac_compress2(handle, matA, true, transA, dA_1, nullptr, stream),
-        rocsparselt_status_invalid_pointer);
+    EXPECT_HIPSPARSELT_STATUS(
+        hipsparseLtSpMMACompress2(handle, matA, true, transA, dA_1, nullptr, stream),
+        HIPSPARSELT_STATUS_INVALID_VALUE);
 }
 
 template <typename Ti,
           typename To,
           typename Tc,
-          rocsparselt_batch_type btype = rocsparselt_batch_type::none>
+          hipsparselt_batch_type btype = hipsparselt_batch_type::none>
 void testing_compress(const Arguments& arg)
 {
     int run_version = 1;
     if(strstr(arg.name, "compress2") != nullptr)
         run_version = 2;
 
-    rocsparselt_operation transA = char2rocsparselt_operation(arg.transA);
-    rocsparselt_operation transB = char2rocsparselt_operation(arg.transB);
+    hipsparseLtOperation_t transA = char_to_hipsparselt_operation(arg.transA);
+    hipsparseLtOperation_t transB = char_to_hipsparselt_operation(arg.transB);
 
     int64_t M = arg.M;
     int64_t N = arg.N;
@@ -294,118 +310,116 @@ void testing_compress(const Arguments& arg)
 
     double gpu_time_used, cpu_time_used;
     gpu_time_used = cpu_time_used                = 0.0;
-    double                   rocsparselt_error_c = 0.0;
-    double                   rocsparselt_error_m = 0.0;
+    double                   hipsparselt_error_c = 0.0;
+    double                   hipsparselt_error_m = 0.0;
     bool                     HMM                 = arg.HMM;
-    rocsparselt_local_handle handle{arg};
+    hipsparselt_local_handle handle{arg};
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
-    int64_t A_row = transA == rocsparselt_operation_none ? M : K;
-    int64_t A_col = transA == rocsparselt_operation_none ? K : M;
-    int64_t B_row = transB == rocsparselt_operation_none ? K : N;
-    int64_t B_col = transB == rocsparselt_operation_none ? N : K;
+    int64_t A_row = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? M : K;
+    int64_t A_col = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : M;
+    int64_t B_row = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : N;
+    int64_t B_col = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? N : K;
 
-    int64_t stride_1_a = transA == rocsparselt_operation_none ? 1 : lda;
-    int64_t stride_2_a = transA == rocsparselt_operation_none ? lda : 1;
+    int64_t stride_1_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? 1 : lda;
+    int64_t stride_2_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? lda : 1;
 
-    constexpr bool do_batched         = (btype == rocsparselt_batch_type::batched);
-    constexpr bool do_strided_batched = (btype == rocsparselt_batch_type::strided_batched);
+    constexpr bool do_batched         = (btype == hipsparselt_batch_type::batched);
+    constexpr bool do_strided_batched = (btype == hipsparselt_batch_type::strided_batched);
     int            num_batches        = (do_batched || do_strided_batched ? arg.batch_count : 1);
     int64_t        stride_a           = do_strided_batched ? arg.stride_a : lda * A_col;
     int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
     int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * M;
     int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * M;
 
-    rocsparselt_local_mat_descr matA(rocsparselt_matrix_type_structured,
+    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
                                      A_row,
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matB(rocsparselt_matrix_type_dense,
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matB(hipsparselt_matrix_type_dense,
                                      handle,
                                      B_row,
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     rocsparselt_order_column);
-    rocsparselt_local_mat_descr matC(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, rocsparselt_order_column);
-    rocsparselt_local_mat_descr matD(
-        rocsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, rocsparselt_order_column);
+                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
 
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
     bool invalid_size_c = ldc < M;
     if(invalid_size_a)
     {
-        EXPECT_ROCSPARSELT_STATUS(matA.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matA.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_ROCSPARSELT_STATUS(matB.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matB.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_c)
     {
-        EXPECT_ROCSPARSELT_STATUS(matC.status(), rocsparselt_status_invalid_size);
+        EXPECT_HIPSPARSELT_STATUS(matC.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
 
         return;
     }
 
     if(do_batched || do_strided_batched)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matA, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matB, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matC, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matD, rocsparselt_mat_num_batches, &num_batches, sizeof(int)),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matA, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matB, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matC, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matD, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
     if(do_strided_batched)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_mat_descr_set_attribute(
-                handle, matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(int64_t)),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
 
-    rocsparselt_local_matmul_descr matmul(
+    hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
-    rocsparselt_local_matmul_alg_selection alg_sel(handle, matmul, rocsparselt_matmul_alg_default);
+    hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
     size_t workspace_size, compressed_size;
-    rocsparselt_matmul_get_workspace(handle, alg_sel, &workspace_size);
+    hipsparseLtMatmulGetWorkspace(handle, alg_sel, &workspace_size);
 
-    rocsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
     if(run_version == 1)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
+                                  HIPSPARSELT_STATUS_SUCCESS);
     }
     else if(run_version == 2)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_compressed_size2(handle, matA, &compressed_size),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize2(handle, matA, &compressed_size),
+                                  HIPSPARSELT_STATUS_SUCCESS);
     }
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy     = arg.unit_check || arg.norm_check ? size_A : 0;
@@ -423,24 +437,24 @@ void testing_compress(const Arguments& arg)
     host_vector<unsigned char> hA_gold(size_A_compressed_copy);
     host_vector<unsigned char> hA_1(size_A_compressed_copy);
 
-    rocsparselt_seedrand();
+    hipsparselt_seedrand();
 
     // Initial Data on CPU
-    if(arg.initialization == rocsparselt_initialization::rand_int)
+    if(arg.initialization == hipsparselt_initialization::rand_int)
     {
-        rocsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
-    else if(arg.initialization == rocsparselt_initialization::trig_float)
+    else if(arg.initialization == hipsparselt_initialization::trig_float)
     {
-        rocsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
-    else if(arg.initialization == rocsparselt_initialization::hpl)
+    else if(arg.initialization == hipsparselt_initialization::hpl)
     {
-        rocsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
-    else if(arg.initialization == rocsparselt_initialization::special)
+    else if(arg.initialization == hipsparselt_initialization::special)
     {
-        rocsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
     }
 
     // copy data from CPU to device
@@ -448,31 +462,29 @@ void testing_compress(const Arguments& arg)
 
     if(run_version == 1)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_compressed_size(handle, plan, &compressed_size),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_prune(
-                handle, matmul, dA, dA, rocsparselt_prune_alg(arg.prune_algo), stream),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
+                                  HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtSpMMAPrune(
+                handle, matmul, dA, dA, hipsparseLtPruneAlg_t(arg.prune_algo), stream),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
     else if(run_version == 2)
     {
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_compressed_size2(handle, matA, &compressed_size),
-            rocsparselt_status_success);
-        EXPECT_ROCSPARSELT_STATUS(
-            rocsparselt_smfmac_prune2(
-                handle, matA, true, transA, dA, dA, rocsparselt_prune_alg(arg.prune_algo), stream),
-            rocsparselt_status_success);
+        EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize2(handle, matA, &compressed_size),
+                                  HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSELT_STATUS(
+            hipsparseLtSpMMAPrune2(
+                handle, matA, true, transA, dA, dA, hipsparseLtPruneAlg_t(arg.prune_algo), stream),
+            HIPSPARSELT_STATUS_SUCCESS);
     }
 
     if(arg.unit_check || arg.norm_check)
     {
         //compressd matrix
-        int64_t c_ld         = transA == rocsparselt_operation_none ? M : K / 2;
-        int64_t c_stride_1_a = transA == rocsparselt_operation_none ? 1 : c_ld;
-        int64_t c_stride_2_a = transA == rocsparselt_operation_none ? c_ld : 1;
+        int64_t c_ld         = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? M : K / 2;
+        int64_t c_stride_1_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? 1 : c_ld;
+        int64_t c_stride_2_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? c_ld : 1;
         int64_t c_stride_a_r = K / 2 * M;
         int64_t c_stride_a   = stride_a == 0 ? 0 : c_stride_a_r;
 
@@ -489,13 +501,13 @@ void testing_compress(const Arguments& arg)
         hA_pruned.transfer_from(dA);
 
         if(run_version == 1)
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
-                rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
+                HIPSPARSELT_STATUS_SUCCESS);
         else if(run_version == 2)
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_compress2(handle, matA, true, transA, dA, dA_compressd, stream),
-                rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMACompress2(handle, matA, true, transA, dA, dA_compressd, stream),
+                HIPSPARSELT_STATUS_SUCCESS);
 
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_compressd));
@@ -569,14 +581,14 @@ void testing_compress(const Arguments& arg)
         }
         if(arg.norm_check)
         {
-            rocsparselt_error_c = unit_check_diff<Ti>(A_row,
+            hipsparselt_error_c = unit_check_diff<Ti>(A_row,
                                                       A_col / 2,
                                                       c_ld,
                                                       c_stride_a,
                                                       reinterpret_cast<Ti*>(hA_gold.data()),
                                                       reinterpret_cast<Ti*>(hA_1.data()),
                                                       num_batches);
-            rocsparselt_error_m
+            hipsparselt_error_m
                 = unit_check_diff<int8_t>(A_row,
                                           A_col / 8,
                                           A_row,
@@ -594,28 +606,28 @@ void testing_compress(const Arguments& arg)
 
         for(int i = 0; i < number_cold_calls; i++)
         {
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
-                rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
+                HIPSPARSELT_STATUS_SUCCESS);
         }
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
         {
-            EXPECT_ROCSPARSELT_STATUS(
-                rocsparselt_smfmac_compress(handle, plan, dA, dA_compressd, stream),
-                rocsparselt_status_success);
+            EXPECT_HIPSPARSELT_STATUS(
+                hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
+                HIPSPARSELT_STATUS_SUCCESS);
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
         ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_lda, e_stride_a, e_batch_count>{}
-            .log_args<float>(rocsparselt_cout,
+            .log_args<float>(hipsparselt_cout,
                              arg,
                              gpu_time_used,
                              ArgumentLogging::NA_value,
                              ArgumentLogging::NA_value,
                              cpu_time_used,
-                             rocsparselt_error_c,
-                             rocsparselt_error_m);
+                             hipsparselt_error_c,
+                             hipsparselt_error_m);
     }
 }

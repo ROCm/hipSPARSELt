@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2021-2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,14 @@
 #
 # ########################################################################
 
-include(src/spmm/hip/CMakeLists.txt)
-include(src/spmm/kernels/CMakeLists.txt)
-set(DL_LIB dl)
-
-# rocSPARSELt source
-set(rocsparselt_source
-  src/handle.cpp
-  src/status.cpp
-  src/rocsparselt_auxiliary.cpp
-  src/rocsparselt_ostream.cpp
-
-# spmm
-  src/spmm/rocsparselt_compress.cpp
-  src/spmm/rocsparselt_prune.cpp
-  src/spmm/rocsparselt_spmm.cpp
-  ${SPMM_KERNELS_SRC}
-  ${KERNEL_LAUNCHER_SRC}
-)
+if(NOT BUILD_CUDA)
+  # hipSPARSE source
+  include(src/hcc_detail/rocsparselt/CMakeLists.txt)
+  set(hipsparselt_source src/hcc_detail/hipsparselt.cpp
+                         src/hipsparselt_ostream.cpp
+                         ${rocsparselt_source})
+else()
+  # hipSPARSE CUDA source
+  # TODO
+  #set(hipsparselt_source src/nvcc_detail/hipsparse.cpp)
+endif()

@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
-# Author: vihuan@amd.com
+
+# ########################################################################
+# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell cop-
+# ies of the Software, and to permit persons to whom the Software is furnished
+# to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IM-
+# PLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNE-
+# CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# ########################################################################
 
 #set -x #echo on
 
@@ -14,7 +35,7 @@ function display_help()
 #  echo "    [--prefix] Specify an alternate CMAKE_INSTALL_PREFIX for cmake"
   echo "    [-i|--install] install after build"
   echo "    [-d|--dependencies] install build dependencies"
-  echo "    [-a|--architecture] Set GPU architecture target(s), e.g., all, gfx000, gfx900, gfx906:xnack-;gfx908:xnack-"
+  echo "    [-a|--architecture] Set AMD GPU architecture target(s), e.g., all, gfx000, gfx900, gfx906:xnack-;gfx908:xnack-"
   echo "    [-c|--clients] build library clients too (combines with -i & -d)"
   echo "    [--cpu_ref_lib <lib>] specify library to use for CPU reference code in testing (blis or lapack)"
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"
@@ -24,8 +45,7 @@ function display_help()
   echo "    [--static] build static library"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
-  echo "    [--matrices-dir] existing client matrices directory"
-  echo "    [--matrices-dir-install] install client matrices directory"
+
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
@@ -217,7 +237,7 @@ install_packages( )
       fi
       ;;
     *)
-      echo "This script is currently supported on Ubuntu, CentOS, RHEL and Fedora"
+      echo "This script is currently supported on Ubuntu, SLES, CentOS, RHEL and Fedora"
       exit 2
       ;;
   esac
@@ -255,16 +275,16 @@ install_package=false
 install_dependencies=false
 build_clients=false
 build_release=true
+build_cuda=false
 build_hip_clang=true
+compiler=g++
 build_static=false
 build_release_debug=false
 build_codecoverage=false
-install_prefix=rocsparselt-install
+install_prefix=hipsparselt-install
 rocm_path=/opt/rocm
 build_relocatable=false
 build_address_sanitizer=false
-matrices_dir=
-matrices_dir_install=
 gpu_architecture=all
 cpu_ref_lib=blis
 
@@ -275,7 +295,7 @@ cpu_ref_lib=blis
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,matrices-dir:,matrices-dir-install:,architecture:,cpu_ref_lib: --options hicdgrka: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib: --options hicdgrka: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -309,14 +329,16 @@ while true; do
         -g|--debug)
             build_release=false
             shift ;;
-        --hip-clang)
-            build_hip_clang=true
+        --cuda|--use-cuda)
+            build_cuda=true
+            build_hip_clang=false
             shift ;;
         --static)
             build_static=true
             shift ;;
         --address-sanitizer)
             build_address_sanitizer=true
+            compiler=hipcc
             shift ;;
         -k|--relwithdebinfo)
             build_release=false
@@ -331,20 +353,6 @@ while true; do
         --cpu_ref_lib)
             cpu_ref_lib=${2}
             shift 2 ;;
-        --matrices-dir)
-            matrices_dir=${2}
-            if [[ "${matrices_dir}" == "" ]];then
-                echo "Missing argument from command line parameter --matrices-dir; aborting"
-                exit 1
-            fi
-            shift 2 ;;
-        --matrices-dir-install)
-            matrices_dir_install=${2}
-            if [[ "${matrices_dir_install}" == "" ]];then
-                echo "Missing argument from command line parameter --matrices-dir-install; aborting"
-                exit 1
-            fi
-            shift 2 ;;
         --prefix)
             install_prefix=${2}
             shift 2 ;;
@@ -355,30 +363,6 @@ while true; do
     esac
 done
 
-#
-# If matrices_dir_install has been set up then install matrices dir and exit.
-#
-if ! [[ "${matrices_dir_install}" == "" ]];then
-    cmake -DCMAKE_MATRICES_DIR=${matrices_dir_install} -P ./cmake/ClientMatrices.cmake
-    exit 0
-fi
-
-#
-# If matrices_dir has been set up then check if it exists and it contains expected files.
-# If it doesn't contain expected file, it will create them.
-#
-if ! [[ "${matrices_dir}" == "" ]];then
-    if ! [ -e ${matrices_dir} ];then
-        echo "Invalid dir from command line parameter --matrices-dir: ${matrices_dir}; aborting";
-        exit 1
-    fi
-
-    # Let's 'reinstall' to the specified location to check if all good
-    # Will be fast if everything already exists as expected.
-    # This is to prevent any empty directory.
-    cmake -DCMAKE_MATRICES_DIR=${matrices_dir} -P ./cmake/ClientMatrices.cmake
-fi
-
 if [[ "${cpu_ref_lib}" == blis ]]; then
   LINK_BLIS=true
 elif [[ "${cpu_ref_lib}" == lapack ]]; then
@@ -388,9 +372,8 @@ else
       exit 2
 fi
 
-build_dir=$(readlink -m ./build)
+build_dir=$(readlink -m build)
 printf "\033[32mCreating project build directory in: \033[33m${build_dir}\033[0m\n"
-
 install_blis()
 {
     #Download prebuilt AMD multithreaded blis
@@ -499,6 +482,14 @@ pushd .
     cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Debug"
   fi
 
+  # cuda
+  if [[ "${build_cuda}" == true ]]; then
+    cmake_common_options+=("-DUSE_CUDA=ON")
+  else
+    cmake_common_options+=("-DUSE_CUDA=OFF")
+  fi
+
+
   # address sanitizer
   if [[ "${build_address_sanitizer}" == true ]]; then
     cmake_common_options="${cmake_common_options} -DBUILD_ADDRESS_SANITIZER=ON"
@@ -515,7 +506,13 @@ pushd .
 
   # library type
   if [[ "${build_static}" == true ]]; then
+    if [[ "${build_cuda}" == true ]]; then
+      printf "Static library not supported for CUDA backend.\n"
+      exit 1
+    fi
     cmake_common_options="{cmake_common_options} -DBUILD_SHARED_LIBS=OFF"
+    compiler="${rocm_path}/bin/hipcc" #force hipcc for static libs, g++ doesn't work
+    printf "Forcing compiler to hipcc for static library.\n"
   fi
 
   # clients
@@ -525,16 +522,8 @@ pushd .
       install_blis
       popd
       cmake_client_options="${cmake_client_options} -DBUILD_CLIENTS_SAMPLES=ON -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_BENCHMARKS=ON -DLINK_BLIS=${LINK_BLIS} -DBUILD_DIR=${build_dir}"
-
-      #
-      # Add matrices_dir if exists.
-      #
-      if ! [[ "${matrices_dir}" == "" ]];then
-          cmake_client_options="${cmake_client_options} -DCMAKE_MATRICES_DIR=${matrices_dir}"
-      fi
   fi
 
-  compiler="hcc"
   if [[ "${build_hip_clang}" == true ]]; then
     compiler="${rocm_path}/bin/hipcc"
   fi
@@ -571,16 +560,16 @@ pushd .
 
     case "${ID}" in
       ubuntu)
-        elevate_if_not_root dpkg -i rocsparselt[-\_]*.deb
+        elevate_if_not_root dpkg -i hipsparselt[-\_]*.deb
       ;;
       centos|rhel)
-        elevate_if_not_root yum -y localinstall rocsparselt-*.rpm
+        elevate_if_not_root yum -y localinstall hipsparselt-*.rpm
       ;;
       fedora)
-        elevate_if_not_root dnf install rocsparselt-*.rpm
+        elevate_if_not_root dnf install hipsparselt-*.rpm
       ;;
       sles|opensuse-leap)
-        elevate_if_not_root zypper -n --no-gpg-checks install rocsparselt-*.rpm
+        elevate_if_not_root zypper -n --no-gpg-checks install hipsparselt-*.rpm
       ;;
     esac
 

@@ -1,7 +1,30 @@
-/* ************************************************************************
+/*******************************************************************************
+ *
+ * MIT License
+ *
  * Copyright (c) 2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
-#include "rocsparselt.h"
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
+
+#include "hipsparselt.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -25,25 +48,23 @@
     }
 #endif
 
-#ifndef CHECK_ROCSPARSE_ERROR
-#define CHECK_ROCSPARSE_ERROR(error)                                \
-    if(error != rocsparselt_status_success)                         \
-    {                                                               \
-        fprintf(stderr, "rocSPARSELt error(Err=%d) : ", error);     \
-        if(error == rocsparselt_status_invalid_handle)              \
-            fprintf(stderr, "rocsparselt_status_invalid_handle");   \
-        if(error == rocsparselt_status_not_implemented)             \
-            fprintf(stderr, " rocsparselt_status_not_implemented"); \
-        if(error == rocsparselt_status_invalid_pointer)             \
-            fprintf(stderr, "rocsparselt_status_invalid_pointer");  \
-        if(error == rocsparselt_status_invalid_size)                \
-            fprintf(stderr, "rocsparselt_status_invalid_size");     \
-        if(error == rocsparselt_status_memory_error)                \
-            fprintf(stderr, "rocsparselt_status_memory_error");     \
-        if(error == rocsparselt_status_internal_error)              \
-            fprintf(stderr, "rocsparselt_status_internal_error");   \
-        fprintf(stderr, "\n");                                      \
-        exit(EXIT_FAILURE);                                         \
+#ifndef CHECK_HIPSPARSELT_ERROR
+#define CHECK_HIPSPARSELT_ERROR(error)                             \
+    if(error != HIPSPARSELT_STATUS_SUCCESS)                        \
+    {                                                              \
+        fprintf(stderr, "hipSPARSELt error(Err=%d) : ", error);    \
+        if(error == HIPSPARSELT_STATUS_NOT_INITIALIZED)            \
+            fprintf(stderr, "HIPSPARSELT_STATUS_NOT_INITIALIZED"); \
+        if(error == HIPSPARSELT_STATUS_INTERNAL_ERROR)             \
+            fprintf(stderr, " HIPSPARSELT_STATUS_INTERNAL_ERROR"); \
+        if(error == HIPSPARSELT_STATUS_INVALID_VALUE)              \
+            fprintf(stderr, "HIPSPARSELT_STATUS_INVALID_VALUE");   \
+        if(error == HIPSPARSELT_STATUS_ALLOC_FAILED)               \
+            fprintf(stderr, "HIPSPARSELT_STATUS_ALLOC_FAILED");    \
+        if(error == HIPSPARSELT_STATUS_ARCH_MISMATCH)              \
+            fprintf(stderr, "HIPSPARSELT_STATUS_ARCH_MISMATCH");   \
+        fprintf(stderr, "\n");                                     \
+        exit(EXIT_FAILURE);                                        \
     }
 #endif
 
@@ -62,10 +83,10 @@ inline bool AlmostEqual(T a, T b)
 }
 
 template <>
-inline bool AlmostEqual(rocsparselt_half a, rocsparselt_half b)
+inline bool AlmostEqual(hipsparseLtHalf a, hipsparseLtHalf b)
 {
-    rocsparselt_half absA = (a > 0) ? a : -a;
-    rocsparselt_half absB = (b > 0) ? b : -b;
+    hipsparseLtHalf absA = (a > 0) ? a : -a;
+    hipsparseLtHalf absB = (b > 0) ? b : -b;
     // this avoids NaN when inf is compared against inf in the alternative code
     // path
     if(static_cast<float>(absA) == std::numeric_limits<float>::infinity()
@@ -78,7 +99,7 @@ inline bool AlmostEqual(rocsparselt_half a, rocsparselt_half b)
     {
         return a == b;
     }
-    rocsparselt_half absDiff = (a - b > 0) ? a - b : b - a;
+    hipsparseLtHalf absDiff = (a - b > 0) ? a - b : b - a;
     return absDiff / (absA + absB + 1) < 0.01;
 }
 
@@ -139,14 +160,14 @@ void print_strided_batched_meta(const char*    name,
     }
 }
 
-void print_strided_batched(const char*       name,
-                           rocsparselt_half* A,
-                           int64_t           n1,
-                           int64_t           n2,
-                           int64_t           n3,
-                           int64_t           s1,
-                           int64_t           s2,
-                           int64_t           s3)
+void print_strided_batched(const char*      name,
+                           hipsparseLtHalf* A,
+                           int64_t          n1,
+                           int64_t          n2,
+                           int64_t          n3,
+                           int64_t          s1,
+                           int64_t          s2,
+                           int64_t          s3)
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
@@ -238,26 +259,26 @@ static void show_usage(char* argv[])
               << std::endl;
 }
 
-static int parse_arguments(int                    argc,
-                           char*                  argv[],
-                           int64_t&               m,
-                           int64_t&               n,
-                           int64_t&               k,
-                           int64_t&               lda,
-                           int64_t&               ldb,
-                           int64_t&               ldc,
-                           int64_t&               ldd,
-                           int64_t&               stride_a,
-                           int64_t&               stride_b,
-                           int64_t&               stride_c,
-                           int64_t&               stride_d,
-                           int&                   batch_count,
-                           float&                 alpha,
-                           float&                 beta,
-                           rocsparselt_operation& trans_a,
-                           rocsparselt_operation& trans_b,
-                           bool&                  header,
-                           bool&                  verbose)
+static int parse_arguments(int                     argc,
+                           char*                   argv[],
+                           int64_t&                m,
+                           int64_t&                n,
+                           int64_t&                k,
+                           int64_t&                lda,
+                           int64_t&                ldb,
+                           int64_t&                ldc,
+                           int64_t&                ldd,
+                           int64_t&                stride_a,
+                           int64_t&                stride_b,
+                           int64_t&                stride_c,
+                           int64_t&                stride_d,
+                           int&                    batch_count,
+                           float&                  alpha,
+                           float&                  beta,
+                           hipsparseLtOperation_t& trans_a,
+                           hipsparseLtOperation_t& trans_b,
+                           bool&                   header,
+                           bool&                   verbose)
 {
     if(argc >= 2)
     {
@@ -340,11 +361,11 @@ static int parse_arguments(int                    argc,
                     ++i;
                     if(strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0)
                     {
-                        trans_a = rocsparselt_operation_none;
+                        trans_a = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
                     }
                     else if(strncmp(argv[i], "T", 1) == 0 || strncmp(argv[i], "t", 1) == 0)
                     {
-                        trans_a = rocsparselt_operation_transpose;
+                        trans_a = HIPSPARSELT_OPERATION_TRANSPOSE;
                     }
                     else
                     {
@@ -358,11 +379,11 @@ static int parse_arguments(int                    argc,
                     ++i;
                     if(strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0)
                     {
-                        trans_b = rocsparselt_operation_none;
+                        trans_b = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
                     }
                     else if(strncmp(argv[i], "T", 1) == 0 || strncmp(argv[i], "t", 1) == 0)
                     {
-                        trans_b = rocsparselt_operation_transpose;
+                        trans_b = HIPSPARSELT_OPERATION_TRANSPOSE;
                     }
                     else
                     {
@@ -389,38 +410,38 @@ static int parse_arguments(int                    argc,
     return EXIT_SUCCESS;
 }
 
-bool bad_argument(rocsparselt_operation trans_a,
-                  rocsparselt_operation trans_b,
-                  int64_t               m,
-                  int64_t               n,
-                  int64_t               k,
-                  int64_t               lda,
-                  int64_t               ldb,
-                  int64_t               ldc,
-                  int64_t               ldd,
-                  int64_t               stride_a,
-                  int64_t               stride_b,
-                  int64_t               stride_c,
-                  int64_t               stride_d,
-                  int64_t               batch_count)
+bool bad_argument(hipsparseLtOperation_t trans_a,
+                  hipsparseLtOperation_t trans_b,
+                  int64_t                m,
+                  int64_t                n,
+                  int64_t                k,
+                  int64_t                lda,
+                  int64_t                ldb,
+                  int64_t                ldc,
+                  int64_t                ldd,
+                  int64_t                stride_a,
+                  int64_t                stride_b,
+                  int64_t                stride_c,
+                  int64_t                stride_d,
+                  int64_t                batch_count)
 {
     bool argument_error = false;
-    if((trans_a == rocsparselt_operation_none) && (lda < m))
+    if((trans_a == HIPSPARSELT_OPERATION_NON_TRANSPOSE) && (lda < m))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << lda << " < " << m << std::endl;
     }
-    if((trans_a == rocsparselt_operation_transpose) && (lda < k))
+    if((trans_a == HIPSPARSELT_OPERATION_TRANSPOSE) && (lda < k))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << lda << " < " << k << std::endl;
     }
-    if((trans_b == rocsparselt_operation_none) && (ldb < k))
+    if((trans_b == HIPSPARSELT_OPERATION_NON_TRANSPOSE) && (ldb < k))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << k << std::endl;
     }
-    if((trans_b == rocsparselt_operation_transpose) && (ldb < n))
+    if((trans_b == HIPSPARSELT_OPERATION_TRANSPOSE) && (ldb < n))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << n << std::endl;
@@ -464,35 +485,35 @@ bool bad_argument(rocsparselt_operation trans_a,
     return argument_error;
 }
 
-void initialize_a_b_c(std::vector<rocsparselt_half>& ha,
-                      int64_t                        size_a,
-                      std::vector<rocsparselt_half>& hb,
-                      int64_t                        size_b,
-                      std::vector<rocsparselt_half>& hc,
-                      int64_t                        size_c)
+void initialize_a_b_c(std::vector<hipsparseLtHalf>& ha,
+                      int64_t                       size_a,
+                      std::vector<hipsparseLtHalf>& hb,
+                      int64_t                       size_b,
+                      std::vector<hipsparseLtHalf>& hc,
+                      int64_t                       size_c)
 {
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<rocsparselt_half>((rand() % 7) - 3);
+        ha[i] = static_cast<hipsparseLtHalf>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_b; ++i)
     {
-        hb[i] = static_cast<rocsparselt_half>((rand() % 7) - 3);
+        hb[i] = static_cast<hipsparseLtHalf>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_c; ++i)
     {
-        hc[i] = static_cast<rocsparselt_half>((rand() % 7) - 3);
+        hc[i] = static_cast<hipsparseLtHalf>((rand() % 7) - 3);
     }
 }
 
 int main(int argc, char* argv[])
 {
     // initialize parameters with default values
-    rocsparselt_operation trans_a = rocsparselt_operation_none;
-    rocsparselt_operation trans_b = rocsparselt_operation_transpose;
+    hipsparseLtOperation_t trans_a = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+    hipsparseLtOperation_t trans_b = HIPSPARSELT_OPERATION_TRANSPOSE;
 
-    // invalid int and float for rocsparselt spmm int and float arguments
+    // invalid int and float for hipsparselt spmm int and float arguments
     int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
     int     invalid_int   = std::numeric_limits<int>::min() + 1;
     float   invalid_float = std::numeric_limits<float>::quiet_NaN();
@@ -544,17 +565,17 @@ int main(int argc, char* argv[])
     if(k == invalid_int64)
         k = DIM3;
     if(lda == invalid_int64)
-        lda = trans_a == rocsparselt_operation_none ? m : k;
+        lda = trans_a == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? m : k;
     if(ldb == invalid_int64)
-        ldb = trans_b == rocsparselt_operation_none ? k : n;
+        ldb = trans_b == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : n;
     if(ldc == invalid_int64)
         ldc = m;
     if(ldd == invalid_int64)
         ldd = m;
     if(stride_a == invalid_int64)
-        stride_a = trans_a == rocsparselt_operation_none ? lda * k : lda * m;
+        stride_a = trans_a == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? lda * k : lda * m;
     if(stride_b == invalid_int64)
-        stride_b = trans_b == rocsparselt_operation_none ? ldb * n : ldb * k;
+        stride_b = trans_b == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? ldb * n : ldb * k;
     if(stride_c == invalid_int64)
         stride_c = ldc * n;
     if(stride_d == invalid_int64)
@@ -595,7 +616,7 @@ int main(int argc, char* argv[])
     int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
     int64_t row_a, col_a, row_b, col_b, row_c, col_c;
     int     size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
-    if(trans_a == rocsparselt_operation_none)
+    if(trans_a == HIPSPARSELT_OPERATION_NON_TRANSPOSE)
     {
         std::cout << "N";
         row_a      = m;
@@ -613,7 +634,7 @@ int main(int argc, char* argv[])
         a_stride_2 = 1;
         size_a1    = lda * m;
     }
-    if(trans_b == rocsparselt_operation_none)
+    if(trans_b == HIPSPARSELT_OPERATION_NON_TRANSPOSE)
     {
         std::cout << "N, ";
         row_b      = k;
@@ -647,12 +668,12 @@ int main(int argc, char* argv[])
     int64_t size_c = stride_c_r * (stride_c == 0 ? 1 : batch_count);
     int64_t size_d = stride_d_r * (stride_d == 0 ? 1 : batch_count);
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
-    std::vector<rocsparselt_half> ha(size_a);
-    std::vector<rocsparselt_half> h_prune(size_a);
-    std::vector<rocsparselt_half> hb(size_b);
-    std::vector<rocsparselt_half> hc(size_c);
-    std::vector<rocsparselt_half> hd(size_c);
-    std::vector<rocsparselt_half> hd_gold(size_d);
+    std::vector<hipsparseLtHalf> ha(size_a);
+    std::vector<hipsparseLtHalf> h_prune(size_a);
+    std::vector<hipsparseLtHalf> hb(size_b);
+    std::vector<hipsparseLtHalf> hc(size_c);
+    std::vector<hipsparseLtHalf> hd(size_c);
+    std::vector<hipsparseLtHalf> hd_gold(size_d);
 
     // initial data on host
     initialize_a_b_c(ha, size_a, hb, size_b, hc, size_c);
@@ -660,7 +681,7 @@ int main(int argc, char* argv[])
     if(verbose)
     {
         printf("\n");
-        if(trans_a == rocsparselt_operation_none)
+        if(trans_a == HIPSPARSELT_OPERATION_NON_TRANSPOSE)
         {
             print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda, stride_a_r);
         }
@@ -668,7 +689,7 @@ int main(int argc, char* argv[])
         {
             print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1, stride_a_r);
         }
-        if(trans_b == rocsparselt_operation_none)
+        if(trans_b == HIPSPARSELT_OPERATION_NON_TRANSPOSE)
         {
             print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb, stride_b_r);
         }
@@ -680,155 +701,137 @@ int main(int argc, char* argv[])
     }
 
     // allocate memory on device
-    rocsparselt_half *da, *da_p, *db, *dc, *dd, *d_compressed;
-    void*             d_workspace;
-    int               num_streams = 1;
-    hipStream_t       stream      = nullptr;
-    hipStream_t       streams[1]  = {stream};
+    hipsparseLtHalf *da, *da_p, *db, *dc, *dd, *d_compressed;
+    void*            d_workspace;
+    int              num_streams = 1;
+    hipStream_t      stream      = nullptr;
+    hipStream_t      streams[1]  = {stream};
 
-    CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(rocsparselt_half)));
-    CHECK_HIP_ERROR(hipMalloc(&da_p, size_a * sizeof(rocsparselt_half)));
-    CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(rocsparselt_half)));
-    CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(rocsparselt_half)));
-    CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(rocsparselt_half)));
+    CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(hipsparseLtHalf)));
+    CHECK_HIP_ERROR(hipMalloc(&da_p, size_a * sizeof(hipsparseLtHalf)));
+    CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(hipsparseLtHalf)));
+    CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(hipsparseLtHalf)));
+    CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(hipsparseLtHalf)));
     // copy matrices from host to device
     CHECK_HIP_ERROR(
-        hipMemcpy(da, ha.data(), sizeof(rocsparselt_half) * size_a, hipMemcpyHostToDevice));
+        hipMemcpy(da, ha.data(), sizeof(hipsparseLtHalf) * size_a, hipMemcpyHostToDevice));
     CHECK_HIP_ERROR(
-        hipMemcpy(db, hb.data(), sizeof(rocsparselt_half) * size_b, hipMemcpyHostToDevice));
+        hipMemcpy(db, hb.data(), sizeof(hipsparseLtHalf) * size_b, hipMemcpyHostToDevice));
     CHECK_HIP_ERROR(
-        hipMemcpy(dc, hc.data(), sizeof(rocsparselt_half) * size_c, hipMemcpyHostToDevice));
+        hipMemcpy(dc, hc.data(), sizeof(hipsparseLtHalf) * size_c, hipMemcpyHostToDevice));
 
-    rocsparselt_handle               handle;
-    rocsparselt_mat_descr            matA, matB, matC, matD;
-    rocsparselt_matmul_descr         matmul;
-    rocsparselt_matmul_alg_selection alg_sel;
-    rocsparselt_matmul_plan          plan;
+    hipsparseLtHandle_t             handle;
+    hipsparseLtMatDescriptor_t      matA, matB, matC, matD;
+    hipsparseLtMatmulDescriptor_t   matmul;
+    hipsparseLtMatmulAlgSelection_t alg_sel;
+    hipsparseLtMatmulPlan_t         plan;
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_init(&handle));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtInit(&handle));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_structured_descr_init(&handle,
-                                                            &matA,
-                                                            row_a,
-                                                            col_a,
-                                                            lda,
-                                                            16,
-                                                            rocsparselt_datatype_f16_r,
-                                                            rocsparselt_order_column,
-                                                            rocsparselt_sparsity_50_percent));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(&handle,
-                                                       &matB,
-                                                       row_b,
-                                                       col_b,
-                                                       ldb,
-                                                       16,
-                                                       rocsparselt_datatype_f16_r,
-                                                       rocsparselt_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(&handle,
-                                                       &matC,
-                                                       row_c,
-                                                       col_c,
-                                                       ldc,
-                                                       16,
-                                                       rocsparselt_datatype_f16_r,
-                                                       rocsparselt_order_column));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_dense_descr_init(&handle,
-                                                       &matD,
-                                                       row_c,
-                                                       col_c,
-                                                       ldd,
-                                                       16,
-                                                       rocsparselt_datatype_f16_r,
-                                                       rocsparselt_order_column));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtStructuredDescriptorInit(&handle,
+                                                                &matA,
+                                                                row_a,
+                                                                col_a,
+                                                                lda,
+                                                                16,
+                                                                HIPSPARSELT_R_16F,
+                                                                HIPSPARSELT_ORDER_COLUMN,
+                                                                HIPSPARSELT_SPARSITY_50_PERCENT));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
+        &handle, &matB, row_b, col_b, ldb, 16, HIPSPARSELT_R_16F, HIPSPARSELT_ORDER_COLUMN));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
+        &handle, &matC, row_c, col_c, ldc, 16, HIPSPARSELT_R_16F, HIPSPARSELT_ORDER_COLUMN));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
+        &handle, &matD, row_c, col_c, ldd, 16, HIPSPARSELT_R_16F, HIPSPARSELT_ORDER_COLUMN));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matA, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matA, rocsparselt_mat_batch_stride, &stride_a, sizeof(stride_a)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matB, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matB, rocsparselt_mat_batch_stride, &stride_b, sizeof(stride_b)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matC, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matC, rocsparselt_mat_batch_stride, &stride_c, sizeof(stride_c)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matD, rocsparselt_mat_num_batches, &batch_count, sizeof(batch_count)));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_set_attribute(
-        &handle, &matD, rocsparselt_mat_batch_stride, &stride_d, sizeof(stride_d)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(stride_a)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matB, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(stride_b)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matC, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(stride_c)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matD, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+        &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(stride_d)));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_descr_init(
-        &handle, &matmul, trans_a, trans_b, &matA, &matB, &matC, &matD, rocsparselt_compute_f32));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(
+        &handle, &matmul, trans_a, trans_b, &matA, &matB, &matC, &matD, HIPSPARSELT_COMPUTE_32F));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_alg_selection_init(
-        &handle, &alg_sel, &matmul, rocsparselt_matmul_alg_default));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulAlgSelectionInit(
+        &handle, &alg_sel, &matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_prune(
-        &handle, &matmul, da, da_p, rocsparselt_prune_smfmac_strip, stream));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtSpMMAPrune(&handle, &matmul, da, da_p, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream));
 
     size_t workspace_size, compressed_size;
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_get_workspace(&handle, &alg_sel, &workspace_size));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &alg_sel, &workspace_size));
 
-    CHECK_ROCSPARSE_ERROR(
-        rocsparselt_matmul_plan_init(&handle, &plan, &matmul, &alg_sel, workspace_size));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel, workspace_size));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compressed_size(&handle, &plan, &compressed_size));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size));
 
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_smfmac_compress(&handle, &plan, da_p, d_compressed, stream));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompress(&handle, &plan, da_p, d_compressed, stream));
 
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul(&handle,
-                                             &plan,
-                                             &alpha,
-                                             d_compressed,
-                                             db,
-                                             &beta,
-                                             dc,
-                                             dd,
-                                             d_workspace,
-                                             &streams[0],
-                                             num_streams));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmul(&handle,
+                                              &plan,
+                                              &alpha,
+                                              d_compressed,
+                                              db,
+                                              &beta,
+                                              dc,
+                                              dd,
+                                              d_workspace,
+                                              &streams[0],
+                                              num_streams));
     hipStreamSynchronize(stream);
     // copy output from device to CPU
     CHECK_HIP_ERROR(
-        hipMemcpy(hd.data(), dd, sizeof(rocsparselt_half) * size_c, hipMemcpyDeviceToHost));
+        hipMemcpy(hd.data(), dd, sizeof(hipsparseLtHalf) * size_c, hipMemcpyDeviceToHost));
     CHECK_HIP_ERROR(
-        hipMemcpy(h_prune.data(), da_p, sizeof(rocsparselt_half) * size_a, hipMemcpyDeviceToHost));
+        hipMemcpy(h_prune.data(), da_p, sizeof(hipsparseLtHalf) * size_a, hipMemcpyDeviceToHost));
     // calculate golden or correct result
     for(int i = 0; i < batch_count; i++)
     {
-        rocsparselt_half* a_ptr = &h_prune[i * stride_a];
-        rocsparselt_half* b_ptr = &hb[i * stride_b];
-        rocsparselt_half* c_ptr = &hc[i * stride_c];
-        rocsparselt_half* d_ptr = &hd_gold[i * stride_d];
-        mat_mat_mult<rocsparselt_half, rocsparselt_half, float>(alpha,
-                                                                beta,
-                                                                m,
-                                                                n,
-                                                                k,
-                                                                a_ptr,
-                                                                a_stride_1,
-                                                                a_stride_2,
-                                                                b_ptr,
-                                                                b_stride_1,
-                                                                b_stride_2,
-                                                                c_ptr,
-                                                                1,
-                                                                ldc,
-                                                                d_ptr,
-                                                                1,
-                                                                ldd);
+        hipsparseLtHalf* a_ptr = &h_prune[i * stride_a];
+        hipsparseLtHalf* b_ptr = &hb[i * stride_b];
+        hipsparseLtHalf* c_ptr = &hc[i * stride_c];
+        hipsparseLtHalf* d_ptr = &hd_gold[i * stride_d];
+        mat_mat_mult<hipsparseLtHalf, hipsparseLtHalf, float>(alpha,
+                                                              beta,
+                                                              m,
+                                                              n,
+                                                              k,
+                                                              a_ptr,
+                                                              a_stride_1,
+                                                              a_stride_2,
+                                                              b_ptr,
+                                                              b_stride_1,
+                                                              b_stride_2,
+                                                              c_ptr,
+                                                              1,
+                                                              ldc,
+                                                              d_ptr,
+                                                              1,
+                                                              ldd);
     }
     if(verbose)
     {
-        std::vector<rocsparselt_half> h_compressed(compressed_size);
+        std::vector<hipsparseLtHalf> h_compressed(compressed_size);
         CHECK_HIP_ERROR(
             hipMemcpy(&h_compressed[0], d_compressed, compressed_size, hipMemcpyDeviceToHost));
 
         auto batch_count_c = stride_a == 0 ? 1 : batch_count;
-        if(trans_a == rocsparselt_operation_none)
+        if(trans_a == HIPSPARSELT_OPERATION_NON_TRANSPOSE)
         {
             print_strided_batched(
                 "ha_prune calculated, N ", &h_prune[0], m, k, batch_count, 1, lda, stride_a_r);
@@ -902,12 +905,12 @@ int main(int argc, char* argv[])
     CHECK_HIP_ERROR(hipFree(dc));
     CHECK_HIP_ERROR(hipFree(dd));
     CHECK_HIP_ERROR(hipFree(d_compressed));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_matmul_plan_destroy(&plan));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matA));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matB));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matC));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_mat_descr_destroy(&matD));
-    CHECK_ROCSPARSE_ERROR(rocsparselt_destroy(&handle));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matA));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matB));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matC));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matD));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtDestroy(&handle));
 
     return EXIT_SUCCESS;
 }

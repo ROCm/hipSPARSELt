@@ -1,10 +1,32 @@
-/* ************************************************************************
- * Copyright (c) 2020-2022 Advanced Micro Devices, Inc.
- * ************************************************************************ */
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 
 #pragma once
 
-#include "rocsparselt_arguments.hpp"
+#include "hipsparselt_arguments.hpp"
 
 namespace ArgumentLogging
 {
@@ -15,12 +37,12 @@ void ArgumentModel_set_log_function_name(bool f);
 bool ArgumentModel_get_log_function_name();
 
 // ArgumentModel template has a variadic list of argument enums
-template <rocsparselt_argument... Args>
+template <hipsparselt_argument... Args>
 class ArgumentModel
 {
     // Whether model has a particular parameter
     // TODO: Replace with C++17 fold expression ((Args == param) || ...)
-    static constexpr bool has(rocsparselt_argument param)
+    static constexpr bool has(hipsparselt_argument param)
     {
         for(auto x : {Args...})
             if(x == param)
@@ -29,8 +51,8 @@ class ArgumentModel
     }
 
 public:
-    void log_perf(rocsparselt_internal_ostream& name_line,
-                  rocsparselt_internal_ostream& val_line,
+    void log_perf(hipsparselt_internal_ostream& name_line,
+                  hipsparselt_internal_ostream& val_line,
                   const Arguments&              arg,
                   double                        gpu_us,
                   double                        gflops,
@@ -50,21 +72,21 @@ public:
             gpu_us /= hot_calls;
 
         // per/us to per/sec *10^6
-        double rocsparselt_gflops = gflops * batch_count / gpu_us * 1e6;
-        double rocsparselt_GBps   = gbytes * batch_count / gpu_us * 1e6;
+        double hipsparselt_gflops = gflops * batch_count / gpu_us * 1e6;
+        double hipsparselt_GBps   = gbytes * batch_count / gpu_us * 1e6;
 
         // append performance fields
         if(gflops != ArgumentLogging::NA_value)
         {
-            name_line << ",rocsparselt-Gflops";
-            val_line << ", " << rocsparselt_gflops;
+            name_line << ",hipsparselt-Gflops";
+            val_line << ", " << hipsparselt_gflops;
         }
 
         if(gbytes != ArgumentLogging::NA_value)
         {
             // GB/s not usually reported for non-memory bound functions
-            name_line << ",rocsparselt-GB/s";
-            val_line << ", " << rocsparselt_GBps;
+            name_line << ",hipsparselt-GB/s";
+            val_line << ", " << hipsparselt_GBps;
         }
 
         name_line << ",us";
@@ -111,7 +133,7 @@ public:
     }
 
     template <typename T>
-    void log_args(rocsparselt_internal_ostream& str,
+    void log_args(hipsparselt_internal_ostream& str,
                   const Arguments&              arg,
                   double                        gpu_us,
                   double                        gflops,
@@ -122,8 +144,8 @@ public:
                   double                        norm3     = ArgumentLogging::NA_value,
                   double                        norm4     = ArgumentLogging::NA_value)
     {
-        rocsparselt_internal_ostream name_list;
-        rocsparselt_internal_ostream value_list;
+        hipsparselt_internal_ostream name_list;
+        hipsparselt_internal_ostream value_list;
 
         if(ArgumentModel_get_log_function_name())
         {

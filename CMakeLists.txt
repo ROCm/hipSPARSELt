@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2021-2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,10 @@
 cmake_minimum_required( VERSION 3.16.8 )
 
 # This will add compile option: -std=c++17
-set( CMAKE_CXX_STANDARD 17 )
+set(CMAKE_CXX_STANDARD 17 )
 # Without this line, it will add -std=gnu++17 instead, which may have issues.
-set( CMAKE_CXX_EXTENSIONS OFF )
+set(CMAKE_CXX_EXTENSIONS OFF )
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Consider removing this in the future
 # This should appear before the project command, because it does not use FORCE
@@ -36,11 +37,20 @@ else()
   set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 endif()
 
+if(NOT BUILD_CUDA)
 # Adding CMAKE_PREFIX_PATH, needed for static builds
 list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+endif()
 
-# CMake modules
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake /opt/rocm/hip/cmake)
+if( NOT DEFINED ENV{HIP_PATH})
+    set( HIP_PATH "/opt/rocm/hip" )
+else( )
+    set (HIP_PATH $ENV{HIP_PATH} )
+endif( )
+
+# Append our library helper cmake path and the cmake path for hip (for convenience)
+# Users may override HIP path by specifying their own in CMAKE_MODULE_PATH
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake  ${ROCM_PATH}/lib/cmake/hip /opt/rocm/lib/cmake/hip ${HIP_PATH}/cmake )
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -54,111 +64,125 @@ if(POLICY CMP0066)
   cmake_policy(SET CMP0066 NEW)
 endif()
 
-# rocSPARSELt project
-project(rocsparselt LANGUAGES CXX Fortran)
+project(hipsparselt LANGUAGES CXX)
 
-# Determine if CXX Compiler is hip-clang
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  message(STATUS "Using hip-clang to build for amdgpu backend")
-  set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__HIP_HCC_COMPAT_MODE__=1" )
-  if ( CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
-    set ( CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
-  endif()
-else()
-  message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
-endif()
-
-# Force library install path to lib (CentOS 7 defaults to lib64)
+# force library install path to lib (CentOS 7 defaults to lib64)
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL "Installation directory for libraries" FORCE)
 
-# Build flags
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Build options
-option(BUILD_SHARED_LIBS "Build rocSPARSELt as a shared library" ON)
+# BUILD_SHARED_LIBS is a cmake built-in; we make it an explicit option such that it shows in cmake-gui
+option(BUILD_SHARED_LIBS "Build hipSparseLt as a shared library" ON )
 option(BUILD_CLIENTS_TESTS "Build tests (requires googletest)" OFF)
 option(BUILD_CLIENTS_BENCHMARKS "Build benchmarks" OFF)
 option(BUILD_CLIENTS_SAMPLES "Build examples" ON)
 option(BUILD_VERBOSE "Output additional build information" OFF)
-option(BUILD_CODE_COVERAGE "Build rocSPARSELt with code coverage enabled" OFF)
-option(BUILD_ADDRESS_SANITIZER "Build rocSPARSELt with address sanitizer enabled" OFF)
+option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
+option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+# Find CUDA if the user wants a CUDA version.
+option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
 
-#
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
   add_link_options(--coverage -lgcov)
 endif()
 
 if(BUILD_ADDRESS_SANITIZER)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
-  add_link_options(-fuse-ld=lld)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
+    add_link_options(-fuse-ld=lld)
 endif()
 
+if(NOT BUILD_CUDA)
+    # Determine if CXX Compiler is hip-clang
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        message(STATUS "Using hip-clang to build for amdgpu backend")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__HIP_HCC_COMPAT_MODE__=1" )
+        if (CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
+            set (CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
+        endif()
+    else()
+        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
+    endif()
+endif()
 # Dependencies
 include(cmake/Dependencies.cmake)
 
-# Detect compiler support for target ID
-if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$")
-  execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-    OUTPUT_VARIABLE CXX_OUTPUT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE)
-  string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
-endif()
-
-# Detect compiler support for target ID
-# This section is deprecated. Please use rocm_check_target_ids for future use.
-if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-        OUTPUT_VARIABLE CXX_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_STRIP_TRAILING_WHITESPACE)
-    string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
-endif()
-
-#Set the AMDGPU_TARGETS with backward compatiblity
-rocm_check_target_ids(target_list
-     TARGETS "gfx908:xnack-"
-)
-
-if (AMDGPU_TARGETS)
-  set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
-  if(TMPAMDGPU_TARGETS STREQUAL "all" )
-    set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target" FORCE)
-  else()
-    set(AMDGPU_TARGETS "${TMPAMDGPU_TARGETS}" CACHE STRING "AMD GPU targets to compile for" FORCE)
-  endif()
+if (USE_CUDA)
+	find_package( CUDA REQUIRED )
+    # Hip headers required of all clients; clients use hip to allocate device memory
+    find_package( HIP MODULE REQUIRED )
+    list( APPEND HIP_INCLUDE_DIRS "${HIP_ROOT_DIR}/include" )
 else()
-  set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
+
+
+    #Set the AMDGPU_TARGETS with backward compatiblity
+    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+        TARGETS "gfx908:xnack-"
+    )
+
+    if (AMDGPU_TARGETS)
+        set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
+        if(TMPAMDGPU_TARGETS STREQUAL "all" )
+            set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target" FORCE)
+        else()
+            set(AMDGPU_TARGETS "${TMPAMDGPU_TARGETS}" CACHE STRING "AMD GPU targets to compile for" FORCE)
+        endif()
+    else()
+        set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
+    endif()
+
+    message(STATUS "AMDGPU_TARGETS: ${AMDGPU_TARGETS}")
+
+    if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+        find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
+    endif( )
 endif()
 
-message(STATUS "AMDGPU_TARGETS: ${AMDGPU_TARGETS}")
-
-if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
-  find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
-endif( )
 
 # Setup version
-set(VERSION_STRING "0.0.1")
-rocm_setup_version(VERSION ${VERSION_STRING})
-set(rocsparselt_SOVERSION 0.1)
+set (VERSION_STRING "0.2.0" )
+rocm_setup_version( VERSION ${VERSION_STRING} )
+set(hipsparselt_SOVERSION 0.2)
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
   set( BUILD_CLIENTS ON )
 endif()
 
-# rocSPARSELt library
-add_subdirectory(library)
+add_subdirectory( library )
 
 # Trigger client builds if selected
 if(BUILD_CLIENTS)
   add_subdirectory(clients)
 endif()
 
-#[[ TODO
+# Package specific CPACK vars
+set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md" )
+set( CPACK_RPM_PACKAGE_LICENSE "MIT")
+
+if( NOT CPACK_PACKAGING_INSTALL_PREFIX )
+    set( CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" )
+endif()
+
+set( CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include" "\${CPACK_PACKAGING_INSTALL_PREFIX}/lib" )
+
+# Give hipsparselt compiled for CUDA backend a different name
+if( NOT USE_CUDA )
+    set( package_name hipsparselt )
+else( )
+    set( package_name hipsparselt-alt )
+endif( )
+
+set( HIPSPARSELTS_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file" )
+
+rocm_create_package(
+    NAME ${package_name}
+    DESCRIPTION "Radeon Open Compute BLAS marshalling library"
+    MAINTAINER "hipSPARSELt Maintainer <hipsparselt-maintainer@amd.com>"
+    LDCONFIG
+    LDCONFIG_DIR ${HIPSPARSELTS_CONFIG_DIR}
+)
+
+
 #
 # ADDITIONAL TARGETS FOR CODE COVERAGE
 #
@@ -174,13 +198,15 @@ if(BUILD_CODE_COVERAGE)
   #
   # Run coverage analysis
   #
+  set(coverage_test ./clients/staging/hipsparselt-test)
+
   add_custom_target(coverage_analysis
     COMMAND echo Coverage GTEST_FILTER=\${GTEST_FILTER}
-    COMMAND ./clients/staging/rocsparselt-test --gtest_filter=\"\${GTEST_FILTER}\"
+    COMMAND ${coverage_test} --gtest_filter=\"\${GTEST_FILTER}\"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
-  add_dependencies(coverage_analysis rocsparselt)
+  add_dependencies(coverage_analysis hipsparselt)
 
   #
   # Prepare coverage output
@@ -214,4 +240,4 @@ if(BUILD_CODE_COVERAGE)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 endif()
-]]
+
