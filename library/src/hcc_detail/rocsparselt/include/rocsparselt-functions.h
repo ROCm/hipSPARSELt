@@ -63,16 +63,15 @@ void rocsparselt_initialize(void);
  *
  *  @param[in]
  *  handle           rocsparselt library handle
- *  algSelection     the algorithm selection descriptor.
+ *  plan             Matrix multiplication plan.
  *
  *  \retval rocsparselt_status_success the operation completed successfully.
- *  \retval rocsparselt_status_invalid_handle \p handle or \p algSelection is invalid.
+ *  \retval rocsparselt_status_invalid_handle \p handle or \p plan is invalid.
  *  \retval rocsparselt_status_invalid_pointer \p workspaceSize pointer is invalid.
  */
-rocsparselt_status
-    rocsparselt_matmul_get_workspace(const rocsparselt_handle*               handle,
-                                     const rocsparselt_matmul_alg_selection* algSelection,
-                                     size_t*                                 workspaceSize);
+rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*      handle,
+                                                    const rocsparselt_matmul_plan* plan,
+                                                    size_t*                        workspaceSize);
 
 /*! \ingroup spmm_module
  *  \brief Sparse matrix dense matrix multiplication

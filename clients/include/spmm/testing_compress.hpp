@@ -221,10 +221,10 @@ void testing_compress_bad_arg(const Arguments& arg)
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
-    size_t workspace_size, compressed_size;
-    hipsparseLtMatmulGetWorkspace(handle, alg_sel, &workspace_size);
-
+    size_t                        workspace_size, compressed_size;
     hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+
+    hipsparseLtMatmulGetWorkspace(handle, plan, &workspace_size);
 
     // test version 1
     EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(nullptr, plan, &compressed_size),
@@ -406,10 +406,10 @@ void testing_compress(const Arguments& arg)
 
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
-    size_t workspace_size, compressed_size;
-    hipsparseLtMatmulGetWorkspace(handle, alg_sel, &workspace_size);
-
+    size_t                        workspace_size, compressed_size;
     hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+
+    hipsparseLtMatmulGetWorkspace(handle, plan, &workspace_size);
 
     if(run_version == 1)
     {

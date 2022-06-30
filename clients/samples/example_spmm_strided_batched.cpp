@@ -771,10 +771,10 @@ int main(int argc, char* argv[])
         hipsparseLtSpMMAPrune(&handle, &matmul, da, da_p, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream));
 
     size_t workspace_size, compressed_size;
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &alg_sel, &workspace_size));
-
     CHECK_HIPSPARSELT_ERROR(
         hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel, workspace_size));
+
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan, &workspace_size));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size));
 

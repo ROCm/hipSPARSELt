@@ -750,10 +750,10 @@ void run(int64_t                m,
         &handle, &alg_sel, &matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT));
 
     size_t workspace_size, compressed_size;
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &alg_sel, &workspace_size));
-
     CHECK_HIPSPARSELT_ERROR(
         hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel, workspace_size));
+
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan, &workspace_size));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size));
 
