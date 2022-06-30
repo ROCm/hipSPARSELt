@@ -430,10 +430,11 @@ void testing_spmm(const Arguments& arg)
 
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
-    size_t workspace_size, compressed_size;
-    hipsparseLtMatmulGetWorkspace(handle, alg_sel, &workspace_size);
-
+    size_t                        workspace_size, compressed_size;
     hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, plan, &workspace_size),
+                            HIPSPARSE_STATUS_SUCCESS);
 
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
                             HIPSPARSE_STATUS_SUCCESS);
