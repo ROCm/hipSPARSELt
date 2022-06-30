@@ -254,9 +254,9 @@ hipsparseStatus_t
 
 /* matmul plan */
 HIPSPARSELT_EXPORT
-hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*             handle,
-                                                const hipsparseLtMatmulAlgSelection_t* algSelection,
-                                                size_t* workspaceSize);
+hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*     handle,
+                                                const hipsparseLtMatmulPlan_t* plan,
+                                                size_t*                        workspaceSize);
 
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*             handle,

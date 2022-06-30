@@ -709,15 +709,13 @@ catch(...)
 }
 
 /* matmul plan */
-hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*             handle,
-                                                const hipsparseLtMatmulAlgSelection_t* algSelection,
-                                                size_t* workspaceSize)
+hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*     handle,
+                                                const hipsparseLtMatmulPlan_t* plan,
+                                                size_t*                        workspaceSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
-        rocsparselt_matmul_get_workspace((const rocsparselt_handle*)handle,
-                                         (const rocsparselt_matmul_alg_selection*)algSelection,
-                                         workspaceSize));
+    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_get_workspace(
+        (const rocsparselt_handle*)handle, (const rocsparselt_matmul_plan*)plan, workspaceSize));
 }
 catch(...)
 {

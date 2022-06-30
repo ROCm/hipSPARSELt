@@ -39,14 +39,13 @@ extern "C" {
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparselt_status
-    rocsparselt_matmul_get_workspace(const rocsparselt_handle*               handle,
-                                     const rocsparselt_matmul_alg_selection* algSelection,
-                                     size_t*                                 workspaceSize)
+rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*      handle,
+                                                    const rocsparselt_matmul_plan* plan,
+                                                    size_t*                        workspaceSize)
 
 {
     // Check if handle is valid
-    if(handle == nullptr || algSelection == nullptr || *handle == nullptr)
+    if(handle == nullptr || plan == nullptr || *plan == nullptr || *handle == nullptr)
     {
         return rocsparselt_status_invalid_handle;
     }
