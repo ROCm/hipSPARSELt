@@ -258,19 +258,25 @@ typedef enum rocsparselt_matmul_descr_attribute_
     rocsparselt_matmul_activation_relu_threshold
     = 2, /**< Lower threshold of the ReLU activation function. */
     rocsparselt_matmul_activation_gelu = 3, /**< GeLU activation function. */
+    rocsparselt_matmul_activation_gelu_scaling
+    = 4, /** Scaling coefficient for the GeLU activation function. It implies gelu is endable */
+    rocsparselt_matmul_alpha_vector_scaling
+    = 5, /** Enable/Disable alpha vector (per-channel) scaling */
+    rocsparselt_matmul_beta_vector_scaling
+    = 6, /** Enable/Disable beta vector (per-channel) scaling */
     rocsparselt_matmul_bias_pointer
-    = 4, /**< Bias pointer. The bias vector size must equal to the number of rows of the output matrix (D). */
+    = 7, /**< Bias pointer. The bias vector size must equal to the number of rows of the output matrix (D). */
     rocsparselt_matmul_bias_stride
-    = 5, /**< Bias stride between consecutive bias vectors. 0 means broadcast the first bias vector. */
-    rocsparselt_matmul_activation_abs       = 6, /**< ABS activation function. */
-    rocsparselt_matmul_activation_leakyrelu = 7, /**< LeakyReLU activation function. */
+    = 8, /**< Bias stride between consecutive bias vectors. 0 means broadcast the first bias vector. */
+    rocsparselt_matmul_activation_abs       = 9, /**< ABS activation function. */
+    rocsparselt_matmul_activation_leakyrelu = 10, /**< LeakyReLU activation function. */
     rocsparselt_matmul_activation_leakyrelu_alpha
-    = 8, /** Alpha value of the LeakyReLU activation function. */
-    rocsparselt_matmul_activation_sigmoid = 9, /** Sigmoid activation function. */
-    rocsparselt_matmul_activation_tanh    = 10, /**< Tanh activation function. */
+    = 11, /** Alpha value of the LeakyReLU activation function. */
+    rocsparselt_matmul_activation_sigmoid = 12, /** Sigmoid activation function. */
+    rocsparselt_matmul_activation_tanh    = 13, /**< Tanh activation function. */
     rocsparselt_matmul_activation_tanh_alpha
-    = 11, /** Alpha value of the Tanh activation function. */
-    rocsparselt_matmul_activation_tanh_beta = 12, /** Beta value of the Tanh activation function. */
+    = 14, /** Alpha value of the Tanh activation function. */
+    rocsparselt_matmul_activation_tanh_beta = 15, /** Beta value of the Tanh activation function. */
 } rocsparselt_matmul_descr_attribute;
 
 /*! \ingroup types_module
@@ -296,8 +302,14 @@ typedef enum rocsparselt_matmul_alg_attribute_
     rocsparselt_matmul_alg_config_id     = 0, /**< Algorithm ID (set and query). */
     rocsparselt_matmul_alg_config_max_id = 1, /**< Algorithm ID limit (query only). */
     rocsparselt_matmul_search_iterations
-    = 2 /**< Number of iterations (kernel launches per algorithm)
+    = 2, /**< Number of iterations (kernel launches per algorithm)
                                                   for rocsparselt_matmul_search, default=10. */
+    rocsparselt_matmul_split_k
+    = 3, /** Split-K factor, default=not set. Valid range: [1, K]. Value 1 is equivalent to the Split-K feature is disabled */
+    rocsparselt_matmul_split_k_mode
+    = 4, /** Number of kernels to call for Split-K. Values are specified in rocsparselt_split_k_mode. */
+    rocsparselt_matmul_split_k_buffers
+    = 5, /** Device memory buffers to store partial results for the reduction. The valid range is [1, SplitK - 1] */
 } rocsparselt_matmul_alg_attribute;
 
 /*! \ingroup types_module
@@ -322,6 +334,13 @@ typedef enum rocsparselt_atomics_mode_
     /*! \brief Algorithms will take advantage of atomics where applicable */
     rocsparselt_atomics_allowed = 1,
 } rocsparselt_atomics_mode;
+
+typedef enum rocsparselt_split_k_mode_
+{
+    rocsparselt_splik_k_mode_one_kernel
+    = 0, /** Use the same SP-MM kernel to do the final reduction */
+    rocsparselt_split_k_mode_two_kernels = 1, /** Use anoghter kernel to do the final reduction */
+} rocsparselt_split_k_mode;
 
 #ifdef __cplusplus
 }
