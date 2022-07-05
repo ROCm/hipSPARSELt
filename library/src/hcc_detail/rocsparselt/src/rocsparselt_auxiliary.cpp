@@ -823,6 +823,8 @@ rocsparselt_status
                 _algSelection->search_iterations = *search_iterations;
                 break;
             }
+            default:
+                return rocsparselt_status_not_implemented;
             }
             log_trace(*handle, "rocsparselt_matmul_alg_set_attribute");
         }
@@ -877,6 +879,8 @@ rocsparselt_status
             case rocsparselt_matmul_search_iterations:
                 *reinterpret_cast<int*>(data) = _algSelection->search_iterations;
                 break;
+            default:
+                return rocsparselt_status_not_implemented;
             }
             log_trace(*handle, "rocsparselt_matmul_alg_get_attribute");
         }

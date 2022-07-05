@@ -280,6 +280,12 @@ rocsparselt_matmul_descr_attribute_
         return rocsparselt_matmul_activation_relu_threshold;
     case HIPSPARSELT_MATMUL_ACTIVATION_GELU:
         return rocsparselt_matmul_activation_gelu;
+    case HIPSPARSELT_MATMUL_ACTIVATION_GELU_SCALING:
+        return rocsparselt_matmul_activation_gelu_scaling;
+    case HIPSPARSELT_MATMUL_ALPHA_VECTOR_SCALING:
+        return rocsparselt_matmul_alpha_vector_scaling;
+    case HIPSPARSELT_MATMUL_BETA_VECTOR_SCALING:
+        return rocsparselt_matmul_beta_vector_scaling;
     case HIPSPARSELT_MATMUL_BIAS_STRIDE:
         return rocsparselt_matmul_bias_stride;
     case HIPSPARSELT_MATMUL_BIAS_POINTER:
@@ -316,6 +322,12 @@ hipsparseLtMatmulDescAttribute_t
         return HIPSPARSELT_MATMUL_ACTIVATION_RELU_THRESHOLD;
     case rocsparselt_matmul_activation_gelu:
         return HIPSPARSELT_MATMUL_ACTIVATION_GELU;
+    case rocsparselt_matmul_activation_gelu_scaling:
+        return HIPSPARSELT_MATMUL_ACTIVATION_GELU_SCALING;
+    case rocsparselt_matmul_alpha_vector_scaling:
+        return HIPSPARSELT_MATMUL_ALPHA_VECTOR_SCALING;
+    case rocsparselt_matmul_beta_vector_scaling:
+        return HIPSPARSELT_MATMUL_BETA_VECTOR_SCALING;
     case rocsparselt_matmul_bias_stride:
         return HIPSPARSELT_MATMUL_BIAS_STRIDE;
     case rocsparselt_matmul_bias_pointer:
@@ -400,6 +412,12 @@ rocsparselt_matmul_alg_attribute_
         return rocsparselt_matmul_alg_config_max_id;
     case HIPSPARSELT_MATMUL_SEARCH_ITERATIONS:
         return rocsparselt_matmul_search_iterations;
+    case HIPSPARSELT_MATMUL_SPLIT_K:
+        return rocsparselt_matmul_split_k;
+    case HIPSPARSELT_MATMUL_SPLIT_K_MODE:
+        return rocsparselt_matmul_split_k_mode;
+    case HIPSPARSELT_MATMUL_SPLIT_K_BUFFERS:
+        return rocsparselt_matmul_split_k_buffers;
     default:
         throw HIPSPARSELT_STATUS_INVALID_ENUM;
     }
@@ -416,6 +434,12 @@ hipsparseLtMatmulAlgAttribute_t
         return HIPSPARSELT_MATMUL_ALG_CONFIG_MAX_ID;
     case rocsparselt_matmul_search_iterations:
         return HIPSPARSELT_MATMUL_SEARCH_ITERATIONS;
+    case rocsparselt_matmul_split_k:
+        return HIPSPARSELT_MATMUL_SPLIT_K;
+    case rocsparselt_matmul_split_k_mode:
+        return HIPSPARSELT_MATMUL_SPLIT_K_MODE;
+    case rocsparselt_matmul_split_k_buffers:
+        return HIPSPARSELT_MATMUL_SPLIT_K_BUFFERS;
     default:
         throw HIPSPARSELT_STATUS_INVALID_ENUM;
     }
@@ -442,6 +466,32 @@ hipsparseLtPruneAlg_t RocSparseLtPruneAlgToHIPPruneAlg(rocsparselt_prune_alg_ al
         return HIPSPARSELT_PRUNE_SPMMA_TILE;
     case rocsparselt_prune_smfmac_strip:
         return HIPSPARSELT_PRUNE_SPMMA_STRIP;
+    default:
+        throw HIPSPARSELT_STATUS_INVALID_ENUM;
+    }
+}
+
+rocsparselt_split_k_mode HIPSplitKModeToRocSparseLtSplitKMode(hipsparseLtSplitKMode_t mode)
+{
+    switch(mode)
+    {
+    case HIPSPARSELT_SPLIT_K_MODE_ONE_KERNEL:
+        return rocsparselt_splik_k_mode_one_kernel;
+    case HIPSPARSELT_SPLIT_K_MODE_TWO_KERNELS:
+        return rocsparselt_split_k_mode_two_kernels;
+    default:
+        throw HIPSPARSELT_STATUS_INVALID_ENUM;
+    }
+}
+
+hipsparseLtSplitKMode_t RocSparseLtSplitKModeToHIPSplitKMode(rocsparselt_split_k_mode mode)
+{
+    switch(mode)
+    {
+    case rocsparselt_splik_k_mode_one_kernel:
+        return HIPSPARSELT_SPLIT_K_MODE_ONE_KERNEL;
+    case rocsparselt_split_k_mode_two_kernels:
+        return HIPSPARSELT_SPLIT_K_MODE_TWO_KERNELS;
     default:
         throw HIPSPARSELT_STATUS_INVALID_ENUM;
     }
