@@ -31,7 +31,6 @@
 
 #include "auxiliary.hpp"
 #include "handle.h"
-#include "hipsparselt-types.h"
 #include "logging.h"
 #include <algorithm>
 #include <exception>
@@ -67,9 +66,9 @@ constexpr const char* rocsparselt_transpose_letter(rocsparselt_operation op)
 template <typename>
 static constexpr char rocsparselt_precision_string[] = "invalid";
 template <>
-static constexpr char rocsparselt_precision_string<hipsparseLtBfloat16>[] = "bf16_r";
+static constexpr char rocsparselt_precision_string<hip_bfloat16>[] = "bf16_r";
 template <>
-static constexpr char rocsparselt_precision_string<hipsparseLtHalf>[] = "f16_r";
+static constexpr char rocsparselt_precision_string<__half>[] = "f16_r";
 template <>
 static constexpr char rocsparselt_precision_string<float>[] = "f32_r";
 template <>

@@ -228,7 +228,8 @@ void validate_gold(T*             A,
             for(int i2 = 0; i2 < m_n2; i2++)
             {
                 auto compare = [&](T a, T b, int x, int64_t apos, int64_t bpos) {
-                    if(a != b)
+                    using c_type = std::conditional_t<std::is_same<__half, T>::value, float, T>;
+                    if(static_cast<c_type>(a) != static_cast<c_type>(b))
                     {
                         // direct floating point comparison is not reliable
                         std::printf("(%d, %d, %d, %d):\t[%ld]%f vs. [%ld]%f\n",
@@ -280,6 +281,7 @@ void validate_compressed(
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
+    using c_type = std::conditional_t<std::is_same<__half, T>::value, float, T>;
     bool correct = true;
     for(int i3 = 0; i3 < n3; i3++)
     {
@@ -287,9 +289,9 @@ void validate_compressed(
         {
             for(int i2 = 0; i2 < n2; i2++)
             {
-                auto a = A[(i1 * s1) + (i2 * s2) + (i3 * s3)];
-                auto b = B[(i1 * s1) + (i2 * s2) + (i3 * s3)];
-                if(a != b)
+                T a = A[(i1 * s1) + (i2 * s2) + (i3 * s3)];
+                T b = B[(i1 * s1) + (i2 * s2) + (i3 * s3)];
+                if(static_cast<c_type>(a) != static_cast<c_type>(b))
                 {
                     // direct floating point comparison is not reliable
                     std::printf("(%d, %d, %d):\t%f vs. %f\n",
@@ -926,11 +928,11 @@ int main(int argc, char* argv[])
     {
     case HIPSPARSELT_R_16F:
         std::cout << "H_";
-        run<hipsparseLtHalf>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<__half>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     case HIPSPARSELT_R_16BF:
         std::cout << "BF16_";
-        run<hipsparseLtBfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<hip_bfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     case HIPSPARSELT_R_8I:
         std::cout << "I8_";

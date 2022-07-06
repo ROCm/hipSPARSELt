@@ -44,22 +44,22 @@ CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipsparseOperation_t trans)
 
 // gemm
 template <>
-void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseOperation_t     transA,
-                                                                 hipsparseOperation_t     transB,
-                                                                 int64_t                    m,
-                                                                 int64_t                    n,
-                                                                 int64_t                    k,
-                                                                 float                      alpha,
-                                                                 const hipsparseLtBfloat16* A,
-                                                                 int64_t                    lda,
-                                                                 const hipsparseLtBfloat16* B,
-                                                                 int64_t                    ldb,
-                                                                 float                      beta,
-                                                                 hipsparseLtBfloat16*       C,
-                                                                 int64_t                    ldc,
-                                                                 bool                       alt)
+void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOperation_t transA,
+                                                   hipsparseOperation_t transB,
+                                                   int64_t                m,
+                                                   int64_t                n,
+                                                   int64_t                k,
+                                                   float                  alpha,
+                                                   const hip_bfloat16*    A,
+                                                   int64_t                lda,
+                                                   const hip_bfloat16*    B,
+                                                   int64_t                ldb,
+                                                   float                  beta,
+                                                   hip_bfloat16*          C,
+                                                   int64_t                ldc,
+                                                   bool                   alt)
 {
-    // cblas does not support hipsparseLtBfloat16, so convert to higher precision float
+    // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
     size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
@@ -93,26 +93,26 @@ void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseOperat
                 ldc);
 
     for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hipsparseLtBfloat16>(C_float[i]);
+        C[i] = static_cast<hip_bfloat16>(C_float[i]);
 }
 
 template <>
-void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseOperation_t     transA,
-                                                   hipsparseOperation_t     transB,
-                                                   int64_t                    m,
-                                                   int64_t                    n,
-                                                   int64_t                    k,
-                                                   float                      alpha,
-                                                   const hipsparseLtBfloat16* A,
-                                                   int64_t                    lda,
-                                                   const hipsparseLtBfloat16* B,
-                                                   int64_t                    ldb,
-                                                   float                      beta,
-                                                   float*                     C,
-                                                   int64_t                    ldc,
-                                                   bool                       alt)
+void cblas_gemm<hip_bfloat16, float, float>(hipsparseOperation_t transA,
+                                            hipsparseOperation_t transB,
+                                            int64_t                m,
+                                            int64_t                n,
+                                            int64_t                k,
+                                            float                  alpha,
+                                            const hip_bfloat16*    A,
+                                            int64_t                lda,
+                                            const hip_bfloat16*    B,
+                                            int64_t                ldb,
+                                            float                  beta,
+                                            float*                 C,
+                                            int64_t                ldc,
+                                            bool                   alt)
 {
-    // cblas does not support hipsparseLtBfloat16, so convert to higher precision float
+    // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
     size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
@@ -145,22 +145,22 @@ void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseOperation_t     tran
 }
 
 template <>
-void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseOperation_t transA,
-                                                         hipsparseOperation_t transB,
-                                                         int64_t                m,
-                                                         int64_t                n,
-                                                         int64_t                k,
-                                                         float                  alpha,
-                                                         const hipsparseLtHalf* A,
-                                                         int64_t                lda,
-                                                         const hipsparseLtHalf* B,
-                                                         int64_t                ldb,
-                                                         float                  beta,
-                                                         hipsparseLtHalf*       C,
-                                                         int64_t                ldc,
-                                                         bool                   alt)
+void cblas_gemm<__half, __half, float>(hipsparseOperation_t transA,
+                                       hipsparseOperation_t transB,
+                                       int64_t                m,
+                                       int64_t                n,
+                                       int64_t                k,
+                                       float                  alpha,
+                                       const __half*          A,
+                                       int64_t                lda,
+                                       const __half*          B,
+                                       int64_t                ldb,
+                                       float                  beta,
+                                       __half*                C,
+                                       int64_t                ldc,
+                                       bool                   alt)
 {
-    // cblas does not support hipsparseLtHalf, so convert to higher precision float
+    // cblas does not support __half, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
     size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
@@ -172,14 +172,11 @@ void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseOperation_t tr
     if(alt)
     {
         for(size_t i = 0; i < sizeA; i++)
-            A_float[i]
-                = hipsparseLtBfloat16(float(A[i]), hipsparseLtBfloat16::truncate_t::truncate);
+            A_float[i] = hip_bfloat16(float(A[i]), hip_bfloat16::truncate_t::truncate);
         for(size_t i = 0; i < sizeB; i++)
-            B_float[i]
-                = hipsparseLtBfloat16(float(B[i]), hipsparseLtBfloat16::truncate_t::truncate);
+            B_float[i] = hip_bfloat16(float(B[i]), hip_bfloat16::truncate_t::truncate);
         for(size_t i = 0; i < sizeC; i++)
-            C_float[i]
-                = hipsparseLtBfloat16(float(C[i]), hipsparseLtBfloat16::truncate_t::truncate);
+            C_float[i] = hip_bfloat16(float(C[i]), hip_bfloat16::truncate_t::truncate);
     }
     else
     {
@@ -209,26 +206,26 @@ void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseOperation_t tr
                 ldc);
 
     for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipsparseLtHalf(C_float[i]);
+        C[i] = __half(C_float[i]);
 }
 
 template <>
-void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseOperation_t transA,
-                                               hipsparseOperation_t transB,
-                                               int64_t                m,
-                                               int64_t                n,
-                                               int64_t                k,
-                                               float                  alpha,
-                                               const hipsparseLtHalf* A,
-                                               int64_t                lda,
-                                               const hipsparseLtHalf* B,
-                                               int64_t                ldb,
-                                               float                  beta,
-                                               float*                 C,
-                                               int64_t                ldc,
-                                               bool                   alt)
+void cblas_gemm<__half, float, float>(hipsparseOperation_t transA,
+                                      hipsparseOperation_t transB,
+                                      int64_t                m,
+                                      int64_t                n,
+                                      int64_t                k,
+                                      float                  alpha,
+                                      const __half*          A,
+                                      int64_t                lda,
+                                      const __half*          B,
+                                      int64_t                ldb,
+                                      float                  beta,
+                                      float*                 C,
+                                      int64_t                ldc,
+                                      bool                   alt)
 {
-    // cblas does not support hipsparseLtHalf, so convert to higher precision float
+    // cblas does not support __half, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
     size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
@@ -239,11 +236,9 @@ void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseOperation_t transA,
     if(alt)
     {
         for(size_t i = 0; i < sizeA; i++)
-            A_float[i]
-                = hipsparseLtBfloat16(float(A[i]), hipsparseLtBfloat16::truncate_t::truncate);
+            A_float[i] = hip_bfloat16(float(A[i]), hip_bfloat16::truncate_t::truncate);
         for(size_t i = 0; i < sizeB; i++)
-            B_float[i]
-                = hipsparseLtBfloat16(float(B[i]), hipsparseLtBfloat16::truncate_t::truncate);
+            B_float[i] = hip_bfloat16(float(B[i]), hip_bfloat16::truncate_t::truncate);
     }
     else
     {

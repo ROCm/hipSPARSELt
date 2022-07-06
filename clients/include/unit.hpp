@@ -77,39 +77,47 @@
 //#define ASSERT_HALF_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
 //#define ASSERT_BF16_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
 
-#define ASSERT_HALF_EQ(a, b)                                   \
-    do                                                         \
-    {                                                          \
-        hipsparseLtHalf absA    = (a > 0) ? a : -a;            \
-        hipsparseLtHalf absB    = (b > 0) ? b : -b;            \
-        hipsparseLtHalf absDiff = (a - b > 0) ? a - b : b - a; \
-        ASSERT_TRUE(absDiff / (absA + absB + 1) < 0.01);       \
+#define ASSERT_HALF_EQ(a, b)                                                         \
+    do                                                                               \
+    {                                                                                \
+        union _HALF                                                                  \
+        {                                                                            \
+            uint16_t x;                                                              \
+            _Float16 data;                                                           \
+        };                                                                           \
+        _HALF a_half  = {__half_raw(a).x};                                           \
+        _HALF b_half  = {__half_raw(b).x};                                           \
+        auto  absA    = (a_half.data > 0) ? a_half.data : -a_half.data;              \
+        auto  absB    = (b_half.data > 0) ? b_half.data : -b_half.data;              \
+        auto  absDiff = (a_half.data - b_half.data > 0) ? a_half.data - b_half.data  \
+                                                        : b_half.data - a_half.data; \
+        ASSERT_TRUE(absDiff / (absA + absB + 1) < 0.01);                             \
     } while(0)
 
 #define ASSERT_BF16_EQ(a, b)                                                                      \
     do                                                                                            \
     {                                                                                             \
-        const hipsparseLtBfloat16 bf16A    = static_cast<hipsparseLtBfloat16>(a);                 \
-        const hipsparseLtBfloat16 bf16B    = static_cast<hipsparseLtBfloat16>(b);                 \
-        const hipsparseLtBfloat16 bf16Zero = static_cast<hipsparseLtBfloat16>(0.0f);              \
-        const hipsparseLtBfloat16 bf16One  = static_cast<hipsparseLtBfloat16>(1.0f);              \
-        hipsparseLtBfloat16       absA     = (bf16A > bf16Zero) ? bf16A : -bf16A;                 \
-        hipsparseLtBfloat16       absB     = (bf16B > bf16Zero) ? bf16B : -bf16B;                 \
-        hipsparseLtBfloat16 absDiff = (bf16A - bf16B > bf16Zero) ? bf16A - bf16B : bf16B - bf16A; \
-        ASSERT_TRUE(absDiff / (absA + absB + bf16One) < static_cast<hipsparseLtBfloat16>(0.1f));  \
+        const hip_bfloat16 bf16A    = static_cast<hip_bfloat16>(a);                               \
+        const hip_bfloat16 bf16B    = static_cast<hip_bfloat16>(b);                               \
+        const hip_bfloat16 bf16Zero = static_cast<hip_bfloat16>(0.0f);                            \
+        const hip_bfloat16 bf16One  = static_cast<hip_bfloat16>(1.0f);                            \
+        hip_bfloat16       absA     = (bf16A > bf16Zero) ? bf16A : -bf16A;                        \
+        hip_bfloat16       absB     = (bf16B > bf16Zero) ? bf16B : -bf16B;                        \
+        hip_bfloat16       absDiff  = (bf16A - bf16B > bf16Zero) ? bf16A - bf16B : bf16B - bf16A; \
+        ASSERT_TRUE(absDiff / (absA + absB + bf16One) < static_cast<hip_bfloat16>(0.1f));         \
     } while(0)
 
-// Compare float to hipsparseLtBfloat16
-// Allow the hipsparseLtBfloat16 to match the rounded or truncated value of float
+// Compare float to hip_bfloat16
+// Allow the hip_bfloat16 to match the rounded or truncated value of float
 // Only call ASSERT_FLOAT_EQ with the rounded value if the truncated value does not match
 #include <gtest/internal/gtest-internal.h>
-#define ASSERT_FLOAT_BF16_EQ(a, b)                                                           \
-    do                                                                                       \
-    {                                                                                        \
-        using testing::internal::FloatingPoint;                                              \
-        if(!FloatingPoint<float>(b).AlmostEquals(                                            \
-               FloatingPoint<float>(hipsparseLtBfloat16(a, hipsparseLtBfloat16::truncate)))) \
-            ASSERT_FLOAT_EQ(b, hipsparseLtBfloat16(a));                                      \
+#define ASSERT_FLOAT_BF16_EQ(a, b)                                             \
+    do                                                                         \
+    {                                                                          \
+        using testing::internal::FloatingPoint;                                \
+        if(!FloatingPoint<float>(b).AlmostEquals(                              \
+               FloatingPoint<float>(hip_bfloat16(a, hip_bfloat16::truncate)))) \
+            ASSERT_FLOAT_EQ(b, hip_bfloat16(a));                               \
     } while(0)
 
 #define ASSERT_FLOAT_COMPLEX_EQ(a, b)                  \
@@ -137,25 +145,22 @@ void unit_check_general(
     int64_t M, int64_t N, int64_t lda, const std::remove_cv_t<T_hpa>* hCPU, const T* hGPU);
 
 template <>
-inline void unit_check_general(int64_t                    M,
-                               int64_t                    N,
-                               int64_t                    lda,
-                               const hipsparseLtBfloat16* hCPU,
-                               const hipsparseLtBfloat16* hGPU)
+inline void unit_check_general(
+    int64_t M, int64_t N, int64_t lda, const hip_bfloat16* hCPU, const hip_bfloat16* hGPU)
 {
     UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_BF16_EQ);
 }
 
 template <>
-inline void unit_check_general<hipsparseLtBfloat16, float>(
-    int64_t M, int64_t N, int64_t lda, const float* hCPU, const hipsparseLtBfloat16* hGPU)
+inline void unit_check_general<hip_bfloat16, float>(
+    int64_t M, int64_t N, int64_t lda, const float* hCPU, const hip_bfloat16* hGPU)
 {
     UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_FLOAT_BF16_EQ);
 }
 
 template <>
-inline void unit_check_general(
-    int64_t M, int64_t N, int64_t lda, const hipsparseLtHalf* hCPU, const hipsparseLtHalf* hGPU)
+inline void
+    unit_check_general(int64_t M, int64_t N, int64_t lda, const __half* hCPU, const __half* hGPU)
 {
     UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_HALF_EQ);
 }
@@ -198,37 +203,37 @@ void unit_check_general(int64_t                        M,
                         int64_t                        batch_count);
 
 template <>
-inline void unit_check_general(int64_t                    M,
-                               int64_t                    N,
-                               int64_t                    lda,
-                               int64_t                    strideA,
-                               const hipsparseLtBfloat16* hCPU,
-                               const hipsparseLtBfloat16* hGPU,
-                               int64_t                    batch_count)
+inline void unit_check_general(int64_t             M,
+                               int64_t             N,
+                               int64_t             lda,
+                               int64_t             strideA,
+                               const hip_bfloat16* hCPU,
+                               const hip_bfloat16* hGPU,
+                               int64_t             batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_BF16_EQ);
 }
 
 template <>
-inline void unit_check_general<hipsparseLtBfloat16, float>(int64_t                    M,
-                                                           int64_t                    N,
-                                                           int64_t                    lda,
-                                                           int64_t                    strideA,
-                                                           const float*               hCPU,
-                                                           const hipsparseLtBfloat16* hGPU,
-                                                           int64_t                    batch_count)
+inline void unit_check_general<hip_bfloat16, float>(int64_t             M,
+                                                    int64_t             N,
+                                                    int64_t             lda,
+                                                    int64_t             strideA,
+                                                    const float*        hCPU,
+                                                    const hip_bfloat16* hGPU,
+                                                    int64_t             batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_FLOAT_BF16_EQ);
 }
 
 template <>
-inline void unit_check_general(int64_t                M,
-                               int64_t                N,
-                               int64_t                lda,
-                               int64_t                strideA,
-                               const hipsparseLtHalf* hCPU,
-                               const hipsparseLtHalf* hGPU,
-                               int64_t                batch_count)
+inline void unit_check_general(int64_t       M,
+                               int64_t       N,
+                               int64_t       lda,
+                               int64_t       strideA,
+                               const __half* hCPU,
+                               const __half* hGPU,
+                               int64_t       batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_HALF_EQ);
 }
@@ -290,35 +295,34 @@ void unit_check_general(int64_t                                    M,
                         int64_t                                    batch_count);
 
 template <>
-inline void unit_check_general(int64_t                                M,
-                               int64_t                                N,
-                               int64_t                                lda,
-                               const host_vector<hipsparseLtBfloat16> hCPU[],
-                               const host_vector<hipsparseLtBfloat16> hGPU[],
-                               int64_t                                batch_count)
+inline void unit_check_general(int64_t                         M,
+                               int64_t                         N,
+                               int64_t                         lda,
+                               const host_vector<hip_bfloat16> hCPU[],
+                               const host_vector<hip_bfloat16> hGPU[],
+                               int64_t                         batch_count)
 {
     UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_BF16_EQ);
 }
 
 template <>
-inline void
-    unit_check_general<hipsparseLtBfloat16, float>(int64_t                                M,
-                                                   int64_t                                N,
-                                                   int64_t                                lda,
-                                                   const host_vector<float>               hCPU[],
-                                                   const host_vector<hipsparseLtBfloat16> hGPU[],
-                                                   int64_t batch_count)
+inline void unit_check_general<hip_bfloat16, float>(int64_t                         M,
+                                                    int64_t                         N,
+                                                    int64_t                         lda,
+                                                    const host_vector<float>        hCPU[],
+                                                    const host_vector<hip_bfloat16> hGPU[],
+                                                    int64_t                         batch_count)
 {
     UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_FLOAT_BF16_EQ);
 }
 
 template <>
-inline void unit_check_general(int64_t                            M,
-                               int64_t                            N,
-                               int64_t                            lda,
-                               const host_vector<hipsparseLtHalf> hCPU[],
-                               const host_vector<hipsparseLtHalf> hGPU[],
-                               int64_t                            batch_count)
+inline void unit_check_general(int64_t                   M,
+                               int64_t                   N,
+                               int64_t                   lda,
+                               const host_vector<__half> hCPU[],
+                               const host_vector<__half> hGPU[],
+                               int64_t                   batch_count)
 {
     UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_HALF_EQ);
 }
@@ -376,34 +380,34 @@ void unit_check_general(int64_t                              M,
                         int64_t                              batch_count);
 
 template <>
-inline void unit_check_general(int64_t                          M,
-                               int64_t                          N,
-                               int64_t                          lda,
-                               const hipsparseLtBfloat16* const hCPU[],
-                               const hipsparseLtBfloat16* const hGPU[],
-                               int64_t                          batch_count)
+inline void unit_check_general(int64_t                   M,
+                               int64_t                   N,
+                               int64_t                   lda,
+                               const hip_bfloat16* const hCPU[],
+                               const hip_bfloat16* const hGPU[],
+                               int64_t                   batch_count)
 {
     UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_BF16_EQ);
 }
 
 template <>
-inline void unit_check_general<hipsparseLtBfloat16, float>(int64_t                          M,
-                                                           int64_t                          N,
-                                                           int64_t                          lda,
-                                                           const float* const               hCPU[],
-                                                           const hipsparseLtBfloat16* const hGPU[],
-                                                           int64_t batch_count)
+inline void unit_check_general<hip_bfloat16, float>(int64_t                   M,
+                                                    int64_t                   N,
+                                                    int64_t                   lda,
+                                                    const float* const        hCPU[],
+                                                    const hip_bfloat16* const hGPU[],
+                                                    int64_t                   batch_count)
 {
     UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_FLOAT_BF16_EQ);
 }
 
 template <>
-inline void unit_check_general(int64_t                      M,
-                               int64_t                      N,
-                               int64_t                      lda,
-                               const hipsparseLtHalf* const hCPU[],
-                               const hipsparseLtHalf* const hGPU[],
-                               int64_t                      batch_count)
+inline void unit_check_general(int64_t             M,
+                               int64_t             N,
+                               int64_t             lda,
+                               const __half* const hCPU[],
+                               const __half* const hGPU[],
+                               int64_t             batch_count)
 {
     UNIT_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, ASSERT_HALF_EQ);
 }
@@ -470,6 +474,7 @@ template <typename T>
 inline int64_t unit_check_diff(
     int64_t M, int64_t N, int64_t lda, int64_t stride, T* hCPU, T* hGPU, int64_t batch_count)
 {
+    using c_type  = std::conditional_t<std::is_same<__half, T>::value, float, T>;
     int64_t error = 0;
     do
     {
@@ -482,8 +487,9 @@ inline int64_t unit_check_diff(
                     }
                     else
                     {
-                        error += (hCPU[i + j * size_t(lda) + k * stride]
-                                  == hGPU[i + j * size_t(lda) + k * stride])
+                        error += static_cast<c_type>(hCPU[i + j * size_t(lda) + k * stride])
+                                         == static_cast<c_type>(
+                                             hGPU[i + j * size_t(lda) + k * stride])
                                      ? 0
                                      : 1;
                     }

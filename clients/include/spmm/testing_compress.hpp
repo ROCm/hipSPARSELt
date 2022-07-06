@@ -70,6 +70,7 @@ void self_validate(T*             A,
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
+    using c_type = std::conditional_t<std::is_same<__half, T>::value, float, T>;
     for(int i3 = 0; i3 < m_n3; i3++)
     {
         for(int i1 = 0; i1 < m_n1; i1++)
@@ -94,7 +95,7 @@ void self_validate(T*             A,
                         b = C[c_pos];
                         m_idx++;
                     }
-                    CHECK_SUCCESS(a == b);
+                    CHECK_SUCCESS(static_cast<c_type>(a) == static_cast<c_type>(b));
                 }
             }
         }
@@ -128,6 +129,7 @@ void compress(const Ti*      in,
               int            num_batches)
 {
     constexpr int tiles_y = 8;
+    using c_type          = std::conditional_t<std::is_same<__half, Ti>::value, float, Ti>;
 
     for(int b = 0; b < num_batches; b++)
         for(int i = 0; i < m; i++)
@@ -162,7 +164,7 @@ void compress(const Ti*      in,
                         valid_data(m_idx++, k - 1, value);
                     }
                     if((k == 3 && m_idx == 1) || (k == 7 && m_idx == 3)
-                       || value != static_cast<Ti>(0))
+                       || static_cast<c_type>(value) != static_cast<c_type>(0.0f))
                     {
                         offset = b * stride_b + i * stride1 + (j + k) * stride2;
                         value  = in[offset];
