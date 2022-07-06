@@ -318,14 +318,13 @@ public:
         return os;
     }
 
-    friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
-                                                    hipsparseLtHalf               half)
+    friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os, __half half)
     {
         return os << float(half);
     }
 
     friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
-                                                    hipsparseLtBfloat16           bf16)
+                                                    hip_bfloat16                  bf16)
     {
         return os << float(bf16);
     }

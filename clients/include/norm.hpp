@@ -139,11 +139,9 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 }
 
 // For BF16 and half, we convert the results to double first
-template <
-    typename T,
-    typename VEC,
-    std::enable_if_t<std::is_same<T, hipsparseLtHalf>{} || std::is_same<T, hipsparseLtBfloat16>{},
-                     int> = 0>
+template <typename T,
+          typename VEC,
+          std::enable_if_t<std::is_same<T, __half>{} || std::is_same<T, hip_bfloat16>{}, int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
 {
     size_t              size = N * (size_t)lda;

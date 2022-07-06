@@ -264,8 +264,7 @@ inline rocsparselt_status rocsparselt_spmm_template(rocsparselt_handle          
         {
             if(compute_type == rocsparselt_compute_f32)
             {
-                rs_status = spmm_typecasting<hipsparseLtHalf, hipsparseLtHalf, float>(
-                    EX_TYPECASTING_PARM);
+                rs_status = spmm_typecasting<__half, __half, float>(EX_TYPECASTING_PARM);
             }
         }
     }
@@ -275,8 +274,8 @@ inline rocsparselt_status rocsparselt_spmm_template(rocsparselt_handle          
         {
             if(compute_type == rocsparselt_compute_f32)
             {
-                rs_status = spmm_typecasting<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(
-                    EX_TYPECASTING_PARM);
+                rs_status
+                    = spmm_typecasting<hip_bfloat16, hip_bfloat16, float>(EX_TYPECASTING_PARM);
             }
         }
     }

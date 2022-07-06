@@ -113,7 +113,7 @@ __global__ void compress_kernel(const Ti*      in,
                         break;
 
                     Ti value = in[pos];
-                    if(value != 0)
+                    if(value != static_cast<Ti>(0.0f))
                     {
                         if(m_idx == 0 && k == 3)
                             m_idx++;
@@ -265,11 +265,9 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const rocsparselt_handle han
     switch(type)
     {
     case rocsparselt_datatype_f16_r:
-        return rocsparselt_smfmac_compress_template<hipsparseLtHalf>(
-            COMPRESS_PARAMS(hipsparseLtHalf));
+        return rocsparselt_smfmac_compress_template<__half>(COMPRESS_PARAMS(__half));
     case rocsparselt_datatype_bf16_r:
-        return rocsparselt_smfmac_compress_template<hipsparseLtBfloat16>(
-            COMPRESS_PARAMS(hipsparseLtBfloat16));
+        return rocsparselt_smfmac_compress_template<hip_bfloat16>(COMPRESS_PARAMS(hip_bfloat16));
     case rocsparselt_datatype_i8_r:
         return rocsparselt_smfmac_compress_template<int8_t>(COMPRESS_PARAMS(int8_t));
     default:

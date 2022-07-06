@@ -42,7 +42,7 @@ set(hipsparselt_headers_public
 )
 
 if(NOT BUILD_CUDA)
-    set(hipsparselt_headers_public ${hipsparselt_headers_public} include/hipsparselt-types.h include/hipsparselt-bfloat16.h)
+    set(hipsparselt_headers_public ${hipsparselt_headers_public})
 endif()
 source_group("Header Files\\Public" FILES ${hipsparselt_headers_public})
 

@@ -113,15 +113,15 @@ public:
     }
 
     // Random NaN half
-    explicit operator hipsparseLtHalf()
+    explicit operator __half()
     {
-        return random_nan_data<hipsparseLtHalf, uint16_t, 10, 5>();
+        return random_nan_data<__half, uint16_t, 10, 5>();
     }
 
     // Random NaN bfloat16
-    explicit operator hipsparseLtBfloat16()
+    explicit operator hip_bfloat16()
     {
-        return random_nan_data<hipsparseLtBfloat16, uint16_t, 7, 8>();
+        return random_nan_data<hip_bfloat16, uint16_t, 7, 8>();
     }
 };
 
@@ -213,20 +213,20 @@ inline float random_generator()
     return hipsparselt_uniform_int_1_10();
 }
 
-// for hipsparseLtHalf, generate float, and convert to hipsparseLtHalf
+// for __half, generate float, and convert to __half
 /*! \brief  generate a random number in range [-2,-1,0,1,2] */
 template <>
-inline hipsparseLtHalf random_generator<hipsparseLtHalf>()
+inline __half random_generator<__half>()
 {
-    return hipsparseLtHalf(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng));
+    return __half(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng));
 };
 
-// for hipsparseLtBfloat16, generate float, and convert to hipsparseLtBfloat16
+// for hip_bfloat16, generate float, and convert to hip_bfloat16
 /*! \brief  generate a random number in range [-2,-1,0,1,2] */
 template <>
-inline hipsparseLtBfloat16 random_generator<hipsparseLtBfloat16>()
+inline hip_bfloat16 random_generator<hip_bfloat16>()
 {
-    return hipsparseLtBfloat16(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng));
+    return hip_bfloat16(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng));
 };
 
 /*! \brief  generate a random number in range [1,2,3] */
@@ -282,12 +282,12 @@ inline int8_t random_hpl_generator()
         saturate(std::uniform_real_distribution<double>(-1.0, 1.0)(t_hipsparselt_rng)));
 }
 
-// for hipsparseLtBfloat16, generate float, and convert to hipsparseLtBfloat16
+// for hip_bfloat16, generate float, and convert to hip_bfloat16
 /*! \brief  generate a random number in HPL-like [-0.5,0.5] doubles  */
 template <>
-inline hipsparseLtBfloat16 random_hpl_generator()
+inline hip_bfloat16 random_hpl_generator()
 {
-    return hipsparseLtBfloat16(std::uniform_real_distribution<float>(-0.5, 0.5)(t_hipsparselt_rng));
+    return hip_bfloat16(std::uniform_real_distribution<float>(-0.5, 0.5)(t_hipsparselt_rng));
 }
 
 /*! \brief  generate a random ASCII string of up to length n */

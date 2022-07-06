@@ -722,12 +722,12 @@ rocsparselt_status
 
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
-                initSolutions<hipsparseLtHalf, hipsparseLtHalf, float>(
+                initSolutions<__half, __half, float>(
                     *handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
             else if(in_type == rocsparselt_datatype_bf16_r
                     && out_type == rocsparselt_datatype_bf16_r
                     && compute_type == rocsparselt_compute_f32)
-                initSolutions<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(
+                initSolutions<hip_bfloat16, hip_bfloat16, float>(
                     *handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
             else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
                     && compute_type == rocsparselt_compute_i32)

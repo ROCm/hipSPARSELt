@@ -46,9 +46,9 @@
 #include <hip/hip_runtime_api.h>
 
 #if defined(__HIP_PLATFORM_HCC__)
-#include "hipsparselt-types.h"
+#include <hip/hip_bfloat16.h>
+#include <hip/hip_fp16.h>
 #endif
-
 /* Opaque structures holding information */
 // clang-format off
 
@@ -59,6 +59,7 @@ typedef struct {uint8_t data[11024];} hipsparseLtMatmulDescriptor_t;
 typedef struct {uint8_t data[11024];} hipsparseLtMatmulAlgSelection_t;
 typedef void* hipsparseLtMatmulPlan_t;
 #elif defined(__HIP_PLATFORM_NVCC__)
+typedef hip_bfloat16 nv_bfloat16;
 typedef struct {uint8_t data[11024];} hipsparseLtHandle_t;
 typedef struct {uint8_t data[11024];} hipsparseLtMatDescriptor_t;
 typedef struct {uint8_t data[11024];} hipsparseLtMatmulDescriptor_t;
