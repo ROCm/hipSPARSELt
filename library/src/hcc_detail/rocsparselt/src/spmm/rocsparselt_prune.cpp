@@ -597,11 +597,9 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle
     switch(type)
     {
     case rocsparselt_datatype_f16_r:
-        return rocsparselt_smfmac_prune_template<hipsparseLtHalf, float>(
-            PRUNE_PARAMS(hipsparseLtHalf));
+        return rocsparselt_smfmac_prune_template<__half, float>(PRUNE_PARAMS(__half));
     case rocsparselt_datatype_bf16_r:
-        return rocsparselt_smfmac_prune_template<hipsparseLtBfloat16, float>(
-            PRUNE_PARAMS(hipsparseLtBfloat16));
+        return rocsparselt_smfmac_prune_template<hip_bfloat16, float>(PRUNE_PARAMS(hip_bfloat16));
     case rocsparselt_datatype_i8_r:
         return rocsparselt_smfmac_prune_template<int8_t, float>(PRUNE_PARAMS(int8_t));
     default:
@@ -645,11 +643,10 @@ rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle 
     switch(type)
     {
     case rocsparselt_datatype_f16_r:
-        return rocsparselt_smfmac_prune_check_template<hipsparseLtHalf>(
-            PRUNE_CHECK_PARAMS(hipsparseLtHalf));
+        return rocsparselt_smfmac_prune_check_template<__half>(PRUNE_CHECK_PARAMS(__half));
     case rocsparselt_datatype_bf16_r:
-        return rocsparselt_smfmac_prune_check_template<hipsparseLtBfloat16>(
-            PRUNE_CHECK_PARAMS(hipsparseLtBfloat16));
+        return rocsparselt_smfmac_prune_check_template<hip_bfloat16>(
+            PRUNE_CHECK_PARAMS(hip_bfloat16));
     case rocsparselt_datatype_i8_r:
         return rocsparselt_smfmac_prune_check_template<int8_t>(PRUNE_CHECK_PARAMS(int8_t));
     default:

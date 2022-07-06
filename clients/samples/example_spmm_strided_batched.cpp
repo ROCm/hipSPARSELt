@@ -83,10 +83,20 @@ inline bool AlmostEqual(T a, T b)
 }
 
 template <>
-inline bool AlmostEqual(hipsparseLtHalf a, hipsparseLtHalf b)
+inline bool AlmostEqual(__half a, __half b)
 {
-    hipsparseLtHalf absA = (a > 0) ? a : -a;
-    hipsparseLtHalf absB = (b > 0) ? b : -b;
+    union _HALF
+    {
+        uint16_t x;
+        _Float16 data;
+    };
+
+    _HALF a_half = {__half_raw(a).x};
+    _HALF b_half = {__half_raw(b).x};
+    auto  a_data = a_half.data;
+    auto  b_data = b_half.data;
+    auto  absA   = (a_data > 0) ? a_data : -a_data;
+    auto  absB   = (b_data > 0) ? b_data : -b_data;
     // this avoids NaN when inf is compared against inf in the alternative code
     // path
     if(static_cast<float>(absA) == std::numeric_limits<float>::infinity()
@@ -97,9 +107,9 @@ inline bool AlmostEqual(hipsparseLtHalf a, hipsparseLtHalf b)
            == std::numeric_limits<float>::infinity()) // however promoting it to
     // float works just as fine
     {
-        return a == b;
+        return a_data == b_data;
     }
-    hipsparseLtHalf absDiff = (a - b > 0) ? a - b : b - a;
+    auto absDiff = (a_data - b_data > 0) ? a_data - b_data : b_data - a_data;
     return absDiff / (absA + absB + 1) < 0.01;
 }
 
@@ -160,14 +170,14 @@ void print_strided_batched_meta(const char*    name,
     }
 }
 
-void print_strided_batched(const char*      name,
-                           hipsparseLtHalf* A,
-                           int64_t          n1,
-                           int64_t          n2,
-                           int64_t          n3,
-                           int64_t          s1,
-                           int64_t          s2,
-                           int64_t          s3)
+void print_strided_batched(const char* name,
+                           __half*     A,
+                           int64_t     n1,
+                           int64_t     n2,
+                           int64_t     n3,
+                           int64_t     s1,
+                           int64_t     s2,
+                           int64_t     s3)
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
@@ -485,25 +495,25 @@ bool bad_argument(hipsparseOperation_t trans_a,
     return argument_error;
 }
 
-void initialize_a_b_c(std::vector<hipsparseLtHalf>& ha,
-                      int64_t                       size_a,
-                      std::vector<hipsparseLtHalf>& hb,
-                      int64_t                       size_b,
-                      std::vector<hipsparseLtHalf>& hc,
-                      int64_t                       size_c)
+void initialize_a_b_c(std::vector<__half>& ha,
+                      int64_t              size_a,
+                      std::vector<__half>& hb,
+                      int64_t              size_b,
+                      std::vector<__half>& hc,
+                      int64_t              size_c)
 {
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<hipsparseLtHalf>((rand() % 7) - 3);
+        ha[i] = static_cast<__half>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_b; ++i)
     {
-        hb[i] = static_cast<hipsparseLtHalf>((rand() % 7) - 3);
+        hb[i] = static_cast<__half>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_c; ++i)
     {
-        hc[i] = static_cast<hipsparseLtHalf>((rand() % 7) - 3);
+        hc[i] = static_cast<__half>((rand() % 7) - 3);
     }
 }
 
@@ -668,12 +678,12 @@ int main(int argc, char* argv[])
     int64_t size_c = stride_c_r * (stride_c == 0 ? 1 : batch_count);
     int64_t size_d = stride_d_r * (stride_d == 0 ? 1 : batch_count);
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
-    std::vector<hipsparseLtHalf> ha(size_a);
-    std::vector<hipsparseLtHalf> h_prune(size_a);
-    std::vector<hipsparseLtHalf> hb(size_b);
-    std::vector<hipsparseLtHalf> hc(size_c);
-    std::vector<hipsparseLtHalf> hd(size_c);
-    std::vector<hipsparseLtHalf> hd_gold(size_d);
+    std::vector<__half> ha(size_a);
+    std::vector<__half> h_prune(size_a);
+    std::vector<__half> hb(size_b);
+    std::vector<__half> hc(size_c);
+    std::vector<__half> hd(size_c);
+    std::vector<__half> hd_gold(size_d);
 
     // initial data on host
     initialize_a_b_c(ha, size_a, hb, size_b, hc, size_c);
@@ -701,24 +711,21 @@ int main(int argc, char* argv[])
     }
 
     // allocate memory on device
-    hipsparseLtHalf *da, *da_p, *db, *dc, *dd, *d_compressed;
-    void*            d_workspace;
-    int              num_streams = 1;
-    hipStream_t      stream      = nullptr;
-    hipStream_t      streams[1]  = {stream};
+    __half *    da, *da_p, *db, *dc, *dd, *d_compressed;
+    void*       d_workspace;
+    int         num_streams = 1;
+    hipStream_t stream      = nullptr;
+    hipStream_t streams[1]  = {stream};
 
-    CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(hipsparseLtHalf)));
-    CHECK_HIP_ERROR(hipMalloc(&da_p, size_a * sizeof(hipsparseLtHalf)));
-    CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(hipsparseLtHalf)));
-    CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(hipsparseLtHalf)));
-    CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(hipsparseLtHalf)));
+    CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(__half)));
+    CHECK_HIP_ERROR(hipMalloc(&da_p, size_a * sizeof(__half)));
+    CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(__half)));
+    CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(__half)));
+    CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(__half)));
     // copy matrices from host to device
-    CHECK_HIP_ERROR(
-        hipMemcpy(da, ha.data(), sizeof(hipsparseLtHalf) * size_a, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(
-        hipMemcpy(db, hb.data(), sizeof(hipsparseLtHalf) * size_b, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(
-        hipMemcpy(dc, hc.data(), sizeof(hipsparseLtHalf) * size_c, hipMemcpyHostToDevice));
+    CHECK_HIP_ERROR(hipMemcpy(da, ha.data(), sizeof(__half) * size_a, hipMemcpyHostToDevice));
+    CHECK_HIP_ERROR(hipMemcpy(db, hb.data(), sizeof(__half) * size_b, hipMemcpyHostToDevice));
+    CHECK_HIP_ERROR(hipMemcpy(dc, hc.data(), sizeof(__half) * size_c, hipMemcpyHostToDevice));
 
     hipsparseLtHandle_t             handle;
     hipsparseLtMatDescriptor_t      matA, matB, matC, matD;
@@ -795,38 +802,37 @@ int main(int argc, char* argv[])
                                               num_streams));
     hipStreamSynchronize(stream);
     // copy output from device to CPU
+    CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(__half) * size_c, hipMemcpyDeviceToHost));
     CHECK_HIP_ERROR(
-        hipMemcpy(hd.data(), dd, sizeof(hipsparseLtHalf) * size_c, hipMemcpyDeviceToHost));
-    CHECK_HIP_ERROR(
-        hipMemcpy(h_prune.data(), da_p, sizeof(hipsparseLtHalf) * size_a, hipMemcpyDeviceToHost));
+        hipMemcpy(h_prune.data(), da_p, sizeof(__half) * size_a, hipMemcpyDeviceToHost));
     // calculate golden or correct result
     for(int i = 0; i < batch_count; i++)
     {
-        hipsparseLtHalf* a_ptr = &h_prune[i * stride_a];
-        hipsparseLtHalf* b_ptr = &hb[i * stride_b];
-        hipsparseLtHalf* c_ptr = &hc[i * stride_c];
-        hipsparseLtHalf* d_ptr = &hd_gold[i * stride_d];
-        mat_mat_mult<hipsparseLtHalf, hipsparseLtHalf, float>(alpha,
-                                                              beta,
-                                                              m,
-                                                              n,
-                                                              k,
-                                                              a_ptr,
-                                                              a_stride_1,
-                                                              a_stride_2,
-                                                              b_ptr,
-                                                              b_stride_1,
-                                                              b_stride_2,
-                                                              c_ptr,
-                                                              1,
-                                                              ldc,
-                                                              d_ptr,
-                                                              1,
-                                                              ldd);
+        __half* a_ptr = &h_prune[i * stride_a];
+        __half* b_ptr = &hb[i * stride_b];
+        __half* c_ptr = &hc[i * stride_c];
+        __half* d_ptr = &hd_gold[i * stride_d];
+        mat_mat_mult<__half, __half, float>(alpha,
+                                            beta,
+                                            m,
+                                            n,
+                                            k,
+                                            a_ptr,
+                                            a_stride_1,
+                                            a_stride_2,
+                                            b_ptr,
+                                            b_stride_1,
+                                            b_stride_2,
+                                            c_ptr,
+                                            1,
+                                            ldc,
+                                            d_ptr,
+                                            1,
+                                            ldd);
     }
     if(verbose)
     {
-        std::vector<hipsparseLtHalf> h_compressed(compressed_size);
+        std::vector<__half> h_compressed(compressed_size);
         CHECK_HIP_ERROR(
             hipMemcpy(&h_compressed[0], d_compressed, compressed_size, hipMemcpyDeviceToHost));
 

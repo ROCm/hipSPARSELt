@@ -190,14 +190,10 @@ __host__ __device__ inline bool hipsparselt_isnan(T arg)
     return std::isnan(arg);
 }
 
-__host__ __device__ inline bool hipsparselt_isnan(hipsparseLtHalf arg)
+__host__ __device__ inline bool hipsparselt_isnan(__half arg)
 {
-    union
-    {
-        hipsparseLtHalf fp;
-        uint16_t        data;
-    } x = {arg};
-    return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) != 0;
+    __half_raw x = __half_raw(arg);
+    return (~x.x & 0x7c00) == 0 && (x.x & 0x3ff) != 0;
 }
 
 /*******************************************************************************
@@ -216,14 +212,10 @@ __host__ __device__ inline bool hipsparselt_isinf(T arg)
     return std::isinf(arg);
 }
 
-__host__ __device__ inline bool hipsparselt_isinf(hipsparseLtHalf arg)
+__host__ __device__ inline bool hipsparselt_isinf(__half arg)
 {
-    union
-    {
-        hipsparseLtHalf fp;
-        uint16_t        data;
-    } x = {arg};
-    return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) == 0;
+    __half_raw x = __half_raw(arg);
+    return (~x.x & 0x7c00) == 0 && (x.x & 0x3ff) == 0;
 }
 
 /*******************************************************************************

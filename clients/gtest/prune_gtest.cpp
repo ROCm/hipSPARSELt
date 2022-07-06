@@ -54,9 +54,8 @@ namespace
         Ti,
         To,
         Tc,
-        std::enable_if_t<std::is_same<Ti, hipsparseLtHalf>{}
-                         || std::is_same<Ti, hipsparseLtBfloat16>{} || std::is_same<Ti, int8_t>{}>>
-        : hipsparselt_test_valid
+        std::enable_if_t<std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{}
+                         || std::is_same<Ti, int8_t>{}>> : hipsparselt_test_valid
     {
         void operator()(const Arguments& arg)
         {

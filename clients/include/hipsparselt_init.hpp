@@ -294,7 +294,7 @@ template <typename T>
 void hipsparselt_init_alt_impl_big(
     std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
-    const hipsparseLtHalf ieee_half_max(65280.0);
+    const __half ieee_half_max(65280.0);
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
         for(size_t i = 0; i < M; ++i)
             for(size_t j = 0; j < N; ++j)
@@ -305,7 +305,7 @@ template <typename T>
 inline void hipsparselt_init_alt_impl_big(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
-    const hipsparseLtHalf ieee_half_max(65280.0);
+    const __half ieee_half_max(65280.0);
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
         for(size_t i = 0; i < M; ++i)
             for(size_t j = 0; j < N; ++j)
@@ -316,7 +316,7 @@ template <typename T>
 void hipsparselt_init_alt_impl_small(
     std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
-    const hipsparseLtHalf ieee_half_small(0.0000607967376708984375);
+    const __half ieee_half_small(0.0000607967376708984375);
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
         for(size_t i = 0; i < M; ++i)
             for(size_t j = 0; j < N; ++j)
@@ -327,7 +327,7 @@ template <typename T>
 void hipsparselt_init_alt_impl_small(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
-    const hipsparseLtHalf ieee_half_small(0.0000607967376708984375);
+    const __half ieee_half_small(0.0000607967376708984375);
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
         for(size_t i = 0; i < M; ++i)
             for(size_t j = 0; j < N; ++j)

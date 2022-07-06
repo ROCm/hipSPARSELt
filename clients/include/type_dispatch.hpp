@@ -32,9 +32,9 @@
 template <typename T>
 constexpr auto hipsparselt_type2datatype()
 {
-    if(std::is_same<T, hipsparseLtHalf>{})
+    if(std::is_same<T, __half>{})
         return HIPSPARSELT_R_16F;
-    if(std::is_same<T, hipsparseLtBfloat16>{})
+    if(std::is_same<T, hip_bfloat16>{})
         return HIPSPARSELT_R_16BF;
     if(std::is_same<T, char>{})
         return HIPSPARSELT_R_8I;
@@ -60,9 +60,9 @@ auto hipsparselt_simple_dispatch(const Arguments& arg)
     switch(arg.a_type)
     {
     case HIPSPARSELT_R_16F:
-        return TEST<hipsparseLtHalf>{}(arg);
+        return TEST<__half>{}(arg);
     case HIPSPARSELT_R_16BF:
-        return TEST<hipsparseLtBfloat16>{}(arg);
+        return TEST<hip_bfloat16>{}(arg);
     default:
         return TEST<void>{}(arg);
     }
@@ -79,11 +79,11 @@ auto hipsparselt_spmm_dispatch(const Arguments& arg)
     {
         if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSE_COMPUTE_32F)
         {
-            return TEST<hipsparseLtHalf, hipsparseLtHalf, float>{}(arg);
+            return TEST<__half, __half, float>{}(arg);
         }
         else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSE_COMPUTE_32F)
         {
-            return TEST<hipsparseLtBfloat16, hipsparseLtBfloat16, float>{}(arg);
+            return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
         else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSE_COMPUTE_32I)
         {

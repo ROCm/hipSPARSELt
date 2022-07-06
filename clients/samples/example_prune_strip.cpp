@@ -138,6 +138,7 @@ template <typename T>
 void validate(T* A, T* B, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_t s2, int64_t s3)
 {
     bool correct = true;
+    using c_type = std::conditional_t<std::is_same<__half, T>::value, float, T>;
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
     for(int i3 = 0; i3 < n3; i3++)
@@ -147,9 +148,9 @@ void validate(T* A, T* B, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_
             for(int i2 = 0; i2 < n2; i2++)
             {
                 auto pos     = (i1 * s1) + (i2 * s2) + (i3 * s3);
-                auto value_a = A[pos];
-                auto value_b = B[pos];
-                if(value_a != value_b)
+                T    value_a = A[pos];
+                T    value_b = B[pos];
+                if(static_cast<c_type>(value_a) != static_cast<c_type>(value_b))
                 {
                     // direct floating point comparison is not reliable
                     std::printf("(%d, %d, %d):\t%f vs. %f\n",
@@ -587,11 +588,11 @@ int main(int argc, char* argv[])
     {
     case HIPSPARSELT_R_16F:
         std::cout << "H";
-        run<hipsparseLtHalf>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<__half>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     case HIPSPARSELT_R_16BF:
         std::cout << "BF16";
-        run<hipsparseLtBfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<hip_bfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
         break;
     case HIPSPARSELT_R_8I:
         std::cout << "I8";

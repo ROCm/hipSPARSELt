@@ -767,6 +767,6 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
     template rocsparselt_status initSolutions<Ti, To, Tc>(                             \
         rocsparselt_handle, rocsparselt_operation, rocsparselt_operation, int*);
 
-GENERATE_DEFINITIONS(hipsparseLtHalf, hipsparseLtHalf, float, "4_4_0")
-GENERATE_DEFINITIONS(hipsparseLtBfloat16, hipsparseLtBfloat16, float, "7_7_0")
+GENERATE_DEFINITIONS(__half, __half, float, "4_4_0")
+GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float, "7_7_0")
 GENERATE_DEFINITIONS(int8_t, int8_t, int32_t, "8_8_0")
