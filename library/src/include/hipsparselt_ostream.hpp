@@ -402,17 +402,17 @@ public:
         return os;
     }
 
-    // hipsparseLtComputetype_t output
+    // hipsparseComputetype_t output
     friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
-                                                    hipsparseLtComputetype_t      d)
+                                                    hipsparseComputetype_t        d)
     {
         os.m_os << hipsparselt_computetype_to_string(d);
         return os;
     }
 
-    // hipsparseLtOperation_t output
+    // hipsparseOperation_t output
     friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
-                                                    hipsparseLtOperation_t        trans)
+                                                    hipsparseOperation_t          trans)
 
     {
         return os << hipsparselt_operation_to_string(trans);
@@ -426,11 +426,11 @@ public:
         return os << hipsparselt_activation_type_to_string(activation_type);
     }
 
-    // hipsparseLtStatus_t output
+    // hipsparseStatus_t output
     friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
-                                                    hipsparseLtStatus_t           status)
+                                                    hipsparseStatus_t             status)
     {
-        os.m_os << hipsparselt_status_to_string(status);
+        os.m_os << hipsparse_status_to_string(status);
         return os;
     }
 

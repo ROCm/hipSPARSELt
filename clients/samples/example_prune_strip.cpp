@@ -49,22 +49,22 @@
 #endif
 
 #ifndef CHECK_HIPSPARSELT_ERROR
-#define CHECK_HIPSPARSELT_ERROR(error)                             \
-    if(error != HIPSPARSELT_STATUS_SUCCESS)                        \
-    {                                                              \
-        fprintf(stderr, "hipSPARSELt error(Err=%d) : ", error);    \
-        if(error == HIPSPARSELT_STATUS_NOT_INITIALIZED)            \
-            fprintf(stderr, "HIPSPARSELT_STATUS_NOT_INITIALIZED"); \
-        if(error == HIPSPARSELT_STATUS_INTERNAL_ERROR)             \
-            fprintf(stderr, " HIPSPARSELT_STATUS_INTERNAL_ERROR"); \
-        if(error == HIPSPARSELT_STATUS_INVALID_VALUE)              \
-            fprintf(stderr, "HIPSPARSELT_STATUS_INVALID_VALUE");   \
-        if(error == HIPSPARSELT_STATUS_ALLOC_FAILED)               \
-            fprintf(stderr, "HIPSPARSELT_STATUS_ALLOC_FAILED");    \
-        if(error == HIPSPARSELT_STATUS_ARCH_MISMATCH)              \
-            fprintf(stderr, "HIPSPARSELT_STATUS_ARCH_MISMATCH");   \
-        fprintf(stderr, "\n");                                     \
-        exit(EXIT_FAILURE);                                        \
+#define CHECK_HIPSPARSELT_ERROR(error)                           \
+    if(error != HIPSPARSE_STATUS_SUCCESS)                        \
+    {                                                            \
+        fprintf(stderr, "hipSPARSELt error(Err=%d) : ", error);  \
+        if(error == HIPSPARSE_STATUS_NOT_INITIALIZED)            \
+            fprintf(stderr, "HIPSPARSE_STATUS_NOT_INITIALIZED"); \
+        if(error == HIPSPARSE_STATUS_INTERNAL_ERROR)             \
+            fprintf(stderr, " HIPSPARSE_STATUS_INTERNAL_ERROR"); \
+        if(error == HIPSPARSE_STATUS_INVALID_VALUE)              \
+            fprintf(stderr, "HIPSPARSE_STATUS_INVALID_VALUE");   \
+        if(error == HIPSPARSE_STATUS_ALLOC_FAILED)               \
+            fprintf(stderr, "HIPSPARSE_STATUS_ALLOC_FAILED");    \
+        if(error == HIPSPARSE_STATUS_ARCH_MISMATCH)              \
+            fprintf(stderr, "HIPSPARSE_STATUS_ARCH_MISMATCH");   \
+        fprintf(stderr, "\n");                                   \
+        exit(EXIT_FAILURE);                                      \
     }
 #endif
 
@@ -234,17 +234,17 @@ static void show_usage(char* argv[])
         << std::endl;
 }
 
-static int parse_arguments(int                     argc,
-                           char*                   argv[],
-                           int64_t&                m,
-                           int64_t&                n,
-                           int64_t&                ld,
-                           int64_t&                stride,
-                           int&                    batch_count,
-                           hipsparseLtOperation_t& trans,
-                           hipsparseLtDatatype_t&  type,
-                           bool&                   header,
-                           bool&                   verbose)
+static int parse_arguments(int                    argc,
+                           char*                  argv[],
+                           int64_t&               m,
+                           int64_t&               n,
+                           int64_t&               ld,
+                           int64_t&               stride,
+                           int&                   batch_count,
+                           hipsparseOperation_t&  trans,
+                           hipsparseLtDatatype_t& type,
+                           bool&                  header,
+                           bool&                  verbose)
 {
     if(argc >= 2)
     {
@@ -291,11 +291,11 @@ static int parse_arguments(int                     argc,
                     ++i;
                     if(strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0)
                     {
-                        trans = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+                        trans = HIPSPARSE_OPERATION_NON_TRANSPOSE;
                     }
                     else if(strncmp(argv[i], "T", 1) == 0 || strncmp(argv[i], "t", 1) == 0)
                     {
-                        trans = HIPSPARSELT_OPERATION_TRANSPOSE;
+                        trans = HIPSPARSE_OPERATION_TRANSPOSE;
                     }
                     else
                     {
@@ -344,20 +344,20 @@ static int parse_arguments(int                     argc,
     return EXIT_SUCCESS;
 }
 
-bool bad_argument(hipsparseLtOperation_t trans,
-                  int64_t                m,
-                  int64_t                n,
-                  int64_t                ld,
-                  int64_t                stride,
-                  int64_t                batch_count)
+bool bad_argument(hipsparseOperation_t trans,
+                  int64_t              m,
+                  int64_t              n,
+                  int64_t              ld,
+                  int64_t              stride,
+                  int64_t              batch_count)
 {
     bool argument_error = false;
-    if((trans == HIPSPARSELT_OPERATION_NON_TRANSPOSE) && (ld < m))
+    if((trans == HIPSPARSE_OPERATION_NON_TRANSPOSE) && (ld < m))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << ld << " < " << m << std::endl;
     }
-    if((trans == HIPSPARSELT_OPERATION_TRANSPOSE) && (ld < n))
+    if((trans == HIPSPARSE_OPERATION_TRANSPOSE) && (ld < n))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << ld << " < " << n << std::endl;
@@ -387,19 +387,19 @@ void initialize_a(std::vector<T>& ha, int64_t size_a)
 }
 
 template <typename T>
-void run(int64_t                m,
-         int64_t                n,
-         int64_t                ld,
-         int64_t                stride,
-         int                    batch_count,
-         hipsparseLtOperation_t trans,
-         hipsparseLtDatatype_t  type,
-         bool                   verbose)
+void run(int64_t               m,
+         int64_t               n,
+         int64_t               ld,
+         int64_t               stride,
+         int                   batch_count,
+         hipsparseOperation_t  trans,
+         hipsparseLtDatatype_t type,
+         bool                  verbose)
 {
     int64_t stride_1, stride_2;
     int64_t row, col;
     int     size_1;
-    if(trans == HIPSPARSELT_OPERATION_NON_TRANSPOSE)
+    if(trans == HIPSPARSE_OPERATION_NON_TRANSPOSE)
     {
         std::cout << ", N";
         row      = m;
@@ -434,7 +434,7 @@ void run(int64_t                m,
     if(verbose)
     {
         printf("\n");
-        if(trans == HIPSPARSELT_OPERATION_NON_TRANSPOSE)
+        if(trans == HIPSPARSE_OPERATION_NON_TRANSPOSE)
         {
             print_strided_batched("host initial", &hp[0], m, n, batch_count, 1, ld, stride);
         }
@@ -470,14 +470,14 @@ void run(int64_t                m,
                                                                 ld,
                                                                 16,
                                                                 type,
-                                                                HIPSPARSELT_ORDER_COLUMN,
+                                                                HIPSPARSE_ORDER_COLUMN,
                                                                 HIPSPARSELT_SPARSITY_50_PERCENT));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matB, n, m, n, 16, type, HIPSPARSELT_ORDER_COLUMN));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matC, m, m, m, 16, type, HIPSPARSELT_ORDER_COLUMN));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matD, m, m, m, 16, type, HIPSPARSELT_ORDER_COLUMN));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtDenseDescriptorInit(&handle, &matB, n, m, n, 16, type, HIPSPARSE_ORDER_COLUMN));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtDenseDescriptorInit(&handle, &matC, m, m, m, 16, type, HIPSPARSE_ORDER_COLUMN));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtDenseDescriptorInit(&handle, &matD, m, m, m, 16, type, HIPSPARSE_ORDER_COLUMN));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
@@ -490,13 +490,12 @@ void run(int64_t                m,
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
-    auto compute_type
-        = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I : HIPSPARSELT_COMPUTE_32F;
+    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSE_COMPUTE_32I : HIPSPARSE_COMPUTE_32F;
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(&handle,
                                                             &matmul,
                                                             trans,
-                                                            HIPSPARSELT_OPERATION_NON_TRANSPOSE,
+                                                            HIPSPARSE_OPERATION_NON_TRANSPOSE,
                                                             &matA,
                                                             &matB,
                                                             &matC,
@@ -537,7 +536,7 @@ void run(int64_t                m,
 int main(int argc, char* argv[])
 {
     // initialize parameters with default values
-    hipsparseLtOperation_t trans = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+    hipsparseOperation_t trans = HIPSPARSE_OPERATION_NON_TRANSPOSE;
 
     // invalid int and float for hipsparselt spmm int and float arguments
     int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
@@ -565,9 +564,9 @@ int main(int argc, char* argv[])
     if(n == invalid_int64)
         n = DIM2;
     if(ld == invalid_int64)
-        ld = trans == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? m : n;
+        ld = trans == HIPSPARSE_OPERATION_NON_TRANSPOSE ? m : n;
     if(stride == invalid_int64)
-        stride = trans == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? ld * n : ld * m;
+        stride = trans == HIPSPARSE_OPERATION_NON_TRANSPOSE ? ld * n : ld * m;
     if(batch_count == invalid_int)
         batch_count = BATCH_COUNT;
 

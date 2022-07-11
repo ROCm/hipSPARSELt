@@ -37,8 +37,8 @@
 
 // gemm
 template <typename Ti, typename To, typename Tc>
-void cblas_gemm(hipsparseLtOperation_t transA,
-                hipsparseLtOperation_t transB,
+void cblas_gemm(hipsparseOperation_t   transA,
+                hipsparseOperation_t   transB,
                 int64_t                m,
                 int64_t                n,
                 int64_t                k,

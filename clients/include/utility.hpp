@@ -147,7 +147,7 @@ typedef enum hipsparselt_matrix_type_
 class hipsparselt_local_mat_descr
 {
     hipsparseLtMatDescriptor_t m_descr;
-    hipsparseLtStatus_t        m_status  = HIPSPARSELT_STATUS_NOT_INITIALIZED;
+    hipsparseStatus_t          m_status  = HIPSPARSE_STATUS_NOT_INITIALIZED;
     static constexpr int       alignment = 16;
 
 public:
@@ -157,7 +157,7 @@ public:
                                 int64_t                    col,
                                 int64_t                    ld,
                                 hipsparseLtDatatype_t      type,
-                                hipsparseLtOrder_t         order)
+                                hipsparseOrder_t           order)
     {
         if(mtype == hipsparselt_matrix_type_structured)
             this->m_status = hipsparseLtStructuredDescriptorInit(handle,
@@ -176,7 +176,7 @@ public:
 
     ~hipsparselt_local_mat_descr()
     {
-        if(this->m_status == HIPSPARSELT_STATUS_SUCCESS)
+        if(this->m_status == HIPSPARSE_STATUS_SUCCESS)
             hipsparseLtMatDescriptorDestroy(&this->m_descr);
     }
 
@@ -185,7 +185,7 @@ public:
     hipsparselt_local_mat_descr& operator=(const hipsparselt_local_mat_descr&) = delete;
     hipsparselt_local_mat_descr& operator=(hipsparselt_local_mat_descr&&) = delete;
 
-    hipsparseLtStatus_t status()
+    hipsparseStatus_t status()
     {
         return m_status;
     }
@@ -214,17 +214,17 @@ public:
 class hipsparselt_local_matmul_descr
 {
     hipsparseLtMatmulDescriptor_t m_descr;
-    hipsparseLtStatus_t           m_status = HIPSPARSELT_STATUS_NOT_INITIALIZED;
+    hipsparseStatus_t             m_status = HIPSPARSE_STATUS_NOT_INITIALIZED;
 
 public:
     hipsparselt_local_matmul_descr(const hipsparseLtHandle_t*        handle,
-                                   hipsparseLtOperation_t            opA,
-                                   hipsparseLtOperation_t            opB,
+                                   hipsparseOperation_t              opA,
+                                   hipsparseOperation_t              opB,
                                    const hipsparseLtMatDescriptor_t* matA,
                                    const hipsparseLtMatDescriptor_t* matB,
                                    const hipsparseLtMatDescriptor_t* matC,
                                    const hipsparseLtMatDescriptor_t* matD,
-                                   hipsparseLtComputetype_t          compute_type)
+                                   hipsparseComputetype_t            compute_type)
     {
         this->m_status = hipsparseLtMatmulDescriptorInit(
             handle, &this->m_descr, opA, opB, matA, matB, matC, matD, compute_type);
@@ -237,7 +237,7 @@ public:
     hipsparselt_local_matmul_descr& operator=(const hipsparselt_local_matmul_descr&) = delete;
     hipsparselt_local_matmul_descr& operator=(hipsparselt_local_matmul_descr&&) = delete;
 
-    hipsparseLtStatus_t status()
+    hipsparseStatus_t status()
     {
         return m_status;
     }
@@ -266,7 +266,7 @@ public:
 class hipsparselt_local_matmul_alg_selection
 {
     hipsparseLtMatmulAlgSelection_t m_alg_sel;
-    hipsparseLtStatus_t             m_status = HIPSPARSELT_STATUS_NOT_INITIALIZED;
+    hipsparseStatus_t               m_status = HIPSPARSE_STATUS_NOT_INITIALIZED;
 
 public:
     hipsparselt_local_matmul_alg_selection(const hipsparseLtHandle_t*           handle,
@@ -286,7 +286,7 @@ public:
     hipsparselt_local_matmul_alg_selection& operator=(hipsparselt_local_matmul_alg_selection&&)
         = delete;
 
-    hipsparseLtStatus_t status()
+    hipsparseStatus_t status()
     {
         return m_status;
     }
@@ -314,7 +314,7 @@ public:
 class hipsparselt_local_matmul_plan
 {
     hipsparseLtMatmulPlan_t m_plan;
-    hipsparseLtStatus_t     m_status = HIPSPARSELT_STATUS_NOT_INITIALIZED;
+    hipsparseStatus_t       m_status = HIPSPARSE_STATUS_NOT_INITIALIZED;
 
 public:
     hipsparselt_local_matmul_plan(const hipsparseLtHandle_t*             handle,
@@ -329,7 +329,7 @@ public:
 
     ~hipsparselt_local_matmul_plan()
     {
-        if(this->m_status == HIPSPARSELT_STATUS_SUCCESS)
+        if(this->m_status == HIPSPARSE_STATUS_SUCCESS)
             hipsparseLtMatmulPlanDestroy(&this->m_plan);
     }
 
@@ -338,7 +338,7 @@ public:
     hipsparselt_local_matmul_plan& operator=(const hipsparselt_local_matmul_plan&) = delete;
     hipsparselt_local_matmul_plan& operator=(hipsparselt_local_matmul_plan&&) = delete;
 
-    hipsparseLtStatus_t status()
+    hipsparseStatus_t status()
     {
         return this->m_status;
     }

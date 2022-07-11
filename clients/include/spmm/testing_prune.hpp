@@ -367,74 +367,69 @@ void testing_prune_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const hipsparseLtOperation_t transA = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
-    const hipsparseLtOperation_t transB = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+    const hipsparseOperation_t transA = HIPSPARSE_OPERATION_NON_TRANSPOSE;
+    const hipsparseOperation_t transB = HIPSPARSE_OPERATION_NON_TRANSPOSE;
 
     // allocate memory on device
     device_vector<Ti> dA(safe_size);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
 
     hipsparselt_local_handle    handle{arg};
-    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
-                                     handle,
-                                     M,
-                                     K,
-                                     lda,
-                                     arg.a_type,
-                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matA(
+        hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matB(
-        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
     hipStream_t stream = nullptr;
 
     // test version 1
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(nullptr, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_NOT_INITIALIZED);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(handle, nullptr, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_NOT_INITIALIZED);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(handle, matmul, dA, nullptr, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(handle, matmul, nullptr, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     // test version 2
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
             nullptr, matA, true, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_NOT_INITIALIZED);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
             handle, nullptr, true, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_NOT_INITIALIZED);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
             handle, matA, false, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_INTERNAL_ERROR);
+        HIPSPARSE_STATUS_INTERNAL_ERROR);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
             handle, matA, true, transA, dA, nullptr, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
             handle, matA, true, transA, nullptr, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 }
 
 template <typename Ti,
@@ -464,8 +459,8 @@ void testing_prune(const Arguments& arg)
     prune_cpu
         = prune_algo == HIPSPARSELT_PRUNE_SPMMA_STRIP ? prune_strip<Ti, Tc> : prune_tile<Ti, Tc>;
 
-    hipsparseLtOperation_t transA = char_to_hipsparselt_operation(arg.transA);
-    hipsparseLtOperation_t transB = char_to_hipsparselt_operation(arg.transB);
+    hipsparseOperation_t transA = char_to_hipsparselt_operation(arg.transA);
+    hipsparseOperation_t transB = char_to_hipsparselt_operation(arg.transB);
 
     int64_t M = arg.M;
     int64_t N = arg.N;
@@ -484,13 +479,13 @@ void testing_prune(const Arguments& arg)
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
-    int64_t A_row = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? M : K;
-    int64_t A_col = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : M;
-    int64_t B_row = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : N;
-    int64_t B_col = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? N : K;
+    int64_t A_row = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K;
+    int64_t A_col = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : M;
+    int64_t B_row = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : N;
+    int64_t B_col = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? N : K;
 
-    int64_t stride_1_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? 1 : lda;
-    int64_t stride_2_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? lda : 1;
+    int64_t stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : lda;
+    int64_t stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda : 1;
 
     int     num_batches = (do_batched || do_strided_batched ? arg.batch_count : 1);
     int64_t stride_a    = do_strided_batched ? arg.stride_a : lda * A_col;
@@ -504,18 +499,18 @@ void testing_prune(const Arguments& arg)
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     HIPSPARSELT_ORDER_COLUMN);
+                                     HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matB(hipsparselt_matrix_type_dense,
                                      handle,
                                      B_row,
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     HIPSPARSELT_ORDER_COLUMN);
+                                     HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
 
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
@@ -523,55 +518,55 @@ void testing_prune(const Arguments& arg)
     bool invalid_size_d = ldd < M;
     if(invalid_size_a)
     {
-        EXPECT_HIPSPARSELT_STATUS(matA.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
+        EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_HIPSPARSELT_STATUS(matB.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
+        EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_c)
     {
-        EXPECT_HIPSPARSELT_STATUS(matC.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
+        EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_d)
     {
-        EXPECT_HIPSPARSELT_STATUS(matD.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
+        EXPECT_HIPSPARSE_STATUS(matD.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
 
     if(do_batched || do_strided_batched)
     {
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matA, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matB, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matC, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matD, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
     }
 
     if(do_strided_batched)
     {
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
     }
 
     hipsparselt_local_matmul_descr matmul(
@@ -620,14 +615,14 @@ void testing_prune(const Arguments& arg)
     if(arg.unit_check || arg.norm_check)
     {
         if(run_version == 1)
-            EXPECT_HIPSPARSELT_STATUS(
+            EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
-                HIPSPARSELT_STATUS_SUCCESS);
+                HIPSPARSE_STATUS_SUCCESS);
         else if(run_version == 2)
-            EXPECT_HIPSPARSELT_STATUS(
+            EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtSpMMAPrune2(
                     handle, matA, true, transA, dA, dA_pruned, prune_algo, stream),
-                HIPSPARSELT_STATUS_SUCCESS);
+                HIPSPARSE_STATUS_SUCCESS);
 
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_pruned));
@@ -637,9 +632,9 @@ void testing_prune(const Arguments& arg)
         device_vector<int> d_valid(1, 1, HMM);
         int                h_valid = 0;
         //check the pruned matrix is sparisty 50 or not.
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtSpMMAPruneCheck(handle, matmul, dA_pruned, d_valid, stream),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
         CHECK_HIP_ERROR(
             hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
         hipStreamSynchronize(stream);
@@ -704,17 +699,17 @@ void testing_prune(const Arguments& arg)
 
         for(int i = 0; i < number_cold_calls; i++)
         {
-            EXPECT_HIPSPARSELT_STATUS(
+            EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
-                HIPSPARSELT_STATUS_SUCCESS);
+                HIPSPARSE_STATUS_SUCCESS);
         }
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
         {
-            EXPECT_HIPSPARSELT_STATUS(
+            EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
-                HIPSPARSELT_STATUS_SUCCESS);
+                HIPSPARSE_STATUS_SUCCESS);
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 

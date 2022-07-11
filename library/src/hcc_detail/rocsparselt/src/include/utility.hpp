@@ -38,9 +38,9 @@
 
 #pragma STDC CX_LIMITED_RANGE ON
 
-hipsparseLtDatatype_t    RocSparseLtDatatypeToHIPDatatype(rocsparselt_datatype_ type);
-hipsparseLtComputetype_t RocSparseLtComputetypeToHIPComputetype(rocsparselt_compute_type_ type);
-hipsparseLtOperation_t   HCCOperationToHIPOperation(rocsparselt_operation_ op);
+hipsparseLtDatatype_t  RocSparseLtDatatypeToHIPDatatype(rocsparselt_datatype_ type);
+hipsparseComputetype_t RocSparseLtComputetypeToHIPComputetype(rocsparselt_compute_type_ type);
+hipsparseOperation_t   HCCOperationToHIPOperation(rocsparselt_operation_ op);
 
 inline bool isAligned(const void* pointer, size_t byte_count)
 {

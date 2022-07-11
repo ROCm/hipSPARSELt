@@ -29,57 +29,65 @@
 #include <hipsparselt.h>
 
 HIPSPARSELT_EXPORT
-constexpr const char* hipsparselt_status_to_string(hipsparseLtStatus_t status)
+constexpr const char* hipsparse_status_to_string(hipsparseStatus_t status)
 {
 #define CASE(x) \
     case x:     \
         return #x
     switch(status)
     {
-        CASE(HIPSPARSELT_STATUS_SUCCESS);
-        CASE(HIPSPARSELT_STATUS_NOT_INITIALIZED);
-        CASE(HIPSPARSELT_STATUS_ALLOC_FAILED);
-        CASE(HIPSPARSELT_STATUS_INVALID_VALUE);
-        CASE(HIPSPARSELT_STATUS_MAPPING_ERROR);
-        CASE(HIPSPARSELT_STATUS_EXECUTION_FAILED);
-        CASE(HIPSPARSELT_STATUS_INTERNAL_ERROR);
-        CASE(HIPSPARSELT_STATUS_NOT_SUPPORTED);
-        CASE(HIPSPARSELT_STATUS_ARCH_MISMATCH);
-        CASE(HIPSPARSELT_STATUS_INVALID_ENUM);
-        CASE(HIPSPARSELT_STATUS_UNKNOWN);
+        CASE(HIPSPARSE_STATUS_SUCCESS);
+        CASE(HIPSPARSE_STATUS_NOT_INITIALIZED);
+        CASE(HIPSPARSE_STATUS_ALLOC_FAILED);
+        CASE(HIPSPARSE_STATUS_INVALID_VALUE);
+        CASE(HIPSPARSE_STATUS_ARCH_MISMATCH);
+        CASE(HIPSPARSE_STATUS_MAPPING_ERROR);
+        CASE(HIPSPARSE_STATUS_EXECUTION_FAILED);
+        CASE(HIPSPARSE_STATUS_INTERNAL_ERROR);
+        CASE(HIPSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED);
+        CASE(HIPSPARSE_STATUS_ZERO_PIVOT);
+        CASE(HIPSPARSE_STATUS_NOT_SUPPORTED);
+#if(!defined(CUDART_VERSION) || CUDART_VERSION >= 11003)
+        CASE(HIPSPARSE_STATUS_INSUFFICIENT_RESOURCES);
+#endif
     }
 #undef CASE
     // We don't use default: so that the compiler warns us if any valid enums are missing
-    // from our switch. If the value is not a valid hipsparseLtStatus_t, we return this string.
-    return "<undefined hipsparseLtStatus_t value>";
+    // from our switch. If the value is not a valid hipsparseStatus_t, we return this string.
+    return "<undefined hipsparseStatus_t value>";
 }
 
 HIPSPARSELT_EXPORT
-constexpr const char* hipsparselt_operation_to_string(hipsparseLtOperation_t value)
+constexpr const char* hipsparselt_operation_to_string(hipsparseOperation_t value)
 {
     switch(value)
     {
-    case HIPSPARSELT_OPERATION_NON_TRANSPOSE:
+    case HIPSPARSE_OPERATION_NON_TRANSPOSE:
         return "N";
-    case HIPSPARSELT_OPERATION_TRANSPOSE:
+    case HIPSPARSE_OPERATION_TRANSPOSE:
         return "T";
+    case HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE:
+        return "C";
     }
     return "invalid";
 }
 
 HIPSPARSELT_EXPORT
-constexpr hipsparseLtOperation_t char_to_hipsparselt_operation(char value)
+constexpr hipsparseOperation_t char_to_hipsparselt_operation(char value)
 {
     switch(value)
     {
     case 'N':
     case 'n':
-        return HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+        return HIPSPARSE_OPERATION_NON_TRANSPOSE;
     case 'T':
     case 't':
-        return HIPSPARSELT_OPERATION_TRANSPOSE;
+        return HIPSPARSE_OPERATION_TRANSPOSE;
+    case 'C':
+    case 'c':
+        return HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
     default:
-        return static_cast<hipsparseLtOperation_t>(-1);
+        return static_cast<hipsparseOperation_t>(-1);
     }
 }
 
@@ -107,19 +115,19 @@ constexpr const char* hipsparselt_datatype_to_string(hipsparseLtDatatype_t type)
 
 // return precision string for hipsparseLtDatatype_t
 HIPSPARSELT_EXPORT
-constexpr const char* hipsparselt_computetype_to_string(hipsparseLtComputetype_t type)
+constexpr const char* hipsparselt_computetype_to_string(hipsparseComputetype_t type)
 {
     switch(type)
     {
-    case HIPSPARSELT_COMPUTE_16F:
+    case HIPSPARSE_COMPUTE_16F:
         return "f16_r";
-    case HIPSPARSELT_COMPUTE_32I:
+    case HIPSPARSE_COMPUTE_32I:
         return "i32_r";
-    case HIPSPARSELT_COMPUTE_32F:
+    case HIPSPARSE_COMPUTE_32F:
         return "f32_r";
-    case HIPSPARSELT_COMPUTE_TF32:
+    case HIPSPARSE_COMPUTE_TF32:
         return "tf32_r";
-    case HIPSPARSELT_COMPUTE_TF32_FAST:
+    case HIPSPARSE_COMPUTE_TF32_FAST:
         return "tf32f_r";
     }
     return "invalid";
@@ -140,15 +148,15 @@ constexpr hipsparseLtDatatype_t string_to_hipsparselt_datatype(const std::string
 }
 
 HIPSPARSELT_EXPORT
-constexpr hipsparseLtComputetype_t string_to_hipsparselt_computetype(const std::string& value)
+constexpr hipsparseComputetype_t string_to_hipsparselt_computetype(const std::string& value)
 {
     return
-        value == "f32_r" || value == "s" ? HIPSPARSELT_COMPUTE_32F  :
-        value == "i32_r"                 ? HIPSPARSELT_COMPUTE_32I  :
-        value == "f16_r" || value == "h" ? HIPSPARSELT_COMPUTE_16F  :
-        value == "tf32_r"                ? HIPSPARSELT_COMPUTE_TF32  :
-        value == "tf32f_r"               ? HIPSPARSELT_COMPUTE_TF32_FAST  :
-        static_cast<hipsparseLtComputetype_t>(-1);
+        value == "f32_r" || value == "s" ? HIPSPARSE_COMPUTE_32F  :
+        value == "i32_r"                 ? HIPSPARSE_COMPUTE_32I  :
+        value == "f16_r" || value == "h" ? HIPSPARSE_COMPUTE_16F  :
+        value == "tf32_r"                ? HIPSPARSE_COMPUTE_TF32  :
+        value == "tf32f_r"               ? HIPSPARSE_COMPUTE_TF32_FAST  :
+        static_cast<hipsparseComputetype_t>(-1);
 }
 // clang-format on
 

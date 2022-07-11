@@ -44,8 +44,8 @@ CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipsparseOperation_t trans)
 
 // gemm
 template <>
-void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseLtOperation_t     transA,
-                                                                 hipsparseLtOperation_t     transB,
+void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseOperation_t     transA,
+                                                                 hipsparseOperation_t     transB,
                                                                  int64_t                    m,
                                                                  int64_t                    n,
                                                                  int64_t                    k,
@@ -62,8 +62,8 @@ void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseLtOper
     // cblas does not support hipsparseLtBfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -97,8 +97,8 @@ void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseLtOper
 }
 
 template <>
-void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseLtOperation_t     transA,
-                                                   hipsparseLtOperation_t     transB,
+void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseOperation_t     transA,
+                                                   hipsparseOperation_t     transB,
                                                    int64_t                    m,
                                                    int64_t                    n,
                                                    int64_t                    k,
@@ -115,8 +115,8 @@ void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseLtOperation_t     tr
     // cblas does not support hipsparseLtBfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -145,8 +145,8 @@ void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseLtOperation_t     tr
 }
 
 template <>
-void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseLtOperation_t transA,
-                                                         hipsparseLtOperation_t transB,
+void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseOperation_t transA,
+                                                         hipsparseOperation_t transB,
                                                          int64_t                m,
                                                          int64_t                n,
                                                          int64_t                k,
@@ -163,8 +163,8 @@ void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseLtOperation_t 
     // cblas does not support hipsparseLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -213,8 +213,8 @@ void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseLtOperation_t 
 }
 
 template <>
-void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseLtOperation_t transA,
-                                               hipsparseLtOperation_t transB,
+void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseOperation_t transA,
+                                               hipsparseOperation_t transB,
                                                int64_t                m,
                                                int64_t                n,
                                                int64_t                k,
@@ -231,8 +231,8 @@ void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseLtOperation_t transA,
     // cblas does not support hipsparseLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -272,20 +272,20 @@ void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseLtOperation_t transA,
 }
 
 template <>
-void cblas_gemm<int8_t, int8_t, float>(hipsparseLtOperation_t transA,
-                                       hipsparseLtOperation_t transB,
-                                       int64_t                m,
-                                       int64_t                n,
-                                       int64_t                k,
-                                       float                  alpha,
-                                       const int8_t*          A,
-                                       int64_t                lda,
-                                       const int8_t*          B,
-                                       int64_t                ldb,
-                                       float                  beta,
-                                       int8_t*                C,
-                                       int64_t                ldc,
-                                       bool                   alt)
+void cblas_gemm<int8_t, int8_t, float>(hipsparseOperation_t transA,
+                                       hipsparseOperation_t transB,
+                                       int64_t              m,
+                                       int64_t              n,
+                                       int64_t              k,
+                                       float                alpha,
+                                       const int8_t*        A,
+                                       int64_t              lda,
+                                       const int8_t*        B,
+                                       int64_t              ldb,
+                                       float                beta,
+                                       int8_t*              C,
+                                       int64_t              ldc,
+                                       bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
     // 32-bit integer operations can be represented accurately with double-precision
@@ -293,8 +293,8 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseLtOperation_t transA,
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
 
-    size_t const sizeA = ((transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
+    size_t const sizeA = ((transA == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
+    size_t const sizeB = ((transB == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
     size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
@@ -335,20 +335,20 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseLtOperation_t transA,
 }
 
 template <>
-void cblas_gemm<int8_t, float, float>(hipsparseLtOperation_t transA,
-                                      hipsparseLtOperation_t transB,
-                                      int64_t                m,
-                                      int64_t                n,
-                                      int64_t                k,
-                                      float                  alpha,
-                                      const int8_t*          A,
-                                      int64_t                lda,
-                                      const int8_t*          B,
-                                      int64_t                ldb,
-                                      float                  beta,
-                                      float*                 C,
-                                      int64_t                ldc,
-                                      bool                   alt)
+void cblas_gemm<int8_t, float, float>(hipsparseOperation_t transA,
+                                      hipsparseOperation_t transB,
+                                      int64_t              m,
+                                      int64_t              n,
+                                      int64_t              k,
+                                      float                alpha,
+                                      const int8_t*        A,
+                                      int64_t              lda,
+                                      const int8_t*        B,
+                                      int64_t              ldb,
+                                      float                beta,
+                                      float*               C,
+                                      int64_t              ldc,
+                                      bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
     // 32-bit integer operations can be represented accurately with double-precision
@@ -356,8 +356,8 @@ void cblas_gemm<int8_t, float, float>(hipsparseLtOperation_t transA,
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
 
-    size_t const sizeA = ((transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
+    size_t const sizeA = ((transA == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
+    size_t const sizeB = ((transB == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
     size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
