@@ -75,12 +75,12 @@
 // This wraps the hipSPARSELt call with catch_signals_and_exceptions_as_failures().
 // By placing it at the hipSPARSELt call site, memory resources are less likely to
 // be leaked in the event of a caught signal.
-#define EXPECT_HIPSPARSELT_STATUS(STATUS, EXPECT)             \
+#define EXPECT_HIPSPARSE_STATUS(STATUS, EXPECT)               \
     do                                                        \
     {                                                         \
         volatile bool signal_or_exception = true;             \
         /* Use status__ in case STATUS contains "status" */   \
-        hipsparseLtStatus_t status__;                         \
+        hipsparseStatus_t status__;                           \
         catch_signals_and_exceptions_as_failures([&] {        \
             status__            = (STATUS);                   \
             signal_or_exception = false;                      \
@@ -88,21 +88,21 @@
         if(signal_or_exception)                               \
             return;                                           \
         { /* localize status for ASSERT_EQ message */         \
-            hipsparseLtStatus_t status_ = status__;           \
+            hipsparseStatus_t status_ = status__;             \
             ASSERT_EQ(status_, EXPECT); /* prints "status" */ \
         }                                                     \
     } while(0)
 
 #else // GOOGLE_TEST
 
-inline void hipsparselt_expect_status(hipsparseLtStatus_t status, hipsparseLtStatus_t expect)
+inline void hipsparselt_expect_status(hipsparseStatus_t status, hipsparseStatus_t expect)
 {
     if(status != expect)
     {
         hipsparselt_cerr << "hipSPARSELt status error: Expected "
-                         << hipsparselt_status_to_string(expect) << ", received "
-                         << hipsparselt_status_to_string(status) << std::endl;
-        if(expect == HIPSPARSELT_STATUS_SUCCESS)
+                         << hipsparse_status_to_string(expect) << ", received "
+                         << hipsparse_status_to_string(status) << std::endl;
+        if(expect == HIPSPARSE_STATUS_SUCCESS)
             exit(EXIT_FAILURE);
     }
 }
@@ -122,7 +122,7 @@ inline void hipsparselt_expect_status(hipsparseLtStatus_t status, hipsparseLtSta
 
 #define CHECK_DEVICE_ALLOCATION CHECK_HIP_ERROR
 
-#define EXPECT_HIPSPARSELT_STATUS hipsparselt_expect_status
+#define EXPECT_HIPSPARSE_STATUS hipsparselt_expect_status
 
 #define CHECK_SUCCESS(ERROR) \
     if(!(ERROR))             \
@@ -130,8 +130,7 @@ inline void hipsparselt_expect_status(hipsparseLtStatus_t status, hipsparseLtSta
 
 #endif // GOOGLE_TEST
 
-#define CHECK_HIPSPARSELT_ERROR2(STATUS) \
-    EXPECT_HIPSPARSELT_STATUS(STATUS, HIPSPARSELT_STATUS_SUCCESS)
+#define CHECK_HIPSPARSELT_ERROR2(STATUS) EXPECT_HIPSPARSE_STATUS(STATUS, HIPSPARSE_STATUS_SUCCESS)
 #define CHECK_HIPSPARSELT_ERROR(STATUS) CHECK_HIPSPARSELT_ERROR2(STATUS)
 
 #ifdef GOOGLE_TEST

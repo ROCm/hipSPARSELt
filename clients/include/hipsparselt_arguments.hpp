@@ -84,11 +84,11 @@ struct Arguments
     int32_t  solution_index;
     uint32_t prune_algo;
 
-    hipsparseLtDatatype_t    a_type;
-    hipsparseLtDatatype_t    b_type;
-    hipsparseLtDatatype_t    c_type;
-    hipsparseLtDatatype_t    d_type;
-    hipsparseLtComputetype_t compute_type;
+    hipsparseLtDatatype_t  a_type;
+    hipsparseLtDatatype_t  b_type;
+    hipsparseLtDatatype_t  c_type;
+    hipsparseLtDatatype_t  d_type;
+    hipsparseComputetype_t compute_type;
 
     hipsparselt_initialization initialization;
 

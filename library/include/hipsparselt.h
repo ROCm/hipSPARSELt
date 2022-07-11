@@ -40,6 +40,7 @@
 
 #include "hipsparselt-export.h"
 #include "hipsparselt-version.h"
+#include <hipsparse.h>
 
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime_api.h>
@@ -65,37 +66,12 @@ typedef struct {uint8_t data[11024];} hipsparseLtMatmulAlgSelection_t;
 typedef struct {uint8_t data[11024];} hipsparseLtMatmulPlan_t;
 #endif
 
-/* hipSPARSE status types */
-typedef enum
-{
-    HIPSPARSELT_STATUS_SUCCESS           = 0, /**< Function succeeds */
-    HIPSPARSELT_STATUS_NOT_INITIALIZED   = 1, /**< hipSPARSELT library not initialized */
-    HIPSPARSELT_STATUS_ALLOC_FAILED      = 2, /**< resource allocation failed */
-    HIPSPARSELT_STATUS_INVALID_VALUE     = 3, /**< unsupported numerical value was passed to function */
-    HIPSPARSELT_STATUS_MAPPING_ERROR     = 4, /**< access to GPU memory space failed */
-    HIPSPARSELT_STATUS_EXECUTION_FAILED  = 5, /**< GPU program failed to execute */
-    HIPSPARSELT_STATUS_INTERNAL_ERROR    = 6, /**< an internal HIPBLAS operation failed */
-    HIPSPARSELT_STATUS_NOT_SUPPORTED     = 7, /**< function not implemented */
-    HIPSPARSELT_STATUS_ARCH_MISMATCH     = 8, /**< architecture mismatch */
-    HIPSPARSELT_STATUS_INVALID_ENUM      = 10, /**<  unsupported enum value was passed to function */
-    HIPSPARSELT_STATUS_UNKNOWN           = 11, /**<  back-end returned an unsupported status code */
-} hipsparseLtStatus_t;
 
 /* Types definitions */
 typedef enum {
     HIPSPARSELT_POINTER_MODE_HOST   = 0,
     HIPSPARSELT_POINTER_MODE_DEVICE = 1
 } hipsparseLtPointerMode_t;
-
-typedef enum {
-    HIPSPARSELT_OPERATION_NON_TRANSPOSE       = 0,
-    HIPSPARSELT_OPERATION_TRANSPOSE           = 1,
-} hipsparseLtOperation_t;
-
-typedef enum {
-   HIPSPARSELT_ORDER_ROW = 0,
-   HIPSPARSELT_ORDER_COLUMN = 1
-} hipsparseLtOrder_t;
 
 typedef enum
 {
@@ -119,12 +95,12 @@ typedef enum {
 } hipsparseLtMatDescAttribute_t;
 
 typedef enum {
-   HIPSPARSELT_COMPUTE_16F = 0,
-   HIPSPARSELT_COMPUTE_32I,
-   HIPSPARSELT_COMPUTE_32F,
-   HIPSPARSELT_COMPUTE_TF32,
-   HIPSPARSELT_COMPUTE_TF32_FAST
-} hipsparseLtComputetype_t;
+   HIPSPARSE_COMPUTE_16F = 0,
+   HIPSPARSE_COMPUTE_32I,
+   HIPSPARSE_COMPUTE_32F,
+   HIPSPARSE_COMPUTE_TF32,
+   HIPSPARSE_COMPUTE_TF32_FAST
+} hipsparseComputetype_t;
 
 typedef enum {
    HIPSPARSELT_MATMUL_ACTIVATION_RELU = 0,            // READ/WRITE
@@ -171,81 +147,81 @@ HIPSPARSELT_EXPORT
 void hipsparseLtInitialize();
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtGetVersion(hipsparseLtHandle_t handle, int* version);
+hipsparseStatus_t hipsparseLtGetVersion(hipsparseLtHandle_t handle, int* version);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtGetGitRevision(hipsparseLtHandle_t handle, char* rev);
+hipsparseStatus_t hipsparseLtGetGitRevision(hipsparseLtHandle_t handle, char* rev);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtGetArchName(char** archName);
+hipsparseStatus_t hipsparseLtGetArchName(char** archName);
 
 /* hipSPARSE initialization and management routines */
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle);
+hipsparseStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtDestroy(const hipsparseLtHandle_t* handle);
+hipsparseStatus_t hipsparseLtDestroy(const hipsparseLtHandle_t* handle);
 
 /* matrix descriptor */
 // dense matrix
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  handle,
-                                                   hipsparseLtMatDescriptor_t* matDescr,
-                                                   int64_t                     rows,
-                                                   int64_t                     cols,
-                                                   int64_t                     ld,
-                                                   uint32_t                    alignment,
-                                                   hipsparseLtDatatype_t       valueType,
-                                                   hipsparseLtOrder_t          order);
+hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  handle,
+                                                 hipsparseLtMatDescriptor_t* matDescr,
+                                                 int64_t                     rows,
+                                                 int64_t                     cols,
+                                                 int64_t                     ld,
+                                                 uint32_t                    alignment,
+                                                 hipsparseLtDatatype_t       valueType,
+                                                 hipsparseOrder_t            order);
 
 // structured matrix
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*  handle,
-                                                        hipsparseLtMatDescriptor_t* matDescr,
-                                                        int64_t                     rows,
-                                                        int64_t                     cols,
-                                                        int64_t                     ld,
-                                                        uint32_t                    alignment,
-                                                        hipsparseLtDatatype_t       valueType,
-                                                        hipsparseLtOrder_t          order,
-                                                        hipsparseLtSparsity_t       sparsity);
+hipsparseStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*  handle,
+                                                      hipsparseLtMatDescriptor_t* matDescr,
+                                                      int64_t                     rows,
+                                                      int64_t                     cols,
+                                                      int64_t                     ld,
+                                                      uint32_t                    alignment,
+                                                      hipsparseLtDatatype_t       valueType,
+                                                      hipsparseOrder_t            order,
+                                                      hipsparseLtSparsity_t       sparsity);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatDescriptorDestroy(const hipsparseLtMatDescriptor_t* matDescr);
+hipsparseStatus_t hipsparseLtMatDescriptorDestroy(const hipsparseLtMatDescriptor_t* matDescr);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatDescSetAttribute(const hipsparseLtHandle_t*    handle,
-                                                   hipsparseLtMatDescriptor_t*   matmulDescr,
-                                                   hipsparseLtMatDescAttribute_t matAttribute,
-                                                   const void*                   data,
-                                                   size_t                        dataSize);
+hipsparseStatus_t hipsparseLtMatDescSetAttribute(const hipsparseLtHandle_t*    handle,
+                                                 hipsparseLtMatDescriptor_t*   matmulDescr,
+                                                 hipsparseLtMatDescAttribute_t matAttribute,
+                                                 const void*                   data,
+                                                 size_t                        dataSize);
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*        handle,
-                                                   const hipsparseLtMatDescriptor_t* matmulDescr,
-                                                   hipsparseLtMatDescAttribute_t     matAttribute,
-                                                   void*                             data,
-                                                   size_t                            dataSize);
+hipsparseStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*        handle,
+                                                 const hipsparseLtMatDescriptor_t* matmulDescr,
+                                                 hipsparseLtMatDescAttribute_t     matAttribute,
+                                                 void*                             data,
+                                                 size_t                            dataSize);
 
 /* matmul descriptor */
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*        handle,
-                                                    hipsparseLtMatmulDescriptor_t*    matMulDescr,
-                                                    hipsparseLtOperation_t            opA,
-                                                    hipsparseLtOperation_t            opB,
-                                                    const hipsparseLtMatDescriptor_t* matA,
-                                                    const hipsparseLtMatDescriptor_t* matB,
-                                                    const hipsparseLtMatDescriptor_t* matC,
-                                                    const hipsparseLtMatDescriptor_t* matD,
-                                                    hipsparseLtComputetype_t          computeType);
+hipsparseStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*        handle,
+                                                  hipsparseLtMatmulDescriptor_t*    matMulDescr,
+                                                  hipsparseOperation_t              opA,
+                                                  hipsparseOperation_t              opB,
+                                                  const hipsparseLtMatDescriptor_t* matA,
+                                                  const hipsparseLtMatDescriptor_t* matB,
+                                                  const hipsparseLtMatDescriptor_t* matC,
+                                                  const hipsparseLtMatDescriptor_t* matD,
+                                                  hipsparseComputetype_t            computeType);
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t
+hipsparseStatus_t
     hipsparseLtMatmulDescSetAttribute(const hipsparseLtHandle_t*       handle,
                                       hipsparseLtMatmulDescriptor_t*   matmulDescr,
                                       hipsparseLtMatmulDescAttribute_t matmulAttribute,
                                       const void*                      data,
                                       size_t                           dataSize);
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t
+hipsparseStatus_t
     hipsparseLtMatmulDescGetAttribute(const hipsparseLtHandle_t*           handle,
                                       const hipsparseLtMatmulDescriptor_t* matmulDescr,
                                       hipsparseLtMatmulDescAttribute_t     matmulAttribute,
@@ -254,21 +230,21 @@ hipsparseLtStatus_t
 
 /* algorithm selection */
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t
+hipsparseStatus_t
     hipsparseLtMatmulAlgSelectionInit(const hipsparseLtHandle_t*           handle,
                                       hipsparseLtMatmulAlgSelection_t*     algSelection,
                                       const hipsparseLtMatmulDescriptor_t* matmulDescr,
                                       hipsparseLtMatmulAlg_t               alg);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatmulAlgSetAttribute(const hipsparseLtHandle_t*       handle,
-                                                     hipsparseLtMatmulAlgSelection_t* algSelection,
-                                                     hipsparseLtMatmulAlgAttribute_t  attribute,
-                                                     const void*                      data,
-                                                     size_t                           dataSize);
+hipsparseStatus_t hipsparseLtMatmulAlgSetAttribute(const hipsparseLtHandle_t*       handle,
+                                                   hipsparseLtMatmulAlgSelection_t* algSelection,
+                                                   hipsparseLtMatmulAlgAttribute_t  attribute,
+                                                   const void*                      data,
+                                                   size_t                           dataSize);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t
+hipsparseStatus_t
     hipsparseLtMatmulAlgGetAttribute(const hipsparseLtHandle_t*             handle,
                                      const hipsparseLtMatmulAlgSelection_t* algSelection,
                                      hipsparseLtMatmulAlgAttribute_t        attribute,
@@ -277,111 +253,109 @@ hipsparseLtStatus_t
 
 /* matmul plan */
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t
-    hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*             handle,
-                                  const hipsparseLtMatmulAlgSelection_t* algSelection,
-                                  size_t*                                workspaceSize);
+hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*             handle,
+                                                const hipsparseLtMatmulAlgSelection_t* algSelection,
+                                                size_t* workspaceSize);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*             handle,
-                                              hipsparseLtMatmulPlan_t*               plan,
-                                              const hipsparseLtMatmulDescriptor_t*   matmulDescr,
-                                              const hipsparseLtMatmulAlgSelection_t* algSelection,
-                                              size_t                                 workspaceSize);
+hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*             handle,
+                                            hipsparseLtMatmulPlan_t*               plan,
+                                            const hipsparseLtMatmulDescriptor_t*   matmulDescr,
+                                            const hipsparseLtMatmulAlgSelection_t* algSelection,
+                                            size_t                                 workspaceSize);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatmulPlanDestroy(const hipsparseLtMatmulPlan_t* plan);
+hipsparseStatus_t hipsparseLtMatmulPlanDestroy(const hipsparseLtMatmulPlan_t* plan);
 
 /* matmul execution */
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
-                                      const hipsparseLtMatmulPlan_t* plan,
-                                      const void*                    alpha,
-                                      const void*                    d_A,
-                                      const void*                    d_B,
-                                      const void*                    beta,
-                                      const void*                    d_C,
-                                      void*                          d_D,
-                                      void*                          workspace,
-                                      hipStream_t*                   streams,
-                                      int32_t                        numStreams);
+hipsparseStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
+                                    const hipsparseLtMatmulPlan_t* plan,
+                                    const void*                    alpha,
+                                    const void*                    d_A,
+                                    const void*                    d_B,
+                                    const void*                    beta,
+                                    const void*                    d_C,
+                                    void*                          d_D,
+                                    void*                          workspace,
+                                    hipStream_t*                   streams,
+                                    int32_t                        numStreams);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtMatmulSearch(const hipsparseLtHandle_t* handle,
-                                            hipsparseLtMatmulPlan_t*   plan,
-                                            const void*                alpha,
-                                            const void*                d_A,
-                                            const void*                d_B,
-                                            const void*                beta,
-                                            const void*                d_C,
-                                            void*                      d_D,
-                                            void*                      workspace,
-                                            hipStream_t*               streams,
-                                            int32_t                    numStreams);
+hipsparseStatus_t hipsparseLtMatmulSearch(const hipsparseLtHandle_t* handle,
+                                          hipsparseLtMatmulPlan_t*   plan,
+                                          const void*                alpha,
+                                          const void*                d_A,
+                                          const void*                d_B,
+                                          const void*                beta,
+                                          const void*                d_C,
+                                          void*                      d_D,
+                                          void*                      workspace,
+                                          hipStream_t*               streams,
+                                          int32_t                    numStreams);
 
 /* helper */
 // prune
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtSpMMAPrune(const hipsparseLtHandle_t*           handle,
-                                          const hipsparseLtMatmulDescriptor_t* matmulDescr,
-                                          const void*                          d_in,
-                                          void*                                d_out,
-                                          hipsparseLtPruneAlg_t                pruneAlg,
-                                          hipStream_t                          stream);
+hipsparseStatus_t hipsparseLtSpMMAPrune(const hipsparseLtHandle_t*           handle,
+                                        const hipsparseLtMatmulDescriptor_t* matmulDescr,
+                                        const void*                          d_in,
+                                        void*                                d_out,
+                                        hipsparseLtPruneAlg_t                pruneAlg,
+                                        hipStream_t                          stream);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtSpMMAPruneCheck(const hipsparseLtHandle_t*           handle,
-                                               const hipsparseLtMatmulDescriptor_t* matmulDescr,
-                                               const void*                          d_in,
-                                               int*                                 valid,
-                                               hipStream_t                          stream);
+hipsparseStatus_t hipsparseLtSpMMAPruneCheck(const hipsparseLtHandle_t*           handle,
+                                             const hipsparseLtMatmulDescriptor_t* matmulDescr,
+                                             const void*                          d_in,
+                                             int*                                 valid,
+                                             hipStream_t                          stream);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtSpMMAPrune2(const hipsparseLtHandle_t*        handle,
-                                           const hipsparseLtMatDescriptor_t* sparseMatDescr,
-                                           int                               isSparseA,
-                                           hipsparseLtOperation_t            op,
-                                           const void*                       d_in,
-                                           void*                             d_out,
-                                           hipsparseLtPruneAlg_t             pruneAlg,
-                                           hipStream_t                       stream);
+hipsparseStatus_t hipsparseLtSpMMAPrune2(const hipsparseLtHandle_t*        handle,
+                                         const hipsparseLtMatDescriptor_t* sparseMatDescr,
+                                         int                               isSparseA,
+                                         hipsparseOperation_t              op,
+                                         const void*                       d_in,
+                                         void*                             d_out,
+                                         hipsparseLtPruneAlg_t             pruneAlg,
+                                         hipStream_t                       stream);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtSpMMAPruneCheck2(const hipsparseLtHandle_t*        handle,
-                                                const hipsparseLtMatDescriptor_t* sparseMatDescr,
-                                                int                               isSparseA,
-                                                hipsparseLtOperation_t            op,
-                                                const void*                       d_in,
-                                                int*                              d_valid,
-                                                hipStream_t                       stream);
+hipsparseStatus_t hipsparseLtSpMMAPruneCheck2(const hipsparseLtHandle_t*        handle,
+                                              const hipsparseLtMatDescriptor_t* sparseMatDescr,
+                                              int                               isSparseA,
+                                              hipsparseOperation_t              op,
+                                              const void*                       d_in,
+                                              int*                              d_valid,
+                                              hipStream_t                       stream);
 
 // compression
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     handle,
-                                                   const hipsparseLtMatmulPlan_t* plan,
-                                                   size_t*                        compressedSize);
+hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     handle,
+                                                 const hipsparseLtMatmulPlan_t* plan,
+                                                 size_t*                        compressedSize);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle,
-                                             const hipsparseLtMatmulPlan_t* plan,
-                                             const void*                    d_dense,
-                                             void*                          d_compressed,
-                                             hipStream_t                    stream);
+hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle,
+                                           const hipsparseLtMatmulPlan_t* plan,
+                                           const void*                    d_dense,
+                                           void*                          d_compressed,
+                                           hipStream_t                    stream);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t
-    hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*        handle,
-                                    const hipsparseLtMatDescriptor_t* sparseMatDescr,
-                                    size_t*                           compressedSize);
+hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*        handle,
+                                                  const hipsparseLtMatDescriptor_t* sparseMatDescr,
+                                                  size_t*                           compressedSize);
 
 HIPSPARSELT_EXPORT
-hipsparseLtStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        handle,
-                                              const hipsparseLtMatDescriptor_t* sparseMatDescr,
-                                              int                               isSparseA,
-                                              hipsparseLtOperation_t            op,
-                                              const void*                       d_dense,
-                                              void*                             d_compressed,
-                                              hipStream_t                       stream);
+hipsparseStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        handle,
+                                            const hipsparseLtMatDescriptor_t* sparseMatDescr,
+                                            int                               isSparseA,
+                                            hipsparseOperation_t              op,
+                                            const void*                       d_dense,
+                                            void*                             d_compressed,
+                                            hipStream_t                       stream);
 
 #ifdef __cplusplus
 }

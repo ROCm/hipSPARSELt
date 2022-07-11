@@ -128,8 +128,8 @@ void testing_spmm_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const hipsparseLtOperation_t transA = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
-    const hipsparseLtOperation_t transB = HIPSPARSELT_OPERATION_NON_TRANSPOSE;
+    const hipsparseOperation_t transA = HIPSPARSE_OPERATION_NON_TRANSPOSE;
+    const hipsparseOperation_t transB = HIPSPARSE_OPERATION_NON_TRANSPOSE;
 
     // allocate memory on device
     device_vector<Ti> dA(safe_size / 2);
@@ -142,19 +142,14 @@ void testing_spmm_bad_arg(const Arguments& arg)
     CHECK_DEVICE_ALLOCATION(dD.memcheck());
 
     hipsparselt_local_handle    handle{arg};
-    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
-                                     handle,
-                                     M,
-                                     K,
-                                     lda,
-                                     arg.a_type,
-                                     HIPSPARSELT_ORDER_COLUMN);
+    hipsparselt_local_mat_descr matA(
+        hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matB(
-        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
@@ -166,45 +161,45 @@ void testing_spmm_bad_arg(const Arguments& arg)
     float alpha = 1.0, beta = 0.0;
 
     hipStream_t stream = nullptr;
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(nullptr, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_NOT_INITIALIZED);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, nullptr, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_NOT_INITIALIZED);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, nullptr, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSELT_STATUS(
+        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, nullptr, dB, &beta, dC, dD, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSELT_STATUS(
+        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, dA, nullptr, &beta, dC, dD, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSELT_STATUS(
+        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, dA, dB, nullptr, dC, dD, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSELT_STATUS(
+        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, nullptr, dD, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSELT_STATUS(
+        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, dC, nullptr, workspace, &stream, 1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, -1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSELT_STATUS(
+        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, nullptr, 1),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     workspace_size = 1;
     hipsparselt_local_matmul_plan plan2(handle, matmul, alg_sel, workspace_size);
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan2, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 0),
-        HIPSPARSELT_STATUS_INVALID_VALUE);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 }
 
 template <typename Ti,
@@ -213,8 +208,8 @@ template <typename Ti,
           hipsparselt_batch_type btype = hipsparselt_batch_type::none>
 void testing_spmm(const Arguments& arg)
 {
-    hipsparseLtOperation_t transA = char_to_hipsparselt_operation(arg.transA);
-    hipsparseLtOperation_t transB = char_to_hipsparselt_operation(arg.transB);
+    hipsparseOperation_t transA = char_to_hipsparselt_operation(arg.transA);
+    hipsparseOperation_t transB = char_to_hipsparselt_operation(arg.transB);
 
     using Talpha = float;
 
@@ -236,13 +231,13 @@ void testing_spmm(const Arguments& arg)
     hipStream_t              stream;
     hipStreamCreate(&stream);
 
-    int64_t A_row = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? M : K;
-    int64_t A_col = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : M;
-    int64_t B_row = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? K : N;
-    int64_t B_col = transB == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? N : K;
+    int64_t A_row = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K;
+    int64_t A_col = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : M;
+    int64_t B_row = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : N;
+    int64_t B_col = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? N : K;
 
-    int64_t stride_1_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? 1 : lda;
-    int64_t stride_2_a = transA == HIPSPARSELT_OPERATION_NON_TRANSPOSE ? lda : 1;
+    int64_t stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : lda;
+    int64_t stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda : 1;
 
     constexpr bool do_batched         = (btype == hipsparselt_batch_type::batched);
     constexpr bool do_strided_batched = (btype == hipsparselt_batch_type::strided_batched);
@@ -258,79 +253,79 @@ void testing_spmm(const Arguments& arg)
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     HIPSPARSELT_ORDER_COLUMN);
+                                     HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matB(hipsparselt_matrix_type_dense,
                                      handle,
                                      B_row,
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     HIPSPARSELT_ORDER_COLUMN);
+                                     HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSELT_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
 
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
     bool invalid_size_c = ldc < M;
     if(invalid_size_a)
     {
-        EXPECT_HIPSPARSELT_STATUS(matA.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
+        EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_HIPSPARSELT_STATUS(matB.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
+        EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
     if(invalid_size_c)
     {
-        EXPECT_HIPSPARSELT_STATUS(matC.status(), HIPSPARSELT_STATUS_INVALID_VALUE);
+        EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
 
     if(do_batched || do_strided_batched)
     {
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matA, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matB, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matC, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matD, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
     }
 
     if(do_strided_batched)
     {
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(int64_t)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(int64_t)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(int64_t)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
     }
 
     hipsparselt_local_matmul_descr matmul(
@@ -340,94 +335,93 @@ void testing_spmm(const Arguments& arg)
     switch(arg.activation_type)
     {
     case hipsparselt_activation_type::clippedrelu:
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_RELU_UPPERBOUND,
                                               &arg.activation_arg2,
                                               sizeof(float)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_RELU_THRESHOLD,
                                               &arg.activation_arg1,
                                               sizeof(float)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
     case hipsparselt_activation_type::relu:
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_RELU,
                                               &activation_on,
                                               sizeof(activation_on)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
         break;
     case hipsparselt_activation_type::gelu:
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_GELU,
                                               &activation_on,
                                               sizeof(activation_on)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
         break;
     case hipsparselt_activation_type::abs:
-        EXPECT_HIPSPARSELT_STATUS(
-            hipsparseLtMatmulDescSetAttribute(handle,
-                                              matmul,
-                                              HIPSPARSELT_MATMUL_ACTIVATION_ABS,
-                                              &activation_on,
-                                              sizeof(activation_on)),
-            HIPSPARSELT_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescSetAttribute(handle,
+                                                                  matmul,
+                                                                  HIPSPARSELT_MATMUL_ACTIVATION_ABS,
+                                                                  &activation_on,
+                                                                  sizeof(activation_on)),
+                                HIPSPARSE_STATUS_SUCCESS);
         break;
     case hipsparselt_activation_type::leakyrelu:
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_LEAKYRELU,
                                               &activation_on,
                                               sizeof(activation_on)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_LEAKYRELU_ALPHA,
                                               &arg.activation_arg1,
                                               sizeof(float)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
         break;
     case hipsparselt_activation_type::sigmoid:
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_SIGMOID,
                                               &activation_on,
                                               sizeof(activation_on)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
         break;
     case hipsparselt_activation_type::tanh:
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_TANH,
                                               &activation_on,
                                               sizeof(activation_on)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_TANH_ALPHA,
                                               &arg.activation_arg1,
                                               sizeof(float)),
-            HIPSPARSELT_STATUS_SUCCESS);
-        EXPECT_HIPSPARSELT_STATUS(
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(handle,
                                               matmul,
                                               HIPSPARSELT_MATMUL_ACTIVATION_TANH_BETA,
                                               &arg.activation_arg2,
                                               sizeof(float)),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
         break;
     default:
         activation_on = 0;
@@ -441,8 +435,8 @@ void testing_spmm(const Arguments& arg)
 
     hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
-    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
-                              HIPSPARSELT_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
+                            HIPSPARSE_STATUS_SUCCESS);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
@@ -542,21 +536,21 @@ void testing_spmm(const Arguments& arg)
             std::copy(hC.begin(), hC.end(), hD_gold.begin());
         }
     }
-    EXPECT_HIPSPARSELT_STATUS(
+    EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(handle, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSELT_STATUS_SUCCESS);
+        HIPSPARSE_STATUS_SUCCESS);
 
-    EXPECT_HIPSPARSELT_STATUS(hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
-                              HIPSPARSELT_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
+                            HIPSPARSE_STATUS_SUCCESS);
 
     if(arg.unit_check || arg.norm_check)
     {
         hipStreamSynchronize(stream);
         CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
-        EXPECT_HIPSPARSELT_STATUS(
+        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmul(
                 handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
-            HIPSPARSELT_STATUS_SUCCESS);
+            HIPSPARSE_STATUS_SUCCESS);
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
         {
@@ -656,35 +650,35 @@ void testing_spmm(const Arguments& arg)
         int number_hot_calls  = arg.iters;
         for(int i = 0; i < number_cold_calls; i++)
         {
-            EXPECT_HIPSPARSELT_STATUS(hipsparseLtMatmul(handle,
-                                                        plan,
-                                                        &h_alpha,
-                                                        dA_compressd,
-                                                        dB,
-                                                        &h_beta,
-                                                        dC,
-                                                        dD,
-                                                        dWorkspace,
-                                                        &stream,
-                                                        1),
-                                      HIPSPARSELT_STATUS_SUCCESS);
+            EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmul(handle,
+                                                      plan,
+                                                      &h_alpha,
+                                                      dA_compressd,
+                                                      dB,
+                                                      &h_beta,
+                                                      dC,
+                                                      dD,
+                                                      dWorkspace,
+                                                      &stream,
+                                                      1),
+                                    HIPSPARSE_STATUS_SUCCESS);
         }
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
         {
-            EXPECT_HIPSPARSELT_STATUS(hipsparseLtMatmul(handle,
-                                                        plan,
-                                                        &h_alpha,
-                                                        dA_compressd,
-                                                        dB,
-                                                        &h_beta,
-                                                        dC,
-                                                        dD,
-                                                        dWorkspace,
-                                                        &stream,
-                                                        1),
-                                      HIPSPARSELT_STATUS_SUCCESS);
+            EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmul(handle,
+                                                      plan,
+                                                      &h_alpha,
+                                                      dA_compressd,
+                                                      dB,
+                                                      &h_beta,
+                                                      dC,
+                                                      dD,
+                                                      dWorkspace,
+                                                      &stream,
+                                                      1),
+                                    HIPSPARSE_STATUS_SUCCESS);
         }
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
         auto flops    = gemm_gflop_count<float>(M, N, K);

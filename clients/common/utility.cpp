@@ -140,9 +140,9 @@ double get_time_us_no_sync(void)
 /*  device query and print out their ID and name; return number of compute-capable devices. */
 int64_t query_device_property()
 {
-    int                 device_count;
-    hipsparseLtStatus_t status = (hipsparseLtStatus_t)hipGetDeviceCount(&device_count);
-    if(status != HIPSPARSELT_STATUS_SUCCESS)
+    int               device_count;
+    hipsparseStatus_t status = (hipsparseStatus_t)hipGetDeviceCount(&device_count);
+    if(status != HIPSPARSE_STATUS_SUCCESS)
     {
         hipsparselt_cerr << "Query device error: cannot get device count" << std::endl;
         return -1;
@@ -162,9 +162,9 @@ int64_t query_device_property()
         if(i >= device_count)
             break;
 
-        hipDeviceProp_t     props;
-        hipsparseLtStatus_t status = (hipsparseLtStatus_t)hipGetDeviceProperties(&props, i);
-        if(status != HIPSPARSELT_STATUS_SUCCESS)
+        hipDeviceProp_t   props;
+        hipsparseStatus_t status = (hipsparseStatus_t)hipGetDeviceProperties(&props, i);
+        if(status != HIPSPARSE_STATUS_SUCCESS)
         {
             hipsparselt_cerr << "Query device error: cannot get device ID " << i << "'s property"
                              << std::endl;
@@ -201,8 +201,8 @@ int64_t query_device_property()
 /*  set current device to device_id */
 void set_device(int64_t device_id)
 {
-    hipsparseLtStatus_t status = (hipsparseLtStatus_t)hipSetDevice(device_id);
-    if(status != HIPSPARSELT_STATUS_SUCCESS)
+    hipsparseStatus_t status = (hipsparseStatus_t)hipSetDevice(device_id);
+    if(status != HIPSPARSE_STATUS_SUCCESS)
     {
         hipsparselt_cerr << "Set device error: cannot set device ID " << device_id
                          << ", there may not be such device ID" << std::endl;
@@ -216,8 +216,8 @@ void set_device(int64_t device_id)
 hipsparselt_local_handle::hipsparselt_local_handle()
 {
     auto status = hipsparseLtInit(&m_handle);
-    if(status != HIPSPARSELT_STATUS_SUCCESS)
-        throw std::runtime_error(hipsparselt_status_to_string(status));
+    if(status != HIPSPARSE_STATUS_SUCCESS)
+        throw std::runtime_error(hipsparse_status_to_string(status));
 
 #ifdef GOOGLE_TEST
     if(t_set_stream_callback)
