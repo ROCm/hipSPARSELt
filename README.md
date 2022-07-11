@@ -60,17 +60,17 @@ The hipSPARSELt interface is compatible with cuSPARSELt APIs. Porting a CUDA app
 ### matmul API
 
 ```c
-hipsparseLtStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
-                                      const hipsparseLtMatmulPlan_t* plan,
-                                      const void*                    alpha,
-                                      const void*                    d_A,
-                                      const void*                    d_B,
-                                      const void*                    beta,
-                                      const void*                    d_C,
-                                      void*                          d_D,
-                                      void*                          workspace,
-                                      hipStream_t*                   streams,
-                                      int32_t                        numStreams);
+hipsparseStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
+                                    const hipsparseLtMatmulPlan_t* plan,
+                                    const void*                    alpha,
+                                    const void*                    d_A,
+                                    const void*                    d_B,
+                                    const void*                    beta,
+                                    const void*                    d_C,
+                                    void*                          d_D,
+                                    void*                          workspace,
+                                    hipStream_t*                   streams,
+                                    int32_t                        numStreams);
 
 ```
 

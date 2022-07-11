@@ -7,7 +7,7 @@ Datatypes:
         f16_r: 150
         i8_r:  160
         bf16_r: 168
-  - hipsparseLtComputetype_t:
+  - hipsparseComputetype_t:
       bases: [ c_int ]
       attr:
         i32_r: 1
@@ -86,7 +86,7 @@ Arguments:
   - b_type: hipsparseLtDatatype_t
   - c_type: hipsparseLtDatatype_t
   - d_type: hipsparseLtDatatype_t
-  - compute_type: hipsparseLtComputetype_t
+  - compute_type: hipsparseComputetype_t
   - initialization: hipsparselt_initialization
   - pad: c_uint32
   - threads: c_uint16

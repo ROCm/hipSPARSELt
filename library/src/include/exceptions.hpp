@@ -31,23 +31,23 @@
 // Convert the current C++ exception to hiblasStatus_t
 // This allows extern "C" functions to return this function in a catch(...) block
 // while converting all C++ exceptions to an equivalent hipblasStatus_t here
-inline hipsparseLtStatus_t exception_to_hipsparselt_status(std::exception_ptr e
-                                                           = std::current_exception())
+inline hipsparseStatus_t exception_to_hipsparselt_status(std::exception_ptr e
+                                                         = std::current_exception())
 try
 {
     if(e)
         std::rethrow_exception(e);
-    return HIPSPARSELT_STATUS_SUCCESS;
+    return HIPSPARSE_STATUS_SUCCESS;
 }
-catch(const hipsparseLtStatus_t& status)
+catch(const hipsparseStatus_t& status)
 {
     return status;
 }
 catch(const std::bad_alloc&)
 {
-    return HIPSPARSELT_STATUS_ALLOC_FAILED;
+    return HIPSPARSE_STATUS_ALLOC_FAILED;
 }
 catch(...)
 {
-    return HIPSPARSELT_STATUS_INTERNAL_ERROR;
+    return HIPSPARSE_STATUS_INTERNAL_ERROR;
 }

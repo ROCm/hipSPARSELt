@@ -108,13 +108,11 @@ endif()
 include(cmake/Dependencies.cmake)
 
 if (USE_CUDA)
-	find_package( CUDA REQUIRED )
+    find_package( CUDA REQUIRED )
     # Hip headers required of all clients; clients use hip to allocate device memory
     find_package( HIP MODULE REQUIRED )
     list( APPEND HIP_INCLUDE_DIRS "${HIP_ROOT_DIR}/include" )
 else()
-
-
     #Set the AMDGPU_TARGETS with backward compatiblity
     rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
         TARGETS "gfx908:xnack-"
@@ -136,6 +134,7 @@ else()
     if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
         find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
     endif( )
+    find_package( hipsparse REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 endif()
 
 
@@ -176,7 +175,7 @@ set( HIPSPARSELTS_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute BLAS marshalling library"
+    DESCRIPTION "Radeon Open Compute Structured Sparsity Matrix Multiplication marshalling library"
     MAINTAINER "hipSPARSELt Maintainer <hipsparselt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPSPARSELTS_CONFIG_DIR}
