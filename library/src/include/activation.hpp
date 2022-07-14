@@ -44,49 +44,8 @@ enum class hipsparselt_activation_type
 };
 
 HIPSPARSELT_EXPORT
-constexpr const hipsparselt_activation_type
-    string_to_hipsparselt_activation_type(const std::string& value)
-{
-    return value == "none"          ? hipsparselt_activation_type::none
-           : value == "abs"         ? hipsparselt_activation_type::abs
-           : value == "clippedrelu" ? hipsparselt_activation_type::clippedrelu
-           : value == "gelu"        ? hipsparselt_activation_type::gelu
-           : value == "leakyrelu"   ? hipsparselt_activation_type::leakyrelu
-           : value == "relu"        ? hipsparselt_activation_type::relu
-           : value == "sigmoid"     ? hipsparselt_activation_type::sigmoid
-           : value == "tanh"        ? hipsparselt_activation_type::tanh
-           : value == "all"         ? hipsparselt_activation_type::all
-           : value == "exp"         ? hipsparselt_activation_type::exp
-                                    : static_cast<hipsparselt_activation_type>(-1);
-}
+const hipsparselt_activation_type string_to_hipsparselt_activation_type(const std::string& value);
 
 // Convert hipsparselt_activation_type to string
 HIPSPARSELT_EXPORT
-constexpr const char* hipsparselt_activation_type_to_string(hipsparselt_activation_type type)
-{
-    switch(type)
-    {
-    case hipsparselt_activation_type::abs:
-        return "abs";
-    case hipsparselt_activation_type::clippedrelu:
-        return "clippedrelu";
-    case hipsparselt_activation_type::exp:
-        return "exp";
-    case hipsparselt_activation_type::gelu:
-        return "gelu";
-    case hipsparselt_activation_type::leakyrelu:
-        return "leakyrelu";
-    case hipsparselt_activation_type::relu:
-        return "relu";
-    case hipsparselt_activation_type::sigmoid:
-        return "sigmoid";
-    case hipsparselt_activation_type::tanh:
-        return "tanh";
-    case hipsparselt_activation_type::all:
-        return "all";
-    case hipsparselt_activation_type::none:
-        return "none";
-    default:
-        return "invalid";
-    }
-}
+const char* hipsparselt_activation_type_to_string(hipsparselt_activation_type type);

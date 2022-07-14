@@ -89,8 +89,14 @@ struct perf_sparse<
     To,
     Tc,
     std::enable_if_t<
+#ifdef __HIP_PLATFORM_HCC__
         (std::is_same<Ti, To>{} && (std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{})
          && std::is_same<Tc, float>{})
+#else
+        (std::is_same<Ti, To>{}
+         && ((std::is_same<Ti, __half>{} && std::is_same<Tc, __half>{})
+             || (std::is_same<Ti, hip_bfloat16>{} && std::is_same<Tc, hip_bfloat16>{})))
+#endif
         || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})>>
     : hipsparselt_test_valid
 {
@@ -468,9 +474,16 @@ try
     if(arg.d_type == static_cast<hipsparseLtDatatype_t>(-1))
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
-    bool is_float    = arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF;
+    bool is_f16      = arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF;
+    bool is_f32      = arg.a_type == HIPSPARSELT_R_32F;
     arg.compute_type = compute_type == ""
-                           ? (is_float ? HIPSPARSE_COMPUTE_32F : HIPSPARSE_COMPUTE_32I)
+#ifdef __HIP_PLATFORM_HCC__
+                           ? (is_f16 ? HIPSPARSE_COMPUTE_32F : HIPSPARSE_COMPUTE_32I)
+#else
+                           ? (is_f16   ? HIPSPARSE_COMPUTE_16F
+                              : is_f32 ? HIPSPARSE_COMPUTE_TF32
+                                       : HIPSPARSE_COMPUTE_32I)
+#endif
                            : string_to_hipsparselt_computetype(compute_type);
     if(arg.compute_type == static_cast<hipsparseComputetype_t>(-1))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);

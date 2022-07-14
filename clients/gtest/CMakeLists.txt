@@ -54,9 +54,19 @@ target_include_directories( hipsparselt-test
     $<BUILD_INTERFACE:${GTEST_INCLUDE_DIRS}>
 )
 message("BLIS_INCLUDE_DIR=" ${BLIS_INCLUDE_DIR})
-target_link_libraries( hipsparselt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipsparselt )
+target_link_libraries( hipsparselt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipsparse roc::hipsparselt )
 
-target_link_libraries( hipsparselt-test PRIVATE hip::host hip::device )
+if( NOT BUILD_CUDA )
+  target_link_libraries( hipsparselt-test PRIVATE hip::host hip::device )
+else()
+  target_compile_definitions( hipsparselt-test PRIVATE __HIP_PLATFORM_NVCC__ )
+  target_include_directories( hipsparselt-test
+    PRIVATE
+      $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>
+
+  )
+  target_link_libraries( hipsparselt-test PRIVATE ${CUDA_LIBRARIES} )
+endif()
 
 if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # GCC or hip-clang needs specific flag to turn on f16c intrinsics
@@ -68,7 +78,12 @@ target_compile_definitions( hipsparselt-test PRIVATE ROCM_USE_FLOAT16 HIPSPARSEL
 target_compile_options(hipsparselt-test PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${COMMON_CXX_OPTIONS}>)
 # target_compile_options does not go to linker like CMAKE_CXX_FLAGS does, so manually add
 
-target_link_libraries( hipsparselt-test PRIVATE lapack cblas )
+if (BUILD_CUDA)
+  target_link_libraries( hipsparselt-test PRIVATE -llapack -lcblas )
+else()
+  target_link_libraries( hipsparselt-test PRIVATE lapack cblas )
+endif()
+
 list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 
 if (NOT BUILD_FORTRAN_CLIENTS)

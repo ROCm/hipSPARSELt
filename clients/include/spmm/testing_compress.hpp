@@ -568,6 +568,8 @@ void testing_compress(const Arguments& arg)
                                    reinterpret_cast<Ti*>(hA_gold.data()),
                                    reinterpret_cast<Ti*>(hA_1.data()),
                                    num_batches);
+// cusparselt' metadata has different layout so skip metadata check.
+#ifdef __HIP_PLATFORM_HCC__
             unit_check_general<int8_t>(A_row,
                                        A_col / 8,
                                        A_row,
@@ -575,6 +577,7 @@ void testing_compress(const Arguments& arg)
                                        reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
                                        reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
                                        num_batches);
+#endif
         }
         if(arg.norm_check)
         {
@@ -585,6 +588,8 @@ void testing_compress(const Arguments& arg)
                                                       reinterpret_cast<Ti*>(hA_gold.data()),
                                                       reinterpret_cast<Ti*>(hA_1.data()),
                                                       num_batches);
+// cusparselt' metadata has different layout so skip metadata check.
+#ifdef __HIP_PLATFORM_HCC__
             hipsparselt_error_m
                 = unit_check_diff<int8_t>(A_row,
                                           A_col / 8,
@@ -593,6 +598,7 @@ void testing_compress(const Arguments& arg)
                                           reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
                                           reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
                                           num_batches);
+#endif
         }
     }
 

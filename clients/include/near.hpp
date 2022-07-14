@@ -39,18 +39,6 @@
 #include "hipsparselt_test.hpp"
 #include "hipsparselt_vector.hpp"
 
-// Sum error tolerance for large sums. Multiplied by the number of items
-// in the sum to get an expected absolute error bound.
-
-template <class T>
-static constexpr double sum_error_tolerance = 0.0;
-
-template <>
-static constexpr double sum_error_tolerance<hip_bfloat16> = 1 / 100.0;
-
-template <>
-static constexpr double sum_error_tolerance<__half> = 1 / 900.0;
-
 #ifndef GOOGLE_TEST
 #define NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, err, NEAR_ASSERT)
 #define NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, err, NEAR_ASSERT)

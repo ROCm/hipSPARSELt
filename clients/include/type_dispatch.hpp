@@ -85,6 +85,14 @@ auto hipsparselt_spmm_dispatch(const Arguments& arg)
         {
             return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
+        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSE_COMPUTE_16F)
+        {
+            return TEST<__half, __half, __half>{}(arg);
+        }
+        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSE_COMPUTE_16F)
+        {
+            return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16>{}(arg);
+        }
         else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSE_COMPUTE_32I)
         {
             return TEST<int8_t, int8_t, int32_t>{}(arg);

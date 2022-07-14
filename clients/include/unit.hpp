@@ -76,7 +76,7 @@
 
 //#define ASSERT_HALF_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
 //#define ASSERT_BF16_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
-
+#if defined(__HIP_PLATFORM_HCC__)
 #define ASSERT_HALF_EQ(a, b)                                                         \
     do                                                                               \
     {                                                                                \
@@ -94,6 +94,17 @@
         ASSERT_TRUE(absDiff / (absA + absB + 1) < 0.01);                             \
     } while(0)
 
+#else
+#define ASSERT_HALF_EQ(a, b)                             \
+    do                                                   \
+    {                                                    \
+        auto absA    = (a > 0) ? a : negate(a);          \
+        auto absB    = (b > 0) ? b : negate(b);          \
+        auto absDiff = (a - b > 0) ? a - b : b - a;      \
+        ASSERT_TRUE(absDiff / (absA + absB + 1) < 0.01); \
+    } while(0)
+#endif
+
 #define ASSERT_BF16_EQ(a, b)                                                                      \
     do                                                                                            \
     {                                                                                             \
@@ -101,8 +112,8 @@
         const hip_bfloat16 bf16B    = static_cast<hip_bfloat16>(b);                               \
         const hip_bfloat16 bf16Zero = static_cast<hip_bfloat16>(0.0f);                            \
         const hip_bfloat16 bf16One  = static_cast<hip_bfloat16>(1.0f);                            \
-        hip_bfloat16       absA     = (bf16A > bf16Zero) ? bf16A : -bf16A;                        \
-        hip_bfloat16       absB     = (bf16B > bf16Zero) ? bf16B : -bf16B;                        \
+        hip_bfloat16       absA     = (bf16A > bf16Zero) ? bf16A : negate(bf16A);                 \
+        hip_bfloat16       absB     = (bf16B > bf16Zero) ? bf16B : negate(bf16B);                 \
         hip_bfloat16       absDiff  = (bf16A - bf16B > bf16Zero) ? bf16A - bf16B : bf16B - bf16A; \
         ASSERT_TRUE(absDiff / (absA + absB + bf16One) < static_cast<hip_bfloat16>(0.1f));         \
     } while(0)
@@ -111,13 +122,13 @@
 // Allow the hip_bfloat16 to match the rounded or truncated value of float
 // Only call ASSERT_FLOAT_EQ with the rounded value if the truncated value does not match
 #include <gtest/internal/gtest-internal.h>
-#define ASSERT_FLOAT_BF16_EQ(a, b)                                             \
-    do                                                                         \
-    {                                                                          \
-        using testing::internal::FloatingPoint;                                \
-        if(!FloatingPoint<float>(b).AlmostEquals(                              \
-               FloatingPoint<float>(hip_bfloat16(a, hip_bfloat16::truncate)))) \
-            ASSERT_FLOAT_EQ(b, hip_bfloat16(a));                               \
+#define ASSERT_FLOAT_BF16_EQ(a, b)                                   \
+    do                                                               \
+    {                                                                \
+        using testing::internal::FloatingPoint;                      \
+        if(!FloatingPoint<float>(b).AlmostEquals(                    \
+               FloatingPoint<float>(float_to_bfloat16_truncate(a)))) \
+            ASSERT_FLOAT_EQ(b, hip_bfloat16(a));                     \
     } while(0)
 
 #define ASSERT_FLOAT_COMPLEX_EQ(a, b)                  \

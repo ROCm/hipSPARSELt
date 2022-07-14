@@ -85,7 +85,7 @@ void prune_strip(const Ti* in,
                     pos[k] = b * stride_b + i * stride1 + (j + k) * stride2;
                 }
 
-                auto max_norm1 = static_cast<Tc>(-1.0f);
+                auto max_norm1 = static_cast<double>(-1.0f);
                 int  pos_a, pos_b;
                 for(int a = 0; a < 4; a++)
                 {
@@ -247,9 +247,9 @@ void prune_tile(const Ti* in,
                     }
                 }
 
-                float norm_res[90];
-                int   max_norm_idx = 0;
-                float max_norm     = -1;
+                float  norm_res[90];
+                int    max_norm_idx = 0;
+                double max_norm     = -1.0;
 
 #pragma omp parallel for
                 for(int pi = 0; pi < 90; pi++)

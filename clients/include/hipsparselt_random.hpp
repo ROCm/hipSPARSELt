@@ -218,7 +218,12 @@ inline float random_generator()
 template <>
 inline __half random_generator<__half>()
 {
-    return __half(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng));
+#if defined(__HIP_PLATFORM_HCC__)
+#define CAST
+#else
+#define CAST static_cast<float>
+#endif
+    return __half(CAST(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng)));
 };
 
 // for hip_bfloat16, generate float, and convert to hip_bfloat16
@@ -226,7 +231,12 @@ inline __half random_generator<__half>()
 template <>
 inline hip_bfloat16 random_generator<hip_bfloat16>()
 {
-    return hip_bfloat16(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng));
+#if defined(__HIP_PLATFORM_HCC__)
+#define CAST
+#else
+#define CAST static_cast<float>
+#endif
+    return hip_bfloat16(CAST(std::uniform_int_distribution<int>(-2, 2)(t_hipsparselt_rng)));
 };
 
 /*! \brief  generate a random number in range [1,2,3] */

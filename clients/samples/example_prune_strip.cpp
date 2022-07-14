@@ -380,10 +380,17 @@ bool bad_argument(hipsparseOperation_t trans,
 template <typename T>
 void initialize_a(std::vector<T>& ha, int64_t size_a)
 {
+    auto CAST = [](auto x) {
+#if defined(__HIP_PLATFORM_HCC__)
+        return static_cast<T>(x);
+#else
+        return static_cast<T>(static_cast<float>(x));
+#endif
+    };
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<T>(rand() % 17);
+        ha[i] = CAST(rand() % 17);
     }
 }
 
@@ -491,7 +498,12 @@ void run(int64_t               m,
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
-    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSE_COMPUTE_32I : HIPSPARSE_COMPUTE_32F;
+    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSE_COMPUTE_32I :
+#ifdef __HIP_PLATFORM_HCC__
+                                                 HIPSPARSE_COMPUTE_32F;
+#else
+                                                 HIPSPARSE_COMPUTE_16F;
+#endif
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(&handle,
                                                             &matmul,
