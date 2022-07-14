@@ -28,10 +28,9 @@ add_executable( example_compress example_compress.cpp)
 set( sample_list_tensile example_spmm_strided_batched example_prune_strip example_compress)
 
 set( sample_list_all ${sample_list_tensile})
-set( sample_list_hip_device ${sample_list_tensile} )
 
 foreach( exe ${sample_list_all} )
-  target_link_libraries( ${exe} PRIVATE roc::hipsparselt )
+  target_link_libraries( ${exe} PRIVATE roc::hipsparse roc::hipsparselt )
 
   set_target_properties( ${exe} PROPERTIES
     CXX_STANDARD 14
@@ -39,8 +38,6 @@ foreach( exe ${sample_list_all} )
     CXX_EXTENSIONS OFF
     RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
   )
-
-  target_compile_definitions( ${exe} PRIVATE ROCM_USE_FLOAT16 )
 
   target_include_directories( ${exe}
     PRIVATE
@@ -58,8 +55,19 @@ foreach( exe ${sample_list_all} )
     target_compile_options( ${exe} PRIVATE -mf16c )
     target_compile_definitions( ${exe} PRIVATE HIPSPARSELT_INTERNAL_API )
   endif( )
+
+  if( NOT BUILD_CUDA )
+    target_compile_definitions( ${exe} PRIVATE ROCM_USE_FLOAT16 )
+    target_link_libraries( ${exe} PRIVATE hip::host hip::device  )
+  else( )
+    target_compile_definitions( ${exe} PRIVATE __HIP_PLATFORM_NVCC__ )
+    target_include_directories( ${exe}
+      PRIVATE
+        $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>
+
+    )
+    target_link_libraries( ${exe} PRIVATE ${CUDA_LIBRARIES} )
+  endif( )
+
 endforeach( )
 
-foreach( exe ${sample_list_hip_device} )
-  target_link_libraries( ${exe} PRIVATE hip::device )
-endforeach( )

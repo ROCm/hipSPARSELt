@@ -135,29 +135,11 @@ constexpr const char* hipsparselt_computetype_to_string(hipsparseComputetype_t t
 
 // clang-format off
 HIPSPARSELT_EXPORT
-constexpr hipsparseLtDatatype_t string_to_hipsparselt_datatype(const std::string& value)
-{
-    return
-        value == "f32_r" || value == "s" ? HIPSPARSELT_R_32F  :
-        value == "f16_r" || value == "h" ? HIPSPARSELT_R_16F  :
-        value == "bf16_r"                ? HIPSPARSELT_R_16BF  :
-        value == "i8_r"                  ? HIPSPARSELT_R_8I   :
-        value == "f8_r"                  ? HIPSPARSELT_R_8F   :
-        value == "bf8_r"                 ? HIPSPARSELT_R_8BF   :
-        static_cast<hipsparseLtDatatype_t>(-1);
-}
+const hipsparseLtDatatype_t string_to_hipsparselt_datatype(const std::string& value);
 
 HIPSPARSELT_EXPORT
-constexpr hipsparseComputetype_t string_to_hipsparselt_computetype(const std::string& value)
-{
-    return
-        value == "f32_r" || value == "s" ? HIPSPARSE_COMPUTE_32F  :
-        value == "i32_r"                 ? HIPSPARSE_COMPUTE_32I  :
-        value == "f16_r" || value == "h" ? HIPSPARSE_COMPUTE_16F  :
-        value == "tf32_r"                ? HIPSPARSE_COMPUTE_TF32  :
-        value == "tf32f_r"               ? HIPSPARSE_COMPUTE_TF32_FAST  :
-        static_cast<hipsparseComputetype_t>(-1);
-}
+const hipsparseComputetype_t string_to_hipsparselt_computetype(const std::string& value);
+
 // clang-format on
 
 /*********************************************************************************************************

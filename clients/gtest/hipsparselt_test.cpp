@@ -133,9 +133,9 @@ static thread_local struct
 
     // sigjmp_buf describing stack frame to go back to
 #ifndef WIN32
-    sigjmp_buf sigjmp_buf;
+    sigjmp_buf sigjmp_buf_;
 #else
-    jmp_buf sigjmp_buf;
+    jmp_buf sigjmp_buf_;
 #endif
 
     // The signal which was received
@@ -178,9 +178,9 @@ extern "C" void hipsparselt_test_signal_handler(int sig)
     t_handler.signal = sig;
     errno            = saved_errno;
 #ifndef WIN32
-    siglongjmp(t_handler.sigjmp_buf, true);
+    siglongjmp(t_handler.sigjmp_buf_, true);
 #else
-    longjmp(t_handler.sigjmp_buf, true);
+    longjmp(t_handler.sigjmp_buf_, true);
 #endif
 }
 
@@ -218,12 +218,12 @@ void catch_signals_and_exceptions_as_failures(std::function<void()> test, bool s
 
 #ifndef WIN32
     // Set up the return point, and handle siglongjmp returning back to here
-    if(sigsetjmp(t_handler.sigjmp_buf, true))
+    if(sigsetjmp(t_handler.sigjmp_buf_, true))
     {
         FAIL() << "Received " << sys_siglist[t_handler.signal] << " signal";
     }
 #else
-    if(setjmp(t_handler.sigjmp_buf))
+    if(setjmp(t_handler.sigjmp_buf_))
     {
         FAIL() << "Received signal";
     }

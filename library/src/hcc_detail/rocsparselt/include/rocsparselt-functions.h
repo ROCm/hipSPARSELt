@@ -171,17 +171,17 @@ o*	The selected algorithm id can be retrieved by using
  *  \retval     rocsparselt_status_invalid_value workspace is invalide or streams and numStreams are invalid
  *  \retval     rocsparselt_status_not_implemented the problme is not supported
  */
-rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle*      handle,
-                                             const rocsparselt_matmul_plan* plan,
-                                             const void*                    alpha,
-                                             const void*                    d_A,
-                                             const void*                    d_B,
-                                             const void*                    beta,
-                                             const void*                    d_C,
-                                             void*                          d_D,
-                                             void*                          workspace,
-                                             hipStream_t*                   streams,
-                                             int32_t                        numStreams);
+rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle* handle,
+                                             rocsparselt_matmul_plan*  plan,
+                                             const void*               alpha,
+                                             const void*               d_A,
+                                             const void*               d_B,
+                                             const void*               beta,
+                                             const void*               d_C,
+                                             void*                     d_D,
+                                             void*                     workspace,
+                                             hipStream_t*              streams,
+                                             int32_t                   numStreams);
 
 /*! \ingroup spmm_module
  *  \brief Purnes a dense matrix.

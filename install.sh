@@ -373,6 +373,7 @@ else
 fi
 
 build_dir=$(readlink -m build)
+
 printf "\033[32mCreating project build directory in: \033[33m${build_dir}\033[0m\n"
 install_blis()
 {
@@ -484,9 +485,9 @@ pushd .
 
   # cuda
   if [[ "${build_cuda}" == true ]]; then
-    cmake_common_options+=("-DUSE_CUDA=ON")
+    cmake_common_options="${cmake_common_options} -DBUILD_CUDA=ON"
   else
-    cmake_common_options+=("-DUSE_CUDA=OFF")
+    cmake_common_options="${cmake_common_options} -DBUILD_CUDA=OFF"
   fi
 
 

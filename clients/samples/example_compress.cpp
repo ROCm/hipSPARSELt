@@ -583,10 +583,18 @@ bool bad_argument(hipsparseOperation_t trans,
 template <typename T>
 void initialize_a(std::vector<T>& ha, int64_t size_a)
 {
+    auto CAST = [](auto x) {
+#if defined(__HIP_PLATFORM_HCC__)
+        return static_cast<T>(x);
+#else
+        return static_cast<T>(static_cast<float>(x));
+#endif
+    };
+
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<T>(rand() % 17);
+        ha[i] = CAST(rand() % 17);
     }
 }
 
@@ -721,7 +729,12 @@ void run(int64_t               m,
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
-    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSE_COMPUTE_32I : HIPSPARSE_COMPUTE_32F;
+    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSE_COMPUTE_32I :
+#ifdef __HIP_PLATFORM_HCC__
+                                                 HIPSPARSE_COMPUTE_32F;
+#else
+                                                 HIPSPARSE_COMPUTE_16F;
+#endif
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(&handle,
                                                             &matmul,
@@ -849,6 +862,9 @@ void run(int64_t               m,
                   m_stride_b);
     validate_compressed(
         &hp_gold[0], &hp_compressed[0], m, n / 2, batch_count, c_stride_1, c_stride_2, c_stride_b);
+
+// cusparselt' metadata has different layout so skip metadata check.
+#ifdef __HIP_PLATFORM_HCC__
     validate_metadata(
         reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
         reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),
@@ -858,6 +874,7 @@ void run(int64_t               m,
         m_stride_1,
         m_stride_2,
         m_stride_b);
+#endif
 
     //validate(&hp_test[0], &hp_compressed[0], reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b * batch_count]), m, n, batch_count, stride_1, stride_2, stride, m, n/2, batch_count, c_stride_1, c_stride_2, c_stride_b, m, n/8, batch_count, m_stride_1, m_stride_2, m_stride_b);
 

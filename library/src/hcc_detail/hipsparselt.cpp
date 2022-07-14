@@ -846,18 +846,17 @@ hipsparseStatus_t hipsparseLtMatmulSearch(const hipsparseLtHandle_t* handle,
                                           int32_t                    numStreams)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
-        rocsparselt_matmul_search((const rocsparselt_handle*)handle,
-                                  (const rocsparselt_matmul_plan*)plan,
-                                  alpha,
-                                  d_A,
-                                  d_B,
-                                  beta,
-                                  d_C,
-                                  d_D,
-                                  workspace,
-                                  streams,
-                                  numStreams));
+    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_search((const rocsparselt_handle*)handle,
+                                                                  (rocsparselt_matmul_plan*)plan,
+                                                                  alpha,
+                                                                  d_A,
+                                                                  d_B,
+                                                                  beta,
+                                                                  d_C,
+                                                                  d_D,
+                                                                  workspace,
+                                                                  streams,
+                                                                  numStreams));
 }
 catch(...)
 {
@@ -1077,7 +1076,7 @@ hipsparseStatus_t hipsparseLtGetArchName(char** archName)
 try
 {
     *archName        = nullptr;
-    std::string arch = rocsparselt_internal_get_arch_name();
+    std::string arch = "cuda";
     *archName        = (char*)malloc(arch.size() * sizeof(char));
     strncpy(*archName, arch.c_str(), arch.size());
     return HIPSPARSE_STATUS_SUCCESS;

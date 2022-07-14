@@ -85,6 +85,7 @@ inline bool AlmostEqual(T a, T b)
 template <>
 inline bool AlmostEqual(__half a, __half b)
 {
+#if defined(__HIP_PLATFORM_HCC__)
     union _HALF
     {
         uint16_t x;
@@ -95,8 +96,12 @@ inline bool AlmostEqual(__half a, __half b)
     _HALF b_half = {__half_raw(b).x};
     auto  a_data = a_half.data;
     auto  b_data = b_half.data;
-    auto  absA   = (a_data > 0) ? a_data : -a_data;
-    auto  absB   = (b_data > 0) ? b_data : -b_data;
+#else
+    auto a_data = a;
+    auto b_data = b;
+#endif
+    auto absA = (a_data > 0.0) ? a_data : static_cast<decltype(a_data)>(-a_data);
+    auto absB = (b_data > 0.0) ? b_data : static_cast<decltype(b_data)>(-b_data);
     // this avoids NaN when inf is compared against inf in the alternative code
     // path
     if(static_cast<float>(absA) == std::numeric_limits<float>::infinity()
@@ -502,18 +507,26 @@ void initialize_a_b_c(std::vector<__half>& ha,
                       std::vector<__half>& hc,
                       int64_t              size_c)
 {
+    auto CAST = [](auto x) {
+#if defined(__HIP_PLATFORM_HCC__)
+        return static_cast<__half>(x);
+#else
+        return static_cast<__half>(static_cast<float>(x));
+#endif
+    };
+
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<__half>((rand() % 7) - 3);
+        ha[i] = CAST((rand() % 7) - 3);
     }
     for(int i = 0; i < size_b; ++i)
     {
-        hb[i] = static_cast<__half>((rand() % 7) - 3);
+        hb[i] = CAST((rand() % 7) - 3);
     }
     for(int i = 0; i < size_c; ++i)
     {
-        hc[i] = static_cast<__half>((rand() % 7) - 3);
+        hc[i] = CAST((rand() % 7) - 3);
     }
 }
 
@@ -768,8 +781,15 @@ int main(int argc, char* argv[])
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(stride_d)));
 
+    auto compute_type =
+#ifdef __HIP_PLATFORM_HCC__
+        HIPSPARSE_COMPUTE_32F;
+#else
+        HIPSPARSE_COMPUTE_16F;
+#endif
+
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(
-        &handle, &matmul, trans_a, trans_b, &matA, &matB, &matC, &matD, HIPSPARSE_COMPUTE_32F));
+        &handle, &matmul, trans_a, trans_b, &matA, &matB, &matC, &matD, compute_type));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulAlgSelectionInit(
         &handle, &alg_sel, &matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT));

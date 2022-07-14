@@ -23,6 +23,22 @@
 
 cmake_minimum_required( VERSION 3.16.8 )
 
+# BUILD_SHARED_LIBS is a cmake built-in; we make it an explicit option such that it shows in cmake-gui
+option(BUILD_SHARED_LIBS "Build hipSparseLt as a shared library" ON )
+option(BUILD_CLIENTS_TESTS "Build tests (requires googletest)" OFF)
+option(BUILD_CLIENTS_BENCHMARKS "Build benchmarks" OFF)
+option(BUILD_CLIENTS_SAMPLES "Build examples" ON)
+option(BUILD_VERBOSE "Output additional build information" OFF)
+option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
+option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+# Find CUDA if the user wants a CUDA version.
+option(BUILD_CUDA "Look for CUDA and use that as a backend if found" OFF)
+
+# IF cuda backend disable clients tests.
+if(BUILD_CUDA)
+    set(BUILD_CLIENTS_TESTS OFF)
+endif()
+
 # This will add compile option: -std=c++17
 set(CMAKE_CXX_STANDARD 17 )
 # Without this line, it will add -std=gnu++17 instead, which may have issues.
@@ -69,18 +85,6 @@ project(hipsparselt LANGUAGES CXX)
 # force library install path to lib (CentOS 7 defaults to lib64)
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL "Installation directory for libraries" FORCE)
 
-
-# BUILD_SHARED_LIBS is a cmake built-in; we make it an explicit option such that it shows in cmake-gui
-option(BUILD_SHARED_LIBS "Build hipSparseLt as a shared library" ON )
-option(BUILD_CLIENTS_TESTS "Build tests (requires googletest)" OFF)
-option(BUILD_CLIENTS_BENCHMARKS "Build benchmarks" OFF)
-option(BUILD_CLIENTS_SAMPLES "Build examples" ON)
-option(BUILD_VERBOSE "Output additional build information" OFF)
-option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
-option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
-# Find CUDA if the user wants a CUDA version.
-option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
-
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
   add_link_options(--coverage -lgcov)
@@ -107,11 +111,12 @@ endif()
 # Dependencies
 include(cmake/Dependencies.cmake)
 
-if (USE_CUDA)
+if (BUILD_CUDA)
     find_package( CUDA REQUIRED )
     # Hip headers required of all clients; clients use hip to allocate device memory
     find_package( HIP MODULE REQUIRED )
     list( APPEND HIP_INCLUDE_DIRS "${HIP_ROOT_DIR}/include" )
+
 else()
     #Set the AMDGPU_TARGETS with backward compatiblity
     rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
@@ -134,9 +139,9 @@ else()
     if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
         find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
     endif( )
-    find_package( hipsparse REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 endif()
 
+find_package( hipsparse REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
 # Setup version
 set (VERSION_STRING "0.3.0" )
@@ -165,7 +170,7 @@ endif()
 set( CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include" "\${CPACK_PACKAGING_INSTALL_PREFIX}/lib" )
 
 # Give hipsparselt compiled for CUDA backend a different name
-if( NOT USE_CUDA )
+if( NOT BUILD_CUDA )
     set( package_name hipsparselt )
 else( )
     set( package_name hipsparselt-alt )

@@ -248,17 +248,17 @@ rocsparselt_status rocsparselt_matmul(const rocsparselt_handle*      handle,
 /********************************************************************************
  * \brief
  *******************************************************************************/
-rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle*      handle,
-                                             const rocsparselt_matmul_plan* plan,
-                                             const void*                    alpha,
-                                             const void*                    d_A,
-                                             const void*                    d_B,
-                                             const void*                    beta,
-                                             const void*                    d_C,
-                                             void*                          d_D,
-                                             void*                          workspace,
-                                             hipStream_t*                   streams,
-                                             int32_t                        numStreams)
+rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle* handle,
+                                             rocsparselt_matmul_plan*  plan,
+                                             const void*               alpha,
+                                             const void*               d_A,
+                                             const void*               d_B,
+                                             const void*               beta,
+                                             const void*               d_C,
+                                             void*                     d_D,
+                                             void*                     workspace,
+                                             hipStream_t*              streams,
+                                             int32_t                   numStreams)
 
 {
     if(handle == nullptr || plan == nullptr)

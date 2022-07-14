@@ -21,14 +21,16 @@
 #
 # ########################################################################
 
+set(hipsparselt_source_common  src/hipsparselt_ostream.cpp
+                               src/auxiliary.cpp)
 if(NOT BUILD_CUDA)
   # hipSPARSE source
   include(src/hcc_detail/rocsparselt/CMakeLists.txt)
   set(hipsparselt_source src/hcc_detail/hipsparselt.cpp
-                         src/hipsparselt_ostream.cpp
+                         ${hipsparselt_source_common}
                          ${rocsparselt_source})
 else()
   # hipSPARSE CUDA source
-  # TODO
-  #set(hipsparselt_source src/nvcc_detail/hipsparse.cpp)
+  set(hipsparselt_source src/nvcc_detail/hipsparselt.cpp
+                         ${hipsparselt_source_common})
 endif()
