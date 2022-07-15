@@ -29,6 +29,19 @@
 #include <bitset>
 #include <omp.h>
 
+CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipsparseOperation_t trans)
+{
+    switch(trans)
+    {
+        case HIPSPARSE_OPERATION_NON_TRANSPOSE:
+            return CblasNoTrans;
+        case HIPSPARSE_OPERATION_TRANSPOSE:
+            return CblasTrans;
+        case HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE:
+            return CblasConjTrans;
+    }
+}
+
 // gemm
 template <>
 void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseLtOperation_t     transA,
@@ -63,10 +76,10 @@ void cblas_gemm<hipsparseLtBfloat16, hipsparseLtBfloat16, float>(hipsparseLtOper
         C_float[i] = static_cast<float>(C[i]);
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
     cblas_sgemm(CblasColMajor,
-                static_cast<CBLAS_TRANSPOSE>(transA),
-                static_cast<CBLAS_TRANSPOSE>(transB),
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
                 m,
                 n,
                 k,
@@ -114,10 +127,10 @@ void cblas_gemm<hipsparseLtBfloat16, float, float>(hipsparseLtOperation_t     tr
         B_float[i] = static_cast<float>(B[i]);
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
     cblas_sgemm(CblasColMajor,
-                static_cast<CBLAS_TRANSPOSE>(transA),
-                static_cast<CBLAS_TRANSPOSE>(transB),
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
                 m,
                 n,
                 k,
@@ -179,10 +192,10 @@ void cblas_gemm<hipsparseLtHalf, hipsparseLtHalf, float>(hipsparseLtOperation_t 
     }
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
     cblas_sgemm(CblasColMajor,
-                static_cast<CBLAS_TRANSPOSE>(transA),
-                static_cast<CBLAS_TRANSPOSE>(transB),
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
                 m,
                 n,
                 k,
@@ -241,10 +254,10 @@ void cblas_gemm<hipsparseLtHalf, float, float>(hipsparseLtOperation_t transA,
     }
 
     // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, static_cast<CBLAS_TRANSPOSE>(transA) );
+    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
     cblas_sgemm(CblasColMajor,
-                static_cast<CBLAS_TRANSPOSE>(transA),
-                static_cast<CBLAS_TRANSPOSE>(transB),
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
                 m,
                 n,
                 k,
@@ -297,8 +310,8 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseLtOperation_t transA,
 
     // just directly cast, since transA, transB are integers in the enum
     cblas_dgemm(CblasColMajor,
-                static_cast<CBLAS_TRANSPOSE>(transA),
-                static_cast<CBLAS_TRANSPOSE>(transB),
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
                 m,
                 n,
                 k,
@@ -360,8 +373,8 @@ void cblas_gemm<int8_t, float, float>(hipsparseLtOperation_t transA,
 
     // just directly cast, since transA, transB are integers in the enum
     cblas_dgemm(CblasColMajor,
-                static_cast<CBLAS_TRANSPOSE>(transA),
-                static_cast<CBLAS_TRANSPOSE>(transB),
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
                 m,
                 n,
                 k,
