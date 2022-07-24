@@ -271,12 +271,13 @@ typedef enum rocsparselt_matmul_descr_attribute_
     rocsparselt_matmul_activation_abs       = 9, /**< ABS activation function. */
     rocsparselt_matmul_activation_leakyrelu = 10, /**< LeakyReLU activation function. */
     rocsparselt_matmul_activation_leakyrelu_alpha
-    = 11, /** Alpha value of the LeakyReLU activation function. */
-    rocsparselt_matmul_activation_sigmoid = 12, /** Sigmoid activation function. */
+    = 11, /**< Alpha value of the LeakyReLU activation function. */
+    rocsparselt_matmul_activation_sigmoid = 12, /**< Sigmoid activation function. */
     rocsparselt_matmul_activation_tanh    = 13, /**< Tanh activation function. */
     rocsparselt_matmul_activation_tanh_alpha
-    = 14, /** Alpha value of the Tanh activation function. */
-    rocsparselt_matmul_activation_tanh_beta = 15, /** Beta value of the Tanh activation function. */
+    = 14, /**< Alpha value of the Tanh activation function. */
+    rocsparselt_matmul_activation_tanh_beta
+    = 15, /**< Beta value of the Tanh activation function. */
 } rocsparselt_matmul_descr_attribute;
 
 /*! \ingroup types_module
@@ -305,11 +306,11 @@ typedef enum rocsparselt_matmul_alg_attribute_
     = 2, /**< Number of iterations (kernel launches per algorithm)
                                                   for rocsparselt_matmul_search, default=10. */
     rocsparselt_matmul_split_k
-    = 3, /** Split-K factor, default=not set. Valid range: [1, K]. Value 1 is equivalent to the Split-K feature is disabled */
+    = 3, /**< Split-K factor, default=not set. Valid range: [1, K]. Value 1 is equivalent to the Split-K feature is disabled */
     rocsparselt_matmul_split_k_mode
-    = 4, /** Number of kernels to call for Split-K. Values are specified in rocsparselt_split_k_mode. */
+    = 4, /**< Number of kernels to call for Split-K. Values are specified in rocsparselt_split_k_mode. */
     rocsparselt_matmul_split_k_buffers
-    = 5, /** Device memory buffers to store partial results for the reduction. The valid range is [1, SplitK - 1] */
+    = 5, /**< Device memory buffers to store partial results for the reduction. The valid range is [1, SplitK - 1] */
 } rocsparselt_matmul_alg_attribute;
 
 /*! \ingroup types_module
@@ -338,8 +339,8 @@ typedef enum rocsparselt_atomics_mode_
 typedef enum rocsparselt_split_k_mode_
 {
     rocsparselt_splik_k_mode_one_kernel
-    = 0, /** Use the same SP-MM kernel to do the final reduction */
-    rocsparselt_split_k_mode_two_kernels = 1, /** Use anoghter kernel to do the final reduction */
+    = 0, /**< Use the same SP-MM kernel to do the final reduction */
+    rocsparselt_split_k_mode_two_kernels = 1, /**< Use anoghter kernel to do the final reduction */
 } rocsparselt_split_k_mode;
 
 #ifdef __cplusplus
