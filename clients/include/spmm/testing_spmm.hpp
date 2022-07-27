@@ -128,7 +128,7 @@ void testing_spmm_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const hipsparseOperation_t transA = HIPSPARSE_OPERATION_NON_TRANSPOSE;
+    const hipsparseOperation_t transA = HIPSPARSE_OPERATION_TRANSPOSE;
     const hipsparseOperation_t transB = HIPSPARSE_OPERATION_NON_TRANSPOSE;
 
     // allocate memory on device
@@ -163,11 +163,11 @@ void testing_spmm_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(nullptr, plan, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, nullptr, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 1),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, nullptr, dA, dB, &beta, dC, dD, workspace, &stream, 1),
@@ -199,7 +199,12 @@ void testing_spmm_bad_arg(const Arguments& arg)
     hipsparselt_local_matmul_plan plan2(handle, matmul, alg_sel, workspace_size);
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan2, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 0),
-        HIPSPARSE_STATUS_INVALID_VALUE);
+#ifdef __HIP_PLATFORM_HCC__
+        HIPSPARSE_STATUS_INVALID_VALUE
+#else
+        HIPSPARSE_STATUS_SUCCESS
+#endif
+    );
 }
 
 template <typename Ti,
@@ -269,21 +274,38 @@ void testing_spmm(const Arguments& arg)
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
     bool invalid_size_c = ldc < M;
+    bool invalid_size_d = ldd < M;
     if(invalid_size_a)
     {
-        EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+
+        if(M != 0 && lda >= A_row)
+            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
+
+        EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+
+        if(N != 0 && ldb >= B_row)
+            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
+
+        EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
 
         return;
     }
     if(invalid_size_c)
     {
         EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+
+        return;
+    }
+    if(invalid_size_d)
+    {
+        EXPECT_HIPSPARSE_STATUS(matD.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }

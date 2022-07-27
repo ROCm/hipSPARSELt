@@ -112,10 +112,10 @@ public:
 
     ~hipsparselt_local_handle();
 
-    hipsparselt_local_handle(const hipsparselt_local_handle&) = delete;
-    hipsparselt_local_handle(hipsparselt_local_handle&&)      = delete;
+    hipsparselt_local_handle(const hipsparselt_local_handle&)            = delete;
+    hipsparselt_local_handle(hipsparselt_local_handle&&)                 = delete;
     hipsparselt_local_handle& operator=(const hipsparselt_local_handle&) = delete;
-    hipsparselt_local_handle& operator=(hipsparselt_local_handle&&) = delete;
+    hipsparselt_local_handle& operator=(hipsparselt_local_handle&&)      = delete;
 
     // Allow hipsparselt_local_handle to be used anywhere hipsparseLtHandle_t is expected
     operator hipsparseLtHandle_t&()
@@ -138,8 +138,8 @@ public:
 
 typedef enum hipsparselt_matrix_type_
 {
-    hipsparselt_matrix_type_dense      = 0, /**< dense matrix type. */
-    hipsparselt_matrix_type_structured = 1, /**< structured matrix type. */
+    hipsparselt_matrix_type_dense      = 1, /**< dense matrix type. */
+    hipsparselt_matrix_type_structured = 2, /**< structured matrix type. */
 } hipsparselt_matrix_type;
 
 /* ============================================================================================ */
@@ -180,10 +180,10 @@ public:
             hipsparseLtMatDescriptorDestroy(&this->m_descr);
     }
 
-    hipsparselt_local_mat_descr(const hipsparselt_local_mat_descr&) = delete;
-    hipsparselt_local_mat_descr(hipsparselt_local_mat_descr&&)      = delete;
+    hipsparselt_local_mat_descr(const hipsparselt_local_mat_descr&)            = delete;
+    hipsparselt_local_mat_descr(hipsparselt_local_mat_descr&&)                 = delete;
     hipsparselt_local_mat_descr& operator=(const hipsparselt_local_mat_descr&) = delete;
-    hipsparselt_local_mat_descr& operator=(hipsparselt_local_mat_descr&&) = delete;
+    hipsparselt_local_mat_descr& operator=(hipsparselt_local_mat_descr&&)      = delete;
 
     hipsparseStatus_t status()
     {
@@ -232,10 +232,10 @@ public:
 
     ~hipsparselt_local_matmul_descr() {}
 
-    hipsparselt_local_matmul_descr(const hipsparselt_local_matmul_descr&) = delete;
-    hipsparselt_local_matmul_descr(hipsparselt_local_matmul_descr&&)      = delete;
+    hipsparselt_local_matmul_descr(const hipsparselt_local_matmul_descr&)            = delete;
+    hipsparselt_local_matmul_descr(hipsparselt_local_matmul_descr&&)                 = delete;
     hipsparselt_local_matmul_descr& operator=(const hipsparselt_local_matmul_descr&) = delete;
-    hipsparselt_local_matmul_descr& operator=(hipsparselt_local_matmul_descr&&) = delete;
+    hipsparselt_local_matmul_descr& operator=(hipsparselt_local_matmul_descr&&)      = delete;
 
     hipsparseStatus_t status()
     {
@@ -333,10 +333,10 @@ public:
             hipsparseLtMatmulPlanDestroy(&this->m_plan);
     }
 
-    hipsparselt_local_matmul_plan(const hipsparselt_local_matmul_plan&) = delete;
-    hipsparselt_local_matmul_plan(hipsparselt_local_matmul_plan&&)      = delete;
+    hipsparselt_local_matmul_plan(const hipsparselt_local_matmul_plan&)            = delete;
+    hipsparselt_local_matmul_plan(hipsparselt_local_matmul_plan&&)                 = delete;
     hipsparselt_local_matmul_plan& operator=(const hipsparselt_local_matmul_plan&) = delete;
-    hipsparselt_local_matmul_plan& operator=(hipsparselt_local_matmul_plan&&) = delete;
+    hipsparselt_local_matmul_plan& operator=(hipsparselt_local_matmul_plan&&)      = delete;
 
     hipsparseStatus_t status()
     {

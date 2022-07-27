@@ -374,7 +374,9 @@ void testing_prune_bad_arg(const Arguments& arg)
     device_vector<Ti> dA(safe_size);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
 
-    hipsparselt_local_handle    handle{arg};
+    hipsparselt_local_handle handle{arg};
+    hipsparseLtHandle_t      handle_;
+
     hipsparselt_local_mat_descr matA(
         hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, HIPSPARSE_ORDER_COLUMN);
     hipsparselt_local_mat_descr matB(
@@ -389,13 +391,18 @@ void testing_prune_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
 
     // test version 1
+
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtSpMMAPrune(&handle_, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        HIPSPARSE_STATUS_INVALID_VALUE);
+
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(nullptr, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(handle, nullptr, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune(handle, matmul, dA, nullptr, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
@@ -409,17 +416,12 @@ void testing_prune_bad_arg(const Arguments& arg)
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
             nullptr, matA, true, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
             handle, nullptr, true, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
-
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtSpMMAPrune2(
-            handle, matA, false, transA, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
-        HIPSPARSE_STATUS_INTERNAL_ERROR);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMAPrune2(
@@ -518,13 +520,23 @@ void testing_prune(const Arguments& arg)
     bool invalid_size_d = ldd < M;
     if(invalid_size_a)
     {
-        EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+
+        if(M != 0 && lda >= A_row)
+            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
+
+        EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+
+        if(N != 0 && ldb >= B_row)
+            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
+
+        EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
 
         return;
     }

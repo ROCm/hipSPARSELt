@@ -225,9 +225,9 @@ void testing_compress_bad_arg(const Arguments& arg)
 
     // test version 1
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize(nullptr, plan, &compressed_size),
-                            HIPSPARSE_STATUS_NOT_INITIALIZED);
+                            HIPSPARSE_STATUS_INVALID_VALUE);
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize(handle, nullptr, &compressed_size),
-                            HIPSPARSE_STATUS_NOT_INITIALIZED);
+                            HIPSPARSE_STATUS_INVALID_VALUE);
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, nullptr),
                             HIPSPARSE_STATUS_INVALID_VALUE);
 
@@ -240,10 +240,10 @@ void testing_compress_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
 
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress(nullptr, plan, dA, dA_1, stream),
-                            HIPSPARSE_STATUS_NOT_INITIALIZED);
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress(handle, nullptr, dA, dA_1, stream),
-                            HIPSPARSE_STATUS_NOT_INITIALIZED);
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress(handle, plan, nullptr, dA_1, stream),
                             HIPSPARSE_STATUS_INVALID_VALUE);
@@ -253,9 +253,9 @@ void testing_compress_bad_arg(const Arguments& arg)
 
     // test version 2
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize2(nullptr, matA, &compressed_size),
-                            HIPSPARSE_STATUS_NOT_INITIALIZED);
+                            HIPSPARSE_STATUS_INVALID_VALUE);
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize2(handle, nullptr, &compressed_size),
-                            HIPSPARSE_STATUS_NOT_INITIALIZED);
+                            HIPSPARSE_STATUS_INVALID_VALUE);
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize2(handle, matA, nullptr),
                             HIPSPARSE_STATUS_INVALID_VALUE);
 
@@ -264,15 +264,17 @@ void testing_compress_bad_arg(const Arguments& arg)
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMACompress2(nullptr, matA, true, transA, dA, dA_1, stream),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMACompress2(handle, nullptr, true, transA, dA, dA_1, stream),
-        HIPSPARSE_STATUS_NOT_INITIALIZED);
+        HIPSPARSE_STATUS_INVALID_VALUE);
 
+#ifdef __HIP_PLATFORM_HCC__
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMACompress2(handle, matA, false, transA, dA, dA_1, stream),
         HIPSPARSE_STATUS_INTERNAL_ERROR);
+#endif
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMACompress2(handle, matA, true, transA, nullptr, dA_1, stream),
@@ -352,21 +354,38 @@ void testing_compress(const Arguments& arg)
     bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
     bool invalid_size_b = N < 8 || ldb < B_row;
     bool invalid_size_c = ldc < M;
+    bool invalid_size_d = ldd < M;
     if(invalid_size_a)
     {
-        EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+
+        if(M != 0 && lda >= A_row)
+            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
+
+        EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
 
         return;
     }
     if(invalid_size_b)
     {
-        EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+
+        if(N != 0 && ldb >= B_row)
+            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
+
+        EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
 
         return;
     }
     if(invalid_size_c)
     {
         EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_INVALID_VALUE);
+
+        return;
+    }
+    if(invalid_size_d)
+    {
+        EXPECT_HIPSPARSE_STATUS(matD.status(), HIPSPARSE_STATUS_INVALID_VALUE);
 
         return;
     }
