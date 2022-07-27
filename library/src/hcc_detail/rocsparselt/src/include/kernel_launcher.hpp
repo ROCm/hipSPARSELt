@@ -111,9 +111,9 @@ T CeilDivide(T num, T den)
 template <typename Ti, typename To = Ti, typename Tc = To>
 struct RocsparseltContractionProblem
 {
-    rocsparselt_handle    handle;
-    rocsparselt_operation trans_a;
-    rocsparselt_operation trans_b;
+    const _rocsparselt_handle* handle;
+    rocsparselt_operation      trans_a;
+    rocsparselt_operation      trans_b;
 
     size_t m;
     size_t n;
@@ -168,7 +168,7 @@ struct RocsparseltContractionProblem
 
     // gemm
     // gemm_strided_batched
-    RocsparseltContractionProblem(rocsparselt_handle          handle,
+    RocsparseltContractionProblem(const _rocsparselt_handle*  handle,
                                   rocsparselt_operation       trans_a,
                                   rocsparselt_operation       trans_b,
                                   int64_t                     m,
@@ -250,7 +250,7 @@ struct RocsparseltContractionProblem
 
     // gemm_ex
     // gemm_strided_batched_ex
-    RocsparseltContractionProblem(rocsparselt_handle          handle,
+    RocsparseltContractionProblem(const _rocsparselt_handle*  handle,
                                   rocsparselt_operation       trans_a,
                                   rocsparselt_operation       trans_b,
                                   int64_t                     m,
@@ -337,7 +337,7 @@ struct RocsparseltContractionProblem
 
     // gemm_ext2
     // gemm_strided_batched_ext2
-    RocsparseltContractionProblem(rocsparselt_handle          handle,
+    RocsparseltContractionProblem(const _rocsparselt_handle*  handle,
                                   int64_t                     m,
                                   int64_t                     n,
                                   int64_t                     k,
@@ -501,10 +501,10 @@ rocsparselt_status runContractionProblem(RocsparseltContractionProblem<Ti, To, T
                                          const int config_max_id,
                                          const int search_iterations);
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status initSolutions(rocsparselt_handle    handle,
-                                 rocsparselt_operation opA,
-                                 rocsparselt_operation opB,
-                                 int*                  kernel_counts);
+rocsparselt_status initSolutions(const _rocsparselt_handle* handle,
+                                 rocsparselt_operation      opA,
+                                 rocsparselt_operation      opB,
+                                 int*                       kernel_counts);
 
 template <typename Ti, typename To, typename Tc>
 std::string generate_kernel_category_str(rocsparselt_operation opA, rocsparselt_operation opB);

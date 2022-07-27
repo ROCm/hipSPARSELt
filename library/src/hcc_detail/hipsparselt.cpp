@@ -27,6 +27,7 @@
 #include "hipsparselt.h"
 #include "exceptions.hpp"
 
+#include "hipsparselt_ostream.hpp"
 #include <hip/hip_runtime_api.h>
 #include <rocsparselt.h>
 #include <stdio.h>
@@ -89,9 +90,9 @@ hipsparseStatus_t RocSparseLtStatusToHIPStatus(rocsparselt_status_ status)
     case rocsparselt_status_success:
         return HIPSPARSE_STATUS_SUCCESS;
     case rocsparselt_status_invalid_handle:
-        return HIPSPARSE_STATUS_NOT_INITIALIZED;
+        return HIPSPARSE_STATUS_INVALID_VALUE;
     case rocsparselt_status_not_implemented:
-        return HIPSPARSE_STATUS_INTERNAL_ERROR;
+        return HIPSPARSE_STATUS_NOT_SUPPORTED;
     case rocsparselt_status_invalid_pointer:
         return HIPSPARSE_STATUS_INVALID_VALUE;
     case rocsparselt_status_invalid_size:
@@ -198,7 +199,7 @@ rocsparselt_operation_ HIPOperationToHCCOperation(hipsparseOperation_t op)
     case HIPSPARSE_OPERATION_TRANSPOSE:
         return rocsparselt_operation_transpose;
     default:
-        throw HIPSPARSE_STATUS_NOT_SUPPORTED;
+        throw HIPSPARSE_STATUS_INVALID_VALUE;
     }
 }
 
@@ -211,7 +212,7 @@ hipsparseOperation_t HCCOperationToHIPOperation(rocsparselt_operation_ op)
     case rocsparselt_operation_transpose:
         return HIPSPARSE_OPERATION_TRANSPOSE;
     default:
-        throw HIPSPARSE_STATUS_NOT_SUPPORTED;
+        throw HIPSPARSE_STATUS_INVALID_VALUE;
     }
 }
 
@@ -1032,11 +1033,6 @@ void hipsparseLtInitialize()
 hipsparseStatus_t hipsparseLtGetVersion(hipsparseLtHandle_t handle, int* version)
 try
 {
-    if(handle == nullptr)
-    {
-        return HIPSPARSE_STATUS_NOT_INITIALIZED;
-    }
-
     *version = hipsparseltVersionMajor * 100000 + hipsparseltVersionMinor * 100
                + hipsparseltVersionPatch;
 
@@ -1051,11 +1047,6 @@ hipsparseStatus_t hipsparseLtGetGitRevision(hipsparseLtHandle_t handle, char* re
 try
 {
     // Get hipSPARSE revision
-    if(handle == nullptr)
-    {
-        return HIPSPARSE_STATUS_NOT_INITIALIZED;
-    }
-
     if(rev == nullptr)
     {
         return HIPSPARSE_STATUS_INVALID_VALUE;

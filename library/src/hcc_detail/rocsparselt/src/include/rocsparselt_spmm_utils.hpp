@@ -142,7 +142,7 @@ inline rocsparselt_status validateGetAttributeDataSize(size_t dataSize,
 template <>
 inline rocsparselt_status validateGetAttributeDataSize<void>(size_t dataSize, size_t expectedSize)
 {
-    if(expectedSize < dataSize)
+    if(expectedSize > dataSize)
     {
         hipsparselt_cerr << "The parameter number 5 (dataSize) had an illegal value: expected "
                          << expectedSize << " bytes, current size " << dataSize << " bytes"
@@ -155,20 +155,31 @@ inline rocsparselt_status validateGetAttributeDataSize<void>(size_t dataSize, si
 /*******************************************************************************
  * Validate Matrix Arguments - matrix init.
  ******************************************************************************/
-inline rocsparselt_status validateMatrixArgs(rocsparselt_handle      handle,
-                                             int64_t                 num_rows,
-                                             int64_t                 num_cols,
-                                             int64_t                 ld,
-                                             uint32_t                alignment,
-                                             rocsparselt_datatype    valueType,
-                                             rocsparselt_order       order,
-                                             rocsparselt_matrix_type matrixType)
+inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
+                                             int64_t                    num_rows,
+                                             int64_t                    num_cols,
+                                             int64_t                    ld,
+                                             uint32_t                   alignment,
+                                             rocsparselt_datatype       valueType,
+                                             rocsparselt_order          order,
+                                             rocsparselt_matrix_type    matrixType)
 {
+    // handle must be valid
+    if(handle == nullptr || !handle->isInit())
+        return rocsparselt_status_invalid_handle;
+
+    if(num_rows == 0 || num_cols == 0)
+    {
+        hipsparselt_cerr << "row and col cannot be zero, current are " << num_rows << " and "
+                         << num_cols << std::endl;
+        return rocsparselt_status_invalid_size;
+    }
+
     if(num_rows < 8 || num_cols < 8)
     {
         hipsparselt_cerr << "row and col must larger than 8, current are " << num_rows << " and "
                          << num_cols << std::endl;
-        return rocsparselt_status_invalid_size;
+        return rocsparselt_status_not_implemented;
     }
 
     // leading dimensions must be valid
@@ -198,35 +209,47 @@ inline rocsparselt_status validateMatrixArgs(rocsparselt_handle      handle,
 /*******************************************************************************
  * Validate Matmul Descr. init Arguments - matrix init.
  ******************************************************************************/
-inline rocsparselt_status validateMatmulDescrArgs(rocsparselt_handle       handle,
-                                                  rocsparselt_operation    opA,
-                                                  rocsparselt_operation    opB,
-                                                  int64_t                  num_rows_a,
-                                                  int64_t                  num_cols_a,
-                                                  int64_t                  lda,
-                                                  int64_t                  num_rows_b,
-                                                  int64_t                  num_cols_b,
-                                                  int64_t                  ldb,
-                                                  int64_t                  num_rows_c,
-                                                  int64_t                  num_cols_c,
-                                                  int64_t                  ldc,
-                                                  int64_t                  num_rows_d,
-                                                  int64_t                  num_cols_d,
-                                                  int64_t                  ldd,
-                                                  rocsparselt_datatype     type_a,
-                                                  rocsparselt_datatype     type_b,
-                                                  rocsparselt_datatype     type_c,
-                                                  rocsparselt_datatype     type_d,
-                                                  rocsparselt_compute_type compute_type,
-                                                  rocsparselt_matrix_type  matrix_type_a,
-                                                  rocsparselt_matrix_type  matrix_type_b,
-                                                  rocsparselt_matrix_type  matrix_type_c,
-                                                  rocsparselt_matrix_type  matrix_type_d)
+inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* handle,
+                                                  rocsparselt_operation      opA,
+                                                  rocsparselt_operation      opB,
+                                                  int64_t                    num_rows_a,
+                                                  int64_t                    num_cols_a,
+                                                  int64_t                    lda,
+                                                  int64_t                    num_rows_b,
+                                                  int64_t                    num_cols_b,
+                                                  int64_t                    ldb,
+                                                  int64_t                    num_rows_c,
+                                                  int64_t                    num_cols_c,
+                                                  int64_t                    ldc,
+                                                  int64_t                    num_rows_d,
+                                                  int64_t                    num_cols_d,
+                                                  int64_t                    ldd,
+                                                  rocsparselt_datatype       type_a,
+                                                  rocsparselt_datatype       type_b,
+                                                  rocsparselt_datatype       type_c,
+                                                  rocsparselt_datatype       type_d,
+                                                  rocsparselt_compute_type   compute_type,
+                                                  rocsparselt_matrix_type    matrix_type_a,
+                                                  rocsparselt_matrix_type    matrix_type_b,
+                                                  rocsparselt_matrix_type    matrix_type_c,
+                                                  rocsparselt_matrix_type    matrix_type_d)
 {
     // handle must be valid
-    if(!handle)
+    if(handle == nullptr || !handle->isInit())
         return rocsparselt_status_invalid_handle;
 
+    auto is_op_valid = [](rocsparselt_operation op) {
+        switch(op)
+        {
+        case rocsparselt_operation_none:
+        case rocsparselt_operation_transpose:
+            return true;
+        default:
+            return false;
+        }
+    };
+    if(!is_op_valid(opA) || !is_op_valid(opB))
+        return rocsparselt_status_invalid_value;
     // sizes of matrics A,B,C,D must fulfill the matrix multiplication rule.
     // D = A x B + C
     // values of num_* are values after been transposed, redirect to before which been transposed.
@@ -251,7 +274,7 @@ inline rocsparselt_status validateMatmulDescrArgs(rocsparselt_handle       handl
 
     // data type of matrics must be the same
     if(type_a != (type_b | type_c | type_d))
-        return rocsparselt_status_invalid_value;
+        return rocsparselt_status_not_implemented;
 
     switch(type_a)
     {
@@ -260,11 +283,11 @@ inline rocsparselt_status validateMatmulDescrArgs(rocsparselt_handle       handl
     case rocsparselt_datatype_f8_r:
     case rocsparselt_datatype_bf8_r:
         if(compute_type != rocsparselt_compute_f32)
-            return rocsparselt_status_invalid_value;
+            return rocsparselt_status_not_implemented;
         break;
     case rocsparselt_datatype_i8_r:
         if(compute_type != rocsparselt_compute_i32)
-            return rocsparselt_status_invalid_value;
+            return rocsparselt_status_not_implemented;
         break;
     default:
         return rocsparselt_status_not_implemented;

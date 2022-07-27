@@ -56,7 +56,10 @@ typedef struct _rocsparselt_handle* rocsparselt_handle;
  *  descriptor must be passed to all subsequent library calls that involve the matrix.
  *  It should be destroyed at the end using \ref rocsparselt_destroy_mat_descr.
  */
-typedef struct _rocsparselt_mat_descr* rocsparselt_mat_descr;
+typedef struct
+{
+    uint8_t data[11024];
+} rocsparselt_mat_descr;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication operation
@@ -91,7 +94,10 @@ typedef struct
  *  It is initialized and destroyed with \ref rocsparselt_matmul_plan_init
  *  and \ref rocsparselt_matmul_plan_destroy functions respectively.
  */
-typedef struct _rocsparselt_matmul_plan* rocsparselt_matmul_plan;
+typedef struct
+{
+    uint8_t data[11024];
+} rocsparselt_matmul_plan;
 
 // Generic API
 
@@ -197,9 +203,9 @@ typedef enum rocsparselt_sparsity_
  */
 typedef enum rocsparselt_matrix_type_
 {
-    rocsparselt_matrix_type_dense      = 0, /**< dense matrix type. */
-    rocsparselt_matrix_type_structured = 1, /**< structured matrix type. */
-    rocsparselt_matrix_type_unknown    = 2
+    rocsparselt_matrix_type_unknown    = 0,
+    rocsparselt_matrix_type_dense      = 1, /**< dense matrix type. */
+    rocsparselt_matrix_type_structured = 2, /**< structured matrix type. */
 } rocsparselt_matrix_type;
 
 /*! \ingroup types_module

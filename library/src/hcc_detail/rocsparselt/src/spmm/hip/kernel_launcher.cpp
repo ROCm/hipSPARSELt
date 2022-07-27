@@ -427,7 +427,7 @@ namespace
         }
 
         // KernelLauncher is not copyable or assignable
-        KernelLauncher(const KernelLauncher&) = delete;
+        KernelLauncher(const KernelLauncher&)            = delete;
         KernelLauncher& operator=(const KernelLauncher&) = delete;
 
         // Get the number of devices
@@ -709,10 +709,10 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
  * initSolutions used to initialize specific type's solutions at the early stage.               *
  * ****************************************************************************/
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status initSolutions(rocsparselt_handle    handle,
-                                 rocsparselt_operation opA,
-                                 rocsparselt_operation opB,
-                                 int*                  kernel_counts)
+rocsparselt_status initSolutions(const _rocsparselt_handle* handle,
+                                 rocsparselt_operation      opA,
+                                 rocsparselt_operation      opB,
+                                 int*                       kernel_counts)
 {
     std::shared_ptr<hipDeviceProp_t> deviceProp;
     auto&                            adapter = get_adapter(&deviceProp, handle->device);
@@ -765,7 +765,7 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
     template rocsparselt_status runContractionProblem<Ti, To, Tc>(                     \
         const RocsparseltContractionProblem<Ti, To, Tc>&, int*, const int, const int); \
     template rocsparselt_status initSolutions<Ti, To, Tc>(                             \
-        rocsparselt_handle, rocsparselt_operation, rocsparselt_operation, int*);
+        const _rocsparselt_handle*, rocsparselt_operation, rocsparselt_operation, int*);
 
 GENERATE_DEFINITIONS(__half, __half, float, "4_4_0")
 GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float, "7_7_0")

@@ -198,17 +198,18 @@ hipError_t SolutionAdapter::getKernel(hipFunction_t& rv, std::string const& name
     return err;
 }
 
-hipError_t SolutionAdapter::launchKernel(rocsparselt_handle handle, KernelInvocation const& kernel)
+hipError_t SolutionAdapter::launchKernel(const _rocsparselt_handle* handle,
+                                         KernelInvocation const&    kernel)
 {
     return launchKernel(handle, kernel, nullptr, nullptr, nullptr);
 }
 
-hipError_t SolutionAdapter::launchKernel(rocsparselt_handle      handle,
-                                         KernelInvocation const& kernel,
-                                         hipStream_t             stream,
-                                         hipEvent_t              startEvent,
-                                         hipEvent_t              stopEvent,
-                                         int                     iter)
+hipError_t SolutionAdapter::launchKernel(const _rocsparselt_handle* handle,
+                                         KernelInvocation const&    kernel,
+                                         hipStream_t                stream,
+                                         hipEvent_t                 startEvent,
+                                         hipEvent_t                 stopEvent,
+                                         int                        iter)
 {
     if(handle->layer_mode & rocsparselt_layer_mode_log_trace)
     {
@@ -261,7 +262,7 @@ hipError_t SolutionAdapter::launchKernel(rocsparselt_handle      handle,
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   handle,
+hipError_t SolutionAdapter::launchKernels(const _rocsparselt_handle*           handle,
                                           std::vector<KernelInvocation> const& kernels)
 {
     for(auto const& k : kernels)
@@ -271,7 +272,7 @@ hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   h
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   handle,
+hipError_t SolutionAdapter::launchKernels(const _rocsparselt_handle*           handle,
                                           std::vector<KernelInvocation> const& kernels,
                                           hipStream_t                          stream,
                                           hipEvent_t                           startEvent,
@@ -295,7 +296,7 @@ hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   h
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::launchKernels(rocsparselt_handle                   handle,
+hipError_t SolutionAdapter::launchKernels(const _rocsparselt_handle*           handle,
                                           std::vector<KernelInvocation> const& kernels,
                                           hipStream_t                          stream,
                                           std::vector<hipEvent_t> const&       startEvents,

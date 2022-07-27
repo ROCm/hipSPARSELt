@@ -37,7 +37,7 @@
 #include "kernel_launcher.hpp"
 
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status spmm_batched_template(rocsparselt_handle          handle,
+rocsparselt_status spmm_batched_template(const _rocsparselt_handle*  handle,
                                          rocsparselt_operation       trans_a,
                                          rocsparselt_operation       trans_b,
                                          int64_t                     m,
@@ -119,7 +119,7 @@ rocsparselt_status spmm_batched_template(rocsparselt_handle          handle,
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
-rocsparselt_status spmm_typecasting(rocsparselt_handle          handle,
+rocsparselt_status spmm_typecasting(const _rocsparselt_handle*  handle,
                                     rocsparselt_operation       trans_a,
                                     rocsparselt_operation       trans_b,
                                     int64_t                     m,
@@ -205,7 +205,7 @@ rocsparselt_status spmm_typecasting(rocsparselt_handle          handle,
                                              search_iterations);
 }
 
-inline rocsparselt_status rocsparselt_spmm_template(rocsparselt_handle          handle,
+inline rocsparselt_status rocsparselt_spmm_template(const _rocsparselt_handle*  handle,
                                                     rocsparselt_operation       trans_a,
                                                     rocsparselt_operation       trans_b,
                                                     int64_t                     m,

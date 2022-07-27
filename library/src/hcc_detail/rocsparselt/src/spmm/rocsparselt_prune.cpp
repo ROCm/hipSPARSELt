@@ -561,13 +561,13 @@ rocsparselt_status rocsparselt_smfmac_prune_check_template(const rocsparselt_han
 extern "C" {
 #endif
 
-rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle,
-                                                 rocsparselt_mat_descr    matrix,
-                                                 rocsparselt_operation    op,
-                                                 const void*              d_in,
-                                                 void*                    d_out,
-                                                 rocsparselt_prune_alg    pruneAlg,
-                                                 hipStream_t              stream)
+rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle      handle,
+                                                 const _rocsparselt_mat_descr* matrix,
+                                                 rocsparselt_operation         op,
+                                                 const void*                   d_in,
+                                                 void*                         d_out,
+                                                 rocsparselt_prune_alg         pruneAlg,
+                                                 hipStream_t                   stream)
 {
     int64_t              m     = op == rocsparselt_operation_transpose ? matrix->n : matrix->m;
     int64_t              n     = op == rocsparselt_operation_transpose ? matrix->m : matrix->n;
@@ -607,12 +607,12 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle handle
     }
 }
 
-rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle handle,
-                                                       rocsparselt_mat_descr    matrix,
-                                                       rocsparselt_operation    op,
-                                                       const void*              d_in,
-                                                       int*                     d_out,
-                                                       hipStream_t              stream)
+rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle      handle,
+                                                       const _rocsparselt_mat_descr* matrix,
+                                                       rocsparselt_operation         op,
+                                                       const void*                   d_in,
+                                                       int*                          d_out,
+                                                       hipStream_t                   stream)
 {
 
     int64_t              m     = op == rocsparselt_operation_transpose ? matrix->n : matrix->m;
@@ -666,7 +666,19 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       hand
 
 {
     // Check if handle is valid
-    if(handle == nullptr || matmulDescr == nullptr || *handle == nullptr)
+    if(handle == nullptr || matmulDescr == nullptr)
+    {
+        return rocsparselt_status_invalid_handle;
+    }
+
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        return rocsparselt_status_invalid_handle;
+    }
+
+    auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
+    if(!_matmulDescr->isInit())
     {
         return rocsparselt_status_invalid_handle;
     }
@@ -683,9 +695,7 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       hand
         return rocsparselt_status_not_implemented;
     }
 
-    auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
-
-    rocsparselt_mat_descr matrix;
+    _rocsparselt_mat_descr* matrix;
     // Check if matrix A is a structured matrix
     if(_matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         matrix = _matmulDescr->matrix_A;
@@ -710,11 +720,21 @@ rocsparselt_status rocsparselt_smfmac_prune2(const rocsparselt_handle*    handle
                                              hipStream_t                  stream)
 {
     // Check if handle is valid
-    if(handle == nullptr || sparseMatDescr == nullptr || *handle == nullptr
-       || *sparseMatDescr == nullptr)
+    if(handle == nullptr || sparseMatDescr == nullptr)
     {
         return rocsparselt_status_invalid_handle;
     }
+
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        return rocsparselt_status_invalid_handle;
+    }
+
+    auto _sparseMatDescr = reinterpret_cast<const _rocsparselt_mat_descr*>(sparseMatDescr);
+
+    if(!_sparseMatDescr->isInit())
+        return rocsparselt_status_invalid_handle;
 
     // Check if pointer is valid
     if(d_in == nullptr || d_out == nullptr)
@@ -734,13 +754,13 @@ rocsparselt_status rocsparselt_smfmac_prune2(const rocsparselt_handle*    handle
         return rocsparselt_status_not_implemented;
     }
 
-    rocsparselt_mat_descr matrix = *sparseMatDescr;
     // Check if matrix A is a structured matrix
-    if(matrix->m_type != rocsparselt_matrix_type_structured)
+    if(_sparseMatDescr->m_type != rocsparselt_matrix_type_structured)
         return rocsparselt_status_not_implemented;
 
     log_trace(*handle, "rocsparselt_smfmac_prune2");
-    return rocsparselt_smfmac_prune_impl(*handle, matrix, op, d_in, d_out, pruneAlg, stream);
+    return rocsparselt_smfmac_prune_impl(
+        *handle, _sparseMatDescr, op, d_in, d_out, pruneAlg, stream);
 }
 
 /********************************************************************************
@@ -753,7 +773,19 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*     
                                                   hipStream_t                     stream)
 {
     // Check if handle is valid
-    if(handle == nullptr || matmulDescr == nullptr || *handle == nullptr)
+    if(handle == nullptr || matmulDescr == nullptr)
+    {
+        return rocsparselt_status_invalid_handle;
+    }
+
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        return rocsparselt_status_invalid_handle;
+    }
+
+    auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
+    if(!_matmulDescr->isInit())
     {
         return rocsparselt_status_invalid_handle;
     }
@@ -764,9 +796,7 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*     
         return rocsparselt_status_invalid_pointer;
     }
 
-    auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
-
-    rocsparselt_mat_descr matrix;
+    _rocsparselt_mat_descr* matrix;
     // Check if matrix A is a structured matrix
     if(_matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         matrix = _matmulDescr->matrix_A;
@@ -790,11 +820,21 @@ rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    
                                                    hipStream_t                  stream)
 {
     // Check if handle is valid
-    if(handle == nullptr || sparseMatDescr == nullptr || *handle == nullptr
-       || *sparseMatDescr == nullptr)
+    if(handle == nullptr || sparseMatDescr == nullptr)
     {
         return rocsparselt_status_invalid_handle;
     }
+
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        return rocsparselt_status_invalid_handle;
+    }
+
+    auto _sparseMatDescr = reinterpret_cast<const _rocsparselt_mat_descr*>(sparseMatDescr);
+
+    if(!_sparseMatDescr->isInit())
+        return rocsparselt_status_invalid_handle;
 
     if(!isSparseA)
         return rocsparselt_status_not_implemented;
@@ -808,13 +848,12 @@ rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    
         return rocsparselt_status_invalid_pointer;
     }
 
-    rocsparselt_mat_descr matrix = *sparseMatDescr;
     // Check if matrix A is a structured matrix
-    if(matrix->m_type != rocsparselt_matrix_type_structured)
+    if(_sparseMatDescr->m_type != rocsparselt_matrix_type_structured)
         return rocsparselt_status_not_implemented;
 
     log_trace(*handle, "rocsparselt_smfmac_prune_check2");
-    return rocsparselt_smfmac_prune_check_impl(*handle, matrix, op, d_in, d_out, stream);
+    return rocsparselt_smfmac_prune_check_impl(*handle, _sparseMatDescr, op, d_in, d_out, stream);
 }
 
 #ifdef __cplusplus

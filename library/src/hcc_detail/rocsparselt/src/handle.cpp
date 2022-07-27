@@ -32,10 +32,7 @@
 
 ROCSPARSELT_KERNEL void init_kernel(){};
 
-/*******************************************************************************
- * constructor
- ******************************************************************************/
-_rocsparselt_handle::_rocsparselt_handle()
+void _rocsparselt_handle::init()
 {
     // Default device is active device
     THROW_IF_HIP_ERROR(hipGetDevice(&device));
@@ -73,13 +70,12 @@ _rocsparselt_handle::_rocsparselt_handle()
     {
         open_log_stream(&log_bench_os, &log_bench_ofs, "ROCSPARSELT_LOG_BENCH_PATH");
     }
+    is_init = true;
 }
 
-/*******************************************************************************
- * destructor
- ******************************************************************************/
-_rocsparselt_handle::~_rocsparselt_handle()
+void _rocsparselt_handle::destroy()
 {
+    is_init = false;
     // Close log files
     if(log_trace_ofs.is_open())
     {
@@ -117,7 +113,7 @@ size_t _rocsparselt_attribute::length()
     return _data_size;
 }
 
-size_t _rocsparselt_attribute::get(void* out, size_t size)
+size_t _rocsparselt_attribute::get(void* out, size_t size) const
 {
     if(out != nullptr && _data != nullptr && _data_size >= size)
     {

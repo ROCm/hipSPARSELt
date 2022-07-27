@@ -88,9 +88,9 @@ static constexpr char rocsparselt_precision_string<uint32_t>[] = "u32_r";
 // log_function will call log_arguments to log function
 // arguments with a comma separator
 template <typename H, typename... Ts>
-void log_trace(rocsparselt_handle handle, H head, Ts&&... xs)
+void log_trace(const _rocsparselt_handle* handle, H head, Ts&&... xs)
 {
-    if(nullptr != handle)
+    if(nullptr != handle && nullptr != handle->log_trace_os)
     {
         if(handle->layer_mode & rocsparselt_layer_mode_log_trace)
         {
@@ -108,9 +108,9 @@ void log_trace(rocsparselt_handle handle, H head, Ts&&... xs)
 // log_bench will call log_arguments to log a string that
 // can be input to the executable rocsparselt-bench.
 template <typename H, typename... Ts>
-void log_bench(rocsparselt_handle handle, H head, std::string precision, Ts&&... xs)
+void log_bench(const _rocsparselt_handle* handle, H head, std::string precision, Ts&&... xs)
 {
-    if(nullptr != handle)
+    if(nullptr != handle && nullptr != handle->log_bench_os)
     {
         if(handle->layer_mode & rocsparselt_layer_mode_log_bench)
         {
