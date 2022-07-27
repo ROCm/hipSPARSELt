@@ -10,8 +10,9 @@ Datatypes:
   - hipsparseComputetype_t:
       bases: [ c_int ]
       attr:
-        i32_r: 1
-        f32_r: 2
+        c_f16_r: 0
+        c_i32_r: 1
+        c_f32_r: 2
   - { half: f16_r }
   - hipsparselt_initialization:
       bases: [ c_int ]
@@ -43,11 +44,11 @@ Common threads and streams: &common_threads_streams
 
 Real precisions: &real_precisions
   - &hpa_half_precision
-    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: f32_r }
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r }
   - &hpa_bf16_precision
-    { a_type:  bf16_r, b_type:  bf16_r, c_type: bf16_r, d_type: bf16_r, compute_type: f32_r }
+    { a_type:  bf16_r, b_type:  bf16_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r }
   - &hpa_int8_precision
-    { a_type:  i8_r, b_type:  i8_r, c_type: i8_r, d_type: i8_r, compute_type: i32_r }
+    { a_type:  i8_r, b_type:  i8_r, c_type: i8_r, d_type: i8_r, compute_type: c_i32_r }
 
 acvation_sigmoid_tanh precisions: &activation_sigmoid_tanh_precisions
   - *hpa_half_precision

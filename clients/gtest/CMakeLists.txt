@@ -31,6 +31,7 @@ set(hipsparselt_test_source
     prune_gtest.cpp
     compress_gtest.cpp
     spmm_gtest.cpp
+    auxiliary_gtest.cpp
   )
 
 add_executable( hipsparselt-test ${hipsparselt_test_source} ${hipsparselt_test_bench_common} )
@@ -116,7 +117,7 @@ add_custom_command( OUTPUT "${HIPSPARSELT_TEST_DATA}"
                             spmm_common.yaml spmm_batched_common.yaml spmm_strided_batched_common.yaml
                             prune_gtest.yaml prune_batched_gtest.yaml prune_strided_batched_gtest.yaml
                             compress_gtest.yaml compress_batched_gtest.yaml compress_strided_batched_gtest.yaml
-                            spmm_gtest.yaml spmm_batched_gtest.yaml spmm_strided_batched_gtest.yaml
+                            spmm_gtest.yaml spmm_batched_gtest.yaml spmm_strided_batched_gtest.yaml auxiliary_gtest.yaml
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 add_custom_target( hipsparselt-test-data
                    DEPENDS "${HIPSPARSELT_TEST_DATA}" )

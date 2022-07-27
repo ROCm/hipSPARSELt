@@ -7,3 +7,4 @@ include: compress_strided_batched_gtest.yaml
 include: spmm_gtest.yaml
 include: spmm_batched_gtest.yaml
 include: spmm_strided_batched_gtest.yaml
+include: auxiliary_gtest.yaml
