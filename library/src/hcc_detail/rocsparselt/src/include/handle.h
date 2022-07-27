@@ -46,10 +46,10 @@ struct _rocsparselt_attribute
 
     size_t length();
 
-    size_t get(void* out, size_t size);
+    size_t get(void* out, size_t size) const;
 
     template <typename T>
-    size_t get(T* out)
+    size_t get(T* out) const
     {
         return get(out, sizeof(T));
     }
@@ -77,9 +77,17 @@ private:
 struct _rocsparselt_handle
 {
     // constructor
-    _rocsparselt_handle();
+    _rocsparselt_handle(){};
     // destructor
-    ~_rocsparselt_handle();
+    ~_rocsparselt_handle(){};
+
+    void init();
+    void destroy();
+
+    bool isInit() const
+    {
+        return is_init;
+    };
 
     // device id
     int device;
@@ -97,6 +105,7 @@ struct _rocsparselt_handle
     // device buffer
     size_t buffer_size;
     void*  buffer;
+    bool   is_init = false;
 
     // logging streams
     std::ofstream log_trace_ofs;
@@ -137,15 +146,26 @@ struct _rocsparselt_mat_descr
     // destructor
     ~_rocsparselt_mat_descr()
     {
+        clear();
+    };
+
+    _rocsparselt_mat_descr* clone()
+    {
+        return new _rocsparselt_mat_descr(*this);
+    };
+
+    void clear()
+    {
+        m_type = rocsparselt_matrix_type_unknown;
         for(int i = 0; i < 2; i++)
         {
             attributes[i].clear();
         }
-    };
+    }
 
-    rocsparselt_mat_descr clone()
+    bool isInit() const
     {
-        return new _rocsparselt_mat_descr(*this);
+        return m_type == rocsparselt_matrix_type_unknown ? false : true;
     };
 
     // matrix type
@@ -182,7 +202,11 @@ struct _rocsparselt_mat_descr
 struct _rocsparselt_matmul_descr
 {
     // constructor
-    _rocsparselt_matmul_descr(){};
+    _rocsparselt_matmul_descr()
+    {
+        is_init = true;
+    };
+
     _rocsparselt_matmul_descr(const _rocsparselt_matmul_descr& rhs)
         : op_A(rhs.op_A)
         , op_B(rhs.op_B)
@@ -206,6 +230,7 @@ struct _rocsparselt_matmul_descr
         matrix_C  = rhs.matrix_C->clone();
         matrix_D  = rhs.matrix_D->clone();
         own_by_us = true;
+        is_init   = true;
     };
 
     // destructor
@@ -218,20 +243,26 @@ struct _rocsparselt_matmul_descr
             delete matrix_C;
             delete matrix_D;
         }
+        is_init = false;
     };
+
+    bool isInit() const
+    {
+        return is_init;
+    }
 
     // operation applied to the matrix A
     rocsparselt_operation op_A;
     // operation applied to the matrix B
     rocsparselt_operation op_B;
     // matrix description of the matrix A
-    rocsparselt_mat_descr matrix_A;
+    _rocsparselt_mat_descr* matrix_A;
     // matrix description of the matrix B
-    rocsparselt_mat_descr matrix_B;
+    _rocsparselt_mat_descr* matrix_B;
     // matrix description of the matrix C
-    rocsparselt_mat_descr matrix_C;
+    _rocsparselt_mat_descr* matrix_C;
     // matrix description of the matrix D
-    rocsparselt_mat_descr matrix_D;
+    _rocsparselt_mat_descr* matrix_D;
     //
     rocsparselt_compute_type compute_type;
     //data of rocsparselt_matmul_descr_attribute
@@ -251,6 +282,7 @@ struct _rocsparselt_matmul_descr
 
 private:
     bool own_by_us = false;
+    bool is_init   = false;
 };
 
 /********************************************************************************
@@ -262,16 +294,28 @@ private:
 struct _rocsparselt_matmul_alg_selection
 {
     // constructor
-    _rocsparselt_matmul_alg_selection(){};
+    _rocsparselt_matmul_alg_selection()
+    {
+        is_init = true;
+    };
     // destructor
-    ~_rocsparselt_matmul_alg_selection(){};
+    ~_rocsparselt_matmul_alg_selection()
+    {
+        is_init = false;
+    };
+
+    bool isInit() const
+    {
+        return is_init;
+    }
 
     //
     rocsparselt_matmul_alg alg;
     //data of rocsparselt_matmul_alg_attribute
-    int config_id         = 0;
-    int config_max_id     = 0;
-    int search_iterations = 10;
+    int  config_id         = 0;
+    int  config_max_id     = 0;
+    int  search_iterations = 10;
+    bool is_init           = false;
 };
 
 /********************************************************************************
@@ -287,12 +331,25 @@ struct _rocsparselt_matmul_plan
     // destructor
     ~_rocsparselt_matmul_plan()
     {
-        delete matmul_descr;
+        clear();
     };
+
+    bool isInit() const
+    {
+        return (matmul_descr == nullptr || alg_selection == nullptr) ? false : true;
+    }
+
+    void clear()
+    {
+        delete matmul_descr;
+        matmul_descr  = nullptr;
+        alg_selection = nullptr;
+    }
     //
-    _rocsparselt_matmul_descr* matmul_descr;
+    _rocsparselt_matmul_descr* matmul_descr = nullptr;
     //
-    _rocsparselt_matmul_alg_selection* alg_selection;
+    _rocsparselt_matmul_alg_selection* alg_selection = nullptr;
+
     //
     size_t workspace_size;
 };

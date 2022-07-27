@@ -65,7 +65,7 @@
  *  passed to all subsequent library function calls. It should be destroyed at the end
  *  using \ref hipsparseLtDestroy.
  */
-typedef void* hipsparseLtHandle_t;
+typedef struct hipsparseLtHandle_t {uint8_t data[11024] = {};} hipsparseLtHandle_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix.
@@ -76,7 +76,7 @@ typedef void* hipsparseLtHandle_t;
  *  descriptor must be passed to all subsequent library calls that involve the matrix.
  *  It should be destroyed at the end using \ref hipsparseLtMatDescriptorDestroy.
  */
-typedef void* hipsparseLtMatDescriptor_t;
+typedef struct hipsparseLtMatDescriptor_t {uint8_t data[11024] = {};} hipsparseLtMatDescriptor_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication operation
@@ -86,7 +86,7 @@ typedef void* hipsparseLtMatDescriptor_t;
  *  the description of the matrix multiplication operation.
  *  It is initialized with \ref hipsparseLtMatmulDescriptorInit function.
  */
-typedef struct {uint8_t data[11024];} hipsparseLtMatmulDescriptor_t;
+typedef struct hipsparseLtMatmulDescriptor_t {uint8_t data[11024] = {};} hipsparseLtMatmulDescriptor_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication algorithm.
@@ -94,7 +94,7 @@ typedef struct {uint8_t data[11024];} hipsparseLtMatmulDescriptor_t;
  *  \details
  *  It is initialized with \ref hipsparseLtMatmulAlgSelectionInit function.
  */
-typedef struct {uint8_t data[11024];} hipsparseLtMatmulAlgSelection_t;
+typedef struct hipsparseLtMatmulAlgSelection_t {uint8_t data[11024] = {};} hipsparseLtMatmulAlgSelection_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication execution plan
@@ -105,7 +105,7 @@ typedef struct {uint8_t data[11024];} hipsparseLtMatmulAlgSelection_t;
  *  It is initialized and destroyed with \ref hipsparseLtMatmulPlanInit
  *  and \ref hipsparseLtMatmulPlanDestroy functions respectively.
  */
-typedef void* hipsparseLtMatmulPlan_t;
+typedef struct hipsparseLtMatmulPlan_t {uint8_t data[11024] = {};} hipsparseLtMatmulPlan_t;
 #elif defined(__HIP_PLATFORM_NVCC__)
 typedef __nv_bfloat16 hip_bfloat16;
 typedef struct {uint8_t data[11024];} hipsparseLtHandle_t;
