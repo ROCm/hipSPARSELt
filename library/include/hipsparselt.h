@@ -24,6 +24,11 @@
  *
  *******************************************************************************/
 
+/*! \file
+*  \brief hipsparselt.h provides Sparse Linear Algebra Subprograms
+*  of Prune, Compressed and Matrix Multiplication, using HIP optimized for AMD GPU hardware.
+*/
+
 //! HIP = Heterogeneous-compute Interface for Portability
 //!
 //! Define a extremely thin runtime layer that allows source code to be compiled
@@ -274,7 +279,7 @@ hipsparseStatus_t hipsparseLtGetGitRevision(hipsparseLtHandle_t handle, char* re
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtGetArchName(char** archName);
 
-/*! \ingroup aux_module
+/*! \ingroup library_module
  *  \brief Create a hipsparselt handle
  *
  *  \details
@@ -293,7 +298,7 @@ hipsparseStatus_t hipsparseLtGetArchName(char** archName);
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle);
 
-/*! \ingroup aux_module
+/*! \ingroup library_module
  *  \brief Destroy a hipsparselt handle
  *
  *  \details
@@ -310,14 +315,28 @@ HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtDestroy(const hipsparseLtHandle_t* handle);
 
 /* matrix descriptor */
-/*! \ingroup aux_module
+/*! \ingroup matrix_desc_module
  *  \brief Create a descriptor for dense matrix
  *  \details
  *  \p hipsparseLtDenseDescriptorInit creates a matrix descriptor It initializes
  *  It should be destroyed at the end using \ref hipsparseLtMatDescriptorDestroy().
  *
+ *  @param[in]
+ *  handle     the hipsparselt handle
  *  @param[out]
  *  matDescr   the pointer to the dense matrix descriptor
+ *  @param[in]
+ *  rows       number of rows
+ *  @param[in]
+ *  cols       number of columns
+ *  @param[in]
+ *  ld         leading dimension
+ *  @param[in]
+ *  alignment  memory alignment in bytes
+ *  @param[in]
+ *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
+ *  @param[in]
+ *  order      memory layout. \p HIPSPARSE_ORDER_COLUMN or \p HIPSPARSE_ORDER_ROW.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle, \p descr , \p rows , \p cols , \p ld  is invalid.
@@ -333,14 +352,30 @@ hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  han
                                                  hipsparseLtDatatype_t       valueType,
                                                  hipsparseOrder_t            order);
 
-/*! \ingroup aux_module
+/*! \ingroup matrix_desc_module
  *  \brief Create a descriptor for structured matrix
  *  \details
  *  \p hipsparseLtStructuredDescriptorInit creates a matrix descriptor It initializes
  *  It should be destroyed at the end using \ref hipsparseLtMatDescriptorDestroy().
  *
+ *  @param[in]
+ *  handle     the hipsparselt handle
  *  @param[out]
  *  matDescr   the pointer to the dense matrix descriptor
+ *  @param[in]
+ *  rows       number of rows
+ *  @param[in]
+ *  cols       number of columns
+ *  @param[in]
+ *  ld         leading dimension
+ *  @param[in]
+ *  alignment  memory alignment in bytes
+ *  @param[in]
+ *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
+ *  @param[in]
+ *  order      memory layout. \p HIPSPARSE_ORDER_COLUMN or \p HIPSPARSE_ORDER_ROW.
+ *  @param[in]
+ *  sparsity   matrix sparsity ratio. see \ref hipsparseLtSparsity_t
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle, \p descr , \p rows , \p cols , \p ld  is invalid.
@@ -357,7 +392,7 @@ hipsparseStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*
                                                       hipsparseOrder_t            order,
                                                       hipsparseLtSparsity_t       sparsity);
 
-/*! \ingroup aux_module
+/*! \ingroup matrix_desc_module
  *  \brief Destroy a matrix descriptor
  *
  *  \details
@@ -365,7 +400,7 @@ hipsparseStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*
  *  resources used by the descriptor
  *
  *  @param[in]
- *  descr   the matrix descriptor
+ *  matDescr   the matrix descriptor
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p descr is invalid.
@@ -373,44 +408,50 @@ hipsparseStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatDescriptorDestroy(const hipsparseLtMatDescriptor_t* matDescr);
 
-/*! \ingroup aux_module
+/*! \ingroup matrix_desc_module
  *  \brief Specify the matrix attribute of a matrix descriptor
  *
  *  \details
  *  \p hipsparseLtMatDescSetAttribute sets the value of the specified attribute belonging
  *  to matrix descr such as number of batches and their stride.
  *
+ *  @param[in]
+ *  handle          the hipsparselt handle
  *  @param[inout]
  *  matDescr        the matrix descriptor
  *  @param[in]
- *  handle          the hipsparselt handle
  *  matAttribute    \ref HIPSPARSELT_MAT_NUM_BATCHES, \ref HIPSPARSELT_MAT_BATCH_STRIDE.
+ *  @param[in]
  *  data            pointer to the value to which the specified attribute will be set.
+ *  @param[in]
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
- *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p descr , \p data or \p dataSize is invalid.
+ *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p matmulDescr , \p data or \p dataSize is invalid.
  */
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatDescSetAttribute(const hipsparseLtHandle_t*    handle,
-                                                 hipsparseLtMatDescriptor_t*   matmulDescr,
+                                                 hipsparseLtMatDescriptor_t*   matDescr,
                                                  hipsparseLtMatDescAttribute_t matAttribute,
                                                  const void*                   data,
                                                  size_t                        dataSize);
 
-/*! \ingroup aux_module
+/*! \ingroup matrix_desc_module
  *  \brief Get the matrix type of a matrix descriptor
  *
  *  \details
  *  \p hipsparseLtMatDescGetAttribute returns the matrix attribute of a matrix descriptor
  *
- *  @param[inout]
- *  data            the memory address containing the attribute value retrieved by this function
  *
  *  @param[in]
  *  handle          the hipsparselt handle
+ *  @param[in]
+ *  matDescr     the matrix descriptor
+ *  @param[in]
  *  matAttribute    \ref HIPSPARSELT_MAT_NUM_BATCHES, \ref HIPSPARSELT_MAT_BATCH_STRIDE.
- *  matDescr        the matrix descriptor
+ *  @param[inout]
+ *  data            the memory address containing the attribute value retrieved by this function
+ *  @param[in]
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -418,29 +459,36 @@ hipsparseStatus_t hipsparseLtMatDescSetAttribute(const hipsparseLtHandle_t*    h
  */
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*        handle,
-                                                 const hipsparseLtMatDescriptor_t* matmulDescr,
+                                                 const hipsparseLtMatDescriptor_t* matDescr,
                                                  hipsparseLtMatDescAttribute_t     matAttribute,
                                                  void*                             data,
                                                  size_t                            dataSize);
 
 /* matmul descriptor */
-/*! \ingroup aux_module
+/*! \ingroup matmul_desc_module
  *  \brief  Initializes the matrix multiplication descriptor.
  *
  *  \details
  *  \p hipsparseLtMatmulDescriptorInit creates a matrix multiplication descriptor.
  *
+ *  @param[in]
+ *  handle          the hipsparselt handle
  *  @param[inout]
  *  matmulDescr     the matrix multiplication descriptor
  *  @param[in]
- *  handle   the hipsparselt handle
- *  opA      hipsparse operation for Matrix A.
- *  opB      hipsparse operation for Matrix B.
- *  matA     the matrix descriptor
- *  matB     the matrix descriptor
- *  matC     the matrix descriptor
- *  matD     the matrix descriptor
- *  computeType        size in bytes of the attribute value used for verification.
+ *  opA             hipsparse operation for Matrix A. \p HIPSPARSE_OPERATION_NON_TRANSPOSE or \p HIPSPARSE_OPERATION_TRANSPOSE
+ *  @param[in]
+ *  opB             hipsparse operation for Matrix B. \p HIPSPARSE_OPERATION_NON_TRANSPOSE or \p HIPSPARSE_OPERATION_TRANSPOSE
+ *  @param[in]
+ *  matA            the matrix descriptor
+ *  @param[in]
+ *  matB            the matrix descriptor
+ *  @param[in]
+ *  matC            the matrix descriptor
+ *  @param[in]
+ *  matD            the matrix descriptor
+ *  @param[in]
+ *  computeType     size in bytes of the attribute value used for verification.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p matmulDescr , \p opA , \p opB , \p matA , \p matB , \p matC , \p matD or \p computeType ,is invalid.
@@ -448,7 +496,7 @@ hipsparseStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*     
  */
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*        handle,
-                                                  hipsparseLtMatmulDescriptor_t*    matMulDescr,
+                                                  hipsparseLtMatmulDescriptor_t*    matmulDescr,
                                                   hipsparseOperation_t              opA,
                                                   hipsparseOperation_t              opB,
                                                   const hipsparseLtMatDescriptor_t* matA,
@@ -457,19 +505,22 @@ hipsparseStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*    
                                                   const hipsparseLtMatDescriptor_t* matD,
                                                   hipsparseComputetype_t            computeType);
 
-/*! \ingroup aux_module
+/*! \ingroup matmul_desc_module
  *  \brief Specify the matrix attribute of a matrix descriptor
  *
  *  \details
  *  \p hipsparseLtMatmulDescSetAttribute sets the value of the specified attribute belonging
  *  to matrix descr such as number of batches and their stride.
  *
- *  @param[inout]
- *  matDescr        the matrix descriptor
  *  @param[in]
  *  handle          the hipsparselt handle
- *  matAttribute    see \ref hipsparseLtMatmulDescAttribute_t
+ *  @param[inout]
+ *  matmulDescr     the matrix multiplication descriptor
+ *  @param[in]
+ *  matmulAttribute see \ref hipsparseLtMatmulDescAttribute_t
+ *  @param[in]
  *  data            pointer to the value to which the specified attribute will be set.
+ *  @param[in]
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -484,20 +535,23 @@ hipsparseStatus_t
                                       const void*                      data,
                                       size_t                           dataSize);
 
-/*! \ingroup aux_module
+/*! \ingroup matmul_desc_module
  *  \brief Get the matrix type of a matrix descriptor
  *
  *  \details
  *  \p hipsparseLtMatmulDescGetAttribute returns the matrix attribute of a matrix descriptor
  *
- *  @param[inout]
- *  data            the memory address containing the attribute value retrieved by this function
  *
  *  @param[in]
- *  handle          the hipsparselt handle
- *  matAttribute    see \ref hipsparseLtMatmulDescAttribute_t
- *  matDescr        the matrix descriptor
- *  dataSize        size in bytes of the attribute value used for verification.
+ *  handle           the hipsparselt handle
+ *  @param[in]
+ *  matmulDescr     the matrix multiplication descriptor
+ *  @param[in]
+ *  matmulAttribute  see \ref hipsparseLtMatmulDescAttribute_t
+ *  @param[inout]
+ *  data             the memory address containing the attribute value retrieved by this function
+ *  @param[in]
+ *  dataSize         size in bytes of the attribute value used for verification.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p matDescr , \p data or \p dataSize is invalid.
@@ -512,13 +566,19 @@ hipsparseStatus_t
                                       size_t                               dataSize);
 
 /* algorithm selection */
-/*! \ingroup aux_module
+/*! \ingroup matmul_algo_module
  *  \brief Initializes the algorithm selection descriptor
  *  \details
  *  \p hipsparseLtMatmulAlgSelectionInit creates a algorithm selection descriptor.
  *
+ *  @param[in]
+ *  handle           the hipsparselt handle
  *  @param[out]
- *  algSelection the pointer to the algorithm selection descriptor
+ *  algSelection     the pointer to the algorithm selection descriptor
+ *  @param[in]
+ *  matmulDescr      the matrix multiplication descriptor
+ *  @param[in]
+ *  alg              the algorithm used to do the matrix multiplication.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p matmulDescr or \p algSelection is invalid.
@@ -530,19 +590,22 @@ hipsparseStatus_t
                                       const hipsparseLtMatmulDescriptor_t* matmulDescr,
                                       hipsparseLtMatmulAlg_t               alg);
 
-/*! \ingroup aux_module
+/*! \ingroup matmul_algo_module
  *  \brief Specify the algorithm attribute of a algorithm selection descriptor
  *
  *  \details
  *  \p hipsparseLtMatmulAlgSetAttribute sets the value of the specified attribute
  *  belonging to algorithm selection descriptor.
  *
+ *  @param[in]
+ *  handle          the hipsparselt handle
  *  @param[inout]
  *  algSelection    the algorithm selection descriptor
  *  @param[in]
- *  handle          the hipsparselt handle
  *  attribute       attributes are specify in \ref hipsparseLtMatmulAlgAttribute_t
+ *  @param[in]
  *  data            pointer to the value to which the specified attribute will be set.
+ *  @param[in]
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -556,20 +619,23 @@ hipsparseStatus_t hipsparseLtMatmulAlgSetAttribute(const hipsparseLtHandle_t*   
                                                    const void*                      data,
                                                    size_t                           dataSize);
 
-/*! \ingroup aux_module
+/*! \ingroup matmul_algo_module
  *  \brief Get the specific algorithm attribute from algorithm selection descriptor
  *
  *  \details
  *  \p hipsparseLtMatmulAlgGetAttribute returns the value of the queried attribute belonging
  *  to algorithm selection descriptor.
  *
- *  @param[inout]
- *  data            the memory address containing the attribute value retrieved by this function
  *
  *  @param[in]
  *  handle          the hipsparselt handle
+ *  @param[in]
  *  algSelection    the algorithm selection descriptor
+ *  @param[in]
  *  attribute       attributes are specify in \ref hipsparseLtMatmulAlgAttribute_t
+ *  @param[inout]
+ *  data            the memory address containing the attribute value retrieved by this function
+ *  @param[in]
  *  dataSize        size in bytes of the attribute value used for verification.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -585,18 +651,18 @@ hipsparseStatus_t
                                      size_t                                 dataSize);
 
 /* matmul plan */
-/*! \ingroup spmm_module
+/*! \ingroup matmul_module
  *  \brief Determines the required workspace size.
  *  \details
  *  \p hipsparseLtMatmulGetWorkspace determines the required workspace size
  *  associated to the selected algorithm.
  *
- *  @param[out]
- *  workspaceSize    Workspace size in bytes
- *
  *  @param[in]
  *  handle           hipsparselt library handle
- *  algSelection     the algorithm selection descriptor.
+ *  @param[in]
+ *  plan             the matrix multiplication plan descriptor.
+ *  @param[out]
+ *  workspaceSize    Workspace size in bytes
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p algSelection or \p workspaceSize is invalid.
@@ -606,24 +672,25 @@ hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*     h
                                                 const hipsparseLtMatmulPlan_t* plan,
                                                 size_t*                        workspaceSize);
 
-/*! \ingroup aux_module
+/*! \ingroup matmul_module
  *  \brief Initializes the matrix multiplication plan descriptor
  *  \details
  *  \p hipsparseLtMatmulPlanInit creates a matrix multiplication plan descriptor.
  *  It should be destroyed at the end using \ref hipsparseLtMatmulPlanDestroy().
  *
- *  @param[out]
- *  plan the pointer to the matrix multiplication plan descriptor
- *
  *  @param[in]
  *  handle           hipsparselt library handle
+ *  @param[out]
+ *  plan             the matrix multiplication plan descriptor
+ *  @param[in]
  *  matmulDescr      the matrix multiplication descriptor
+ *  @param[in]
  *  algSelection     the algorithm selection descriptor
+ *  @param[in]
  *  workspaceSize    Workspace size in bytes
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
- *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p plan , \p matmulDescr , \p algSelection or \p workspaceSize is invalid.
- *  \retval HIPSPARSE_STATUS_INVALID_VALUE \ref HIPSPARSELT_MAT_NUM_BATCHES from matrix A to D are inconisistent
+ *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p plan , \p matmulDescr , \p algSelection or \p workspaceSize is invalid. \ref HIPSPARSELT_MAT_NUM_BATCHES from matrix A to D are inconisistent
  */
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*             handle,
@@ -632,7 +699,7 @@ hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*          
                                             const hipsparseLtMatmulAlgSelection_t* algSelection,
                                             size_t                                 workspaceSize);
 
-/*! \ingroup aux_module
+/*! \ingroup matmul_module
  *  \brief Destroy a matrix multiplication plan descriptor
  *  \details
  *  \p hipsparseLtMatmulPlanDestroy releases the resources used by an instance
@@ -649,7 +716,7 @@ HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatmulPlanDestroy(const hipsparseLtMatmulPlan_t* plan);
 
 /* matmul execution */
-/*! \ingroup spmm_module
+/*! \ingroup matmul_module
  *  \brief Sparse matrix dense matrix multiplication
  *
  *  \details
@@ -666,19 +733,27 @@ hipsparseStatus_t hipsparseLtMatmulPlanDestroy(const hipsparseLtMatmulPlan_t* pl
  *  \note
  *  Currently, only supports the case where D has the same shape of C.
  *
- *  @param[out]
- *  d_D         Pointer to the dense matrix D
- *
  *  @param[in]
  *  handle      hipsparselt library handle
+ *  @param[in]
  *  plan        Matrix multiplication plan
+ *  @param[in]
  *  alpha       scalar \f$\alpha\f$. (float)
+ *  @param[in]
  *  d_A         Pointer to the structured matrix A
+ *  @param[in]
  *  d_B         Pointer to the dense matrix B
+ *  @param[in]
  *  beta        scalar \f$\beta\f$. (float)
+ *  @param[in]
  *  d_C         Pointer to the dense matrix C
+ *  @param[out]
+ *  d_D         Pointer to the dense matrix D
+ *  @param[in]
  *  workspace   Pointor to the worksapce
+ *  @param[in]
  *  streams     Pointer to HIP stream array for the computation
+ *  @param[in]
  *  numStreams  Number of HIP streams in \p streams
 
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -699,7 +774,7 @@ hipsparseStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
                                     hipStream_t*                   streams,
                                     int32_t                        numStreams);
 
-/*! \ingroup spmm_module
+/*! \ingroup matmul_module
  *  \brief Sparse matrix dense matrix multiplication
  *
  *  \details
@@ -724,19 +799,28 @@ hipsparseStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
  *  \note
  *	The selected algorithm id can be retrieved by using
  *
- *  @param[out]
- *  d_D         Pointer to the dense matrix D
  *
  *  @param[in]
  *  handle      hipsparselt library handle
+ *  @param[in]
  *  plan        Matrix multiplication plan
+ *  @param[in]
  *  alpha       scalar \f$\alpha\f$. (float)
+ *  @param[in]
  *  d_A         Pointer to the structured matrix A
+ *  @param[in]
  *  d_B         Pointer to the dense matrix B
+ *  @param[in]
  *  beta        scalar \f$\beta\f$. (float)
+ *  @param[in]
  *  d_C         Pointer to the dense matrix C
+ *  @param[out]
+ *  d_D         Pointer to the dense matrix D
+ *  @param[in]
  *  workspace   Pointor to the worksapce
+ *  @param[in]
  *  streams     Pointer to HIP stream array for the computation
+ *  @param[in]
  *  numStreams  Number of HIP streams in \p streams
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -759,7 +843,7 @@ hipsparseStatus_t hipsparseLtMatmulSearch(const hipsparseLtHandle_t* handle,
 
 /* helper */
 // prune
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief Purnes a dense matrix.
  *
  *  \details
@@ -772,14 +856,17 @@ hipsparseStatus_t hipsparseLtMatmulSearch(const hipsparseLtHandle_t* handle,
  *  \note
  *  This function supports asynchronous execution with respect to stream.
  *
- *  @param[out]
- *  d_out       pointer to the pruned matrix.
- *
  *  @param[in]
  *  handle      hipsparselt library handle
+ *  @param[in]
  *  matmulDescr matrix multiplication descriptor.
+ *  @param[in]
  *  d_in        pointer to the dense matrix.
+ *  @param[out]
+ *  d_out       pointer to the pruned matrix.
+ *  @param[in]
  *  pruneAlg    pruning algorithm.
+ *  @param[in]
  *  stream      HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -793,7 +880,7 @@ hipsparseStatus_t hipsparseLtSpMMAPrune(const hipsparseLtHandle_t*           han
                                         hipsparseLtPruneAlg_t                pruneAlg,
                                         hipStream_t                          stream);
 
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief checks the correctness of the pruning structure for a given matrix.
  *
  *  \details
@@ -801,13 +888,15 @@ hipsparseStatus_t hipsparseLtSpMMAPrune(const hipsparseLtHandle_t*           han
  *  Contents in the given matrix must be sparsity 2:4.
  *
  *
- *  @param[out]
- *  d_valid     validation results (0 correct, 1 wrong).
- *
  *  @param[in]
  *  handle      hipsparselt library handle
+ *  @param[in]
  *  matmulDescr matrix multiplication descriptor.
+ *  @param[in]
  *  d_in        pointer to the matrix to check.
+ *  @param[out]
+ *  d_valid     validation results (0 correct, 1 wrong).
+ *  @param[in]
  *  stream      HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -820,7 +909,7 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck(const hipsparseLtHandle_t*         
                                              int*                                 d_valid,
                                              hipStream_t                          stream);
 
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief Purnes a dense matrix.
  *
  *  \details
@@ -833,16 +922,21 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck(const hipsparseLtHandle_t*         
  *  \note
  *  This function supports asynchronous execution with respect to stream.
  *
- *  @param[out]
- *  d_out       pointer to the pruned matrix.
- *
  *  @param[in]
  *  handle         hipsparselt library handle
+ *  @param[in]
  *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  @param[in]
  *  isSparseA      specify if the structured (sparse) matrix is in the first position (matA or matB) (Currently, only support matA)
+ *  @param[in]
  *  op             operation that will be applied to the structured (sparse) matrix in the multiplication
+ *  @param[in]
  *  d_in           pointer to the dense matrix.
+ *  @param[out]
+ *  d_out       pointer to the pruned matrix.
+ *  @param[in]
  *  pruneAlg       pruning algorithm.
+ *  @param[in]
  *  stream         HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -859,23 +953,26 @@ hipsparseStatus_t hipsparseLtSpMMAPrune2(const hipsparseLtHandle_t*        handl
                                          hipsparseLtPruneAlg_t             pruneAlg,
                                          hipStream_t                       stream);
 
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief checks the correctness of the pruning structure for a given matrix.
  *
  *  \details
  *  \p hipsparseLtSpMMAPruneCheck2 checks the correctness of the pruning structure for a given matrix.
  *  Contents in the given matrix must be sparsity 2:4.
  *
- *
- *  @param[out]
- *  d_valid     validation results (0 correct, 1 wrong).
- *
  *  @param[in]
  *  handle         hipsparselt library handle
+ *  @param[in]
  *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  @param[in]
  *  isSparseA      specify if the structured (sparse) matrix is in the first position (matA or matB) (HIP backend only support matA)
+ *  @param[in]
  *  op             operation that will be applied to the structured (sparse) matrix in the multiplication
+ *  @param[in]
  *  d_in           pointer to the matrix to check.
+ *  @param[out]
+ *  d_valid     validation results (0 correct, 1 wrong).
+ *  @param[in]
  *  stream         HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -892,20 +989,19 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck2(const hipsparseLtHandle_t*        
                                               hipStream_t                       stream);
 
 // compression
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief provide the size of the compressed matrix.
  *
  *  \details
  *  \p HIPSPARSE_STATUS_INVALID_VALUE provides the size of the compressed matrix
  *  to be allocated before calling \ref hipsparseLtSpMMACompress() or \ref hipsparseLtSpMMACompress2().
  *
- *
- *  @param[out]
- *  compressedSize     size in bytes of the compressed matrix.
- *
  *  @param[in]
  *  handle             hipsparselt library handle
+ *  @param[in]
  *  plan               matrix multiplication plan descriptor.
+ *  @param[out]
+ *  compressedSize     size in bytes of the compressed matrix.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval     HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p plan or \p compressedSize is invalid.
@@ -915,7 +1011,7 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     
                                                  const hipsparseLtMatmulPlan_t* plan,
                                                  size_t*                        compressedSize);
 
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief compresses a dense matrix to structured matrix.
  *
  *  \details
@@ -923,13 +1019,15 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     
  *  The compressed matrix is intended to be used as the first/second operand A/B
  *  in the \ref hipsparseLtMatmul() function.
  *
- *  @param[out]
- *  d_compressed   compressed matrix and metadata
- *
  *  @param[in]
  *  handle         handle to the hipsparselt library context queue.
+ *  @param[in]
  *  plan           matrix multiplication plan descriptor.
+ *  @param[in]
  *  d_dense        pointer to the dense matrix.
+ *  @param[out]
+ *  d_compressed   compressed matrix and metadata
+ *  @param[in]
  *  stream         HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
@@ -943,20 +1041,19 @@ hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle
                                            void*                          d_compressed,
                                            hipStream_t                    stream);
 
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief provide the size of the compressed matrix.
  *
  *  \details
  *  \p hipsparseLtSpMMACompressedSize2 provides the size of the compressed matrix
- *  to be allocated before calling \ref hipsparseLtSpMMACompress() or \ref hipsparseLtSpMMACompress2()
- *
- *
- *  @param[out]
- *  compressedSize     size in bytes of the compressed matrix.
+ *  to be allocated before calling \ref hipsparseLtSpMMACompress or \ref hipsparseLtSpMMACompress2
  *
  *  @param[in]
  *  handle             hipsparselt library handle
+ *  @param[in]
  *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  @param[out]
+ *  compressedSize     size in bytes of the compressed matrix.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval     HIPSPARSE_STATUS_NOT_INITIALIZED \p handle , \p sparseMatDescr \p compressedSize is invalid.
@@ -967,7 +1064,7 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*    
                                                   const hipsparseLtMatDescriptor_t* sparseMatDescr,
                                                   size_t*                           compressedSize);
 
-/*! \ingroup spmm_module
+/*! \ingroup helper_module
  *  \brief compresses a dense matrix to structured matrix.
  *
  *  \details
@@ -975,15 +1072,19 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*    
  *  The compressed matrix is intended to be used as the first/second operand A/B
  *  in the \ref hipsparseLtMatmul() function.
  *
- *  @param[out]
- *  d_compressed   compressed matrix and metadata
- *
  *  @param[in]
  *  handle         handle to the hipsparselt library context queue.
+ *  @param[in]
  *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  @param[in]
  *  isSparseA      specify if the structured (sparse) matrix is in the first position (matA or matB) (HIP backend only support matA)
+ *  @param[in]
  *  op             operation that will be applied to the structured (sparse) matrix in the multiplication
+ *  @param[in]
  *  d_dense        pointer to the dense matrix.
+ *  @param[out]
+ *  d_compressed   compressed matrix and metadata
+ *  @param[in]
  *  stream         HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
