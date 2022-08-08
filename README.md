@@ -1,5 +1,5 @@
 # hipSPARSELt
-hipSPARSELt is a SPARSE marshalling library, with multiple supported backends. It sits between the application and a 'worker' SPARSE library, marshalling inputs into the backend library and marshalling results back to the application. hipSPARSELt exports an interface that does not require the client to change, regardless of the chosen backend. Currently, hipSPARSELt supports [rocSPARSELt](library/src/hcc_detial/rocsparselt) and [cuSPARSELt v0.2](https://docs.nvidia.com/cuda/cusparselt) as backends.
+hipSPARSELt is a SPARSE marshalling library, with multiple supported backends. It sits between the application and a 'worker' SPARSE library, marshalling inputs into the backend library and marshalling results back to the application. hipSPARSELt exports an interface that does not require the client to change, regardless of the chosen backend. Currently, hipSPARSELt supports [rocSPARSELt](library/src/hcc_detial/rocsparselt) and [cuSPARSELt v0.3](https://docs.nvidia.com/cuda/cusparselt) as backends.
 
 ## Installing pre-built packages
 Download pre-built packages either from [ROCm's package servers](https://rocm.github.io/install.html#installing-from-amd-rocm-repositories) or by clicking the github releases tab and manually downloading, which could be newer. Release notes are available for each release on the releases tab.
@@ -48,7 +48,7 @@ The root of this repository has a helper bash script `install.sh` to build and i
        - <span style="color:green">BF8</span> input/output, <span style="color:green">FP32</span> Matrix Core accumulate
      - Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
 - CUDA
-  - TBD, need to support cusparseLt v0.2
+  - Support cusparseLt v0.3
 
 ## Documentation
 The latest hipSPARSELt documentation and API description can be found [here](doc/hipSPARSELt_api.docx) or downloaded as [pdf](doc/hipSPARSELt_api.pdf).
