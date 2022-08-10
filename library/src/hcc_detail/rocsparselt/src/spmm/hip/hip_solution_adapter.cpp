@@ -35,15 +35,15 @@
 #include "hipsparselt_ostream.hpp"
 #include "utility.hpp"
 
-#define HIP_CHECK_RETURN(expr)                                               \
-    do                                                                       \
-    {                                                                        \
-        hipError_t e = (expr);                                               \
-        if(e)                                                                \
-        {                                                                    \
-            hipsparselt_cerr << "err = " << hipGetErrorName(e) << std::endl; \
-            return e;                                                        \
-        }                                                                    \
+#define HIP_CHECK_RETURN(expr)                \
+    do                                        \
+    {                                         \
+        hipError_t e = (expr);                \
+        if(e)                                 \
+        {                                     \
+            PRINT_IF_HIP_ERROR(handle, expr); \
+            return e;                         \
+        }                                     \
     } while(0)
 
 SolutionAdapter::SolutionAdapter() {}
@@ -56,7 +56,7 @@ SolutionAdapter::SolutionAdapter(std::string const& name)
 SolutionAdapter::~SolutionAdapter()
 {
     for(auto& module : m_modules)
-        PRINT_IF_HIP_ERROR(hipModuleUnload(module.second));
+        PRINT_IF_HIP_ERROR_2(hipModuleUnload(module.second));
     for(auto handle : m_lib_handles)
         dlclose(handle);
 }
@@ -115,13 +115,15 @@ hipError_t SolutionAdapter::loadLibrary(std::string const& path)
     return hipSuccess;
 }
 
-hipError_t SolutionAdapter::loadCodeObjectBytes(std::vector<uint8_t> const& bytes,
+hipError_t SolutionAdapter::loadCodeObjectBytes(const _rocsparselt_handle*  handle,
+                                                std::vector<uint8_t> const& bytes,
                                                 std::string const&          name)
 {
-    return loadCodeObject(bytes.data(), name);
+    return loadCodeObject(handle, bytes.data(), name);
 }
 
-hipError_t SolutionAdapter::loadCodeObject(std::string const& name)
+hipError_t SolutionAdapter::loadCodeObject(const _rocsparselt_handle* handle,
+                                           std::string const&         name)
 {
     //check if the module already exist.
     if(m_modules.find(name) != m_modules.end())
@@ -139,13 +141,15 @@ hipError_t SolutionAdapter::loadCodeObject(std::string const& name)
 
         if(k_bytes != NULL)
         {
-            return loadCodeObject(k_bytes, name);
+            return loadCodeObject(handle, k_bytes, name);
         }
     }
     return hipErrorNotFound;
 }
 
-hipError_t SolutionAdapter::loadCodeObject(const void* image, std::string const& name)
+hipError_t SolutionAdapter::loadCodeObject(const _rocsparselt_handle* handle,
+                                           const void*                image,
+                                           std::string const&         name)
 {
     std::lock_guard<std::mutex> guard(m_access);
     auto                        it = m_modules.find(name);
@@ -213,20 +217,22 @@ hipError_t SolutionAdapter::launchKernel(const _rocsparselt_handle* handle,
 {
     if(handle->layer_mode & rocsparselt_layer_mode_log_trace)
     {
-        hipsparselt_cout << "Kernel " << kernel.kernelName << "\n"
-                         << " l"
-                         << " (" << kernel.workGroupSize.x << ", " << kernel.workGroupSize.y << ". "
-                         << kernel.workGroupSize.z << ")"
-                         << " x g"
-                         << " (" << kernel.numWorkGroups.x << ", " << kernel.numWorkGroups.y << ". "
-                         << kernel.numWorkGroups.z << ")"
-                         << " = "
-                         << "(" << kernel.numWorkItems.x << ", " << kernel.numWorkItems.y << ". "
-                         << kernel.numWorkItems.z << ") \n"
-                         << kernel.args << std::endl;
+        std::ostringstream stream;
+        stream << "Kernel " << kernel.kernelName << "\n"
+               << " l"
+               << " (" << kernel.workGroupSize.x << ", " << kernel.workGroupSize.y << ". "
+               << kernel.workGroupSize.z << ")"
+               << " x g"
+               << " (" << kernel.numWorkGroups.x << ", " << kernel.numWorkGroups.y << ". "
+               << kernel.numWorkGroups.z << ")"
+               << " = "
+               << "(" << kernel.numWorkItems.x << ", " << kernel.numWorkItems.y << ". "
+               << kernel.numWorkItems.z << ") \n"
+               << kernel.args << std::endl;
+        log_trace(handle, __func__, stream.str());
     }
 
-    HIP_CHECK_RETURN(loadCodeObject(kernel.kernelName));
+    HIP_CHECK_RETURN(loadCodeObject(handle, kernel.kernelName));
 
     hipFunction_t function;
     HIP_CHECK_RETURN(getKernel(function, kernel.kernelName));

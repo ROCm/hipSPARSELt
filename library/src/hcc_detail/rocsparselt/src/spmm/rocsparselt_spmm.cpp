@@ -45,27 +45,34 @@ rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*   
 
 {
     // Check if handle is valid
-    if(handle == nullptr || plan == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    if(plan == nullptr)
+    {
+        log_error(_handle, __func__, "plan is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
-
     if(!_plan->isInit())
     {
+        log_error(_handle, __func__, "plan did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
     if(workspaceSize == nullptr)
     {
+        log_error(_handle, __func__, "workspaceSize is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
@@ -76,7 +83,8 @@ rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*   
     }
 }
 
-rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle*      handle,
+rocsparselt_status rocsparselt_matmul_impl(const char*                    caller,
+                                           const rocsparselt_handle*      handle,
                                            const rocsparselt_matmul_plan* plan,
                                            const void*                    alpha,
                                            const void*                    d_A,
@@ -90,36 +98,73 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle*      handle
                                            bool                           search = false)
 {
     // Check if handle is valid
-    if(handle == nullptr || plan == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    if(plan == nullptr)
+    {
+        log_error(_handle, caller, "plan is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
-
     if(!_plan->isInit())
     {
+        log_error(_handle, caller, "plan did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
-    if(alpha == nullptr || beta == nullptr || d_A == nullptr || d_B == nullptr || d_C == nullptr
-       || d_D == nullptr)
+    if(alpha == nullptr)
     {
+        log_error(_handle, caller, "alpha is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_A == nullptr)
+    {
+        log_error(_handle, caller, "d_A is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_B == nullptr)
+    {
+        log_error(_handle, caller, "d_B is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(beta == nullptr)
+    {
+        log_error(_handle, caller, "beta is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_C == nullptr)
+    {
+        log_error(_handle, caller, "d_C is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_D == nullptr)
+    {
+        log_error(_handle, caller, "d_D is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
     if(workspace == nullptr && _plan->workspace_size != 0)
     {
-        hipsparselt_cerr << "The parameter number 9 (workspace) had an illegal value: "
+        hipsparselt_cerr << "The parameter number 9 (workspace) had an illegal value "
                             "expected a device memroy with "
                          << _plan->workspace_size << " bytes, but current is nullptr" << std::endl;
+        log_error(_handle, caller, "expected workspace is not a NULL pointer");
         return rocsparselt_status_invalid_value;
     }
 
@@ -127,12 +172,16 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle*      handle
     {
         hipsparselt_cerr << "The parameter number 11 (numStreams) had an illegal value: "
                          << numStreams << std::endl;
+        log_error(_handle, caller, "numStreams should >= 0");
         return rocsparselt_status_invalid_value;
     }
     else if(streams == nullptr && numStreams > 0)
     {
         hipsparselt_cerr << "The parameter number 10 (streams) had an illegal value: nullptr"
                          << std::endl;
+        log_error(_handle,
+                  caller,
+                  "streams should not be a NULL pointer because the numStreams is not 0");
         return rocsparselt_status_invalid_value;
     }
 
@@ -221,13 +270,14 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle*      handle
     auto    status
         = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
     if(status != rocsparselt_status_success)
+    {
+        log_error(_handle, caller, "A, B matrix size are not matched");
         return status;
+    }
 
     int64_t c_num_cols_a    = (opA == rocsparselt_operation_none ? c_k_a : num_cols_a);
     int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
         c_num_cols_a, c_lda, (batch_stride_a == 0 ? 1 : num_batches_a), type_a);
-    if(status != rocsparselt_status_success)
-        return status;
 
     const unsigned char* metadata = reinterpret_cast<const unsigned char*>(d_A) + metadata_offset;
 
@@ -238,10 +288,46 @@ rocsparselt_status rocsparselt_matmul_impl(const rocsparselt_handle*      handle
         act_args[0], act_args[1], bias_vector, bias_stride, streams, numStreams, &config_id,      \
         config_max_id, search_iterations
 
+    log_api(_handle,
+            caller,
+            "plan[in]",
+            *_plan,
+            "m",
+            m,
+            "n",
+            n,
+            "k",
+            k,
+            "activation",
+            hipsparselt_activation_type_to_string(act_type),
+            "act_args1",
+            act_args[0],
+            "act_args2",
+            act_args[1],
+            "alpha[in]",
+            alpha,
+            "d_A[in]",
+            d_A,
+            "d_B[in]",
+            d_B,
+            "beta[in]",
+            beta,
+            "d_C[in]",
+            d_C,
+            "d_D[in]",
+            d_D,
+            "workspace[in]",
+            workspace,
+            "streams[in]",
+            streams,
+            "numStreams[in]",
+            numStreams);
+
     status = rocsparselt_spmm_template(EX_PARM);
     if(search && status == rocsparselt_status_success)
     {
-        _plan->alg_selection->config_max_id = config_id;
+        log_info(_handle, caller, "found the best config_id", config_id);
+        _plan->alg_selection->config_id = config_id;
     }
     return status;
 }
@@ -263,7 +349,7 @@ rocsparselt_status rocsparselt_matmul(const rocsparselt_handle*      handle,
 
 {
     return rocsparselt_matmul_impl(
-        handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams);
+        __func__, handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams);
 }
 
 /********************************************************************************
@@ -282,8 +368,19 @@ rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle* handle,
                                              int32_t                   numStreams)
 
 {
-    return rocsparselt_matmul_impl(
-        handle, plan, alpha, d_A, d_B, beta, d_C, d_D, workspace, streams, numStreams, true);
+    return rocsparselt_matmul_impl(__func__,
+                                   handle,
+                                   plan,
+                                   alpha,
+                                   d_A,
+                                   d_B,
+                                   beta,
+                                   d_C,
+                                   d_D,
+                                   workspace,
+                                   streams,
+                                   numStreams,
+                                   true);
 }
 
 #ifdef __cplusplus

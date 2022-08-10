@@ -178,10 +178,30 @@ typedef enum rocsparselt_pointer_mode_
  */
 typedef enum rocsparselt_layer_mode
 {
-    rocsparselt_layer_mode_none      = 0x0, /**< layer is not active. */
-    rocsparselt_layer_mode_log_trace = 0x1, /**< layer is in logging mode. */
-    rocsparselt_layer_mode_log_bench = 0x2 /**< layer is in benchmarking mode. */
+    rocsparselt_layer_mode_none      = 0, /**< layer is not active. */
+    rocsparselt_layer_mode_log_error = 1, /**< layer is in error mode. */
+    rocsparselt_layer_mode_log_trace = 2, /**< layer is in trace mode. */
+    rocsparselt_layer_mode_log_hints = 4, /**< layer is in hints mode. */
+    rocsparselt_layer_mode_log_info  = 8, /**< layer is in info mode. */
+    rocsparselt_layer_mode_log_api   = 16, /**< layer is in api mode. */
 } rocsparselt_layer_mode;
+
+/*! \ingroup types_module
+ *  \brief Indicates if layer is active with level.
+ *
+ *  \details
+ *  The \ref rocsparselt_layer_level number indicates the logging characteristics.
+ *  A higher log level will show logs including the lower log level.
+ */
+typedef enum rocsparselt_layer_level
+{
+    rocsparselt_layer_level_none      = 0, /**< layer is not active. */
+    rocsparselt_layer_level_log_error = 1, /**< layer is in error mode. */
+    rocsparselt_layer_level_log_trace = 2, /**< layer is in trace mode. */
+    rocsparselt_layer_level_log_hints = 3, /**< layer is in hints mode. */
+    rocsparselt_layer_level_log_info  = 4, /**< layer is in info mode. */
+    rocsparselt_layer_level_log_api   = 5, /**< layer is in api mode. */
+} rocsparselt_layer_level;
 
 /*! \ingroup types_module
  *  \brief Specify the sparsity of the structured matrix.

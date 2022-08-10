@@ -271,6 +271,11 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
     case rocsparselt_datatype_i8_r:
         return rocsparselt_smfmac_compress_template<int8_t>(COMPRESS_PARAMS(int8_t));
     default:
+        log_error(handle,
+                  "rocsparselt_smfmac_compress",
+                  "datatype",
+                  rocsparselt_datatype_to_string(type),
+                  "is not supported");
         return rocsparselt_status_not_implemented;
     }
 }
@@ -317,27 +322,34 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
 
 {
     // Check if handle is valid
-    if(handle == nullptr || plan == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    if(plan == nullptr)
+    {
+        log_error(_handle, __func__, "plan is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
-
     if(!_plan->isInit())
     {
+        log_error(_handle, __func__, "plan did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
     if(compressedSize == nullptr)
     {
+        log_error(_handle, __func__, "compressedSize is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
@@ -351,10 +363,11 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
         }
         else
         {
+            log_error(_handle, __func__, "Matrix A is not a structured matrix");
             return rocsparselt_status_not_implemented;
         }
 
-        log_trace(*handle, "rocsparselt_smfmac_compressed_size");
+        log_api(_handle, __func__, "plan[in]", *_plan, "compressedSize[in]", compressedSize);
         return rocsparselt_smfmac_compressed_size_impl(
             matrix, _plan->matmul_descr->op_A, compressedSize);
     }
@@ -369,26 +382,35 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
 
 {
     // Check if handle is valid
-    if(handle == nullptr || sparseMatDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    if(sparseMatDescr == nullptr)
+    {
+        log_error(_handle, __func__, "sparseMatDescr is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
     auto _sparseMatDescr = reinterpret_cast<_rocsparselt_mat_descr*>(
         const_cast<rocsparselt_mat_descr*>(sparseMatDescr));
-
     if(!_sparseMatDescr->isInit())
+    {
+        log_error(_handle, __func__, "sparseMatDescr did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
+    }
 
     // Check if pointer is valid
     if(compressedSize == nullptr)
     {
+        log_error(_handle, __func__, "compressedSize is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
@@ -396,6 +418,7 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
         // Only support when Matrix A is a structured matrix.
         if(_sparseMatDescr->m_type != rocsparselt_matrix_type_structured)
         {
+            log_error(_handle, __func__, "Matrix is not a structured matrix");
             return rocsparselt_status_not_implemented;
         }
 
@@ -422,7 +445,12 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
             _sparseMatDescr->c_k  = -1;
         }
 
-        log_trace(*handle, "rocsparselt_smfmac_compressed_size2");
+        log_api(_handle,
+                __func__,
+                "sparseMatDescr[in]",
+                *_sparseMatDescr,
+                "compressedSize[in]",
+                compressedSize);
         return rocsparselt_smfmac_compressed_size_impl(_sparseMatDescr, op, compressedSize);
     }
 }
@@ -438,27 +466,40 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
 
 {
     // Check if handle is valid
-    if(handle == nullptr || plan == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    if(plan == nullptr)
+    {
+        log_error(_handle, __func__, "plan is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
-
     if(!_plan->isInit())
     {
+        log_error(_handle, __func__, "plan did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
-    if(d_dense == nullptr || d_compressed == nullptr)
+    if(d_dense == nullptr)
     {
+        log_error(_handle, __func__, "d_dense is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_compressed == nullptr)
+    {
+        log_error(_handle, __func__, "d_compressed is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
@@ -467,9 +508,21 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
     if(_plan->matmul_descr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         matrix = _plan->matmul_descr->matrix_A;
     else
+    {
+        log_error(_handle, __func__, "Matrix A is not a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
-    log_trace(*handle, "rocsparselt_smfmac_compress");
+    log_api(_handle,
+            __func__,
+            "plan[in]",
+            *_plan,
+            "d_dense[in]",
+            d_dense,
+            "d_compressed[out]",
+            d_compressed,
+            "stream[in]",
+            stream);
 
     return rocsparselt_smfmac_compress_impl(
         *handle, matrix, _plan->matmul_descr->op_A, d_dense, d_compressed, stream);
@@ -488,38 +541,77 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
 
 {
     // Check if handle is valid
-    if(handle == nullptr || sparseMatDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
-    auto _sparseMatDescr = reinterpret_cast<const _rocsparselt_mat_descr*>(sparseMatDescr);
-
-    if(!_sparseMatDescr->isInit())
+    if(sparseMatDescr == nullptr)
+    {
+        log_error(_handle, __func__, "sparseMatDescr is a NULL pointer");
         return rocsparselt_status_invalid_handle;
+    }
+    auto _sparseMatDescr = reinterpret_cast<_rocsparselt_mat_descr*>(
+        const_cast<rocsparselt_mat_descr*>(sparseMatDescr));
+    if(!_sparseMatDescr->isInit())
+    {
+        log_error(_handle, __func__, "sparseMatDescr did not initialized or already destroyed");
+        return rocsparselt_status_invalid_handle;
+    }
 
     if(!isSparseA)
+    {
+        log_error(_handle, __func__, "Matrix A must be a structured matrix");
         return rocsparselt_status_internal_error;
+    }
 
     if(op != rocsparselt_operation_none && op != rocsparselt_operation_transpose)
+    {
+        log_error(_handle, __func__, "op is invalid");
         return rocsparselt_status_invalid_value;
+    }
 
     // Check if pointer is valid
-    if(d_dense == nullptr || d_compressed == nullptr)
+    if(d_dense == nullptr)
     {
+        log_error(_handle, __func__, "d_dense is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
+
+    if(d_compressed == nullptr)
+    {
+        log_error(_handle, __func__, "d_compressed is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
     // Check if matrix A is a structured matrix
     if(_sparseMatDescr->m_type != rocsparselt_matrix_type_structured)
+    {
+        log_error(_handle, __func__, "Matrix is not a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
-    log_trace(*handle, "rocsparselt_smfmac_compress2");
+    log_api(_handle,
+            __func__,
+            "sparseMatDescr[in]",
+            *_sparseMatDescr,
+            "isSparseA[in]",
+            isSparseA,
+            "op[in]",
+            rocsparselt_operation_to_string(op),
+            "d_dense[in]",
+            d_dense,
+            "d_compressed[out]",
+            d_compressed,
+            "stream[in]",
+            stream);
 
     return rocsparselt_smfmac_compress_impl(
         *handle, _sparseMatDescr, op, d_dense, d_compressed, stream);

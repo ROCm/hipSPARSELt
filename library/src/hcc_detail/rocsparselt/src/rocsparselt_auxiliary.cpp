@@ -52,6 +52,7 @@ rocsparselt_status rocsparselt_init(rocsparselt_handle* handle)
     // Check if handle is valid
     if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -62,7 +63,8 @@ rocsparselt_status rocsparselt_init(rocsparselt_handle* handle)
         {
             auto _handle = reinterpret_cast<_rocsparselt_handle*>(handle);
             _handle->init();
-            log_trace(_handle, "rocsparselt_init");
+
+            log_api(_handle, __func__, "handle[out]", _handle);
         }
         catch(const rocsparselt_status& status)
         {
@@ -79,16 +81,18 @@ rocsparselt_status rocsparselt_destroy(const rocsparselt_handle* handle)
 {
     if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_success;
     }
 
     auto _handle = reinterpret_cast<_rocsparselt_handle*>(const_cast<rocsparselt_handle*>(handle));
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
-    log_trace(_handle, "rocsparse_destroy");
+    log_api(_handle, __func__, "handle[in]", _handle);
     // Destruct
     try
     {
@@ -96,6 +100,7 @@ rocsparselt_status rocsparselt_destroy(const rocsparselt_handle* handle)
     }
     catch(const rocsparselt_status& status)
     {
+        hipsparselt_cerr << "rocsparselt_destroy status=" << status << std::endl;
         return status;
     }
     return rocsparselt_status_success;
@@ -120,10 +125,20 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
     // Check if matDescr is valid
     if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-    else if(matDescr == nullptr)
+
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matDescr is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -131,11 +146,6 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
 
             auto status = validateMatrixArgs(_handle,
                                              rows,
@@ -149,7 +159,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
                 throw status;
 
             auto                   _matDescr = reinterpret_cast<_rocsparselt_mat_descr*>(matDescr);
-            _rocsparselt_mat_descr tmpMatDescr;
+            _rocsparselt_mat_descr tmpMatDescr(_handle);
             memcpy(_matDescr, &tmpMatDescr, sizeof(_rocsparselt_mat_descr));
             _matDescr->m_type    = rocsparselt_matrix_type_dense;
             _matDescr->m         = rows;
@@ -162,10 +172,26 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
             int64_t batch_stride = cols * ld;
             _matDescr->attributes[rocsparselt_mat_batch_stride].set(&batch_stride);
             _matDescr->attributes[rocsparselt_mat_num_batches].set(&num_batches);
-            log_trace(_handle, "rocsparselt_dense_descr_init");
+            log_api(_handle,
+                    __func__,
+                    "_matDescr[out]",
+                    _matDescr,
+                    "rows[in]",
+                    rows,
+                    "cols[in]",
+                    cols,
+                    "ld[in]",
+                    ld,
+                    "alignment[in]",
+                    alignment,
+                    "valueType[in]",
+                    rocsparselt_datatype_to_string(valueType),
+                    "order[in]",
+                    rocsparselt_order_to_string(order));
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -193,10 +219,19 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
     // Check if matDescr is valid
     if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-    else if(matDescr == nullptr)
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matDescr is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -204,11 +239,6 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
             auto status = validateMatrixArgs(_handle,
                                              rows,
                                              cols,
@@ -221,7 +251,7 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
                 throw status;
 
             auto                   _matDescr = reinterpret_cast<_rocsparselt_mat_descr*>(matDescr);
-            _rocsparselt_mat_descr tmpMatDescr;
+            _rocsparselt_mat_descr tmpMatDescr(_handle);
             memcpy(_matDescr, &tmpMatDescr, sizeof(_rocsparselt_mat_descr));
             _matDescr->m_type    = rocsparselt_matrix_type_structured;
             _matDescr->m         = rows;
@@ -231,14 +261,33 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
             _matDescr->type      = valueType;
             _matDescr->order     = order;
             _matDescr->sparsity  = sparsity;
+
             int     num_batches  = 1;
             int64_t batch_stride = cols * ld;
             _matDescr->attributes[rocsparselt_mat_batch_stride].set(&batch_stride);
             _matDescr->attributes[rocsparselt_mat_num_batches].set(&num_batches);
-            log_trace(_handle, "rocsparselt_structured_descr_init");
+            log_api(_handle,
+                    __func__,
+                    "_matDescr[out]",
+                    _matDescr,
+                    "rows[in]",
+                    rows,
+                    "cols[in]",
+                    cols,
+                    "ld[in]",
+                    ld,
+                    "alignment[in]",
+                    alignment,
+                    "valueType[in]",
+                    rocsparselt_datatype_to_string(valueType),
+                    "order[in]",
+                    rocsparselt_order_to_string(order),
+                    "sparsity[in]",
+                    rocsparselt_sparsity_to_string(sparsity));
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -250,14 +299,23 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
  *******************************************************************************/
 rocsparselt_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr* matDescr)
 {
+    //
     if(matDescr == nullptr)
+    {
+        hipsparselt_cerr << "matDescr is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
+    }
 
     auto _matDescr
         = reinterpret_cast<_rocsparselt_mat_descr*>(const_cast<rocsparselt_mat_descr*>(matDescr));
 
-    if(_matDescr->isInit())
+    if(!_matDescr->isInit())
+    {
+        hipsparselt_cerr << "matDescr=" << matDescr << " did not initialized or already destroyed"
+                         << std::endl;
         return rocsparselt_status_success;
+    }
+    log_api(_matDescr->handle, __func__, "_matDescr[in]", _matDescr);
     // Destruct
     try
     {
@@ -265,6 +323,7 @@ rocsparselt_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr* ma
     }
     catch(const rocsparselt_status& status)
     {
+        log_info(_matDescr->handle, __func__, "status", status);
         return status;
     }
     return rocsparselt_status_success;
@@ -282,12 +341,26 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
 
 {
 
-    if(handle == nullptr || matDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    else if(matDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matDescr is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
+        log_error(_handle, __func__, "data is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -295,16 +368,14 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
 
             auto _matDescr = reinterpret_cast<_rocsparselt_mat_descr*>(matDescr);
 
             if(!_matDescr->isInit())
+            {
+                log_error(_handle, __func__, "matDescr did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
+            }
 
             rocsparselt_status status;
             switch(matAttribute)
@@ -313,13 +384,18 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
             {
                 if((status = validateSetAttributeDataSize<int>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
+                }
                 const int* num_batches = reinterpret_cast<const int*>(data);
                 if(*num_batches < 1)
                 {
                     hipsparselt_cerr
                         << "The number of batches must be greater or equal to 1, current: "
                         << *num_batches << std::endl;
+                    log_error(
+                        _handle, __func__, "The number of batches must be greater or equal to 1");
                     return rocsparselt_status_invalid_value;
                 }
                 break;
@@ -338,6 +414,8 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
                         hipsparselt_cerr << "The batch stride must be 0 or at least cols * ld ("
                                          << expected_batch_stride << "), current: " << *batch_stride
                                          << std::endl;
+                        log_error(
+                            _handle, __func__, "The batch stride must be 0 or at least cols * ld");
                         return rocsparselt_status_invalid_value;
                     }
                 }
@@ -345,10 +423,20 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
             }
             }
             _matDescr->attributes[matAttribute].set(data, dataSize);
-            log_trace(_handle, "rocsparselt_mat_descr_set_attribute");
+            log_api(_handle,
+                    __func__,
+                    "matDescr[out]",
+                    _matDescr,
+                    "matAttribute[in]",
+                    matAttribute,
+                    "data[in]",
+                    data,
+                    "dataSize[in]",
+                    dataSize);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -365,8 +453,21 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
                                                        void*                           data,
                                                        size_t                          dataSize)
 {
-    if(handle == nullptr || matDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matDescr is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
@@ -377,16 +478,11 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
     {
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
-
             auto _matDescr = reinterpret_cast<const _rocsparselt_mat_descr*>(matDescr);
 
             if(!_matDescr->isInit())
             {
+                log_error(_handle, __func__, "matDescr did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
             }
 
@@ -398,6 +494,7 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
                 if((status = validateGetAttributeDataSize<int>(dataSize))
                    != rocsparselt_status_success)
                 {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
                 }
                 break;
@@ -407,6 +504,7 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
                 if((status = validateGetAttributeDataSize<int64_t>(dataSize))
                    != rocsparselt_status_success)
                 {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
                 }
                 break;
@@ -419,10 +517,20 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
             {
                 return rocsparselt_status_internal_error;
             }
-            log_trace(_handle, "rocsparselt_mat_descr_get_attribute");
+            log_api(_handle,
+                    __func__,
+                    "matDescr[in]",
+                    _matDescr,
+                    "matAttribute[in]",
+                    matAttribute,
+                    "data[out]",
+                    data,
+                    "dataSize[in]",
+                    dataSize);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -443,13 +551,41 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
                                                  rocsparselt_compute_type     computeType)
 {
     // Check if matmulDescr is valid
-    if(handle == nullptr || matA == nullptr || matB == nullptr || matC == nullptr
-       || matD == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matA == nullptr)
+    {
+        log_error(_handle, __func__, "matA is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
+    else if(matB == nullptr)
+    {
+        log_error(_handle, __func__, "matB is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
+    else if(matC == nullptr)
+    {
+        log_error(_handle, __func__, "matC is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
+    else if(matD == nullptr)
+    {
+        log_error(_handle, __func__, "matD is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(matmulDescr == nullptr)
     {
+        log_error(_handle, __func__, "matmulDescr is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -457,31 +593,37 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                log_trace(_handle, "handle not init");
-                return rocsparselt_status_invalid_handle;
-            }
             auto _matA = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matA));
             if(!_matA->isInit())
+            {
+                log_error(_handle, __func__, "matA did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
+            }
 
             auto _matB = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matB));
             if(!_matB->isInit())
+            {
+                log_error(_handle, __func__, "matB did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
+            }
 
             auto _matC = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matC));
             if(!_matC->isInit())
+            {
+                log_error(_handle, __func__, "matC did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
+            }
 
             auto _matD = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matD));
             if(!_matD->isInit())
+            {
+                log_error(_handle, __func__, "matD did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
+            }
 
             auto status = validateMatmulDescrArgs(_handle,
                                                   opA,
@@ -516,7 +658,7 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             _matA->c_k        = k / 2;
             _matA->c_ld       = (opA == rocsparselt_operation_transpose ? _matA->c_k : m);
             auto _matmulDescr = reinterpret_cast<_rocsparselt_matmul_descr*>(matmulDescr);
-            _rocsparselt_matmul_descr tmpDescr;
+            _rocsparselt_matmul_descr tmpDescr(_handle);
             memcpy(_matmulDescr, &tmpDescr, sizeof(_rocsparselt_matmul_descr));
             _matmulDescr->op_A         = opA;
             _matmulDescr->op_B         = opB;
@@ -525,10 +667,28 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             _matmulDescr->matrix_C     = _matC;
             _matmulDescr->matrix_D     = _matD;
             _matmulDescr->compute_type = computeType;
-            log_trace(_handle, "rocsparselt_matmul_descr_init");
+            log_api(_handle,
+                    __func__,
+                    "matmulDescr",
+                    _matmulDescr,
+                    "opA",
+                    rocsparselt_operation_to_string(opA),
+                    "opB",
+                    rocsparselt_operation_to_string(opB),
+                    "matA",
+                    _matA,
+                    "matB",
+                    _matB,
+                    "matC",
+                    _matC,
+                    "matD",
+                    _matD,
+                    "computeType",
+                    rocsparselt_compute_type_to_string(computeType));
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -547,13 +707,27 @@ rocsparselt_status
                                            size_t                             dataSize)
 {
     // Check if matmulDescr is valid
-    if(handle == nullptr || matmulDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matmulDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matmulDescr is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
         hipsparselt_cerr << "The parameter number 4 (data) cannot be NULL" << std::endl;
+        log_error(_handle, __func__, "data is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -561,16 +735,12 @@ rocsparselt_status
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
-
             auto _matmulDescr = reinterpret_cast<_rocsparselt_matmul_descr*>(matmulDescr);
 
             if(!_matmulDescr->isInit())
             {
+                log_error(
+                    _handle, __func__, "matmulDescr did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
             }
             rocsparselt_status status;
@@ -579,7 +749,11 @@ rocsparselt_status
                 using val_type = typename std::remove_pointer<decltype(val)>::type;
                 if((status = validateSetAttributeDataSize<val_type>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(
+                        _handle, "rocsparselt_matmul_descr_set_attribute", "dataSize is invalid");
                     return;
+                }
                 *val   = *(reinterpret_cast<const val_type*>(data));
                 status = rocsparselt_status_success;
             };
@@ -613,6 +787,8 @@ rocsparselt_status
                 {
                     hipsparselt_cerr << "Sigmoid activation function is not support for int8"
                                      << std::endl;
+                    log_error(
+                        _handle, __func__, "Sigmoid activation function is not support for int8");
                     _matmulDescr->activation_sigmoid = 0;
                     return rocsparselt_status_not_implemented;
                 }
@@ -624,6 +800,8 @@ rocsparselt_status
                 {
                     hipsparselt_cerr << "Tanh activation function is not support for int8"
                                      << std::endl;
+                    log_error(
+                        _handle, __func__, "Tanh activation function is not support for int8");
                     _matmulDescr->activation_tanh = 0;
                     return rocsparselt_status_not_implemented;
                 }
@@ -639,7 +817,10 @@ rocsparselt_status
             {
                 if((status = validateSetAttributeDataSize<float*>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
+                }
                 _matmulDescr->bias_pointer = reinterpret_cast<float*>(data);
 
                 break;
@@ -648,14 +829,21 @@ rocsparselt_status
             {
                 if((status = validateSetAttributeDataSize<int64_t>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
+                }
                 const int64_t* bias_stride = reinterpret_cast<const int64_t*>(data);
                 if(*bias_stride != 0 && *bias_stride < _matmulDescr->matrix_D.m)
                 {
-                    hipsparselt_cerr << "The batch stride must be 0 or at least the number of rows "
+                    hipsparselt_cerr << "The bias stride must be 0 or at least the number of rows "
                                         "of the output matrix (D) ("
                                      << _matmulDescr->matrix_D.m << "), current: " << *bias_stride
                                      << std::endl;
+                    log_error(_handle,
+                              __func__,
+                              "The bias stride must be 0 or at least the number of rows of the "
+                              "output matrix (D)");
                     return rocsparselt_status_invalid_value;
                 }
                 _matmulDescr->bias_stride = *bias_stride;
@@ -663,14 +851,26 @@ rocsparselt_status
             }
 #endif
             default:
+                log_error(
+                    _handle, __func__, "matmulAttribute", matmulAttribute, "is not implemented");
                 return rocsparselt_status_not_implemented;
             }
             if(status != rocsparselt_status_success)
                 return status;
-            log_trace(_handle, "rocsparselt_matmul_descr_set_attribute");
+            log_api(_handle,
+                    __func__,
+                    "matmulDescr[out]",
+                    matmulDescr,
+                    "matmulAttribute[in]",
+                    matmulAttribute,
+                    "data[in]",
+                    data,
+                    "dataSize[in]",
+                    dataSize);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -691,27 +891,38 @@ rocsparselt_status
 {
 
     // Check if matmulDescr is valid
-    if(handle == nullptr || matmulDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matmulDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matmulDescr is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
+        hipsparselt_cerr << "The parameter number 4 (data) cannot be NULL" << std::endl;
+        log_error(_handle, __func__, "data is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
     {
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
-
             auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
             if(!_matmulDescr->isInit())
             {
+                log_error(
+                    _handle, __func__, "matmulDescr did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
             }
 
@@ -720,7 +931,11 @@ rocsparselt_status
             auto retrive_data = [&](auto val) {
                 if((status = validateGetAttributeDataSize<decltype(val)>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(
+                        _handle, "rocsparselt_matmul_descr_get_attribute", "dataSize is invalid");
                     return;
+                }
                 *(reinterpret_cast<decltype(val)*>(data)) = val;
                 status                                    = rocsparselt_status_success;
             };
@@ -764,26 +979,49 @@ rocsparselt_status
             case rocsparselt_matmul_bias_pointer:
                 if((status = validateGetAttributeDataSize<float*>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
+                }
+
                 if(_matmulDescr->bias_pointer.get(data, dataSize) == 0)
+                {
+                    log_error(_handle, __func__, "read bias_pointer failed");
                     return rocsparselt_status_internal_error;
+                }
                 break;
             case rocsparselt_matmul_bias_stride:
                 if((status = validateGetAttributeDataSize<int64_t>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
+                }
+
                 *(reinterpret_cast<int64_t*>(data)) = _matmulDescr->bias_stride;
                 break;
 #endif
             default:
+                log_error(
+                    _handle, __func__, "matmulAttribute", matmulAttribute, "is not implemented");
                 return rocsparselt_status_not_implemented;
             }
             if(status != rocsparselt_status_success)
                 return status;
-            log_trace(_handle, "rocsparselt_matmul_descr_get_attribute");
+            log_api(_handle,
+                    __func__,
+                    "matmulDescr[in]",
+                    matmulDescr,
+                    "matmulAttribute[in]",
+                    matmulAttribute,
+                    "data[out]",
+                    data,
+                    "dataSize[in]",
+                    dataSize);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -800,12 +1038,26 @@ rocsparselt_status
                                           rocsparselt_matmul_alg            alg)
 {
     // Check if algSelection is valid
-    if(handle == nullptr || matmulDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matmulDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matmulDescr is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(algSelection == nullptr)
     {
+        log_error(_handle, __func__, "algSelection is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -813,14 +1065,12 @@ rocsparselt_status
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
+
             auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
             if(!_matmulDescr->isInit())
             {
+                log_error(
+                    _handle, __func__, "matmulDescr did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
             }
 
@@ -849,17 +1099,26 @@ rocsparselt_status
             if(!config_max_id)
             {
                 hipsparselt_cerr << "There are no solutions for this problem size" << std::endl;
+                log_error(_handle, __func__, "There are no solutions for this problem size");
                 return rocsparselt_status_not_implemented;
             }
 
-            _rocsparselt_matmul_alg_selection tmpAlgSelection;
+            _rocsparselt_matmul_alg_selection tmpAlgSelection(_handle);
             memcpy(_algSelection, &tmpAlgSelection, sizeof(_rocsparselt_matmul_alg_selection));
             _algSelection->alg           = alg;
             _algSelection->config_max_id = config_max_id;
-            log_trace(_handle, "rocsparselt_matmul_alg_selection_init");
+            log_api(_handle,
+                    __func__,
+                    "algSelection[out]",
+                    algSelection,
+                    "matmulDescr[in]",
+                    matmulDescr,
+                    "alg[in]",
+                    alg);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -877,12 +1136,26 @@ rocsparselt_status
                                          size_t                            dataSize)
 {
     // Check if algSelection is valid
-    if(handle == nullptr || algSelection == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(algSelection == nullptr)
+    {
+        log_error(_handle, __func__, "algSelection is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
+        log_error(_handle, __func__, "data is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else
@@ -890,15 +1163,11 @@ rocsparselt_status
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
-
             auto _algSelection = reinterpret_cast<_rocsparselt_matmul_alg_selection*>(algSelection);
             if(!_algSelection->isInit())
             {
+                log_error(
+                    _handle, __func__, "algSelection did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
             }
             rocsparselt_status status;
@@ -908,7 +1177,10 @@ rocsparselt_status
             {
                 if((status = validateSetAttributeDataSize<int>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
+                }
 
                 const int* config_id = reinterpret_cast<const int*>(data);
                 if(*config_id >= _algSelection->config_max_id)
@@ -926,19 +1198,25 @@ rocsparselt_status
             {
                 hipsparselt_cerr << "rocsparselt_matmul_alg_config_max_id is only for query."
                                  << std::endl;
+                log_error(_handle, __func__, "config_max_id is only for query");
                 return rocsparselt_status_invalid_value;
             }
             case rocsparselt_matmul_search_iterations:
             {
                 if((status = validateSetAttributeDataSize<int>(dataSize))
                    != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
                     return status;
+                }
+
                 const int* search_iterations = reinterpret_cast<const int*>(data);
                 if(*search_iterations < 1)
                 {
                     hipsparselt_cerr
                         << "The search iterations must be greater or equal to 1, current: "
                         << *search_iterations << std::endl;
+                    log_error(_handle, __func__, "search iterations must >= 1");
                     return rocsparselt_status_invalid_value;
                 }
                 _algSelection->search_iterations = *search_iterations;
@@ -947,10 +1225,20 @@ rocsparselt_status
             default:
                 return rocsparselt_status_not_implemented;
             }
-            log_trace(_handle, "rocsparselt_matmul_alg_set_attribute");
+            log_api(_handle,
+                    __func__,
+                    "algSelection[out]",
+                    algSelection,
+                    "attribute[in]",
+                    attribute,
+                    "data[in]",
+                    data,
+                    "dataSize[in]",
+                    dataSize);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -968,38 +1256,48 @@ rocsparselt_status
                                          size_t                                  dataSize)
 
 {
-    if(handle == nullptr || algSelection == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(algSelection == nullptr)
+    {
+        log_error(_handle, __func__, "algSelection is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(data == nullptr)
     {
+        log_error(_handle, __func__, "data is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
-    }
-    else if(dataSize <= 0)
-    {
-        return rocsparselt_status_invalid_value;
     }
     else
     {
         try
         {
-            auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-            if(!_handle->isInit())
-            {
-                return rocsparselt_status_invalid_handle;
-            }
-
             auto _algSelection
                 = reinterpret_cast<const _rocsparselt_matmul_alg_selection*>(algSelection);
             if(!_algSelection->isInit())
             {
+                log_error(
+                    _handle, __func__, "algSelection did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
             }
 
             rocsparselt_status status;
             if((status = validateGetAttributeDataSize<int>(dataSize)) != rocsparselt_status_success)
+            {
+                log_error(_handle, __func__, "dataSize is invalid");
                 return status;
+            }
+
             switch(attribute)
             {
             case rocsparselt_matmul_alg_config_id:
@@ -1012,12 +1310,23 @@ rocsparselt_status
                 *reinterpret_cast<int*>(data) = _algSelection->search_iterations;
                 break;
             default:
+                log_error(_handle, __func__, "attribute", attribute, "is not supported");
                 return rocsparselt_status_not_implemented;
             }
-            log_trace(_handle, "rocsparselt_matmul_alg_get_attribute");
+            log_api(_handle,
+                    __func__,
+                    "algSelection[in]",
+                    algSelection,
+                    "attribute[in]",
+                    attribute,
+                    "data[out]",
+                    data,
+                    "dataSize[in]",
+                    dataSize);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -1036,29 +1345,44 @@ rocsparselt_status
 
 {
     // Check if plan is valid
-    if(handle == nullptr || matmulDescr == nullptr || algSelection == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    if(!_handle->isInit())
+    {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        return rocsparselt_status_invalid_handle;
+    }
+
+    if(matmulDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matmulDescr is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
+    else if(algSelection == nullptr)
+    {
+        log_error(_handle, __func__, "algSelection is a NULL pointer");
         return rocsparselt_status_invalid_handle;
     }
     else if(plan == nullptr)
     {
+        log_error(_handle, __func__, "plan is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
     else if(workspaceSize < 0)
     {
+        log_error(_handle, __func__, "workspaceSize is invalid");
         return rocsparselt_status_invalid_size;
     }
     else
     {
-        auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-        if(!_handle->isInit())
-        {
-            return rocsparselt_status_invalid_handle;
-        }
-
         auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
         if(!_matmulDescr->isInit())
         {
+            log_error(_handle, __func__, "matmulDescr did not initialized or already destroyed");
             return rocsparselt_status_invalid_handle;
         }
 
@@ -1066,6 +1390,7 @@ rocsparselt_status
             = reinterpret_cast<const _rocsparselt_matmul_alg_selection*>(algSelection);
         if(!_algSelection->isInit())
         {
+            log_error(_handle, __func__, "algSelection did not initialized or already destroyed");
             return rocsparselt_status_invalid_handle;
         }
         // Allocate
@@ -1083,19 +1408,31 @@ rocsparselt_status
             {
                 hipsparselt_cerr << " number of batches of matrics A,B,C,D must be the same"
                                  << std::endl;
+                log_error(
+                    _handle, __func__, "number of batches of matrics A,B,C,D must be the same");
                 return rocsparselt_status_invalid_size;
             }
 
-            _rocsparselt_matmul_plan tmpPlan;
+            _rocsparselt_matmul_plan tmpPlan(_handle);
             memcpy(_plan, &tmpPlan, sizeof(_rocsparselt_matmul_plan));
 
             (_plan)->matmul_descr   = new _rocsparselt_matmul_descr(*_matmulDescr);
             (_plan)->alg_selection  = const_cast<_rocsparselt_matmul_alg_selection*>(_algSelection);
             (_plan)->workspace_size = workspaceSize;
-            log_trace(_handle, "rocsparselt_matmul_plan_init");
+            log_api(_handle,
+                    __func__,
+                    "plan[out]",
+                    plan,
+                    "matmulDescr[in]",
+                    matmulDescr,
+                    "algSelection[in]",
+                    algSelection,
+                    "workspaceSize[in]",
+                    workspaceSize);
         }
         catch(const rocsparselt_status& status)
         {
+            log_info(_handle, __func__, "status", status);
             return status;
         }
         return rocsparselt_status_success;
@@ -1109,6 +1446,7 @@ rocsparselt_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan
 {
     if(plan == nullptr)
     {
+        hipsparselt_cerr << "plan is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
@@ -1116,9 +1454,11 @@ rocsparselt_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan
         = reinterpret_cast<_rocsparselt_matmul_plan*>(const_cast<rocsparselt_matmul_plan*>(plan));
     if(!_plan->isInit())
     {
+        hipsparselt_cerr << "plan did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    log_api(_plan->handle, __func__, "plan[in]", plan);
     // Destruct
     try
     {
@@ -1126,6 +1466,7 @@ rocsparselt_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan
     }
     catch(const rocsparselt_status& status)
     {
+        log_info(_plan->handle, __func__, "status", status);
         return status;
     }
     return rocsparselt_status_success;

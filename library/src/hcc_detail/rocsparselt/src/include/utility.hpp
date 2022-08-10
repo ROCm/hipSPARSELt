@@ -82,24 +82,102 @@ static constexpr char rocsparselt_precision_string<int32_t>[] = "i32_r";
 template <>
 static constexpr char rocsparselt_precision_string<uint32_t>[] = "u32_r";
 
+std::string prefix(const char* layer, const char* caller);
+
+const char* rocsparselt_datatype_to_string(rocsparselt_datatype type);
+
+const char* rocsparselt_compute_type_to_string(rocsparselt_compute_type type);
+
+const char* rocsparselt_order_to_string(rocsparselt_order order);
+
+const char* rocsparselt_operation_to_string(rocsparselt_operation op);
+
+const char* rocsparselt_sparsity_to_string(rocsparselt_sparsity sparsity);
+
+const char* rocsparselt_matrix_type_to_string(rocsparselt_matrix_type type);
+
+const char* rocsparselt_layer_mode2string(rocsparselt_layer_mode layer_mode);
+
 // if trace logging is turned on with
 // (handle->layer_mode & rocsparselt_layer_mode_log_trace) == true
 // then
 // log_function will call log_arguments to log function
 // arguments with a comma separator
 template <typename H, typename... Ts>
-void log_trace(const _rocsparselt_handle* handle, H head, Ts&&... xs)
+void log_base(const _rocsparselt_handle* handle,
+              rocsparselt_layer_mode     layer_mode,
+              const char*                func,
+              H                          head,
+              Ts&&... xs)
 {
     if(nullptr != handle && nullptr != handle->log_trace_os)
     {
-        if(handle->layer_mode & rocsparselt_layer_mode_log_trace)
+        if(handle->layer_mode & layer_mode)
         {
             std::string comma_separator = ",";
 
             std::ostream* os = handle->log_trace_os;
-            log_arguments(*os, comma_separator, head, std::forward<Ts>(xs)...);
+
+            std::string prefix_str = prefix(rocsparselt_layer_mode2string(layer_mode), func);
+
+            log_arguments(*os, comma_separator, prefix_str, head, std::forward<Ts>(xs)...);
         }
     }
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocsparselt_layer_mode_log_error) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_error(const _rocsparselt_handle* handle, const char* func, H head, Ts&&... xs)
+{
+    log_base(handle, rocsparselt_layer_mode_log_error, func, head, std::forward<Ts>(xs)...);
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocsparselt_layer_mode_log_trace) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_trace(const _rocsparselt_handle* handle, const char* func, H head, Ts&&... xs)
+{
+    log_base(handle, rocsparselt_layer_mode_log_trace, func, head, std::forward<Ts>(xs)...);
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocsparselt_layer_mode_log_hints) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_hints(const _rocsparselt_handle* handle, const char* func, H head, Ts&&... xs)
+{
+    log_base(handle, rocsparselt_layer_mode_log_hints, func, head, std::forward<Ts>(xs)...);
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocsparselt_layer_mode_log_info) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_info(const _rocsparselt_handle* handle, const char* func, H head, Ts&&... xs)
+{
+    log_base(handle, rocsparselt_layer_mode_log_info, func, head, std::forward<Ts>(xs)...);
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocsparselt_layer_mode_log_api) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_api(const _rocsparselt_handle* handle, const char* func, H head, Ts&&... xs)
+{
+    log_base(handle, rocsparselt_layer_mode_log_api, func, head, std::forward<Ts>(xs)...);
 }
 
 // if bench logging is turned on with
@@ -108,16 +186,20 @@ void log_trace(const _rocsparselt_handle* handle, H head, Ts&&... xs)
 // log_bench will call log_arguments to log a string that
 // can be input to the executable rocsparselt-bench.
 template <typename H, typename... Ts>
-void log_bench(const _rocsparselt_handle* handle, H head, std::string precision, Ts&&... xs)
+void log_bench(
+    const _rocsparselt_handle* handle, const char* func, H head, std::string precision, Ts&&... xs)
 {
     if(nullptr != handle && nullptr != handle->log_bench_os)
     {
-        if(handle->layer_mode & rocsparselt_layer_mode_log_bench)
+        if(handle->log_bench)
         {
-            std::string space_separator = " ";
+            std::string comma_separator = " ";
 
             std::ostream* os = handle->log_bench_os;
-            log_arguments(*os, space_separator, head, precision, std::forward<Ts>(xs)...);
+
+            std::string prefix_str = prefix("Bench", func);
+
+            log_arguments(*os, comma_separator, prefix_str, head, std::forward<Ts>(xs)...);
         }
     }
 }

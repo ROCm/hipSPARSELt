@@ -101,17 +101,19 @@ struct _rocsparselt_handle
     // pointer mode ; default mode is host
     rocsparselt_pointer_mode pointer_mode = rocsparselt_pointer_mode_host;
     // logging mode
-    rocsparselt_layer_mode layer_mode;
+    int  layer_mode;
+    bool log_bench = false;
+
     // device buffer
     size_t buffer_size;
     void*  buffer;
     bool   is_init = false;
 
     // logging streams
-    std::ofstream log_trace_ofs;
-    std::ofstream log_bench_ofs;
-    std::ostream* log_trace_os = nullptr;
-    std::ostream* log_bench_os = nullptr;
+    std::ofstream* log_trace_ofs = nullptr;
+    std::ofstream* log_bench_ofs = nullptr;
+    std::ostream*  log_trace_os  = nullptr;
+    std::ostream*  log_bench_os  = nullptr;
 };
 
 /********************************************************************************
@@ -124,9 +126,11 @@ struct _rocsparselt_handle
 struct _rocsparselt_mat_descr
 {
     // constructor
-    _rocsparselt_mat_descr(){};
+    _rocsparselt_mat_descr(const _rocsparselt_handle* handle)
+        : handle(handle){};
     _rocsparselt_mat_descr(const _rocsparselt_mat_descr& rhs)
-        : m_type(rhs.m_type)
+        : handle(rhs.handle)
+        , m_type(rhs.m_type)
         , m(rhs.m)
         , n(rhs.n)
         , ld(rhs.ld)
@@ -168,6 +172,9 @@ struct _rocsparselt_mat_descr
         return m_type == rocsparselt_matrix_type_unknown ? false : true;
     };
 
+    friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_mat_descr& t);
+
+    const _rocsparselt_handle* handle = nullptr;
     // matrix type
     rocsparselt_matrix_type m_type = rocsparselt_matrix_type_unknown;
     // num rows
@@ -202,13 +209,15 @@ struct _rocsparselt_mat_descr
 struct _rocsparselt_matmul_descr
 {
     // constructor
-    _rocsparselt_matmul_descr()
+    _rocsparselt_matmul_descr(const _rocsparselt_handle* handle)
+        : handle(handle)
     {
         is_init = true;
     };
 
     _rocsparselt_matmul_descr(const _rocsparselt_matmul_descr& rhs)
-        : op_A(rhs.op_A)
+        : handle(rhs.handle)
+        , op_A(rhs.op_A)
         , op_B(rhs.op_B)
         , compute_type(rhs.compute_type)
         , activation_relu(rhs.activation_relu)
@@ -250,6 +259,10 @@ struct _rocsparselt_matmul_descr
     {
         return is_init;
     }
+
+    friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_descr& t);
+
+    const _rocsparselt_handle* handle = nullptr;
 
     // operation applied to the matrix A
     rocsparselt_operation op_A;
@@ -294,7 +307,8 @@ private:
 struct _rocsparselt_matmul_alg_selection
 {
     // constructor
-    _rocsparselt_matmul_alg_selection()
+    _rocsparselt_matmul_alg_selection(const _rocsparselt_handle* handle)
+        : handle(handle)
     {
         is_init = true;
     };
@@ -309,6 +323,10 @@ struct _rocsparselt_matmul_alg_selection
         return is_init;
     }
 
+    friend std::ostream& operator<<(std::ostream&                            stream,
+                                    const _rocsparselt_matmul_alg_selection& t);
+
+    const _rocsparselt_handle* handle = nullptr;
     //
     rocsparselt_matmul_alg alg;
     //data of rocsparselt_matmul_alg_attribute
@@ -327,7 +345,8 @@ struct _rocsparselt_matmul_alg_selection
 struct _rocsparselt_matmul_plan
 {
     // constructor
-    _rocsparselt_matmul_plan(){};
+    _rocsparselt_matmul_plan(const _rocsparselt_handle* handle)
+        : handle(handle){};
     // destructor
     ~_rocsparselt_matmul_plan()
     {
@@ -345,6 +364,10 @@ struct _rocsparselt_matmul_plan
         matmul_descr  = nullptr;
         alg_selection = nullptr;
     }
+
+    friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_plan& t);
+
+    const _rocsparselt_handle* handle = nullptr;
     //
     _rocsparselt_matmul_descr* matmul_descr = nullptr;
     //

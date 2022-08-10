@@ -44,9 +44,13 @@ public:
         return m_name;
     }
     hipError_t    loadLibrary(std::string const& path);
-    hipError_t    loadCodeObject(std::string const& name);
-    hipError_t    loadCodeObject(const void* image, std::string const& name);
-    hipError_t    loadCodeObjectBytes(std::vector<uint8_t> const& bytes, std::string const& name);
+    hipError_t    loadCodeObject(const _rocsparselt_handle* handle, std::string const& name);
+    hipError_t    loadCodeObject(const _rocsparselt_handle* handle,
+                                 const void*                image,
+                                 std::string const&         name);
+    hipError_t    loadCodeObjectBytes(const _rocsparselt_handle*  handle,
+                                      std::vector<uint8_t> const& bytes,
+                                      std::string const&          name);
     hipError_t    launchKernel(const _rocsparselt_handle* handle, KernelInvocation const& kernel);
     hipError_t    launchKernel(const _rocsparselt_handle* handle,
                                KernelInvocation const&    kernel,

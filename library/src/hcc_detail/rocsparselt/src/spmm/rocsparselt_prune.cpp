@@ -394,19 +394,19 @@ __global__
 }
 
 template <typename Ti, typename Tc>
-rocsparselt_status rocsparselt_smfmac_prune_template(const rocsparselt_handle handle,
-                                                     int64_t                  m,
-                                                     int64_t                  n,
-                                                     int64_t                  stride0,
-                                                     int64_t                  stride1,
-                                                     int                      num_batches,
-                                                     int64_t                  batch_stride,
-                                                     rocsparselt_operation    op,
-                                                     rocsparselt_order        order,
-                                                     const Ti*                d_in,
-                                                     Ti*                      d_out,
-                                                     rocsparselt_prune_alg    pruneAlg,
-                                                     hipStream_t              stream)
+rocsparselt_status rocsparselt_smfmac_prune_template(const _rocsparselt_handle* handle,
+                                                     int64_t                    m,
+                                                     int64_t                    n,
+                                                     int64_t                    stride0,
+                                                     int64_t                    stride1,
+                                                     int                        num_batches,
+                                                     int64_t                    batch_stride,
+                                                     rocsparselt_operation      op,
+                                                     rocsparselt_order          order,
+                                                     const Ti*                  d_in,
+                                                     Ti*                        d_out,
+                                                     rocsparselt_prune_alg      pruneAlg,
+                                                     hipStream_t                stream)
 {
     if(pruneAlg == rocsparselt_prune_smfmac_strip)
     {
@@ -561,7 +561,7 @@ rocsparselt_status rocsparselt_smfmac_prune_check_template(const rocsparselt_han
 extern "C" {
 #endif
 
-rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle      handle,
+rocsparselt_status rocsparselt_smfmac_prune_impl(const _rocsparselt_handle*    handle,
                                                  const _rocsparselt_mat_descr* matrix,
                                                  rocsparselt_operation         op,
                                                  const void*                   d_in,
@@ -603,6 +603,11 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const rocsparselt_handle      h
     case rocsparselt_datatype_i8_r:
         return rocsparselt_smfmac_prune_template<int8_t, float>(PRUNE_PARAMS(int8_t));
     default:
+        log_error(handle,
+                  "rocsparselt_smfmac_prune",
+                  "datatype",
+                  rocsparselt_datatype_to_string(type),
+                  "is not supported");
         return rocsparselt_status_not_implemented;
     }
 }
@@ -650,6 +655,11 @@ rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle 
     case rocsparselt_datatype_i8_r:
         return rocsparselt_smfmac_prune_check_template<int8_t>(PRUNE_CHECK_PARAMS(int8_t));
     default:
+        log_error(handle,
+                  "rocsparselt_smfmac_prune_check",
+                  "datatype",
+                  rocsparselt_datatype_to_string(type),
+                  "is not supported");
         return rocsparselt_status_not_implemented;
     }
 }
@@ -666,32 +676,47 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       hand
 
 {
     // Check if handle is valid
-    if(handle == nullptr || matmulDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    if(matmulDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matmulDescr is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
     auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
     if(!_matmulDescr->isInit())
     {
+        log_error(_handle, __func__, "matmulDescr did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
-    if(d_in == nullptr || d_out == nullptr)
+    if(d_in == nullptr)
     {
+        log_error(_handle, __func__, "d_in is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_out == nullptr)
+    {
+        log_error(_handle, __func__, "d_out is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
     // Check if prune alg is valid
     if(pruneAlg != rocsparselt_prune_smfmac_strip && pruneAlg != rocsparselt_prune_smfmac_tile)
     {
+        log_error(_handle, __func__, "pruneAlg", pruneAlg, "is not supported");
         return rocsparselt_status_not_implemented;
     }
 
@@ -700,11 +725,25 @@ rocsparselt_status rocsparselt_smfmac_prune(const rocsparselt_handle*       hand
     if(_matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         matrix = _matmulDescr->matrix_A;
     else
+    {
+        log_error(_handle, __func__, "Matrix A is not a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
-    log_trace(*handle, "rocsparselt_smfmac_prune");
+    log_api(_handle,
+            __func__,
+            "matmulDescr[in]",
+            *_matmulDescr,
+            "d_in[in]",
+            d_in,
+            "d_out[out]",
+            d_out,
+            "pruneAlg[in]",
+            pruneAlg,
+            "stream[in]",
+            stream);
     return rocsparselt_smfmac_prune_impl(
-        *handle, matrix, _matmulDescr->op_A, d_in, d_out, pruneAlg, stream);
+        _handle, matrix, _matmulDescr->op_A, d_in, d_out, pruneAlg, stream);
 }
 
 /********************************************************************************
@@ -720,45 +759,86 @@ rocsparselt_status rocsparselt_smfmac_prune2(const rocsparselt_handle*    handle
                                              hipStream_t                  stream)
 {
     // Check if handle is valid
-    if(handle == nullptr || sparseMatDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
-    auto _sparseMatDescr = reinterpret_cast<const _rocsparselt_mat_descr*>(sparseMatDescr);
-
-    if(!_sparseMatDescr->isInit())
-        return rocsparselt_status_invalid_handle;
-
-    // Check if pointer is valid
-    if(d_in == nullptr || d_out == nullptr)
+    if(sparseMatDescr == nullptr)
     {
-        return rocsparselt_status_invalid_pointer;
+        log_error(_handle, __func__, "sparseMatDescr is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
+    auto _sparseMatDescr = reinterpret_cast<_rocsparselt_mat_descr*>(
+        const_cast<rocsparselt_mat_descr*>(sparseMatDescr));
+    if(!_sparseMatDescr->isInit())
+    {
+        log_error(_handle, __func__, "sparseMatDescr did not initialized or already destroyed");
+        return rocsparselt_status_invalid_handle;
     }
 
     if(!isSparseA)
+    {
+        log_error(_handle, __func__, "Matrix A must be a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
     if(op != rocsparselt_operation_none && op != rocsparselt_operation_transpose)
+    {
+        log_error(_handle, __func__, "op is invalid");
         return rocsparselt_status_invalid_value;
+    }
+
+    // Check if pointer is valid
+    if(d_in == nullptr)
+    {
+        log_error(_handle, __func__, "d_in is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_out == nullptr)
+    {
+        log_error(_handle, __func__, "d_out is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
 
     // Check if prune alg is valid
     if(pruneAlg != rocsparselt_prune_smfmac_strip && pruneAlg != rocsparselt_prune_smfmac_tile)
     {
+        log_error(_handle, __func__, "pruneAlg", pruneAlg, "is not supported");
         return rocsparselt_status_not_implemented;
     }
 
     // Check if matrix A is a structured matrix
     if(_sparseMatDescr->m_type != rocsparselt_matrix_type_structured)
+    {
+        log_error(_handle, __func__, "Matrix is not a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
-    log_trace(*handle, "rocsparselt_smfmac_prune2");
+    log_api(_handle,
+            __func__,
+            "sparseMatDescr[in]",
+            *_sparseMatDescr,
+            "isSparseA[in]",
+            isSparseA,
+            "op[in]",
+            rocsparselt_operation_to_string(op),
+            "d_in[in]",
+            d_in,
+            "d_out[out]",
+            d_out,
+            "pruneAlg[in]",
+            pruneAlg,
+            "stream[in]",
+            stream);
     return rocsparselt_smfmac_prune_impl(
         *handle, _sparseMatDescr, op, d_in, d_out, pruneAlg, stream);
 }
@@ -773,26 +853,40 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*     
                                                   hipStream_t                     stream)
 {
     // Check if handle is valid
-    if(handle == nullptr || matmulDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
+    if(matmulDescr == nullptr)
+    {
+        log_error(_handle, __func__, "matmulDescr is a NULL pointer");
+        return rocsparselt_status_invalid_handle;
+    }
     auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
     if(!_matmulDescr->isInit())
     {
+        log_error(_handle, __func__, "matmulDescr did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
     // Check if pointer is valid
-    if(d_in == nullptr || d_out == nullptr)
+    if(d_in == nullptr)
     {
+        log_error(_handle, __func__, "d_in is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_out == nullptr)
+    {
+        log_error(_handle, __func__, "d_out is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
@@ -801,9 +895,21 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*     
     if(_matmulDescr->matrix_A->m_type == rocsparselt_matrix_type_structured)
         matrix = _matmulDescr->matrix_A;
     else
+    {
+        log_error(_handle, __func__, "Matrix A is not a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
-    log_trace(*handle, "rocsparselt_smfmac_prune_check");
+    log_api(_handle,
+            __func__,
+            "matmulDescr[in]",
+            *_matmulDescr,
+            "d_in[in]",
+            d_in,
+            "d_out[out]",
+            d_out,
+            "stream[in]",
+            stream);
     return rocsparselt_smfmac_prune_check_impl(
         *handle, matrix, _matmulDescr->op_A, d_in, d_out, stream);
 }
@@ -820,39 +926,77 @@ rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    
                                                    hipStream_t                  stream)
 {
     // Check if handle is valid
-    if(handle == nullptr || sparseMatDescr == nullptr)
+    if(handle == nullptr)
     {
+        hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
+        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
-    auto _sparseMatDescr = reinterpret_cast<const _rocsparselt_mat_descr*>(sparseMatDescr);
-
-    if(!_sparseMatDescr->isInit())
+    if(sparseMatDescr == nullptr)
+    {
+        log_error(_handle, __func__, "sparseMatDescr is a NULL pointer");
         return rocsparselt_status_invalid_handle;
+    }
+    auto _sparseMatDescr = reinterpret_cast<_rocsparselt_mat_descr*>(
+        const_cast<rocsparselt_mat_descr*>(sparseMatDescr));
+    if(!_sparseMatDescr->isInit())
+    {
+        log_error(_handle, __func__, "sparseMatDescr did not initialized or already destroyed");
+        return rocsparselt_status_invalid_handle;
+    }
 
     if(!isSparseA)
+    {
+        log_error(_handle, __func__, "Matrix A must be a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
     if(op != rocsparselt_operation_none && op != rocsparselt_operation_transpose)
+    {
+        log_error(_handle, __func__, "op is invalid");
         return rocsparselt_status_invalid_value;
+    }
 
     // Check if pointer is valid
-    if(d_in == nullptr || d_out == nullptr)
+    if(d_in == nullptr)
     {
+        log_error(_handle, __func__, "d_in is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
+
+    if(d_out == nullptr)
+    {
+        log_error(_handle, __func__, "d_out is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
 
     // Check if matrix A is a structured matrix
     if(_sparseMatDescr->m_type != rocsparselt_matrix_type_structured)
+    {
+        log_error(_handle, __func__, "Matrix is not a structured matrix");
         return rocsparselt_status_not_implemented;
+    }
 
-    log_trace(*handle, "rocsparselt_smfmac_prune_check2");
+    log_api(_handle,
+            __func__,
+            "sparseMatDescr[in]",
+            *_sparseMatDescr,
+            "isSparseA[in]",
+            isSparseA,
+            "op[in]",
+            rocsparselt_operation_to_string(op),
+            "d_in[in]",
+            d_in,
+            "d_out[out]",
+            d_out,
+            "stream[in]",
+            stream);
     return rocsparselt_smfmac_prune_check_impl(*handle, _sparseMatDescr, op, d_in, d_out, stream);
 }
 

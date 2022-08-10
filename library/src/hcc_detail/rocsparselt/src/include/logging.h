@@ -31,6 +31,8 @@
 
 #include <fstream>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 
 /**
  *  @brief Logging function
@@ -73,13 +75,26 @@ inline void open_log_stream(std::ostream** log_os,
         // if environment variable is set, open file at logfile_pathname contained in the
         // environment variable
         std::string logfile_pathname = (std::string)environment_variable_value;
-        log_ofs->open(logfile_pathname);
 
-        // if log_ofs is open, then stream to log_ofs, else log_os is already
-        // set equal to std::cerr
-        if(log_ofs->is_open() == true)
+        log_ofs->exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        try
         {
-            *log_os = log_ofs;
+            size_t pos = logfile_pathname.find("%i");
+            if(pos != std::string::npos)
+                logfile_pathname.replace(pos, 2, std::to_string(getpid()));
+            log_ofs->open(logfile_pathname);
+
+            // if log_ofs is open, then stream to log_ofs, else log_os is already
+            // set equal to std::cerr
+            if(log_ofs->is_open() == true)
+            {
+                *log_os = log_ofs;
+            }
+        }
+        catch(std::ofstream::failure& e)
+        {
+            std::cerr << "exception occured when writing to file: " << logfile_pathname << "\n"
+                      << e.what() << std::endl;
         }
     }
 }
@@ -171,10 +186,12 @@ private:
  *                 separator.
  */
 template <typename H, typename... Ts>
-void log_arguments(std::ostream& os, std::string& separator, H head, Ts&&... xs)
+void log_arguments(
+    std::ostream& os, std::string& separator, std::string& prefix, H head, Ts&&... xs)
 {
-    os << "\n" << head;
+    os << prefix << " " << head;
     each_args(log_arg{os, separator}, std::forward<Ts>(xs)...);
+    os << "\n";
 }
 
 /**
