@@ -28,6 +28,7 @@
 #define ROCSPARSELT_SPMM_UTILS_HPP
 #include "handle.h"
 #include "hipsparselt_ostream.hpp"
+#include "utility.hpp"
 #include <cxxabi.h>
 
 inline rocsparselt_status getOriginalSizes(rocsparselt_operation opA,
@@ -172,6 +173,7 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     {
         hipsparselt_cerr << "row and col cannot be zero, current are " << num_rows << " and "
                          << num_cols << std::endl;
+        log_error(handle, __func__, "row and col cannot be 0");
         return rocsparselt_status_invalid_size;
     }
 
@@ -179,6 +181,7 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     {
         hipsparselt_cerr << "row and col must larger than 8, current are " << num_rows << " and "
                          << num_cols << std::endl;
+        log_error(handle, __func__, "row and col must > 8");
         return rocsparselt_status_not_implemented;
     }
 
@@ -187,11 +190,16 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     {
         hipsparselt_cerr << "number of rows(" << num_rows << ") is larger than leading dimension("
                          << ld << ")" << std::endl;
+        log_error(handle, __func__, "row and col must > 8");
         return rocsparselt_status_invalid_size;
     }
 
     if(order == rocsparselt_order_row)
+    {
+        hipsparselt_cerr << "rocsparselt_order_row is not supported" << std::endl;
+        log_error(handle, __func__, "rocsparselt_order_row is not supported");
         return rocsparselt_status_not_implemented;
+    }
 
     //TODO should support other datatype in the future.
     switch(valueType)
@@ -201,6 +209,9 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     case rocsparselt_datatype_i8_r:
         break;
     default:
+        hipsparselt_cerr << "datatype (" << rocsparselt_datatype_to_string(valueType)
+                         << ") is not supported" << std::endl;
+        log_error(handle, __func__, "datatype is not supported");
         return rocsparselt_status_not_implemented;
     }
     return rocsparselt_status_success;
@@ -248,8 +259,18 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
             return false;
         }
     };
-    if(!is_op_valid(opA) || !is_op_valid(opB))
+
+    if(!is_op_valid(opA))
+    {
+        log_error(handle, __func__, "opA", opA, "is not valid");
         return rocsparselt_status_invalid_value;
+    }
+    if(!is_op_valid(opB))
+    {
+        log_error(handle, __func__, "opB", opB, "is not valid");
+        return rocsparselt_status_invalid_value;
+    }
+
     // sizes of matrics A,B,C,D must fulfill the matrix multiplication rule.
     // D = A x B + C
     // values of num_* are values after been transposed, redirect to before which been transposed.
@@ -257,11 +278,15 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
     auto    status
         = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
     if(status != rocsparselt_status_success)
+    {
+        log_error(handle, __func__, "size of matrices are not matched");
         return status;
+    }
 
     if(m != (num_rows_c | num_rows_d) || n != (num_cols_c | num_cols_d))
     {
         hipsparselt_cerr << "matrix size is not valid" << std::endl;
+        log_error(handle, __func__, "matrix size is not valid");
         return rocsparselt_status_invalid_size;
     }
 
@@ -269,12 +294,16 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
     if(k % 8 != 0)
     {
         hipsparselt_cerr << "k must be a multiplication of 8" << std::endl;
+        log_error(handle, __func__, "k must be a multiplication of 8");
         return rocsparselt_status_invalid_size;
     }
 
     // data type of matrics must be the same
     if(type_a != (type_b | type_c | type_d))
+    {
+        log_error(handle, __func__, "datatype of matrices are inconsistent");
         return rocsparselt_status_not_implemented;
+    }
 
     switch(type_a)
     {
@@ -283,32 +312,48 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
     case rocsparselt_datatype_f8_r:
     case rocsparselt_datatype_bf8_r:
         if(compute_type != rocsparselt_compute_f32)
+        {
+            log_error(handle, __func__, "computType must be f32");
             return rocsparselt_status_not_implemented;
+        }
         break;
     case rocsparselt_datatype_i8_r:
         if(compute_type != rocsparselt_compute_i32)
+        {
+            log_error(handle, __func__, "computType must be i32");
             return rocsparselt_status_not_implemented;
+        }
         break;
     default:
+        log_error(handle,
+                  __func__,
+                  "datatype",
+                  rocsparselt_datatype_to_string(type_a),
+                  "is not supported");
         return rocsparselt_status_not_implemented;
     }
 
     // Only matrix A can be structured matrix.
     if(matrix_type_a != rocsparselt_matrix_type_structured)
     {
-        hipsparselt_cerr << " Matrix A must be structrured matrix." << std::endl;
+        hipsparselt_cerr << "Matrix A must be structrured matrix." << std::endl;
+        log_error(handle, __func__, "Matrix A must be structrured matrix");
         return rocsparselt_status_not_implemented;
     }
 
     if(matrix_type_b != rocsparselt_matrix_type_dense)
     {
-        hipsparselt_cerr << " Matrix B cannot be structrured matrix." << std::endl;
+        hipsparselt_cerr << "Matrix B cannot be structrured matrix." << std::endl;
+        log_error(handle, __func__, "Matrix B cannot be structrured matrix");
         return rocsparselt_status_not_implemented;
     }
 
     if(matrix_type_c != rocsparselt_matrix_type_dense
        || matrix_type_d != rocsparselt_matrix_type_dense)
+    {
+        log_error(handle, __func__, "Matrix C and D must be dense matrix");
         return rocsparselt_status_invalid_value;
+    }
 
     return rocsparselt_status_success;
 }

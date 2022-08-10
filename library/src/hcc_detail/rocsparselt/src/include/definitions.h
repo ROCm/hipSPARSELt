@@ -66,17 +66,30 @@
         }                                                                      \
     }
 
-#define PRINT_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                \
-    {                                                             \
-        hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
-        if(TMP_STATUS_FOR_CHECK != hipSuccess)                    \
-        {                                                         \
-            fprintf(stderr,                                       \
-                    "hip error code: %d at %s:%d\n",              \
-                    TMP_STATUS_FOR_CHECK,                         \
-                    __FILE__,                                     \
-                    __LINE__);                                    \
-        }                                                         \
+#define PRINT_IF_HIP_ERROR(HANDLE, INPUT_STATUS_FOR_CHECK)                                      \
+    {                                                                                           \
+        hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK;                               \
+        if(TMP_STATUS_FOR_CHECK != hipSuccess)                                                  \
+        {                                                                                       \
+            fprintf(stderr,                                                                     \
+                    "hip error code: %s at %s:%d\n",                                            \
+                    hipGetErrorName(TMP_STATUS_FOR_CHECK),                                      \
+                    __FILE__,                                                                   \
+                    __LINE__);                                                                  \
+            if(HANDLE != nullptr && HANDLE->layer_mode & rocsparselt_layer_mode_log_error)      \
+            {                                                                                   \
+                std::ostringstream stream;                                                      \
+                stream << "hip error code: " << hipGetErrorName(TMP_STATUS_FOR_CHECK) << " at " \
+                       << __FILE__ << ":" << __LINE__;                                          \
+                log_error(HANDLE, __func__, stream.str());                                      \
+            }                                                                                   \
+        }                                                                                       \
+    }
+
+#define PRINT_IF_HIP_ERROR_2(INPUT_STATUS_FOR_CHECK)        \
+    {                                                       \
+        _rocsparselt_handle* handle = nullptr;              \
+        PRINT_IF_HIP_ERROR(handle, INPUT_STATUS_FOR_CHECK); \
     }
 
 #define RETURN_IF_INVALID_HANDLE(HANDLE)              \

@@ -471,6 +471,21 @@ hipsparseLtSplitKMode_t CuSparseLtSplitKModeToHIPSplitKMode(cusparseLtSplitKMode
 
 hipsparseStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle)
 {
+    char* log_env;
+    if((log_env = getenv("HIPSPARSELT_LOG_LEVEL")) != NULL)
+    {
+        setenv("CUSPARSELT_LOG_LEVEL", log_env, 0);
+    }
+    if((log_env = getenv("HIPSPARSELT_LOG_MASK")) != NULL)
+    {
+        int mask = strtol(log_env, nullptr, 0);
+        setenv("CUSPARSELT_LOG_MASK", std::to_string(mask).c_str(), 0);
+    }
+    if((log_env = getenv("HIPSPARSELT_LOG_FILE")) != NULL)
+    {
+        setenv("CUSPARSELT_LOG_FILE", log_env, 0);
+    }
+
     return hipCUSPARSEStatusToHIPStatus(cusparseLtInit((cusparseLtHandle_t*)handle));
 }
 

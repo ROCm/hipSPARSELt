@@ -198,6 +198,8 @@ rocsparselt_operation_ HIPOperationToHCCOperation(hipsparseOperation_t op)
         return rocsparselt_operation_none;
     case HIPSPARSE_OPERATION_TRANSPOSE:
         return rocsparselt_operation_transpose;
+    case HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE:
+        return rocsparselt_operation_conjugate_transpose;
     default:
         throw HIPSPARSE_STATUS_INVALID_VALUE;
     }
@@ -211,6 +213,8 @@ hipsparseOperation_t HCCOperationToHIPOperation(rocsparselt_operation_ op)
         return HIPSPARSE_OPERATION_NON_TRANSPOSE;
     case rocsparselt_operation_transpose:
         return HIPSPARSE_OPERATION_TRANSPOSE;
+    case rocsparselt_operation_conjugate_transpose:
+        return HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
     default:
         throw HIPSPARSE_STATUS_INVALID_VALUE;
     }

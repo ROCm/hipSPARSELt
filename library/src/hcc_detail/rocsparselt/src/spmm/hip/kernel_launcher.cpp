@@ -724,7 +724,7 @@ rocsparselt_status initSolutions(const _rocsparselt_handle* handle,
 
     KernelParams* solution = adapter.getKernelParams(str);
     for(int i = 0; i < *kernel_counts; i++)
-        PRINT_IF_HIP_ERROR(adapter.loadCodeObject(solution[i].SolutionNameMin));
+        PRINT_IF_HIP_ERROR(handle, adapter.loadCodeObject(handle, solution[i].SolutionNameMin));
     return rocsparselt_status_success;
 }
 
