@@ -644,9 +644,14 @@ void testing_prune(const Arguments& arg)
         device_vector<int> d_valid(1, 1, HMM);
         int                h_valid = 0;
         //check the pruned matrix is sparisty 50 or not.
-        EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtSpMMAPruneCheck(handle, matmul, dA_pruned, d_valid, stream),
-            HIPSPARSE_STATUS_SUCCESS);
+        if(run_version == 1)
+            EXPECT_HIPSPARSE_STATUS(
+                hipsparseLtSpMMAPruneCheck(handle, matmul, dA_pruned, d_valid, stream),
+                HIPSPARSE_STATUS_SUCCESS);
+        else if(run_version == 2)
+            EXPECT_HIPSPARSE_STATUS(
+                hipsparseLtSpMMAPruneCheck2(handle, matA, true, transA, dA_pruned, d_valid, stream),
+                HIPSPARSE_STATUS_SUCCESS);
         CHECK_HIP_ERROR(
             hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
         hipStreamSynchronize(stream);
