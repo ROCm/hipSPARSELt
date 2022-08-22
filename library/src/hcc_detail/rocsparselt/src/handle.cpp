@@ -27,6 +27,7 @@
 #include "handle.h"
 #include "definitions.h"
 #include "logging.h"
+#include "status.h"
 #include "utility.hpp"
 
 #include <hip/hip_runtime.h>

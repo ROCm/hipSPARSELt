@@ -29,12 +29,10 @@
 #include "kernel_launcher.hpp"
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
+#include "status.h"
 #include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
-
-#define TO_STR2(x) #x
-#define TO_STR(x) TO_STR2(x)
 
 #ifdef __cplusplus
 extern "C" {
