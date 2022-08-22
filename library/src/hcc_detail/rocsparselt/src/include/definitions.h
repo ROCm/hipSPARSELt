@@ -22,22 +22,13 @@
  *
  * ************************************************************************ */
 
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
-
-#include "status.h"
+#pragma once
 
 /*******************************************************************************
  * Definitions
  * this file to not include any others
  * thereby it can include top-level definitions included by all
  ******************************************************************************/
-
-//
-// @brief Macros for coverage exclusion
-//
-#define ROCSPARSELT_COV_EXCL_START (void)("LCOV_EXCL_START")
-#define ROCSPARSELT_COV_EXCL_STOP (void)("LCOV_EXCL_STOP")
 
 #define RETURN_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                             \
     {                                                                           \
@@ -107,5 +98,3 @@
             return rocsparselt_status_invalid_pointer; \
         }                                              \
     }
-
-#endif // DEFINITIONS_H

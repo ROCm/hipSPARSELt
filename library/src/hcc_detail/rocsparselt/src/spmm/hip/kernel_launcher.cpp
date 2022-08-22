@@ -31,6 +31,7 @@
 #include "hipsparselt_ostream.hpp"
 #include "rocsparselt-types.h"
 #include "rocsparselt.h"
+#include "status.h"
 #include "utility.hpp"
 
 #include <atomic>
@@ -427,7 +428,7 @@ namespace
         }
 
         // KernelLauncher is not copyable or assignable
-        KernelLauncher(const KernelLauncher&)            = delete;
+        KernelLauncher(const KernelLauncher&) = delete;
         KernelLauncher& operator=(const KernelLauncher&) = delete;
 
         // Get the number of devices

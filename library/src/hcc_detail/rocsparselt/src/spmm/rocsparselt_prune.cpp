@@ -27,6 +27,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocsparselt.h"
+#include "status.h"
 #include "utility.hpp"
 
 #include "hipsparselt_ostream.hpp"
