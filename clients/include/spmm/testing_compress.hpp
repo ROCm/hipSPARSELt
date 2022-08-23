@@ -314,7 +314,7 @@ void testing_compress(const Arguments& arg)
     bool                     HMM                 = arg.HMM;
     hipsparselt_local_handle handle{arg};
     hipStream_t              stream;
-    hipStreamCreate(&stream);
+    CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
     int64_t A_row = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K;
     int64_t A_col = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : M;
@@ -513,8 +513,8 @@ void testing_compress(const Arguments& arg)
 
         auto metadata_offset = c_stride_a_r * sizeof(Ti) * (stride_a == 0 ? 1 : num_batches);
 
-        hipStreamSynchronize(stream);
-        hA_pruned.transfer_from(dA);
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+        CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
 
         if(run_version == 1)
             EXPECT_HIPSPARSE_STATUS(
@@ -525,7 +525,7 @@ void testing_compress(const Arguments& arg)
                 hipsparseLtSpMMACompress2(handle, matA, true, transA, dA, dA_compressd, stream),
                 HIPSPARSE_STATUS_SUCCESS);
 
-        hipStreamSynchronize(stream);
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_compressd));
 
         // now we can recycle gold matrix for reference purposes

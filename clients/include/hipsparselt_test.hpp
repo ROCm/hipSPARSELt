@@ -210,7 +210,7 @@ void launch_test_on_streams(std::function<void()> test, size_t numStreams, size_
         size_t      devices      = arg.devices;                                              \
         int         availDevices = 0;                                                        \
         bool        HMM          = arg.HMM;                                                  \
-        hipGetDeviceCount(&availDevices);                                                    \
+        CHECK_HIP_ERROR(hipGetDeviceCount(&availDevices));                                   \
         if(devices > availDevices)                                                           \
         {                                                                                    \
             SUCCEED() << TOO_MANY_DEVICES_STRING;                                            \

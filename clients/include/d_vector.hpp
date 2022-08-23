@@ -101,13 +101,14 @@ public:
             if(m_guard_len > 0)
             {
                 // Copy m_guard to device memory before allocated memory
-                hipMemcpy(d, m_guard, m_guard_len, hipMemcpyHostToDevice);
+                EXPECT_EQ(hipMemcpy(d, m_guard, m_guard_len, hipMemcpyHostToDevice), hipSuccess);
 
                 // Point to allocated block
                 d += m_pad;
 
                 // Copy m_guard to device memory after allocated memory
-                hipMemcpy(d + m_size, m_guard, m_guard_len, hipMemcpyHostToDevice);
+                EXPECT_EQ(hipMemcpy(d + m_size, m_guard, m_guard_len, hipMemcpyHostToDevice),
+                          hipSuccess);
             }
         }
 #endif
@@ -122,7 +123,8 @@ public:
             T host[m_pad];
 
             // Copy device memory after allocated memory to host
-            hipMemcpy(host, d + this->m_size, m_guard_len, hipMemcpyDeviceToHost);
+            EXPECT_EQ(hipMemcpy(host, d + this->m_size, m_guard_len, hipMemcpyDeviceToHost),
+                      hipSuccess);
 
             // Make sure no corruption has occurred
             EXPECT_EQ(memcmp(host, m_guard, m_guard_len), 0);
@@ -131,7 +133,7 @@ public:
             d -= m_pad;
 
             // Copy device memory after allocated memory to host
-            hipMemcpy(host, d, m_guard_len, hipMemcpyDeviceToHost);
+            EXPECT_EQ(hipMemcpy(host, d, m_guard_len, hipMemcpyDeviceToHost), hipSuccess);
 
             // Make sure no corruption has occurred
             EXPECT_EQ(memcmp(host, m_guard, m_guard_len), 0);
@@ -149,7 +151,8 @@ public:
                 T host[m_pad];
 
                 // Copy device memory after allocated memory to host
-                hipMemcpy(host, d + this->m_size, m_guard_len, hipMemcpyDeviceToHost);
+                EXPECT_EQ(hipMemcpy(host, d + this->m_size, m_guard_len, hipMemcpyDeviceToHost),
+                          hipSuccess);
 
                 // Make sure no corruption has occurred
                 EXPECT_EQ(memcmp(host, m_guard, m_guard_len), 0);
@@ -158,14 +161,17 @@ public:
                 d -= m_pad;
 
                 // Copy device memory after allocated memory to host
-                hipMemcpy(host, d, m_guard_len, hipMemcpyDeviceToHost);
+                EXPECT_EQ(hipMemcpy(host, d, m_guard_len, hipMemcpyDeviceToHost), hipSuccess);
 
                 // Make sure no corruption has occurred
                 EXPECT_EQ(memcmp(host, m_guard, m_guard_len), 0);
             }
 #endif
             // Free device memory
-            CHECK_HIP_ERROR((hipFree)(d));
+            if((hipFree)(d) != hipSuccess)
+            {
+                hipsparselt_cerr << "free device memory failed" << std::endl;
+            }
         }
     }
 };

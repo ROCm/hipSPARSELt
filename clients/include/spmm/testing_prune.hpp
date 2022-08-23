@@ -479,7 +479,7 @@ void testing_prune(const Arguments& arg)
     bool                     HMM               = arg.HMM;
     hipsparselt_local_handle handle{arg};
     hipStream_t              stream;
-    hipStreamCreate(&stream);
+    CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
     int64_t A_row = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K;
     int64_t A_col = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : M;
@@ -636,7 +636,7 @@ void testing_prune(const Arguments& arg)
                     handle, matA, true, transA, dA, dA_pruned, prune_algo, stream),
                 HIPSPARSE_STATUS_SUCCESS);
 
-        hipStreamSynchronize(stream);
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(hA_1.transfer_from(dA_pruned));
 
         //print_strided_batched("device", hA_1.data(), M, K, num_batches, stride_1_a, stride_2_a, stride_a);
@@ -654,7 +654,7 @@ void testing_prune(const Arguments& arg)
                 HIPSPARSE_STATUS_SUCCESS);
         CHECK_HIP_ERROR(
             hipMemcpyAsync(&h_valid, d_valid, sizeof(int), hipMemcpyDeviceToHost, stream));
-        hipStreamSynchronize(stream);
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_SUCCESS(h_valid == 0);
 
         // now we can recycle gold matrix for reference purposes

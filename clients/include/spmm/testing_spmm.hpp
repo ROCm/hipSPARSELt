@@ -234,7 +234,7 @@ void testing_spmm(const Arguments& arg)
     bool                     HMM               = arg.HMM;
     hipsparselt_local_handle handle{arg};
     hipStream_t              stream;
-    hipStreamCreate(&stream);
+    CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
     int64_t A_row = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K;
     int64_t A_col = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : M;
@@ -568,7 +568,7 @@ void testing_spmm(const Arguments& arg)
 
     if(arg.unit_check || arg.norm_check)
     {
-        hipStreamSynchronize(stream);
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmul(
@@ -652,7 +652,7 @@ void testing_spmm(const Arguments& arg)
         }
 
         // fetch GPU
-        hipStreamSynchronize(stream);
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(hD_1.transfer_from(dD));
 
         if(arg.unit_check)
