@@ -102,7 +102,10 @@ size_t strided_batched_matrix_size(int rows, int cols, int lda, int64_t stride, 
 /*! \brief  CPU Timer(in microsecond): synchronize with the default device and return wall time */
 double get_time_us_sync_device(void)
 {
-    hipDeviceSynchronize();
+    if(hipDeviceSynchronize() != hipSuccess)
+    {
+        hipsparselt_cerr << "Synchronizing device failed" << std::endl;
+    }
 
     auto now = std::chrono::steady_clock::now();
     // now.time_since_epoch() is the duration since epoch
@@ -115,7 +118,10 @@ double get_time_us_sync_device(void)
 /*! \brief  CPU Timer(in microsecond): synchronize with given queue/stream and return wall time */
 double get_time_us_sync(hipStream_t stream)
 {
-    hipStreamSynchronize(stream);
+    if(hipDeviceSynchronize() != hipSuccess)
+    {
+        hipsparselt_cerr << "Synchronizing device failed" << std::endl;
+    }
 
     auto now = std::chrono::steady_clock::now();
     // now.time_since_epoch() is the duration since epoch
@@ -246,6 +252,9 @@ hipsparselt_local_handle::hipsparselt_local_handle(const Arguments& arg)
 hipsparselt_local_handle::~hipsparselt_local_handle()
 {
     if(m_memory)
-        (hipFree)(m_memory);
+        if(hipFree(m_memory) != hipSuccess)
+        {
+            hipsparselt_cerr << "free device memory failed " << std::endl;
+        }
     hipsparseLtDestroy(&m_handle);
 }

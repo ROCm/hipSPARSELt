@@ -869,7 +869,7 @@ void testing_aux_matmul_get_attr_bad_arg(const Arguments& arg)
     EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescGetAttribute(
                                 handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &dBias, 4),
                             HIPSPARSE_STATUS_INVALID_VALUE);
-    hipFree(dBias);
+    CHECK_HIP_ERROR(hipFree(dBias));
 #endif
 }
 
