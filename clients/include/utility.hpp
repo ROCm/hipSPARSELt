@@ -531,3 +531,31 @@ void print_strided_batched(
     }
     hipsparselt_cout << std::flush;
 }
+
+
+inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int m, int n, int ld)
+{
+    int elements = 8;
+    switch(type)
+    {
+    case HIPSPARSELT_R_8I:
+    case HIPSPARSELT_R_8F:
+    case HIPSPARSELT_R_8BF:
+        elements = 16;
+        break;
+    default:
+        break;
+    }
+
+    if(m <= 0 || n <= 0)
+        return HIPSPARSE_STATUS_INVALID_VALUE;
+
+    if(m < elements || n < elements)
+        return HIPSPARSE_STATUS_NOT_SUPPORTED;
+    if(m % elements != 0 || n % elements != 0)
+        return HIPSPARSE_STATUS_NOT_SUPPORTED;
+
+    if(m > ld)
+        return HIPSPARSE_STATUS_INVALID_VALUE;
+    return HIPSPARSE_STATUS_SUCCESS;
+}
