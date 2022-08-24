@@ -351,44 +351,22 @@ void testing_compress(const Arguments& arg)
     hipsparselt_local_mat_descr matD(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
 
-    bool invalid_size_a = M < 8 || K % 8 != 0 || lda < A_row;
-    bool invalid_size_b = N < 8 || ldb < B_row;
-    bool invalid_size_c = ldc < M;
-    bool invalid_size_d = ldd < M;
-    if(invalid_size_a)
-    {
-        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+    hipsparseStatus_t eStatus = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
+    EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
 
-        if(M != 0 && lda >= A_row)
-            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
+    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb);
+    EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
 
-        EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
+    eStatus = expected_hipsparse_status_of_matrix_size(arg.c_type, M, N, ldc);
+    EXPECT_HIPSPARSE_STATUS(matC.status(), eStatus);
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
 
-        return;
-    }
-    if(invalid_size_b)
-    {
-        hipsparseStatus_t eStatus = HIPSPARSE_STATUS_INVALID_VALUE;
+    eStatus = expected_hipsparse_status_of_matrix_size(arg.d_type, M, N, ldd);
+    EXPECT_HIPSPARSE_STATUS(matD.status(), eStatus);
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
 
-        if(N != 0 && ldb >= B_row)
-            eStatus = HIPSPARSE_STATUS_NOT_SUPPORTED;
-
-        EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
-
-        return;
-    }
-    if(invalid_size_c)
-    {
-        EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_INVALID_VALUE);
-
-        return;
-    }
-    if(invalid_size_d)
-    {
-        EXPECT_HIPSPARSE_STATUS(matD.status(), HIPSPARSE_STATUS_INVALID_VALUE);
-
-        return;
-    }
 
     if(do_batched || do_strided_batched)
     {
@@ -654,4 +632,5 @@ void testing_compress(const Arguments& arg)
                              hipsparselt_error_c,
                              hipsparselt_error_m);
     }
+    CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }

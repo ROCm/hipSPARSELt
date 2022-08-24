@@ -177,11 +177,40 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
         return rocsparselt_status_invalid_size;
     }
 
-    if(num_rows < 8 || num_cols < 8)
+    int num_elements = 8;
+    switch(valueType)
     {
-        hipsparselt_cerr << "row and col must larger than 8, current are " << num_rows << " and "
+    case rocsparselt_datatype_i8_r:
+    case rocsparselt_datatype_f8_r:
+    case rocsparselt_datatype_bf8_r:
+        num_elements = 16;
+        break;
+    default:
+        break;
+    }
+
+    if(num_rows < num_elements || num_cols < num_elements)
+    {
+        hipsparselt_cerr << "row and col must larger than " << num_elements << ", current are " << num_rows << " and "
                          << num_cols << std::endl;
-        log_error(handle, __func__, "row and col must > 8");
+        if(handle->layer_mode & rocsparselt_layer_mode_log_error)
+        {
+            std::ostringstream stream;
+            stream << "row and col must >= " << num_elements;
+            log_error(handle, __func__, stream.str());
+        }
+        return rocsparselt_status_not_implemented;
+    }
+
+    if(num_rows % num_elements != 0 || num_cols % num_elements)
+    {
+        hipsparselt_cerr << "row and col must be a multiple of " << num_elements << std::endl;
+        if(handle->layer_mode & rocsparselt_layer_mode_log_error)
+        {
+            std::ostringstream stream;
+            stream << "row and col must be a multiple of " << num_elements;
+            log_error(handle, __func__, stream.str());
+        }
         return rocsparselt_status_not_implemented;
     }
 
@@ -190,7 +219,7 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     {
         hipsparselt_cerr << "number of rows(" << num_rows << ") is larger than leading dimension("
                          << ld << ")" << std::endl;
-        log_error(handle, __func__, "row and col must > 8");
+        log_error(handle, __func__, "row and col must >= ld");
         return rocsparselt_status_invalid_size;
     }
 
@@ -287,14 +316,6 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
     {
         hipsparselt_cerr << "matrix size is not valid" << std::endl;
         log_error(handle, __func__, "matrix size is not valid");
-        return rocsparselt_status_invalid_size;
-    }
-
-    // size of k must be a multiplication of 8
-    if(k % 8 != 0)
-    {
-        hipsparselt_cerr << "k must be a multiplication of 8" << std::endl;
-        log_error(handle, __func__, "k must be a multiplication of 8");
         return rocsparselt_status_invalid_size;
     }
 

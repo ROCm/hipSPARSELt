@@ -15,21 +15,21 @@ Tests:
 - name: prune_bad_arg
   category: pre_checkin
   function:
-    - prune_bad_arg: *real_precisions_2b
+    - prune_bad_arg: *real_precisions_1b
   transA: N
   transB: N
 
 # Tests confirm no NaN propagation when alpha = 0, 2 and beta = 0. Value .NaN is converted into zero
-- {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *hpa_bf16_precision,
+- {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *real_precisions_1b,
    function: prune, transA: N, transB: N, M: 256, N: 128, K:  64, alpha: [ .NaN, 2 ], beta: [ .NaN, 2 ] }
 
 
-# Split *real_precisions_2b into *int8 and *nonint8_real_precisions. Since int8 has flags 0,1
+# Split *real_precisions_1b into *int8 and *nonint8_real_precisions. Since int8 has flags 0,1
 
 - name: prune_small
   category: quick
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -38,7 +38,7 @@ Tests:
 - name: prune_medium
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -58,7 +58,7 @@ Tests:
 - name: prune_medium_HMM
   category: HMM
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   matrix_size: *medium_matrix_size_range
   transA: [ N ]
   transB: [ N ]
@@ -70,7 +70,7 @@ Tests:
 - name: prune_chunk
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   matrix_size: *chunk_matrix_size_range
   transA_transB: *transA_transB_range
   alpha: 2
@@ -80,7 +80,7 @@ Tests:
 - name: prune_deepbench
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   matrix_size: *deepbench_sizes
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
@@ -101,7 +101,7 @@ Tests:
 - name: resnet50_fwd
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: N
   transB: N
   matrix_size: *resnet50_fwd_sizes
@@ -124,7 +124,7 @@ Tests:
 - name: resnet50_bwdwrw
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: T
   transB: N
   matrix_size: *resnet50_bwdwrw_sizes
@@ -135,7 +135,7 @@ Tests:
 - name: resnet50_bwddata
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: N
   transB: T
   matrix_size: *resnet50_bwddata_sizes
@@ -146,7 +146,7 @@ Tests:
 - name: inception4_fwd
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: N
   transB: N
   matrix_size: *inception4_fwd_sizes
@@ -157,7 +157,7 @@ Tests:
 - name: inception4_bwdwrw
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: T
   transB: N
   matrix_size: *inception4_bwdwrw_sizes
@@ -168,7 +168,7 @@ Tests:
 - name: inception4_bwddata
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: N
   transB: T
   matrix_size: *inception4_bwddata_sizes
@@ -179,7 +179,7 @@ Tests:
 - name: ctest_bwdwrw
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: T
   transB: N
   alpha: 1
@@ -190,7 +190,7 @@ Tests:
 - name: ctest_fwd
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   transA: N
   transB: N
   alpha: 1
@@ -198,21 +198,10 @@ Tests:
   matrix_size: *ctest_fwd_sizes
   prune_algo: [ 0, 1 ]
 
-- name: prune_8
-  category: quick
-  function:
-    prune: *real_precisions_2b
-  M: 8
-  N: 8
-  K: 8
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
-  prune_algo: [ 0, 1 ]
-
 - name: prune_16
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 16
   N: 16
   K: 16
@@ -220,67 +209,56 @@ Tests:
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_24
-  category: pre_checkin
-  function:
-    prune: *real_precisions_2b
-  M: 24
-  N: 24
-  K: 24
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
-  prune_algo: [ 0, 1 ]
-
-- name: prune_32_8_128
+- name: prune_32_16_128
   category: nightly
   function:
-    prune: *real_precisions_2b
-  M: [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128]
+    prune: *real_precisions_1b
+  M: [16, 32, 48, 64, 80, 96, 112, 128]
   N: 32
   K: 32
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_48_8_128
+- name: prune_48_16_128
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 48
-  N: [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128]
+  N: [16, 32, 48, 64, 80, 96, 112, 128]
   K: 48
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_64_8_128
+- name: prune_64_16_128
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 64
   N: 64
-  K: [16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128]
+  K: [16, 32, 48, 64, 80, 96, 112, 128]
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_64_8_8
+- name: prune_64_16_16
   category: quick
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 64
-  N: 8
-  K: 8
+  N: 16
+  K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_8_8_64
+- name: prune_16_64
   category: quick
   function:
-    prune: *real_precisions_2b
-  M: 8
-  N: 8
+    prune: *real_precisions_1b
+  M: 16
+  N: 16
   K: 64
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
@@ -289,7 +267,7 @@ Tests:
 - name: prune_96
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 96
   N: 96
   K: 96
@@ -300,7 +278,7 @@ Tests:
 - name: prune_128
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 128
   N: 128
   K: 128
@@ -311,7 +289,7 @@ Tests:
 - name: prune_256
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 256
   N: 256
   K: 256
@@ -319,33 +297,34 @@ Tests:
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_256_8_16
+- name: prune_256_16_16
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 256
-  N: 8
+  N: 16
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_16_256_8
+- name: prune_16_256_16
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 16
   N: 256
-  K: 8
+  K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_8_16_256
+- name: prune_16_16_256
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
-  M: 8
+    prune: *real_precisions_1b
+
+  M: 16
   N: 16
   K: 256
   alpha_beta: *alpha_beta_range
@@ -355,7 +334,7 @@ Tests:
 - name: prune_512
   category: pre_checkin
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 512
   N: 512
   K: 512
@@ -366,7 +345,7 @@ Tests:
 - name: prune_1024
   category: nightly
   function:
-    prune: *real_precisions_2b
+    prune: *real_precisions_1b
   M: 1024
   N: 1024
   K: 1024
@@ -374,20 +353,4 @@ Tests:
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
 
-- name: prune_bf16
-  category: quick
-  function:
-    prune: *hpa_bf16_precision
-  transA: T
-  transB: N
-  alpha: 1
-  beta: 0
-  matrix_size:
-    - { M:  512, N:  512, K:  512 }
-    - { M: 1024, N: 1024, K: 1024 }
-    - { M: 2048, N: 2048, K: 2048 }
-    - { M: 4096, N: 4096, K: 4096 }
-    - { M:  960, N: 1024, K: 1024 }
-    - { M: 3840, N: 4096, K: 4096 }
-  prune_algo: [ 0, 1 ]
 ...

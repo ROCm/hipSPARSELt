@@ -22,7 +22,7 @@ Tests:
 - name: spmm_strided_batched_small
   category: quick
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_small_matrix_size_range
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
@@ -31,7 +31,7 @@ Tests:
 - name: spmm_strided_batched_small_stride_zero
   category: quick
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_small_matrix_size_stride_a_range
   alpha: 2.0
   alphai: 1.0
@@ -44,7 +44,7 @@ Tests:
 - name: spmm_strided_batched_medium
   category: pre_checkin
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -64,7 +64,7 @@ Tests:
 - name: spmm_strided_batched_medium_stride_zero
   category: nightly
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_medium_matrix_size_stride_a_range
   alpha: 2.0
   alphai: 1.0
@@ -89,7 +89,7 @@ Tests:
 - name: spmm_strided_batched_large
   category: pre_checkin
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_large_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -98,7 +98,7 @@ Tests:
 - name: spmm_strided_batched_large_stride_zero
   category: pre_checkin
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_large_matrix_size_stride_a_range
   alpha: 2.0
   alphai: 1.0
@@ -111,7 +111,7 @@ Tests:
 - name: spmm_strided_batched_deepbench
   category: nightly
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_deepbench_vec
   alpha: 1.0
   beta: 0.0
@@ -134,7 +134,7 @@ Tests:
 - name: spmm_strided_batched_conv_resnet50_fwd
   category: nightly
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_conv_resnet50_fwd
   alpha: 1.0
   beta: 0.0
@@ -145,7 +145,7 @@ Tests:
 - name: spmm_strided_batched_conv_resnet50_bwddata
   category: nightly
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_conv_resnet50_bwddata
   alpha: 1.0
   beta: 0.0
@@ -153,21 +153,10 @@ Tests:
   transB: T
   batch_count: 4
 
-- name: spmm_strided_batched_conv_inception4_fwd
-  category: nightly
-  function:
-    spmm_strided_batched: *real_precisions
-  matrix_size: *strided_batched_conv_inception4_fwd
-  alpha: 1.0
-  beta: 0.0
-  transA: N
-  transB: N
-  batch_count: 4
-
 - name: spmm_strided_batched_conv_inception4_bwddata
   category: nightly
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_conv_inception4_bwddata
   alpha: 1.0
   beta: 0.0
@@ -178,7 +167,7 @@ Tests:
 - name: spmm_strided_batched_conv_ctest_fwd
   category: nightly
   function:
-    spmm_strided_batched: *real_precisions
+    spmm_strided_batched: *real_precisions_2b
   matrix_size: *strided_batched_conv_ctest_fwd
   alpha: 1.0
   beta: 0.0
