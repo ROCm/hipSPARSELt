@@ -632,6 +632,7 @@ void testing_compress(const Arguments& arg)
                 hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         }
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
@@ -640,6 +641,7 @@ void testing_compress(const Arguments& arg)
                 hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         }
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
         ArgumentModel<e_transA, e_transB, e_M, e_N, e_K, e_lda, e_stride_a, e_batch_count>{}
