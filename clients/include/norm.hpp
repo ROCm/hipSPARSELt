@@ -161,7 +161,7 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC
     return norm_check_general<double>(norm_type, M, N, lda, hCPU_double, hGPU_double);
 }
 
-// For BF16 and half, we convert the results to double first
+// For int8, we convert the results to int first
 template <typename T, typename VEC, std::enable_if_t<std::is_same<T, int8_t>{}, int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
 {
