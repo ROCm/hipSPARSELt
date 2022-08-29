@@ -687,6 +687,7 @@ void testing_spmm(const Arguments& arg)
                                     HIPSPARSE_STATUS_SUCCESS);
         }
 
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
         {
@@ -703,6 +704,7 @@ void testing_spmm(const Arguments& arg)
                                                       1),
                                     HIPSPARSE_STATUS_SUCCESS);
         }
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
         auto flops    = gemm_gflop_count<float>(M, N, K);
         switch(arg.activation_type)

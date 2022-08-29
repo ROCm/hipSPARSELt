@@ -720,6 +720,7 @@ void testing_prune(const Arguments& arg)
                 hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         }
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
 
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
@@ -728,6 +729,7 @@ void testing_prune(const Arguments& arg)
                 hipsparseLtSpMMAPrune(handle, matmul, dA, dA_pruned, prune_algo, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         }
+        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
 
         double (*gflop_count)(int64_t m, int64_t n);
