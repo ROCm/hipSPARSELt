@@ -249,8 +249,8 @@ void testing_spmm(const Arguments& arg)
     int            num_batches        = (do_batched || do_strided_batched ? arg.batch_count : 1);
     int64_t        stride_a           = do_strided_batched ? arg.stride_a : lda * A_col;
     int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
-    int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * M;
-    int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * M;
+    int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * N;
+    int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * N;
 
     hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
@@ -452,7 +452,8 @@ void testing_spmm(const Arguments& arg)
 
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
-    size_t                        workspace_size, compressed_size;
+    size_t                        workspace_size = 0, compressed_size = 0;
+
     hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
 
     EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, plan, &workspace_size),
