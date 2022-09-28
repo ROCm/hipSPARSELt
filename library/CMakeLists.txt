@@ -44,9 +44,6 @@ set(hipsparselt_headers_public
   ${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt-version.h
 )
 
-if(NOT BUILD_CUDA)
-    set(hipsparselt_headers_public ${hipsparselt_headers_public})
-endif()
 source_group("Header Files\\Public" FILES ${hipsparselt_headers_public})
 
 include(GNUInstallDirs)
@@ -135,10 +132,22 @@ endif( )
 # Installation
 
 rocm_install_targets(
-  TARGETS hipsparselt ${SPMM_KERNEL_LIBS}
+  TARGETS hipsparselt
   INCLUDE
     ${CMAKE_BINARY_DIR}/include
 )
+
+if ( NOT BUILD_CUDA )
+    if (WIN32)
+      set( HIPSPARSELT_SPMM_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/bin/hipsparselt" CACHE PATH "path to spmm kernels" )
+    else()
+      set( HIPSPARSELT_SPMM_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipsparselt" CACHE PATH "path to spmm kernels" )
+    endif()
+    rocm_install(
+      DIRECTORY ${CMAKE_BINARY_DIR}/SPMM_KERNELS/library
+      DESTINATION ${HIPSPARSELT_SPMM_LIBRARY_DIR}
+      COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT})
+endif()
 
 if ( NOT BUILD_CUDA )
     rocm_export_targets(

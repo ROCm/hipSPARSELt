@@ -506,8 +506,12 @@ namespace
 #endif // ifndef ROCSPARSELT_STATIC_LIB
 
                 // Find the location of the libraries
-                if(TestPath(path + "/library"))
+                if(TestPath(path + "/../SPMM_KERNELS/library"))
+                    path += "/../SPMM_KERNELS/library";
+                else if(TestPath(path + "/library"))
                     path += "/library";
+                else
+                    path += "/hipsparselt/library";
             }
 
             auto dir      = path + "/libspmm_kernels_" + processor + ".so";
