@@ -152,6 +152,16 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
   set( BUILD_CLIENTS ON )
 endif()
 
+# FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_wrap_header_dir(
+    ${CMAKE_SOURCE_DIR}/library/include
+    PATTERNS "*.h"
+    GUARDS SYMLINK WRAPPER
+    WRAPPER_LOCATIONS include
+  )
+endif()
 add_subdirectory( library )
 
 # Trigger client builds if selected
@@ -159,13 +169,32 @@ if(BUILD_CLIENTS)
   add_subdirectory(clients)
 endif()
 
+# The following code is setting variables to control the behavior of CPack to generate our
+if( WIN32 )
+    set( CPACK_SOURCE_GENERATOR "ZIP" )
+    set( CPACK_GENERATOR "ZIP" )
+endif( )
+
 # Package specific CPACK vars
+if( NOT BUILD_CUDA )
+  rocm_package_add_dependencies(DEPENDS "hipsparse >= 2.1.0")
+endif( )
+
 set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md" )
 set( CPACK_RPM_PACKAGE_LICENSE "MIT")
 
-if( NOT CPACK_PACKAGING_INSTALL_PREFIX )
+if (WIN32)
+  SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
+  SET( INSTALL_PREFIX "C:/hipSDK" )
+  SET( CPACK_SET_DESTDIR FALSE )
+  SET( CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK" )
+  SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
+  set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
+else()
+  if( NOT CPACK_PACKAGING_INSTALL_PREFIX )
     set( CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" )
-endif()
+  endif()
+endif( )
 
 set( CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include" "\${CPACK_PACKAGING_INSTALL_PREFIX}/lib" )
 
