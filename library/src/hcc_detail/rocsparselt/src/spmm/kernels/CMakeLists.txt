@@ -43,6 +43,9 @@ macro(GENERATE_KERNEL_LIB arch)
   add_library(spmm_kernels_${arch} SHARED ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernels.cpp ${CMAKE_CURRENT_BINARY_DIR}/${arch}/kernel_params.cpp)
   set(SPMM_KERNEL_LIBS ${KERNEL_LIBS} spmm_kernels_${arch})
   add_dependencies(spmm_kernels_${arch} spmm_kernels_cpp_${arch} spmm_kernels_params_cpp_${arch})
+
+  set_target_properties(spmm_kernels_${arch} PROPERTIES
+         LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/SPMM_KERNELS/library)
 endmacro()
 
 add_executable(addKernels ${utils_dir}/addKernels.cpp)
