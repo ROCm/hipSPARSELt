@@ -32,13 +32,16 @@ endif()
 
 # Configure a header file to pass the hipSPARSE version
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipsparselt-version.h.in"
-               "${PROJECT_BINARY_DIR}/include/hipsparselt-version.h"
+               "${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt-version.h"
 )
+
+# Copy Public Headers to Build Dir
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipsparselt.h" "${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt.h" COPYONLY)
 
 # Public hipSPARSE headers
 set(hipsparselt_headers_public
   include/hipsparselt.h
-  ${PROJECT_BINARY_DIR}/include/hipsparselt-version.h
+  ${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt-version.h
 )
 
 if(NOT BUILD_CUDA)
@@ -111,59 +114,50 @@ if(NOT BUILD_SHARED_LIBS)
   set_target_properties(hipsparselt PROPERTIES PREFIX "lib")
 endif()
 
-# Generate export header
-include(GenerateExportHeader)
-generate_export_header(hipsparselt EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/hipsparselt-export.h)
+# Package that helps me set visibility for function names exported from shared library
+include( GenerateExportHeader )
+generate_export_header( hipsparselt EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt-export.h)
 
-# Install targets
-rocm_install_targets(TARGETS hipsparselt ${SPMM_KERNEL_LIBS}
-                     INCLUDE
-                       ${CMAKE_SOURCE_DIR}/library/include
-                       ${CMAKE_BINARY_DIR}/include
-                     PREFIX hipsparselt
+if (BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_wrap_header_file(
+    hipsparselt-version.h hipsparselt-export.h
+    GUARDS SYMLINK WRAPPER
+    WRAPPER_LOCATIONS include hipsparselt/include
+  )
+endif( )
+
+# Following Boost conventions of prefixing 'lib' on static built libraries, across all platforms
+if( NOT BUILD_SHARED_LIBS )
+  set_target_properties( hipsparselt PROPERTIES PREFIX "lib" )
+endif( )
+
+############################################################
+# Installation
+
+rocm_install_targets(
+  TARGETS hipsparselt ${SPMM_KERNEL_LIBS}
+  INCLUDE
+    ${CMAKE_BINARY_DIR}/include
 )
 
-# Export targets
-if(NOT BUILD_CUDA)
-  rocm_export_targets(TARGETS roc::hipsparselt
-                      PREFIX hipsparselt
-                      DEPENDS PACKAGE hip
-                      NAMESPACE roc::)
-else()
-  rocm_export_targets(TARGETS roc::hipsparselt
-                      PREFIX hipsparselt
-                      NAMESPACE roc::)
+if ( NOT BUILD_CUDA )
+    rocm_export_targets(
+        TARGETS roc::hipsparselt
+	DEPENDS PACKAGE hip
+	NAMESPACE roc::
+    )
+else( )
+    rocm_export_targets(
+        TARGETS roc::hipsparselt
+	DEPENDS PACKAGE HIP
+	NAMESPACE roc::
+    )
+endif( )
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_install(
+    DIRECTORY
+       "${PROJECT_BINARY_DIR}/hipsparselt"
+        DESTINATION "." )
+  message( STATUS "Backward Compatible Sym Link Created for include directories" )
 endif()
-
-# Symbolic links
-rocm_install_symlink_subdir(hipsparselt)
-
-if(NOT BUILD_CUDA)
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip-rocclr >= 3.5.0")
-endif()
-
-# Package specific CPACK vars
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.md")
-
-if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
-  set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-endif()
-
-set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include")
-
-if(NOT BUILD_CUDA)
-  set(package_name hipsparselt)
-else()
-  set(package_name hipsparselt-alt)
-endif()
-
-set(HIPSPARSELT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
-
-rocm_create_package(
-  NAME ${package_name}
-  DESCRIPTION "Radeon Open Compute SPARSE library with xDL supported"
-  MAINTAINER "hipSPARSELt Maintainer"
-  LDCONFIG
-  LDCONFIG_DIR ${HIPSPARSELT_CONFIG_DIR}
-)
