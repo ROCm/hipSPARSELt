@@ -55,7 +55,7 @@ Once installed, hipSPARSELt can be used just like any other library with a C API
 The header file will need to be included in the user code in order to make calls into hipSPARSELt, and the hipSPARSELt shared library will become link-time and run-time dependent for the user application.
 
 Building hipSPARSELt from source
-------------------------------
+--------------------------------
 Building from source is not necessary, as hipSPARSELt can be used after installing the pre-built packages as described above.
 If desired, the following instructions can be used to build hipSPARSELt from source.
 Furthermore, the following compile-time dependencies must be met
@@ -67,7 +67,7 @@ Furthermore, the following compile-time dependencies must be met
 - `googletest <https://github.com/google/googletest>`_ (optional, for clients)
 
 Download hipSPARSELt
-``````````````````
+````````````````````
 The hipSPARSELt source code is available at the `hipSPARSELt GitHub page <https://github.com/ROCmSoftwarePlatform/hipSPARSELt>`_.
 Download the develop branch using:
 
@@ -80,7 +80,7 @@ Below are steps to build different packages of the library, including dependenci
 It is recommended to install hipSPARSELt using the `install.sh` script.
 
 Using `install.sh` to build hipSPARSELt with dependencies
-```````````````````````````````````````````````````````
+`````````````````````````````````````````````````````````
 The following table lists common uses of `install.sh` to build dependencies + library.
 
 .. tabularcolumns::
@@ -96,7 +96,7 @@ Command           Description
 ================= ====
 
 Using `install.sh` to build hipSPARSELt with dependencies and clients
-```````````````````````````````````````````````````````````````````
+`````````````````````````````````````````````````````````````````````
 The client contains example code and unit tests. Common uses of `install.sh` to build them are listed in the table below.
 
 .. tabularcolumns::
@@ -113,7 +113,7 @@ Command             Description
 =================== ====
 
 Using individual commands to build hipSPARSELt
-````````````````````````````````````````````
+``````````````````````````````````````````````
 CMake 3.16.8 or later is required in order to build hipSPARSELt.
 
 hipSPARSELt can be built using the following commands:
@@ -214,7 +214,7 @@ Storage Formats
 ===============
 
 Structured sparsity storage format
-------------------
+----------------------------------
 The Structured sparsity storage format represents a :math:`m \times n` matrix by
 
 ================ =====================================================================================================
@@ -259,69 +259,73 @@ Types
 =====
 
 hipsparseLtHandle_t
------------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtHandle_t
+.. doxygenstruct:: hipsparseLtHandle_t
 
 hipsparseLtMatDescriptor_t
--------------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtMatDescriptor_t
+.. doxygenstruct:: hipsparseLtMatDescriptor_t
 
 hipsparseLtMatmulDescriptor_t
------------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtMatmulDescriptor_t
+.. doxygenstruct:: hipsparseLtMatmulDescriptor_t
 
 hipsparseLtMatmulAlgSelection_t
-------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtMatmulAlgSelection_t
+.. doxygenstruct:: hipsparseLtMatmulAlgSelection_t
 
 hipsparseLtMatmulPlan_t
-------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtMatmulPlan_t
+.. doxygenstruct:: hipsparseLtMatmulPlan_t
 
 hipsparseLtDatatype_t
---------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtDatatype_t
+.. doxygenenum:: hipsparseLtDatatype_t
 
 hipsparseLtSparsity_t
--------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtSparsity_t
+.. doxygenenum:: hipsparseLtSparsity_t
 
 hipsparseLtMatDescAttribute_t
-------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtMatDescAttribute_t
+.. doxygenenum:: hipsparseLtMatDescAttribute_t
 
 hipsparseComputetype_t
-------------
-
-.. doxygentypedef:: hipsparseComputetype_t
+---------------------------------------------------
+.. doxygenenum:: hipsparseComputetype_t
 
 hipsparseLtMatmulDescAttribute_t
---------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtMatmulDescAttribute_t
+.. doxygenenum:: hipsparseLtMatmulDescAttribute_t
 
 hipsparseLtMatmulAlg_t
--------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtMatmulAlg_t
+.. doxygenenum:: hipsparseLtMatmulAlg_t
 
 hipsparseLtPruneAlg_t
---------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtPruneAlg_t
+.. doxygenenum:: hipsparseLtMatmulAlgAttribute_t
+
+hipsparseLtMatmulAlgAttribute_t
+---------------------------------------------------
+
+.. doxygenenum:: hipsparseLtPruneAlg_t
 
 hipsparseLtSplitKMode_t
------------
+---------------------------------------------------
 
-.. doxygentypedef:: hipsparseLtSplitKMode_t
+.. doxygenenum:: hipsparseLtSplitKMode_t
 
 .. _api:
 
@@ -422,7 +426,7 @@ Helper Functions
 +-------------------------------------------+
 |:cpp:func:`hipsparseLtSpMMAPrune2`         |
 +-------------------------------------------+
-|:cpp:func:`hipsparseLtSpMMAPruneCheck2`    |        |
+|:cpp:func:`hipsparseLtSpMMAPruneCheck2`    |
 +-------------------------------------------+
 |:cpp:func:`hipsparseLtSpMMACompressedSize` |
 +-------------------------------------------+
@@ -452,13 +456,14 @@ hipsparseLtInit()
 
 .. doxygenfunction:: hipsparseLtInit
 
-.. _hipsparselt_destroy_:
+.. _hipsparselt_destroy:
 
 hipsparseLtDestroy()
 --------------------
 
 .. doxygenfunction:: hipsparseLtDestroy
 
+.. _hipsparselt_matrix_descriptor_functions_:
 
 Matrix Descriptor Functions
 ===========================
@@ -469,6 +474,11 @@ hipsparseLtDenseDescriptorInit()
 --------------------------------
 
 .. doxygenfunction:: hipsparseLtDenseDescriptorInit
+
+hipsparseLtStructuredDescriptorInit()
+-------------------------------------
+
+.. doxygenfunction:: hipsparseLtStructuredDescriptorInit
 
 hipsparseLtMatDescriptorDestroy()
 ---------------------------------
@@ -485,6 +495,7 @@ hipsparseLtMatDescGetAttribute()
 
 .. doxygenfunction:: hipsparseLtMatDescGetAttribute
 
+.. _hipsparselt_matmul_descriptor_functions_:
 
 Matmul Descriptor Functions
 ===========================
@@ -506,6 +517,7 @@ hipsparseLtMatmulDescGetAttribute()
 
 .. doxygenfunction:: hipsparseLtMatmulDescGetAttribute
 
+.. _hipsparselt_matmul_algorithm_functions_:
 
 Matmul Algorithm Functions
 ==========================
@@ -527,7 +539,7 @@ hipsparseLtMatmulAlgGetAttribute()
 
 .. doxygenfunction:: hipsparseLtMatmulAlgGetAttribute
 
-
+.. _hipsparselt_matmul_functions_:
 
 Matmul Functions
 ================
@@ -561,6 +573,7 @@ hipsparseLtMatmulSearch()
 
 .. doxygenfunction:: hipsparseLtMatmulSearch
 
+.. _hipsparselt_helper_functions_:
 
 Helper Functions
 ================
