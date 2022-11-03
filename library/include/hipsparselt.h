@@ -66,7 +66,7 @@
  *
  *  \details
  *  The hhipSPARSELt handle is a structure holding the hipSPARSELt library context. It must
- *  be initialized using \ref hipSparseLtInit and the returned handle must be
+ *  be initialized using \ref hipsparseLtInit and the returned handle must be
  *  passed to all subsequent library function calls. It should be destroyed at the end
  *  using \ref hipsparseLtDestroy.
  */
@@ -246,7 +246,7 @@ typedef enum {
  *  \brief Specify the split k mode value.
  *
  *  \details
- *  The \ref hipsparseLtSplitKMode_t is used by \ref HIPSPARSELT_MATMUL_SPLIT_K_MODE attribute in \ref hipsparseLtMatmulAlgAttribute_t.
+ *  The \ref hipsparseLtSplitKMode_t is used by HIPSPARSELT_MATMUL_SPLIT_K_MODE attribute in \ref hipsparseLtMatmulAlgAttribute_t.
  */
 typedef enum {
    HIPSPARSELT_SPLIT_K_MODE_ONE_KERNEL = 0,  /**< Use the same SP-MM kernel to do the final reduction */
@@ -848,7 +848,7 @@ hipsparseStatus_t hipsparseLtMatmulSearch(const hipsparseLtHandle_t* handle,
  *
  *  \details
  *  \p hipsparseLtSpMMAPrune prunes a dense matrix d_in according to the specified
- *  algorithm pruneAlg, \ref HIPSPARSELT_PRUNE_SPMMA_TILE or \ref HIPSPARSELT_PRUNE_SPMMA_STRIP.
+ *  algorithm pruneAlg, HIPSPARSELT_PRUNE_SPMMA_TILE or HIPSPARSELT_PRUNE_SPMMA_STRIP.
  *
  *  \note
  *	The function requires no extra storage.
@@ -914,7 +914,7 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck(const hipsparseLtHandle_t*         
  *
  *  \details
  *  \p hipsparseLtSpMMAPrune2 prunes a dense matrix d_in according to the specified
- *  algorithm pruneAlg, \ref HIPSPARSELT_PRUNE_SPMMA_TILE or \ref HIPSPARSELT_PRUNE_SPMMA_STRIP.
+ *  algorithm pruneAlg, HIPSPARSELT_PRUNE_SPMMA_TILE or HIPSPARSELT_PRUNE_SPMMA_STRIP.
  *
  *  \note
  *	The function requires no extra storage.
