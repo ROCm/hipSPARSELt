@@ -774,4 +774,4 @@ std::atomic_bool& rocsparselt_internal_kl_is_initialized()
 
 GENERATE_DEFINITIONS(__half, __half, float, "4_4_0")
 GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float, "7_7_0")
-GENERATE_DEFINITIONS(int8_t, int8_t, int32_t, "8_8_0")
+GENERATE_DEFINITIONS(int8_t, int8_t, float, "8_8_0")

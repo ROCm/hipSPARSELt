@@ -21,9 +21,12 @@
 #
 # ########################################################################
 
-include(src/hcc_detail/rocsparselt/src/spmm/hip/CMakeLists.txt)
-include(src/hcc_detail/rocsparselt/src/spmm/kernels/CMakeLists.txt)
 set(DL_LIB dl)
+
+if( NOT BUILD_WITH_TENSILE)
+  include(src/hcc_detail/rocsparselt/src/spmm/hip/CMakeLists.txt)
+  include(src/hcc_detail/rocsparselt/src/spmm/kernels/CMakeLists.txt)
+endif()
 
 # rocSPARSELt source
 set(rocsparselt_source
@@ -38,4 +41,5 @@ set(rocsparselt_source
   src/hcc_detail/rocsparselt/src/spmm/rocsparselt_spmm.cpp
   ${SPMM_KERNELS_SRC}
   ${KERNEL_LAUNCHER_SRC}
+  ${Tensile_SRC}
 )
