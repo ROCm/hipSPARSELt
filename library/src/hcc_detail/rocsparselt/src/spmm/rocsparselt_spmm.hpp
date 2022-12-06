@@ -33,8 +33,11 @@
 #include "handle.h"
 #include "hipsparselt_ostream.hpp"
 #include "utility.hpp"
-
-#include "kernel_launcher.hpp"
+#if BUILD_WITH_TENSILE
+    #include "tensile_host.hpp"
+#else
+    #include "kernel_launcher.hpp"
+#endif
 
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status spmm_batched_template(const _rocsparselt_handle*  handle,
@@ -70,6 +73,8 @@ rocsparselt_status spmm_batched_template(const _rocsparselt_handle*  handle,
                                          float                       act_arg1,
                                          const void*                 bias_vector,
                                          int64_t                     bias_stride,
+                                         void*                       workspace,
+                                         size_t                      workspaceSize,
                                          hipStream_t*                streams,
                                          int32_t                     numStreams,
                                          int*                        config_id,
@@ -113,6 +118,8 @@ rocsparselt_status spmm_batched_template(const _rocsparselt_handle*  handle,
                                                       act_arg1,
                                                       bias_vector,
                                                       bias_stride,
+                                                      workspace,
+                                                      workspaceSize,
                                                       streams,
                                                       numStreams};
     return runContractionProblem<Ti, To, Tc>(problem, config_id, config_max_id, search_iterations);
@@ -152,6 +159,8 @@ rocsparselt_status spmm_typecasting(const _rocsparselt_handle*  handle,
                                     float                       act_arg1,
                                     const void*                 bias_vector,
                                     int64_t                     bias_stride,
+                                    void*                       workspace,
+                                    size_t                      workspaceSize,
                                     hipStream_t*                streams,
                                     int32_t                     numStreams,
                                     int*                        config_id,
@@ -198,6 +207,8 @@ rocsparselt_status spmm_typecasting(const _rocsparselt_handle*  handle,
                                              act_arg1,
                                              bias_vector,
                                              bias_stride,
+                                             workspace,
+                                             workspaceSize,
                                              streams,
                                              numStreams,
                                              config_id,
@@ -243,6 +254,8 @@ inline rocsparselt_status rocsparselt_spmm_template(const _rocsparselt_handle*  
                                                     float                       act_arg1,
                                                     const void*                 bias_vector,
                                                     int64_t                     bias_stride,
+                                                    void*                       workspace,
+                                                    size_t                      workspaceSize,
                                                     hipStream_t*                streams,
                                                     int32_t                     numStreams,
                                                     int*                        config_id,
@@ -255,8 +268,8 @@ inline rocsparselt_status rocsparselt_spmm_template(const _rocsparselt_handle*  
     handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, offset_a, b, ld_b,  \
         batch_stride_b, offset_b, beta, c, ld_c, batch_stride_c, offset_c, d, ld_d,        \
         batch_stride_d, offset_d, batch_count, strided_batch, sparseA, metadata, act_type, \
-        act_arg0, act_arg1, bias_vector, bias_stride, streams, numStreams, config_id,      \
-        config_max_id, search_iterations
+        act_arg0, act_arg1, bias_vector, bias_stride, workspace, workspaceSize,            \
+        streams, numStreams, config_id, config_max_id, search_iterations
 
     if(a_type == rocsparselt_datatype_f16_r && b_type == rocsparselt_datatype_f16_r)
     {
@@ -285,7 +298,7 @@ inline rocsparselt_status rocsparselt_spmm_template(const _rocsparselt_handle*  
         {
             if(compute_type == rocsparselt_compute_i32)
             {
-                rs_status = spmm_typecasting<int8_t, int8_t, int32_t>(EX_TYPECASTING_PARM);
+                rs_status = spmm_typecasting<int8_t, int8_t, float>(EX_TYPECASTING_PARM);
             }
         }
     }

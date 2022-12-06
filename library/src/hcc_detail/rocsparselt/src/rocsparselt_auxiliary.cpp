@@ -26,7 +26,9 @@
 
 #include "definitions.h"
 #include "handle.h"
-#include "kernel_launcher.hpp"
+#if !BUILD_WITH_TENSILE
+  #include "kernel_launcher.hpp"
+#endif
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
 #include "status.h"
@@ -1079,7 +1081,10 @@ rocsparselt_status
             auto compute_type = _matmulDescr->compute_type;
 
             int config_max_id = 0;
-
+#if BUILD_WITH_TENSILE
+            //TODO the real max id should be provided by tensile.
+            config_max_id = 1;
+#else
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
                 initSolutions<__half, __half, float>(
@@ -1093,7 +1098,7 @@ rocsparselt_status
                     && compute_type == rocsparselt_compute_i32)
                 initSolutions<int8_t, int8_t, int32_t>(
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
-
+#endif
             if(!config_max_id)
             {
                 hipsparselt_cerr << "There are no solutions for this problem size" << std::endl;
