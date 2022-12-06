@@ -37,9 +37,15 @@
 
 #pragma STDC CX_LIMITED_RANGE ON
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 hipsparseLtDatatype_t  RocSparseLtDatatypeToHIPDatatype(rocsparselt_datatype_ type);
 hipsparseComputetype_t RocSparseLtComputetypeToHIPComputetype(rocsparselt_compute_type_ type);
 hipsparseOperation_t   HCCOperationToHIPOperation(rocsparselt_operation_ op);
+#ifdef __cplusplus
+}
+#endif
 
 inline bool isAligned(const void* pointer, size_t byte_count)
 {
