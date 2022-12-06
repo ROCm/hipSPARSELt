@@ -28,6 +28,7 @@
 #include "exceptions.hpp"
 
 #include "hipsparselt_ostream.hpp"
+#include "utility.hpp"
 #include <hip/hip_runtime_api.h>
 #include <rocsparselt.h>
 #include <stdio.h>
