@@ -159,6 +159,7 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
         return rocsparselt_status_invalid_pointer;
     }
 
+    size_t workspaceSize = _plan->workspace_size;
     if(workspace == nullptr && _plan->workspace_size != 0)
     {
         hipsparselt_cerr << "The parameter number 9 (workspace) had an illegal value "
@@ -285,8 +286,8 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
     _handle, opA, opB, m, n, k, alpha, d_A, type_a, c_lda, c_batch_stride_a, 0, d_B, type_b, ldb, \
         batch_stride_b, 0, beta, d_C, type_c, ldc, batch_stride_c, 0, d_D, type_d, ldd,           \
         batch_stride_d, 0, num_batches_a, true, compute_type, true, metadata, act_type,           \
-        act_args[0], act_args[1], bias_vector, bias_stride, streams, numStreams, &config_id,      \
-        config_max_id, search_iterations
+        act_args[0], act_args[1], bias_vector, bias_stride, workspace, workspaceSize,             \
+        streams, numStreams, &config_id, config_max_id, search_iterations
 
     log_api(_handle,
             caller,
@@ -318,6 +319,8 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
             d_D,
             "workspace[in]",
             workspace,
+            "workspaceSize[in]",
+            workspaceSize,
             "streams[in]",
             streams,
             "numStreams[in]",

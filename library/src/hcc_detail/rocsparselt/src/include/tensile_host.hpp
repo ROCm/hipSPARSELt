@@ -23,86 +23,25 @@
  * SOFTWARE.
  *
  *******************************************************************************/
+/*********************************************************
+ * Declaration of the rocSPARSELt<->Tensile interface layer. *
+ *********************************************************/
 
 #pragma once
+
+/*****************************************************************************
+ * WARNING: Tensile-specific data types, functions and macros should only be *
+ * referenced from tensile_host.cpp. This header file defines the interface  *
+ * that the rest of rocSPARSELt uses to access Tensile. If another Tensile       *
+ * feature needs to be accessed, the API for accessing it should be defined  *
+ * in this file, without referencing any Tensile-specific identifiers here.  *
+ *****************************************************************************/
 
 #include "activation.hpp"
 #include "handle.h"
 #include "tuple_helper.hpp"
 #include "utility.hpp"
 #include <atomic>
-#include <vector>
-
-/**
-   * Zero-padding description
-   */
-struct ZeroPad
-{
-    ZeroPad(int32_t ai = -1, int32_t bi = -1, int64_t ps = 0, int64_t pe = 0)
-        : anchorIndex(ai)
-        , anchorPos(-1)
-        , boundIndex(bi)
-        , padStart(ps)
-        , padEnd(pe){};
-
-    int32_t anchorIndex;
-    int32_t anchorPos; //! position of anchorIndex in A or B tensor
-    int32_t boundIndex;
-    int32_t boundPos; //! position of anchroIndex in A or B tensor
-    int64_t padStart;
-    int64_t padEnd;
-
-    bool valid() const
-    {
-        return anchorIndex != -1;
-    };
-    std::string description() const;
-};
-using ZeroPads = std::vector<ZeroPad>;
-
-/**
-   * Represents a pair of free indices in a tensor contraction.
-   */
-struct FreeIndex
-{
-    bool   isA; //< True=index is in A; False=index is in B
-    size_t i; //< Dimension in A or B (depending on isA)
-    size_t c; //< Dimension of C which corresponds for this index
-    size_t d; //< Dimension of D which corresponds for this index
-};
-using FreeIndices = std::vector<FreeIndex>;
-
-/**
-   * Represents a batched index in a tensor contraction.
-   */
-struct BatchIndex
-{
-    size_t a, b, c, d;
-};
-using BatchIndices = std::vector<BatchIndex>;
-
-/*
-       * Represents a bound (or summed) index in a tensor contraction.
-   */
-struct BoundIndex
-{
-    BoundIndex(size_t xa = 0, size_t xb = 0, bool aMirror = false, bool bMirror = false)
-        : a(xa)
-        , b(xb)
-        , aMirror(aMirror)
-        , bMirror(bMirror){};
-    size_t  a, b; //! positions in a or b tensor
-    ZeroPad aZeroPad;
-    ZeroPad bZeroPad;
-    bool    aMirror, bMirror;
-};
-using BoundIndices = std::vector<BoundIndex>;
-
-template <typename T>
-T CeilDivide(T num, T den)
-{
-    return (num + (den - 1)) / den;
-}
 
 /********************************************************************
  * RocsparseltContractionProblem captures the arguments for a GEMM-like *
@@ -115,6 +54,10 @@ struct RocsparseltContractionProblem
     rocsparselt_operation      trans_a;
     rocsparselt_operation      trans_b;
 
+    // The RocsparseltContractionProblem data members should exactly match
+    // Tensile's parameter types, even if rocSPARSELt uses differently
+    // sized or signed types. The constructors should convert rocSPARSELt
+    // types into the corresponding Tensile types stored in this class.
     size_t m;
     size_t n;
     size_t k;
@@ -163,6 +106,9 @@ struct RocsparseltContractionProblem
     const void*                 bias_vector;
     int64_t                     bias_stride;
 
+    void *workspace;
+    size_t workspaceSize;
+
     hipStream_t* streams;
     int32_t      numStreams;
 
@@ -174,7 +120,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     m,
                                   int64_t                     n,
                                   int64_t                     k,
-                                  const float*                alpha,
+                                  const Tc*                   alpha,
                                   const Ti*                   A,
                                   const Ti* const*            batch_A,
                                   int64_t                     ld_a,
@@ -185,7 +131,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     ld_b,
                                   int64_t                     batch_stride_b,
                                   int64_t                     offset_b,
-                                  const float*                beta,
+                                  const Tc*                   beta,
                                   To*                         C,
                                   To* const*                  batch_C,
                                   int64_t                     ld_c,
@@ -200,6 +146,8 @@ struct RocsparseltContractionProblem
                                   float                       act_arg1,
                                   const void*                 bias_vector,
                                   int64_t                     bias_stride,
+                                  void*                       workspace,
+                                  size_t                      workspaceSize,
                                   hipStream_t*                streams,
                                   int32_t                     numStreams)
         : handle(handle)
@@ -243,6 +191,8 @@ struct RocsparseltContractionProblem
         , act_arg1(act_arg1)
         , bias_vector(bias_vector)
         , bias_stride(bias_stride)
+        , workspace(workspace)
+        , workspaceSize(workspaceSize)
         , streams(streams)
         , numStreams(numStreams)
     {
@@ -256,7 +206,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     m,
                                   int64_t                     n,
                                   int64_t                     k,
-                                  const float*                alpha,
+                                  const Tc*                   alpha,
                                   const Ti*                   A,
                                   const Ti* const*            batch_A,
                                   int64_t                     ld_a,
@@ -267,7 +217,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     ld_b,
                                   int64_t                     batch_stride_b,
                                   int64_t                     offset_b,
-                                  const float*                beta,
+                                  const Tc*                   beta,
                                   const To*                   C,
                                   const To* const*            batch_C,
                                   int64_t                     ld_c,
@@ -287,6 +237,8 @@ struct RocsparseltContractionProblem
                                   float                       act_arg1,
                                   const void*                 bias_vector,
                                   int64_t                     bias_stride,
+                                  void*                       workspace,
+                                  size_t                      workspaceSize,
                                   hipStream_t*                streams,
                                   int32_t                     numStreams)
         : handle(handle)
@@ -330,6 +282,8 @@ struct RocsparseltContractionProblem
         , act_arg1(act_arg1)
         , bias_vector(bias_vector)
         , bias_stride(bias_stride)
+        , workspace(workspace)
+        , workspaceSize(workspaceSize)
         , streams(streams)
         , numStreams(numStreams)
     {
@@ -341,7 +295,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     m,
                                   int64_t                     n,
                                   int64_t                     k,
-                                  const float*                alpha,
+                                  const Tc*                   alpha,
                                   const Ti*                   A,
                                   const Ti* const*            batch_A,
                                   int64_t                     row_stride_a,
@@ -354,7 +308,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     col_stride_b,
                                   int64_t                     batch_stride_b,
                                   int64_t                     offset_b,
-                                  const float*                beta,
+                                  const Tc*                   beta,
                                   const To*                   C,
                                   const To* const*            batch_C,
                                   int64_t                     row_stride_c,
@@ -376,6 +330,8 @@ struct RocsparseltContractionProblem
                                   float                       act_arg1,
                                   const void*                 bias_vector,
                                   int64_t                     bias_stride,
+                                  void*                       workspace,
+                                  size_t                      workspaceSize,
                                   hipStream_t*                streams,
                                   int32_t                     numStreams)
         : handle(handle)
@@ -419,6 +375,8 @@ struct RocsparseltContractionProblem
         , act_arg1(act_arg1)
         , bias_vector(bias_vector)
         , bias_stride(bias_stride)
+        , workspace(workspace)
+        , workspaceSize(workspaceSize)
         , streams(streams)
         , numStreams(numStreams)
     {
@@ -495,29 +453,24 @@ struct RocsparseltContractionProblem
     };
 };
 
+/*******************************************************************************
+ * runContractionProblem() solves a RocsparseltContractionProblem                  *
+ *******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem,
                                          int*                                             config_id,
-                                         const int config_max_id,
-                                         const int search_iterations);
-template <typename Ti, typename To, typename Tc>
-rocsparselt_status initSolutions(const _rocsparselt_handle* handle,
-                                 rocsparselt_operation      opA,
-                                 rocsparselt_operation      opB,
-                                 int*                       kernel_counts);
-
-template <typename Ti, typename To, typename Tc>
-std::string generate_kernel_category_str(rocsparselt_operation opA, rocsparselt_operation opB);
+                                         const int                                        config_max_id,
+                                         const int                                        search_iterations);
 
 /***********************************************************************************
- * Whether Kernel Launcher has been initialized for at least one device (used for testing) *
+ * Whether Tensile has been initialized for at least one device (used for testing) *
  ***********************************************************************************/
-std::atomic_bool& rocsparselt_internal_kl_is_initialized();
+std::atomic_bool& rocsparselt_internal_tensile_is_initialized();
 
 /**********************************************
- * Whether to suppress Kernel error messages *
+ * Whether to suppress Tensile error messages *
  **********************************************/
-inline bool& rocsparselt_suppress_kl_error_messages()
+inline bool& rocsparselt_suppress_tensile_error_messages()
 {
     thread_local bool t_suppress = false;
     return t_suppress;
