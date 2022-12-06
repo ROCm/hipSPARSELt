@@ -20,10 +20,86 @@
 # THE SOFTWARE.
 #
 # ########################################################################
-
 set(hipsparselt_source_common  src/hipsparselt_ostream.cpp
                                src/auxiliary.cpp)
 if(NOT BUILD_CUDA)
+
+  # Set up Tensile Dependency
+  if( BUILD_WITH_TENSILE )
+    # If we want to build a shared rocblas lib, force Tensile to build as a static lib to absorb into rocblas
+    if( BUILD_SHARED_LIBS )
+      set( ROCSPARSELT_SHARED_LIBS ON )
+      set( BUILD_SHARED_LIBS OFF )
+    else( )
+      set( ROCSPARSELT_SHARED_LIBS OFF )
+    endif( )
+
+    set( Tensile_RUNTIME_LANGUAGE "HIP" )
+
+    #TODO update when this feature has been validated
+    #set( PACKAGE_TENSILE_LIBRARY ON )
+    set( PACKAGE_TENSILE_LIBRARY OFF )
+
+    # Build options list
+    if(Tensile_MERGE_FILES)
+      set(Tensile_Options ${Tensile_Options} MERGE_FILES)
+    endif()
+    if(Tensile_SHORT_FILENAMES)
+      set(Tensile_Options ${Tensile_Options} SHORT_FILE_NAMES)
+    endif()
+    if(Tensile_PRINT_DEBUG)
+      set(Tensile_Options ${Tensile_Options} PRINT_DEBUG)
+    endif()
+    if(PACKAGE_TENSILE_LIBRARY)
+      set(Tensile_Options ${Tensile_Options} GENERATE_PACKAGE)
+    endif()
+
+    # Add a build target for Tensile kernel library
+    # Runtime language is HIP by default
+    # warning our Tensile_ variables may shadow variable in TensileCreateLibraryFiles
+    # thus bypassing the function argument parameter system (mainly the options list) and CPU_THREADS
+    if(Tensile_CPU_THREADS MATCHES "^[0-9]+$")
+      # only including threads argument if number
+      TensileCreateLibraryFiles(
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/src/spmm/Tensile/Logic/${Tensile_LOGIC}"
+        "${PROJECT_BINARY_DIR}/Tensile"
+        ARCHITECTURE        ${Tensile_ARCHITECTURE}
+        CODE_OBJECT_VERSION ${Tensile_CODE_OBJECT_VERSION}
+        COMPILER            ${Tensile_COMPILER}
+        LIBRARY_FORMAT      ${Tensile_LIBRARY_FORMAT}
+        CPU_THREADS         ${Tensile_CPU_THREADS}
+        ${Tensile_Options}
+      )
+    else()
+      TensileCreateLibraryFiles(
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/src/spmm/Tensile/Logic/${Tensile_LOGIC}"
+        "${PROJECT_BINARY_DIR}/Tensile"
+        ARCHITECTURE        ${Tensile_ARCHITECTURE}
+        CODE_OBJECT_VERSION ${Tensile_CODE_OBJECT_VERSION}
+        COMPILER            ${Tensile_COMPILER}
+        LIBRARY_FORMAT      ${Tensile_LIBRARY_FORMAT}
+        ${Tensile_Options}
+      )
+    endif()
+
+    # Create a unique name for TensileHost compiled for rocBLAS
+    set_target_properties( TensileHost PROPERTIES OUTPUT_NAME rocsparselt-tensile CXX_EXTENSIONS NO )
+
+    # Tensile host depends on libs build target
+    add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
+
+    if( ROCSPARSELT_SHARED_LIBS )
+      set( BUILD_SHARED_LIBS ON )
+      set_target_properties( TensileHost PROPERTIES POSITION_INDEPENDENT_CODE ON )
+    endif()
+
+    if( BUILD_WITH_TENSILE )
+      set(Tensile_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/src/tensile_host.cpp)
+      set(Tensile_INC ${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/src/Tensile)
+    endif()
+
+  endif( ) # BUILD_WITH_TENSILE
+
   # hipSPARSE source
   include(src/hcc_detail/rocsparselt/CMakeLists.txt)
   set(hipsparselt_source src/hcc_detail/hipsparselt.cpp

@@ -61,10 +61,56 @@ add_library(roc::hipsparselt ALIAS hipsparselt)
 
 # Target compile definitions
 if(NOT BUILD_CUDA)
-    target_compile_options(hipsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
-    target_compile_definitions(hipsparselt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
+  target_compile_options(hipsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
+  target_compile_definitions(hipsparselt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
+
+  if( BUILD_WITH_TENSILE )
+    if( BUILD_SHARED_LIBS )
+      target_link_libraries( hipsparselt PRIVATE TensileHost )
+    else()
+      target_compile_definitions( hipsparselt PRIVATE HIPSPARSELT_STATIC_LIB )
+
+      # bypassing cmake dependencies chain for static link as it won't allow target from different directory
+
+      # including tensile headers into rocblas tensileHost client so get compile properties
+      get_target_property(TensileHost_INCLUDES TensileHost INCLUDE_DIRECTORIES)
+      target_include_directories( hipsparselt PRIVATE ${TensileHost_INCLUDES} )
+      get_target_property(TensileHost_DEFINES TensileHost COMPILE_DEFINITIONS)
+      target_compile_definitions( hipsparselt PRIVATE ${TensileHost_DEFINES} )
+
+      get_target_property( TensileHost_LIBDIR TensileHost BINARY_DIR )
+
+      message (STATUS "TensileHost_INCLUDES == ${TensileHost_INCLUDES}")
+      message (STATUS "TensileHost_DEFINES == ${TensileHost_DEFINES}")
+      message (STATUS "TensileHost_LIBDIR == ${TensileHost_LIBDIR}")
+      # recreate LLVM static dependencies
+      if (${Tensile_LIBRARY_FORMAT} STREQUAL "yaml")
+        find_package(LLVM 6.0 QUIET CONFIG)
+        if(NOT LLVM_FOUND)
+            find_package(LLVM 7.0 QUIET CONFIG)
+            if(NOT LLVM_FOUND)
+                find_package(LLVM 9.0 QUIET CONFIG)
+                if(NOT LLVM_FOUND)
+                    find_package(LLVM REQUIRED CONFIG)
+                endif()
+            endif()
+        endif()
+        find_library(LLVMObjectYAML_LIBRARY
+          NAMES LLVMObjectYAML
+          PATHS ${LLVM_LIBRARY_DIR})
+        message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
+        target_link_libraries(hipsparselt PRIVATE LLVMObjectYAML )  # match tensile
+      endif()
+
+      # to get TensileHost built first, not to link target
+      # as dependency chain can not be created
+      add_dependencies(hipsparselt TensileHost)
+    endif()
+    target_compile_definitions(hipsparselt PRIVATE ${TENSILE_DEFINES} )
+  endif()
+
 else()
-    target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_NVCC__)
+  target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_NVCC__)
 endif()
 
 # Target compile features
@@ -73,6 +119,7 @@ target_compile_features(hipsparselt PRIVATE cxx_nullptr)
 # Target include directories
 target_include_directories(hipsparselt
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
+                                   $<BUILD_INTERFACE:${Tensile_INC}>
                            PUBLIC  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
                                    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
                                    $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
@@ -138,6 +185,17 @@ rocm_install_targets(
 )
 
 if ( NOT BUILD_CUDA )
+  if( BUILD_WITH_TENSILE )
+    if (WIN32)
+      set( HIPSPARSELT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/bin/hipsparselt" CACHE PATH "path to tensile library" )
+    else()
+      set( HIPSPARSELT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipsparselt" CACHE PATH "path to tensile library" )
+    endif()
+    rocm_install(
+      DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
+      DESTINATION ${HIPSPARSELT_TENSILE_LIBRARY_DIR}
+      COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME}) # Use this cmake variable to be compatible with rocm-cmake 0.6 and 0.7
+  else()
     if (WIN32)
       set( HIPSPARSELT_SPMM_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/bin/hipsparselt" CACHE PATH "path to spmm kernels" )
     else()
@@ -147,6 +205,7 @@ if ( NOT BUILD_CUDA )
       DIRECTORY ${CMAKE_BINARY_DIR}/SPMM_KERNELS/library
       DESTINATION ${HIPSPARSELT_SPMM_LIBRARY_DIR}
       COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT})
+  endif()
 endif()
 
 if ( NOT BUILD_CUDA )
