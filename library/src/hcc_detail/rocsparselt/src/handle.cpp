@@ -226,7 +226,7 @@ std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_alg_sel
 {
     stream << "{"
            << "ptr=" << (&t) << ", alg=" << t.alg << ", config_id=" << t.config_id
-           << ", config_max_id=" << t.search_iterations << "}";
+           << ", config_max_id=" << t.config_max_id <<  ", search_iterations=" << t.search_iterations << "}";
     return stream;
 }
 
