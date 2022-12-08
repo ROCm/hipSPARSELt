@@ -686,7 +686,11 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
                     RETURN_IF_HIP_ERROR(hipEventSynchronize(stopEvent));
                     RETURN_IF_HIP_ERROR(hipEventElapsedTime(&ms, startEvent, stopEvent));
                     if(ms < min_ms)
+                    {
                         *config_id = id;
+                        min_ms = ms;
+                    }
+
                 }
                 RETURN_IF_HIP_ERROR(hipEventDestroy(startEvent));
                 RETURN_IF_HIP_ERROR(hipEventDestroy(stopEvent));
