@@ -32,6 +32,7 @@
 #include <hip/hip_runtime_api.h>
 #include <iostream>
 #include <vector>
+#include <memory>
 
 struct _rocsparselt_attribute
 {
@@ -298,6 +299,36 @@ private:
     bool is_init   = false;
 };
 
+struct _rocsparselt_matmul_config
+{
+    _rocsparselt_matmul_config(){}
+    ~_rocsparselt_matmul_config(){}
+
+    _rocsparselt_matmul_config(const _rocsparselt_matmul_config& rhs)
+    {
+        this->data = rhs.data;
+        this->max_workspace_bytes = rhs.max_workspace_bytes;
+    }
+
+    union u {
+
+        u(): ptr(nullptr){}
+        ~u(){}
+
+        u& operator=(const u& rhs)
+        {
+            if(this != &rhs)
+               ptr = std::static_pointer_cast<void>(rhs.ptr);
+            return *this;
+        }
+
+        std::shared_ptr<void> ptr;
+        uint8_t data[48];
+    } data;
+
+    size_t max_workspace_bytes = 0;
+};
+
 /********************************************************************************
  * \brief rocsparselt_matmul_alg_selection holds the description of the matrix
  * multiplication algorithm.
@@ -311,6 +342,7 @@ struct _rocsparselt_matmul_alg_selection
         : handle(handle)
     {
         is_init = true;
+        configs = std::make_shared<std::vector<_rocsparselt_matmul_config>>();
     };
     // destructor
     ~_rocsparselt_matmul_alg_selection()
@@ -328,6 +360,9 @@ struct _rocsparselt_matmul_alg_selection
 
     const _rocsparselt_handle* handle = nullptr;
     //
+
+    std::shared_ptr<std::vector<_rocsparselt_matmul_config>> configs;
+
     rocsparselt_matmul_alg alg;
     //data of rocsparselt_matmul_alg_attribute
     int  config_id         = 0;

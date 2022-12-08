@@ -29,6 +29,11 @@
 #include "handle.h"
 #include "hipsparselt_ostream.hpp"
 #include "utility.hpp"
+#if BUILD_WITH_TENSILE
+  #include "tensile_host.hpp"
+#else
+  #include "kernel_launcher.hpp"
+#endif
 #include <cxxabi.h>
 
 inline rocsparselt_status getOriginalSizes(rocsparselt_operation opA,
@@ -377,5 +382,36 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
     }
 
     return rocsparselt_status_success;
+}
+
+template <typename Ti, typename To, typename Tc>
+rocsparselt_status ConstructRocSparseLtProblem(const char*                      caller,
+                                               RocsparseltContractionProblem<Ti, To, Tc> **prob,
+                                               const _rocsparselt_matmul_descr* matDescr,
+                                               const Tc*                        alpha = nullptr,
+                                               const Tc*                        beta = nullptr,
+                                               const Ti*                        a = nullptr,
+                                               const Ti*                        b = nullptr,
+                                               const To*                        c = nullptr,
+                                               To*                              d = nullptr,
+                                               bool                             strided_batch = true,
+                                               void*                            workspace = nullptr,
+                                               size_t                           workspaceSize = ~size_t{0},
+                                               hipStream_t*                     streams = nullptr,
+                                               int32_t                          numStreams = 0);
+
+template <typename Ti, typename To, typename Tc>
+rocsparselt_status findTopConfigs(const _rocsparselt_matmul_descr* matmulDescr,
+                                  std::vector<_rocsparselt_matmul_config> *configs,
+                                  int* config_max_id,
+                                  const int requestConfigs=10)
+{
+    RocsparseltContractionProblem<Ti, To, Tc> *prob;
+    auto status = ConstructRocSparseLtProblem<Ti, To, Tc>(__func__, &prob, matmulDescr);
+    if(status != rocsparselt_status_success)
+        return status;
+    getBestSolutions<Ti, To, Tc>(*prob, requestConfigs, configs, config_max_id);
+    delete prob;
+    return status;
 }
 #endif
