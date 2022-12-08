@@ -77,8 +77,8 @@ rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*   
     }
 
     {
-        //TODO
-        *workspaceSize = 0;
+        *workspaceSize = _plan->alg_selection->configs->at(_plan->alg_selection->config_id).max_workspace_bytes;
+        log_api(_handle, __func__, *workspaceSize);
         return rocsparselt_status_success;
     }
 }
@@ -186,125 +186,19 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
         return rocsparselt_status_invalid_value;
     }
 
-    rocsparselt_operation    opA          = _plan->matmul_descr->op_A;
-    rocsparselt_operation    opB          = _plan->matmul_descr->op_B;
-    rocsparselt_compute_type compute_type = _plan->matmul_descr->compute_type;
-
-    // matrix A
-    int64_t              num_rows_a     = _plan->matmul_descr->matrix_A->m;
-    int64_t              num_cols_a     = _plan->matmul_descr->matrix_A->n;
-    int64_t              c_k_a          = _plan->matmul_descr->matrix_A->c_k;
-    int64_t              c_lda          = _plan->matmul_descr->matrix_A->c_ld;
-    rocsparselt_datatype type_a         = _plan->matmul_descr->matrix_A->type;
-    int                  num_batches_a  = 1;
-    int64_t              batch_stride_a = 0;
-    _plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
-    _plan->matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
-    int64_t c_batch_stride_a = (batch_stride_a == 0                   ? 0
-                                : (opA == rocsparselt_operation_none) ? c_lda * c_k_a
-                                                                      : c_lda * num_cols_a);
-
-    // matrix B
-    int64_t              num_rows_b     = _plan->matmul_descr->matrix_B->m;
-    int64_t              num_cols_b     = _plan->matmul_descr->matrix_B->n;
-    int64_t              ldb            = _plan->matmul_descr->matrix_B->ld;
-    rocsparselt_datatype type_b         = _plan->matmul_descr->matrix_B->type;
-    int                  num_batches_b  = 1;
-    int64_t              batch_stride_b = 0;
-    _plan->matmul_descr->matrix_B->attributes[rocsparselt_mat_num_batches].get(&num_batches_b);
-    _plan->matmul_descr->matrix_B->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_b);
-
-    // matrix C
-    int64_t              ldc            = _plan->matmul_descr->matrix_C->ld;
-    rocsparselt_datatype type_c         = _plan->matmul_descr->matrix_C->type;
-    int                  num_batches_c  = 1;
-    int64_t              batch_stride_c = 0;
-    _plan->matmul_descr->matrix_C->attributes[rocsparselt_mat_num_batches].get(&num_batches_c);
-    _plan->matmul_descr->matrix_C->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_c);
-
-    // matrix D
-    int64_t              ldd            = _plan->matmul_descr->matrix_D->ld;
-    rocsparselt_datatype type_d         = _plan->matmul_descr->matrix_D->type;
-    int                  num_batches_d  = 1;
-    int64_t              batch_stride_d = 0;
-    _plan->matmul_descr->matrix_D->attributes[rocsparselt_mat_num_batches].get(&num_batches_d);
-    _plan->matmul_descr->matrix_D->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_d);
-
-    // activation
-    hipsparselt_activation_type act_type    = hipsparselt_activation_type::none;
-    float                       act_args[2] = {0.0f, 0.0f};
-    if(_plan->matmul_descr->activation_relu)
-    {
-        act_args[0] = _plan->matmul_descr->activation_relu_threshold;
-        act_args[1] = _plan->matmul_descr->activation_relu_upperbound;
-        if(act_args[0] == 0 && act_args[1] == std::numeric_limits<float>::infinity())
-            act_type = hipsparselt_activation_type::relu;
-        else
-            act_type = hipsparselt_activation_type::clippedrelu;
-    }
-    else if(_plan->matmul_descr->activation_gelu)
-        act_type = hipsparselt_activation_type::gelu;
-    else if(_plan->matmul_descr->activation_abs)
-        act_type = hipsparselt_activation_type::abs;
-    else if(_plan->matmul_descr->activation_leakyrelu)
-    {
-        act_type    = hipsparselt_activation_type::leakyrelu;
-        act_args[0] = _plan->matmul_descr->activation_leakyrelu_alpha;
-    }
-    else if(_plan->matmul_descr->activation_sigmoid)
-        act_type = hipsparselt_activation_type::sigmoid;
-    else if(_plan->matmul_descr->activation_tanh)
-    {
-        act_type    = hipsparselt_activation_type::tanh;
-        act_args[0] = _plan->matmul_descr->activation_tanh_alpha;
-        act_args[1] = _plan->matmul_descr->activation_tanh_beta;
-    }
-    float*  bias_vector = _plan->matmul_descr->bias_pointer;
-    int64_t bias_stride = _plan->matmul_descr->bias_stride;
-
     // algorithm selection
     int config_id         = _plan->alg_selection->config_id;
     int config_max_id     = _plan->alg_selection->config_max_id;
     int search_iterations = search ? _plan->alg_selection->search_iterations : 0; //default
 
-    int64_t m, n, k;
-    auto    status
-        = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
-    if(status != rocsparselt_status_success)
-    {
-        log_error(_handle, caller, "A, B matrix size are not matched");
-        return status;
-    }
-
-    int64_t c_num_cols_a    = (opA == rocsparselt_operation_none ? c_k_a : num_cols_a);
-    int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
-        c_num_cols_a, c_lda, (batch_stride_a == 0 ? 1 : num_batches_a), type_a);
-
-    const unsigned char* metadata = reinterpret_cast<const unsigned char*>(d_A) + metadata_offset;
-
-#define EX_PARM                                                                                   \
-    _handle, opA, opB, m, n, k, alpha, d_A, type_a, c_lda, c_batch_stride_a, 0, d_B, type_b, ldb, \
-        batch_stride_b, 0, beta, d_C, type_c, ldc, batch_stride_c, 0, d_D, type_d, ldd,           \
-        batch_stride_d, 0, num_batches_a, true, compute_type, true, metadata, act_type,           \
-        act_args[0], act_args[1], bias_vector, bias_stride, workspace, workspaceSize,             \
-        streams, numStreams, &config_id, config_max_id, search_iterations
+#define EX_PARM                                                          \
+    caller, _handle, _plan, alpha, beta, d_A, d_B, d_C, d_D, workspace,  \
+    streams, numStreams, &config_id, config_max_id, search_iterations
 
     log_api(_handle,
             caller,
             "plan[in]",
             *_plan,
-            "m",
-            m,
-            "n",
-            n,
-            "k",
-            k,
-            "activation",
-            hipsparselt_activation_type_to_string(act_type),
-            "act_args1",
-            act_args[0],
-            "act_args2",
-            act_args[1],
             "alpha[in]",
             alpha,
             "d_A[in]",
@@ -326,7 +220,7 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
             "numStreams[in]",
             numStreams);
 
-    status = rocsparselt_spmm_template(EX_PARM);
+    rocsparselt_status status = rocsparselt_spmm_template(EX_PARM);
     if(search && status == rocsparselt_status_success)
     {
         log_info(_handle, caller, "found the best config_id", config_id);
@@ -385,7 +279,176 @@ rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle* handle,
                                    numStreams,
                                    true);
 }
-
 #ifdef __cplusplus
 }
 #endif
+
+template <typename Ti, typename To, typename Tc>
+rocsparselt_status ConstructRocSparseLtProblem(const char*                      caller,
+                                               RocsparseltContractionProblem<Ti, To, Tc> **prob,
+                                               const _rocsparselt_matmul_descr* matmul_descr,
+                                               const Tc*                        alpha,
+                                               const Tc*                        beta,
+                                               const Ti*                        a,
+                                               const Ti*                        b,
+                                               const To*                        c,
+                                               To*                              d,
+                                               bool                             strided_batch,
+                                               void*                            workspace,
+                                               size_t                           workspaceSize,
+                                               hipStream_t*                     streams,
+                                               int32_t                          numStreams)
+{
+    std::shared_ptr<Tc> _one = std::make_shared<Tc>(static_cast<Tc>(1));
+    if (alpha == nullptr)
+       alpha = _one.get();
+
+    if (beta == nullptr)
+       beta = _one.get();
+
+    rocsparselt_operation    opA        = matmul_descr->op_A;
+    rocsparselt_operation    opB        = matmul_descr->op_B;
+
+    // matrix A
+    int64_t              num_rows_a     = matmul_descr->matrix_A->m;
+    int64_t              num_cols_a     = matmul_descr->matrix_A->n;
+    int64_t              c_k_a          = matmul_descr->matrix_A->c_k;
+    int64_t              c_lda          = matmul_descr->matrix_A->c_ld;
+    rocsparselt_datatype type_a         = matmul_descr->matrix_A->type;
+    int64_t              offset_a       = 0;
+    int                  num_batches_a  = 1;
+    int64_t              batch_stride_a = 0;
+    matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
+    matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
+    int64_t c_batch_stride_a = (batch_stride_a == 0                   ? 0
+                                : (opA == rocsparselt_operation_none) ? c_lda * c_k_a
+                                                                      : c_lda * num_cols_a);
+
+    // matrix B
+    int64_t              num_rows_b     = matmul_descr->matrix_B->m;
+    int64_t              num_cols_b     = matmul_descr->matrix_B->n;
+    int64_t              ldb            = matmul_descr->matrix_B->ld;
+    int64_t              offset_b       = 0;
+    int                  num_batches_b  = 1;
+    int64_t              batch_stride_b = 0;
+    matmul_descr->matrix_B->attributes[rocsparselt_mat_num_batches].get(&num_batches_b);
+    matmul_descr->matrix_B->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_b);
+
+    // matrix C
+    int64_t              ldc            = matmul_descr->matrix_C->ld;
+    int64_t              offset_c       = 0;
+    int                  num_batches_c  = 1;
+    int64_t              batch_stride_c = 0;
+    matmul_descr->matrix_C->attributes[rocsparselt_mat_num_batches].get(&num_batches_c);
+    matmul_descr->matrix_C->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_c);
+
+    // matrix D
+    int64_t              ldd            = matmul_descr->matrix_D->ld;
+    int64_t              offset_d       = 0;
+    int                  num_batches_d  = 1;
+    int64_t              batch_stride_d = 0;
+    matmul_descr->matrix_D->attributes[rocsparselt_mat_num_batches].get(&num_batches_d);
+    matmul_descr->matrix_D->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_d);
+
+    // activation
+    hipsparselt_activation_type act_type    = hipsparselt_activation_type::none;
+    float                       act_args[2] = {0.0f, 0.0f};
+    if(matmul_descr->activation_relu)
+    {
+        act_args[0] = matmul_descr->activation_relu_threshold;
+        act_args[1] = matmul_descr->activation_relu_upperbound;
+        if(act_args[0] == 0 && act_args[1] == std::numeric_limits<float>::infinity())
+            act_type = hipsparselt_activation_type::relu;
+        else
+            act_type = hipsparselt_activation_type::clippedrelu;
+    }
+    else if(matmul_descr->activation_gelu)
+        act_type = hipsparselt_activation_type::gelu;
+    else if(matmul_descr->activation_abs)
+        act_type = hipsparselt_activation_type::abs;
+    else if(matmul_descr->activation_leakyrelu)
+    {
+        act_type    = hipsparselt_activation_type::leakyrelu;
+        act_args[0] = matmul_descr->activation_leakyrelu_alpha;
+    }
+    else if(matmul_descr->activation_sigmoid)
+        act_type = hipsparselt_activation_type::sigmoid;
+    else if(matmul_descr->activation_tanh)
+    {
+        act_type    = hipsparselt_activation_type::tanh;
+        act_args[0] = matmul_descr->activation_tanh_alpha;
+        act_args[1] = matmul_descr->activation_tanh_beta;
+    }
+    float*  bias_vector = matmul_descr->bias_pointer;
+    int64_t bias_stride = matmul_descr->bias_stride;
+
+    int64_t m, n, k;
+    auto    status
+        = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
+    if(status != rocsparselt_status_success)
+    {
+        log_error(matmul_descr->handle, caller, "A, B matrix size are not matched");
+        return status;
+    }
+
+    int64_t c_num_cols_a    = (opA == rocsparselt_operation_none ? c_k_a : num_cols_a);
+    int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
+        c_num_cols_a, c_lda, (batch_stride_a == 0 ? 1 : num_batches_a), type_a);
+
+    const unsigned char* metadata = (a == nullptr) ? nullptr : reinterpret_cast<const unsigned char*>(a) + metadata_offset;
+
+    (*prob) = new RocsparseltContractionProblem<Ti, To, Tc>(matmul_descr->handle,
+                                                            opA,
+                                                            opB,
+                                                            m,
+                                                            n,
+                                                            k,
+                                                            alpha,
+                                                            a,
+                                                            nullptr,
+                                                            c_lda,
+                                                            c_batch_stride_a,
+                                                            offset_a,
+                                                            b,
+                                                            nullptr,
+                                                            ldb,
+                                                            batch_stride_b,
+                                                            offset_b,
+                                                            beta,
+                                                            c,
+                                                            nullptr,
+                                                            ldc,
+                                                            batch_stride_c,
+                                                            offset_c,
+                                                            d,
+                                                            nullptr,
+                                                            ldd,
+                                                            batch_stride_d,
+                                                            offset_d,
+                                                            num_batches_a,
+                                                            strided_batch,
+                                                            true,
+                                                            metadata,
+                                                            act_type,
+                                                            act_args[0],
+                                                            act_args[1],
+                                                            bias_vector,
+                                                            bias_stride,
+                                                            workspace,
+                                                            workspaceSize,
+                                                            streams,
+                                                            numStreams);
+    return rocsparselt_status_success;
+}
+
+#define GENERATE_DEFINITIONS(Ti, To, Tc)                                                  \
+    template rocsparselt_status ConstructRocSparseLtProblem<Ti, To, Tc>(                  \
+        const char*, RocsparseltContractionProblem<Ti, To, Tc>**,                         \
+        const _rocsparselt_matmul_descr*, const Tc*, const Tc*,                           \
+        const Ti*, const Ti*, const To*, To*, bool, void*, size_t, hipStream_t*, int32_t);
+
+GENERATE_DEFINITIONS(__half, __half, float)
+GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float)
+GENERATE_DEFINITIONS(int8_t, int8_t, float)
+
+#undef GENERATE_DEFINITIONS
