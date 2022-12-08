@@ -163,6 +163,9 @@ struct RocsparseltContractionProblem
     const void*                 bias_vector;
     int64_t                     bias_stride;
 
+    void *workspace;
+    size_t workspaceSize;
+
     hipStream_t* streams;
     int32_t      numStreams;
 
@@ -174,7 +177,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     m,
                                   int64_t                     n,
                                   int64_t                     k,
-                                  const float*                alpha,
+                                  const Tc*                   alpha,
                                   const Ti*                   A,
                                   const Ti* const*            batch_A,
                                   int64_t                     ld_a,
@@ -185,7 +188,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     ld_b,
                                   int64_t                     batch_stride_b,
                                   int64_t                     offset_b,
-                                  const float*                beta,
+                                  const Tc*                   beta,
                                   To*                         C,
                                   To* const*                  batch_C,
                                   int64_t                     ld_c,
@@ -256,7 +259,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     m,
                                   int64_t                     n,
                                   int64_t                     k,
-                                  const float*                alpha,
+                                  const Tc*                   alpha,
                                   const Ti*                   A,
                                   const Ti* const*            batch_A,
                                   int64_t                     ld_a,
@@ -267,7 +270,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     ld_b,
                                   int64_t                     batch_stride_b,
                                   int64_t                     offset_b,
-                                  const float*                beta,
+                                  const Tc*                   beta,
                                   const To*                   C,
                                   const To* const*            batch_C,
                                   int64_t                     ld_c,
@@ -287,6 +290,8 @@ struct RocsparseltContractionProblem
                                   float                       act_arg1,
                                   const void*                 bias_vector,
                                   int64_t                     bias_stride,
+                                  void*                       workspace,
+                                  size_t                      workspaceSize,
                                   hipStream_t*                streams,
                                   int32_t                     numStreams)
         : handle(handle)
@@ -330,6 +335,8 @@ struct RocsparseltContractionProblem
         , act_arg1(act_arg1)
         , bias_vector(bias_vector)
         , bias_stride(bias_stride)
+        , workspace(workspace)
+        , workspaceSize(workspaceSize)
         , streams(streams)
         , numStreams(numStreams)
     {
@@ -341,7 +348,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     m,
                                   int64_t                     n,
                                   int64_t                     k,
-                                  const float*                alpha,
+                                  const Tc*                   alpha,
                                   const Ti*                   A,
                                   const Ti* const*            batch_A,
                                   int64_t                     row_stride_a,
@@ -354,7 +361,7 @@ struct RocsparseltContractionProblem
                                   int64_t                     col_stride_b,
                                   int64_t                     batch_stride_b,
                                   int64_t                     offset_b,
-                                  const float*                beta,
+                                  const Tc*                   beta,
                                   const To*                   C,
                                   const To* const*            batch_C,
                                   int64_t                     row_stride_c,
