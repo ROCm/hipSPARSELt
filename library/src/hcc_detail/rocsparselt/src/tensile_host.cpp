@@ -31,7 +31,7 @@
 #include "definitions.h"
 #include "status.h"
 #include "utility.hpp"
-
+#include "rocsparselt_spmm_utils.hpp"
 /*****************************************************************************
  * This is the only file in rocsparselt which should #include Tensile headers    *
  * or reference Tensile identifiers. tensile_host.hpp defines the interface. *
@@ -251,7 +251,7 @@ namespace
                                     {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d},
                                     prob.buffer_offset_d};
 
-        size_t workspace_size = ~size_t{0};
+        size_t workspace_size = prob.workspaceSize;
 
         // The ContractionProblem
         Tensile::ContractionProblem tensileProblem{a,
@@ -707,6 +707,7 @@ namespace
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
+                                         _rocsparselt_matmul_config*                      configs,
                                          int*                                             config_id,
                                          const int                                        config_max_id,
                                          const int                                        search_iterations)
@@ -726,9 +727,9 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         auto tensile_prob = ConstructTensileProblem(prob);
         auto handle       = prob.handle;
 
-        solution = library->findBestSolution(tensile_prob, *hardware);
+        //solution = library->findBestSolution(tensile_prob, *hardware);
 
-        if(!solution)
+        if(!config_max_id || configs == nullptr)
         {
             hipsparselt_internal_ostream msg;
             print_once(msg << "\nhipsparselt_error: No Tensile solution found for " << prob);
@@ -736,6 +737,8 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         }
         else
         {
+            std::shared_ptr<Tensile::ContractionSolution> solution =
+                std::static_pointer_cast<Tensile::ContractionSolution>(configs[*config_id].data.ptr);
             adapter.launchKernels(solution->solve(tensile_prob, GetTensileInputs(prob), *hardware),
                                   prob.streams[0],
                                   nullptr,
@@ -759,6 +762,39 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
     return status;
 }
 
+/******************************************************************************
+ * getBestSolutions calls Tensile's findTopSolutions and converts to          *
+ * _rocsparselt_matmul_config.                                                *
+ ******************************************************************************/
+template <typename Ti, typename To, typename Tc>
+rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, Tc> &prob,
+                                    int requestConfigs,
+                                    std::vector<_rocsparselt_matmul_config> *configs,
+                                    int *foundConfigs) {
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>> library;
+    std::shared_ptr<hipDeviceProp_t> deviceProp;
+    std::shared_ptr<Tensile::Hardware> hardware;
+
+    // auto &adapter =
+    get_library_and_adapter(&library, &deviceProp, prob.handle->device);
+
+    hardware = Tensile::hip::GetDevice(*deviceProp);
+    auto tensile_prob = ConstructTensileProblem(prob);
+    // auto handle = prob.handle;
+
+    auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
+
+    *foundConfigs = std::min((int)solutions.size(), requestConfigs);
+    for (size_t i = 0; i < *foundConfigs; i++) {
+        auto solution = solutions[i];
+        _rocsparselt_matmul_config config;
+        config.data.ptr = std::static_pointer_cast<void>(solution);
+        config.max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
+        configs->push_back(config);
+    }
+    return rocsparselt_status_success;
+}
+
 /***************************************************************
  * ! \brief  Initialize rocsparselt for the current HIP device, to *
  * avoid costly startup time at the first call on that device. *
@@ -768,19 +804,6 @@ extern "C" void rocsparselt_initialize()
     get_library_and_adapter();
 }
 
-/******************************************************************************
- * Intantiate the cases of runContractionProblem which are needed to satisfy  *
- * rocsparselt dependencies. This file's template functions are not defined in a  *
- * header file, in order to keep Tensile and rocsparselt separate.                *
- ******************************************************************************/
-
-// types
-template rocsparselt_status runContractionProblem(
-    const RocsparseltContractionProblem<__half, __half, float>&, int*, const int, const int);
-template rocsparselt_status runContractionProblem(
-    const RocsparseltContractionProblem<hip_bfloat16, hip_bfloat16, float>&, int*, const int, const int);
-template rocsparselt_status runContractionProblem(
-    const RocsparseltContractionProblem<int8_t, int8_t, float>&, int*, const int, const int);
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for testing) *
  ***********************************************************************************/
@@ -789,3 +812,22 @@ std::atomic_bool& rocsparselt_internal_tensile_is_initialized()
     static std::atomic_bool init;
     return init;
 }
+
+/******************************************************************************
+ * Intantiate the cases of runContractionProblem which are needed to satisfy  *
+ * rocsparselt dependencies. This file's template functions are not defined in a  *
+ * header file, in order to keep Tensile and rocsparselt separate.                *
+ ******************************************************************************/
+#define GENERATE_DEFINITIONS(Ti, To, Tc)                                                  \
+    template rocsparselt_status runContractionProblem<Ti, To, Tc>(                        \
+        const RocsparseltContractionProblem<Ti, To, Tc>&,                                 \
+        _rocsparselt_matmul_config*, int*, const int, const int);                         \
+    template rocsparselt_status getBestSolutions<Ti, To, Tc>(                             \
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int,                            \
+        std::vector<_rocsparselt_matmul_config> *, int*);                                 \
+
+GENERATE_DEFINITIONS(__half, __half, float)
+GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float)
+GENERATE_DEFINITIONS(int8_t, int8_t, float)
+
+#undef GENERATE_DEFINITIONS
