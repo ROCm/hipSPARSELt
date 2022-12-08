@@ -26,7 +26,9 @@
 
 #include "definitions.h"
 #include "handle.h"
-#if !BUILD_WITH_TENSILE
+#if BUILD_WITH_TENSILE
+  #include "tensile_host.hpp"
+#else
   #include "kernel_launcher.hpp"
 #endif
 #include "rocsparselt.h"
@@ -1081,9 +1083,30 @@ rocsparselt_status
             auto compute_type = _matmulDescr->compute_type;
 
             int config_max_id = 0;
+            std::vector<_rocsparselt_matmul_config> configs;
+
 #if BUILD_WITH_TENSILE
-            //TODO the real max id should be provided by tensile.
-            config_max_id = 1;
+            constexpr int requestConfigs = 10;  // find top 10 configs.
+
+            rocsparselt_status status = rocsparselt_status_success;
+
+            if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
+               && compute_type == rocsparselt_compute_f32)
+            {
+                status = findTopConfigs<__half, __half, float>(_matmulDescr, &configs, &config_max_id, requestConfigs);
+            }
+            else if(in_type == rocsparselt_datatype_bf16_r
+                    && out_type == rocsparselt_datatype_bf16_r
+                    && compute_type == rocsparselt_compute_f32)
+            {
+                status = findTopConfigs<hip_bfloat16, hip_bfloat16, float>(_matmulDescr, &configs, &config_max_id, requestConfigs);
+            }
+            else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
+                    && compute_type == rocsparselt_compute_i32)
+            {
+                status = findTopConfigs<int8_t, int8_t, float>(_matmulDescr, &configs, &config_max_id, requestConfigs);
+            }
+            if(status !=  rocsparselt_status_success) return status;
 #else
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
@@ -1110,12 +1133,13 @@ rocsparselt_status
             memcpy(_algSelection, &tmpAlgSelection, sizeof(_rocsparselt_matmul_alg_selection));
             _algSelection->alg           = alg;
             _algSelection->config_max_id = config_max_id;
+            _algSelection->configs = std::make_shared<std::vector<_rocsparselt_matmul_config>>(configs);
             log_api(_handle,
                     __func__,
                     "algSelection[out]",
-                    algSelection,
+                    *_algSelection,
                     "matmulDescr[in]",
-                    matmulDescr,
+                    *_matmulDescr,
                     "alg[in]",
                     alg);
         }
