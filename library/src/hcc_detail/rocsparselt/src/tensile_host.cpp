@@ -727,8 +727,6 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         auto tensile_prob = ConstructTensileProblem(prob);
         auto handle       = prob.handle;
 
-        //solution = library->findBestSolution(tensile_prob, *hardware);
-
         if(!config_max_id || configs == nullptr)
         {
             hipsparselt_internal_ostream msg;
@@ -737,12 +735,73 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         }
         else
         {
-            std::shared_ptr<Tensile::ContractionSolution> solution =
-                std::static_pointer_cast<Tensile::ContractionSolution>(configs[*config_id].data.ptr);
-            adapter.launchKernels(solution->solve(tensile_prob, GetTensileInputs(prob), *hardware),
-                                  prob.streams[0],
-                                  nullptr,
-                                  nullptr);
+            auto tensile_inputs = GetTensileInputs(prob);
+
+            if(!search_iterations)
+            {
+                std::shared_ptr<Tensile::ContractionSolution> solution =
+                    std::static_pointer_cast<Tensile::ContractionSolution>(configs[*config_id].data.ptr);
+
+                if(configs[*config_id].max_workspace_bytes > prob.workspaceSize || (configs[*config_id].max_workspace_bytes > 0 && prob.workspace == nullptr))
+                {
+                    hipsparselt_cerr << "config " << *config_id << " need extra workspace " << configs[*config_id].max_workspace_bytes  << " bytes - skip." << std::endl;
+                    return rocsparselt_status_internal_error;
+                }
+
+                RETURN_IF_HIP_ERROR(adapter.launchKernels(solution->solve(tensile_prob, tensile_inputs, *hardware),
+                                    prob.streams[0],
+                                    nullptr,
+                                    nullptr));
+            }
+            else
+            {
+                float      min_ms = std::numeric_limits<float>::max();
+                hipEvent_t startEvent, stopEvent;
+                float      ms, sum_ms;
+                RETURN_IF_HIP_ERROR(hipEventCreate(&startEvent));
+                RETURN_IF_HIP_ERROR(hipEventCreate(&stopEvent));
+                for(int id = 0; id < config_max_id; id++)
+                {
+                    std::shared_ptr<Tensile::ContractionSolution> solution =
+                        std::static_pointer_cast<Tensile::ContractionSolution>(configs[id].data.ptr);
+
+                    if(configs[id].max_workspace_bytes > prob.workspaceSize || (configs[id].max_workspace_bytes > 0 && prob.workspace == nullptr))
+                    {
+                        hipsparselt_cerr << "config " << id << " need extra workspace " << configs[id].max_workspace_bytes  << " bytes - skip." << std::endl;
+                        continue;
+                    }
+
+                    //warm up
+                    RETURN_IF_HIP_ERROR(adapter.launchKernels(solution->solve(tensile_prob, tensile_inputs, *hardware),
+                                        prob.streams[0],
+                                        nullptr,
+                                        nullptr));
+
+                    sum_ms = 0.0f;
+                    for(int i= 0; i < search_iterations; i++)
+                    {
+                        RETURN_IF_HIP_ERROR(adapter.launchKernels(solution->solve(tensile_prob, tensile_inputs, *hardware),
+                                            prob.streams[0],
+                                            startEvent,
+                                            stopEvent));
+                        RETURN_IF_HIP_ERROR(hipEventSynchronize(stopEvent));
+                        RETURN_IF_HIP_ERROR(hipEventElapsedTime(&ms, startEvent, stopEvent));
+                        sum_ms += ms;
+                    }
+
+                    if(sum_ms < min_ms)
+                    {
+                        min_ms = sum_ms;
+                        *config_id = id;
+                    }
+                }
+                RETURN_IF_HIP_ERROR(hipEventDestroy(startEvent));
+                RETURN_IF_HIP_ERROR(hipEventDestroy(stopEvent));
+
+                if(min_ms==std::numeric_limits<float>::max())
+                    return rocsparselt_status_internal_error;
+            }
+
             status = rocsparselt_status_success;
         }
     }
