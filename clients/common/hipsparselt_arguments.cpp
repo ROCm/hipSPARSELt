@@ -100,6 +100,8 @@ void Arguments::init()
     activation_arg2 = std::numeric_limits<float>::infinity();
     c_noalias_d     = false;
     HMM             = false;
+    search          = false;
+    search_iters    = 10;
 }
 
 // Function to print Arguments out to stream in YAML format
