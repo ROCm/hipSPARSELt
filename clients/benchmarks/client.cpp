@@ -402,6 +402,14 @@ try
          value<size_t>(&arg.user_allocated_workspace)->default_value(0),
          "Set fixed workspace memory size instead of using hipsparselt managed memory")
 
+        ("search",
+         bool_switch(&arg.search)->default_value(false),
+         "Evaluates all available algorithms and find the fastest one.")
+
+        ("search_iters",
+         value<int32_t>(&arg.search_iters)->default_value(10),
+         "Iterations to run inside timing loop of each algorithms when search is on. (default: 10)")
+
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
          "Function name precedes other itmes.")

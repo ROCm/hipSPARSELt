@@ -432,10 +432,29 @@ void testing_spmm(const Arguments& arg)
     size_t                        workspace_size = 0, compressed_size = 0;
 
     {
-        hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel, workspace_size);
 
-        EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, plan_tmp, &workspace_size),
-                                HIPSPARSE_STATUS_SUCCESS);
+
+        if(arg.search)
+        {
+            int config_max_id = 0;
+            hipsparseLtMatmulAlgGetAttribute(handle, alg_sel, HIPSPARSELT_MATMUL_ALG_CONFIG_MAX_ID, &config_max_id, sizeof(int));
+            for(int i = 0; i < config_max_id; i++)
+            {
+                hipsparseLtMatmulAlgSetAttribute(handle, alg_sel, HIPSPARSELT_MATMUL_ALG_CONFIG_ID, &i, sizeof(int));
+                hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel, workspace_size);
+                size_t ws = 0;
+                EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, plan_tmp, &ws),
+                                        HIPSPARSE_STATUS_SUCCESS);
+                workspace_size = max(workspace_size, ws);
+            }
+            hipsparseLtMatmulAlgSetAttribute(handle, alg_sel, HIPSPARSELT_MATMUL_SEARCH_ITERATIONS, &arg.search_iters, sizeof(int));
+        }
+        else
+        {
+            hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel, workspace_size);
+            EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, plan_tmp, &workspace_size),
+                                    HIPSPARSE_STATUS_SUCCESS);
+        }
     }
 
     hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
@@ -548,6 +567,11 @@ void testing_spmm(const Arguments& arg)
     EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
                             HIPSPARSE_STATUS_SUCCESS);
 
+    if(arg.search)
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulSearch(
+                handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
+            HIPSPARSE_STATUS_SUCCESS);
     if(arg.unit_check || arg.norm_check)
     {
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
