@@ -128,3 +128,5 @@ add_custom_target( hipsparselt-test-data
                    DEPENDS "${HIPSPARSELT_TEST_DATA}" )
 add_dependencies( hipsparselt-test hipsparselt-test-data hipsparselt-common )
 
+rocm_install(TARGETS hipsparselt-test COMPONENT tests)
+rocm_install(FILES ${HIPSPARSELT_TEST_DATA} DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT tests)
