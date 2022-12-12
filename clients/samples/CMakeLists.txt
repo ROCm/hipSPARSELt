@@ -68,6 +68,6 @@ foreach( exe ${sample_list_all} )
     )
     target_link_libraries( ${exe} PRIVATE ${CUDA_LIBRARIES} )
   endif( )
-
+  rocm_install(TARGETS ${exe} COMPONENT samples)
 endforeach( )
 

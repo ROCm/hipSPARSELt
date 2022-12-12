@@ -91,3 +91,5 @@ set_target_properties( hipsparselt-bench PROPERTIES
 )
 
 add_dependencies( hipsparselt-bench hipsparselt-common )
+
+rocm_install(TARGETS hipsparselt-bench COMPONENT benchmarks)
