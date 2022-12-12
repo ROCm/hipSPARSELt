@@ -39,16 +39,16 @@
 #include <string>
 #include <utility>
 
-#ifdef __cpp_lib_filesystem
+#if __has_include(<filesystem>)
 #include <filesystem>
-#else
+namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
 #include <experimental/filesystem>
-
-namespace std
-{
-    namespace filesystem = experimental::filesystem;
-}
+namespace fs = std::experimental::filesystem;
+#else
+#error no fs found
 #endif
+
 
 // Class used to read Arguments data into the tests
 class HipSparseLt_TestData
@@ -108,7 +108,7 @@ public:
         filename() = std::move(name);
         if(remove_atexit)
         {
-            auto cleanup = [] { std::filesystem::remove(filename().c_str()); };
+            auto cleanup = [] { fs::remove(filename().c_str()); };
             atexit(cleanup);
             at_quick_exit(cleanup);
         }
