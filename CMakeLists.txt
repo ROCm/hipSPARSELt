@@ -200,6 +200,21 @@ endif()
 
 find_package( hipsparse REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
+# rocm-cmake helpers
+include( ROCMSetupVersion )
+include( ROCMCreatePackage )
+include( ROCMInstallTargets )
+include( ROCMPackageConfigHelpers )
+include( ROCMInstallSymlinks )
+include( ROCMCheckTargetIds )
+include( ROCMHeaderWrapper )
+include( ROCMClients )
+
+
+include (os-detection)
+get_os_id(OS_ID)
+message (STATUS "OS detected is ${OS_ID}")
+
 # Setup version
 set (VERSION_STRING "0.3.0" )
 rocm_setup_version( VERSION ${VERSION_STRING} )
@@ -213,7 +228,47 @@ else()
 endif()
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
+  if(NOT CLIENTS_OS)
+    rocm_set_os_id(CLIENTS_OS)
+    string(TOLOWER "${CLIENTS_OS}" CLIENTS_OS)
+    rocm_read_os_release(CLIENTS_OS_VERSION VERSION_ID)
+  endif()
+  message(STATUS "OS: ${CLIENTS_OS} ${CLIENTS_OS_VERSION}")
+  set(OPENMP_RPM "libgomp")
+  set(OPENMP_DEB "libomp-dev")
+  set(GFORTRAN_RPM "libgfortran4")
+  set(GFORTRAN_DEB "libgfortran4")
+  if(CLIENTS_OS STREQUAL "centos" OR CLIENTS_OS STREQUAL "rhel")
+    if(CLIENTS_OS_VERSION VERSION_GREATER_EQUAL "8")
+      set(GFORTRAN_RPM "libgfortran")
+    endif()
+  elseif(CLIENTS_OS STREQUAL "ubuntu" AND CLIENTS_OS_VERSION VERSION_GREATER_EQUAL "20.04")
+    set(GFORTRAN_DEB "libgfortran5")
+  elseif(CLIENTS_OS STREQUAL "sles")
+    set(OPENMP_RPM "libgomp1")
+  endif()
+
   set( BUILD_CLIENTS ON )
+  rocm_package_setup_component(clients)
+  rocm_package_setup_client_component( clients-common )
+  if(BUILD_CLIENTS_TESTS)
+    rocm_package_setup_client_component(
+      tests
+      DEPENDS
+        COMPONENT clients-common
+        DEB "${OPENMP_DEB}"
+        RPM "${OPENMP_RPM}"
+    )
+  endif()
+  if(BUILD_CLIENTS_BENCHMARKS)
+    rocm_package_setup_client_component(
+      benchmarks
+      DEPENDS
+        COMPONENT clients-common
+        DEB "${OPENMP_DEB}"
+        RPM "${OPENMP_RPM}"
+    )
+  endif()
 endif()
 
 # FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
