@@ -516,7 +516,7 @@ namespace
                 if(TestPath(path + "/../Tensile/library"))
                     path += "/../Tensile/library";
                 else
-                    path += "/library";
+                    path += "/hipsparselt/library";
 
                 if(TestPath(path + "/" + processor))
                     path += "/" + processor;
