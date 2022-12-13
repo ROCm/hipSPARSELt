@@ -394,8 +394,8 @@ namespace
             inputs.metadata = reinterpret_cast<const unsigned char*>(prob.metadata);
 
         // push 2 activation arguments
-        inputs.activationArgs.push_back(static_cast<Tensile_To>(prob.act_arg0));
-        inputs.activationArgs.push_back(static_cast<Tensile_To>(prob.act_arg1));
+        inputs.activationArgs.push_back(static_cast<Tensile_Talpha_beta>(prob.act_arg0));
+        inputs.activationArgs.push_back(static_cast<Tensile_Talpha_beta>(prob.act_arg1));
 
         return inputs;
     }
