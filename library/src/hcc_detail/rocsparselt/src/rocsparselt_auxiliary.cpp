@@ -1121,6 +1121,12 @@ rocsparselt_status
                     && compute_type == rocsparselt_compute_i32)
                 initSolutions<int8_t, int8_t, int32_t>(
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
+            for(int i = 0; i < config_max_id; i++)
+            {
+                _rocsparselt_matmul_config config;
+                config.max_workspace_bytes = 0;
+                configs.push_back(config);
+            }
 #endif
             if(!config_max_id)
             {
