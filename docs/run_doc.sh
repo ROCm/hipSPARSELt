@@ -18,5 +18,5 @@ doxygen Doxyfile
 # Build sphinx docs
 cd source
 make clean
-make html
+make -e SPHINXOPTS="-t html" html
 make latexpdf
