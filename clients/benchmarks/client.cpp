@@ -180,15 +180,33 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
                          << std::endl;
         arg.ldd = min_ldd;
     }
+
+    int64_t min_stride_a = arg.lda * (arg.transA == 'N' ? arg.K : arg.M);
+    int64_t min_stride_b = arg.ldb * (arg.transB == 'N' ? arg.N : arg.K);
     int64_t min_stride_c = arg.ldc * arg.N;
     int64_t min_stride_d = arg.ldd * arg.N;
-    if(!any_stride && arg.stride_c < min_stride_c)
+
+    // force using min_stride when stride is -1
+    // stride_a is zero means the boradcast mode.
+    if(arg.stride_a == -1 || (!any_stride  && arg.stride_a < min_stride_a && arg.stride_a != 0))
+    {
+        hipsparselt_cout << "hipsparselt-bench INFO: stride_a < min_stride_a and stride_a != 0, set stride_a = "
+                         << min_stride_a << std::endl;
+        arg.stride_a = min_stride_a;
+    }
+    if(arg.stride_b == -1 || (!any_stride && arg.stride_b < min_stride_b))
+    {
+        hipsparselt_cout << "hipsparselt-bench INFO: stride_b < min_stride_b, set stride_b = "
+                         << min_stride_b << std::endl;
+        arg.stride_b = min_stride_b;
+    }
+    if(arg.stride_c == -1 || (!any_stride && arg.stride_c < min_stride_c))
     {
         hipsparselt_cout << "hipsparselt-bench INFO: stride_c < min_stride_c, set stride_c = "
                          << min_stride_c << std::endl;
         arg.stride_c = min_stride_c;
     }
-    if(!any_stride && arg.stride_d < min_stride_d)
+    if(arg.stride_d == -1 || (!any_stride && arg.stride_d < min_stride_d))
     {
         hipsparselt_cout << "hipsparselt-bench INFO: stride_d < min_stride_d, set stride_d = "
                          << min_stride_d << std::endl;
@@ -264,19 +282,19 @@ try
          "Specific matrix size: the number of columns in A and rows in B.")
 
         ("lda",
-         value<int64_t>(&arg.lda)->default_value(128),
+         value<int64_t>(&arg.lda)->default_value(-1),
          "Leading dimension of matrix A.")
 
         ("ldb",
-         value<int64_t>(&arg.ldb)->default_value(128),
+         value<int64_t>(&arg.ldb)->default_value(-1),
          "Leading dimension of matrix B.")
 
         ("ldc",
-         value<int64_t>(&arg.ldc)->default_value(128),
+         value<int64_t>(&arg.ldc)->default_value(-1),
          "Leading dimension of matrix C.")
 
         ("ldd",
-         value<int64_t>(&arg.ldd)->default_value(128),
+         value<int64_t>(&arg.ldd)->default_value(-1),
          "Leading dimension of matrix D.")
 
         ("any_stride",
@@ -284,19 +302,19 @@ try
          "Do not modify input strides based on leading dimensions")
 
         ("stride_a",
-         value<int64_t>(&arg.stride_a)->default_value(128*128),
+         value<int64_t>(&arg.stride_a)->default_value(-1),
          "Specific stride of strided_batched matrix A, second dimension * leading dimension.")
 
         ("stride_b",
-         value<int64_t>(&arg.stride_b)->default_value(128*128),
+         value<int64_t>(&arg.stride_b)->default_value(-1),
          "Specific stride of strided_batched matrix B, second dimension * leading dimension.")
 
         ("stride_c",
-         value<int64_t>(&arg.stride_c)->default_value(128*128),
+         value<int64_t>(&arg.stride_c)->default_value(-1),
          "Specific stride of strided_batched matrix C, second dimension * leading dimension.")
 
         ("stride_d",
-         value<int64_t>(&arg.stride_d)->default_value(128*128),
+         value<int64_t>(&arg.stride_d)->default_value(-1),
          "Specific stride of strided_batched matrix D, second dimension * leading dimension.")
 
         ("alpha",
