@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1119,7 +1119,7 @@ rocsparselt_status
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
             else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
                     && compute_type == rocsparselt_compute_i32)
-                initSolutions<int8_t, int8_t, int32_t>(
+                initSolutions<int8_t, int8_t, float>(
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
             for(int i = 0; i < config_max_id; i++)
             {
