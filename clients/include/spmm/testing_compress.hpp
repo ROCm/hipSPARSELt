@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -351,22 +351,26 @@ void testing_compress(const Arguments& arg)
     hipsparselt_local_mat_descr matD(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
 
-    hipsparseStatus_t eStatus = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
+    hipsparseStatus_t eStatus
+        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
     EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+        return;
 
     eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb);
     EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+        return;
 
     eStatus = expected_hipsparse_status_of_matrix_size(arg.c_type, M, N, ldc);
     EXPECT_HIPSPARSE_STATUS(matC.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+        return;
 
     eStatus = expected_hipsparse_status_of_matrix_size(arg.d_type, M, N, ldd);
     EXPECT_HIPSPARSE_STATUS(matD.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS) return;
-
+    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+        return;
 
     if(do_batched || do_strided_batched)
     {
@@ -476,6 +480,8 @@ void testing_compress(const Arguments& arg)
     if(arg.unit_check || arg.norm_check)
     {
         //compressd matrix
+        int64_t c_row        = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K / 2;
+        int64_t c_col        = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K / 2 : M;
         int64_t c_ld         = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K / 2;
         int64_t c_stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : c_ld;
         int64_t c_stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? c_ld : 1;
@@ -558,8 +564,8 @@ void testing_compress(const Arguments& arg)
                               m_stride_2_a,
                               m_stride_a);
 
-            unit_check_general<Ti>(A_row,
-                                   A_col / 2,
+            unit_check_general<Ti>(c_row,
+                                   c_col,
                                    c_ld,
                                    c_stride_a,
                                    reinterpret_cast<Ti*>(hA_gold.data()),
@@ -567,9 +573,9 @@ void testing_compress(const Arguments& arg)
                                    num_batches);
 // cusparselt' metadata has different layout so skip metadata check.
 #ifdef __HIP_PLATFORM_HCC__
-            unit_check_general<int8_t>(A_row,
-                                       A_col / 8,
-                                       A_row,
+            unit_check_general<int8_t>(M,
+                                       K / 8,
+                                       M,
                                        m_stride_a,
                                        reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
                                        reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
@@ -578,8 +584,8 @@ void testing_compress(const Arguments& arg)
         }
         if(arg.norm_check)
         {
-            hipsparselt_error_c = unit_check_diff<Ti>(A_row,
-                                                      A_col / 2,
+            hipsparselt_error_c = unit_check_diff<Ti>(c_row,
+                                                      c_col,
                                                       c_ld,
                                                       c_stride_a,
                                                       reinterpret_cast<Ti*>(hA_gold.data()),
@@ -588,9 +594,9 @@ void testing_compress(const Arguments& arg)
 // cusparselt' metadata has different layout so skip metadata check.
 #ifdef __HIP_PLATFORM_HCC__
             hipsparselt_error_m
-                = unit_check_diff<int8_t>(A_row,
-                                          A_col / 8,
-                                          A_row,
+                = unit_check_diff<int8_t>(M,
+                                          K / 8,
+                                          M,
                                           m_stride_a,
                                           reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
                                           reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
