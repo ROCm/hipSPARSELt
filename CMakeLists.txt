@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -182,7 +182,7 @@ else()
       else()
         # Use the virtual-env setup and download package from specified repot:
         set( tensile_fork "ROCmSoftwarePlatform" CACHE STRING "Tensile fork to use" )
-        file (STRINGS "tensile_tag.txt" read_tensile_tag)
+        file (STRINGS "tensilelite_tag.txt" read_tensile_tag)
         set( tensile_tag ${read_tensile_tag} CACHE STRING "Tensile tag to download" )
         virtualenv_install("git+https://github.com/${tensile_fork}/hipBLASLt.git@${tensile_tag}#subdirectory=tensilelite")
 
