@@ -4,15 +4,9 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import subprocess
 from rocm_docs import ROCmDocs
 
-getVersionCmd = r'sed -n -e "s/^.*VERSION_STRING.* \"\([0-9\.]\{1,\}\).*/\1/p" ../CMakeLists.txt'
-version = subprocess.getoutput(getVersionCmd)
-if len(version) == 0:
-    version = '0.3.0' # optional version number override if CMakeLists.txt does not have the version
-
-docs_core = ROCmDocs("hipSPARSELt {}".format(version))
+docs_core = ROCmDocs("hipSPARSELt Documentation")
 docs_core.run_doxygen()
 docs_core.setup()
 
