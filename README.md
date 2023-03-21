@@ -51,7 +51,19 @@ The root of this repository has a helper bash script `install.sh` to build and i
   - Support cusparseLt v0.3
 
 ## Documentation
-The latest hipSPARSELt documentation and API description can be found [here](doc/hipSPARSELt_api.docx) or downloaded as [pdf](doc/hipSPARSELt_api.pdf).
+The latest hipSPARSELt documentation and API description can be found [here](docs/data/hipSPARSELt_api.docx) or downloaded as [pdf](docs/data/hipSPARSELt_api.pdf).
+
+### How to build documentation
+
+Run the steps below to build documentation locally.
+
+```
+cd docs
+
+pip3 install -r .sphinx/requirements.txt
+
+python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+```
 
 ## hipSPARSELt interface examples
 The hipSPARSELt interface is compatible with cuSPARSELt APIs. Porting a CUDA application which originally calls the cuSPARSELt API to an application calling hipSPARSELt API should be relatively straightforward. For example, the hipSPARSELt matmul interface is
