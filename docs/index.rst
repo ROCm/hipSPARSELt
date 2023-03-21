@@ -10,4 +10,3 @@ hipSPARSELt User Guide
    Introduction
    Linux_Install_Guide
    API_Reference_Guide
-   Disclaimer
