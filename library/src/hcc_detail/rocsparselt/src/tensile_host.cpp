@@ -168,13 +168,10 @@ namespace
         // Tensor descriptors for a, b
         Tensile::TensorDescriptor a, b;
 
-        // Tensor ops for matrices, like complex conjugate
-        Tensile::TensorOps aops, bops, cops, dops;
-
         // Tensile Indices for contraction problem
-        Tensile::ContractionProblem::FreeIndices  freeIndex(2);
-        Tensile::ContractionProblem::BoundIndices boundIndex(1);
-        Tensile::ContractionProblem::BatchIndices batchIndex{{2, 2, 2, 2}};
+        Tensile::ContractionProblemGemm::FreeIndices  freeIndex(2);
+        Tensile::ContractionProblemGemm::BoundIndices boundIndex(1);
+        Tensile::ContractionProblemGemm::BatchIndices batchIndex{{2, 2, 2, 2}};
 
         // Set up GEMM indices
         freeIndex[0].isA = true;
@@ -193,10 +190,10 @@ namespace
         if(prob.trans_a != rocsparselt_operation_none)
         {
             a = {
+                    "a",
                     Tensile_Ti,
                     {k, prob.m, prob.batch_count},
-                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a},
-                    prob.buffer_offset_a
+                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a}
                 };
             freeIndex[0].i  = 1;
             boundIndex[0].a = 0;
@@ -204,10 +201,10 @@ namespace
         else
         {
             a = {
+                    "a",
                     Tensile_Ti,
                     {prob.m, k, prob.batch_count},
-                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a},
-                    prob.buffer_offset_a
+                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a}
                 };
             freeIndex[0].i  = 0;
             boundIndex[0].a = 1;
@@ -217,10 +214,10 @@ namespace
         if(prob.trans_b != rocsparselt_operation_none)
         {
             b = {
+                    "b",
                     Tensile_Ti,
                     {prob.n, k, prob.batch_count},
-                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b},
-                    prob.buffer_offset_b
+                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b}
                 };
             freeIndex[1].i  = 0;
             boundIndex[0].b = 1;
@@ -228,10 +225,10 @@ namespace
         else
         {
             b = {
+                    "b",
                     Tensile_Ti,
                     {k, prob.n, prob.batch_count},
-                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b},
-                    prob.buffer_offset_b
+                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b}
                 };
             freeIndex[1].i  = 1;
             boundIndex[0].b = 0;
@@ -240,33 +237,36 @@ namespace
         // clang-format on
 
         // Descriptor for input matrix C
-        Tensile::TensorDescriptor c{Tensile_To,
+        Tensile::TensorDescriptor c{"c",
+                                    Tensile_To,
                                     {prob.m, prob.n, prob.batch_count},
-                                    {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c},
-                                    prob.buffer_offset_c};
+                                    {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c}};
 
         // Descriptor for output matrix D
-        Tensile::TensorDescriptor d{Tensile_To,
+        Tensile::TensorDescriptor d{"d",
+                                    Tensile_To,
                                     {prob.m, prob.n, prob.batch_count},
-                                    {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d},
-                                    prob.buffer_offset_d};
+                                    {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d}};
 
         size_t workspace_size = prob.workspaceSize;
 
-        // The ContractionProblem
-        Tensile::ContractionProblem tensileProblem{a,
-                                                   aops,
-                                                   b,
-                                                   bops,
-                                                   c,
-                                                   cops,
-                                                   d,
-                                                   dops,
-                                                   freeIndex,
-                                                   batchIndex,
-                                                   boundIndex,
-                                                   value_category(*prob.beta),
-                                                   workspace_size};
+        Tensile::TensorDescriptor e{"e"};
+        Tensile::TensorDescriptor bias{"bias"};
+        Tensile::TensorDescriptor scaleD{"scaleD"};
+
+        // The ContractionProblemGemm
+        Tensile::ContractionProblemGemm tensileProblem{a,
+                                                       b,
+                                                       c,
+                                                       d,
+                                                       e,
+                                                       bias,
+                                                       scaleD,
+                                                       freeIndex,
+                                                       batchIndex,
+                                                       boundIndex,
+                                                       value_category(*prob.beta),
+                                                       workspace_size};
 
 
         tensileProblem.setAlphaType(Tensile_Tc);
@@ -274,14 +274,6 @@ namespace
 
         // HPA is active iff sizeof(compute type) > sizeof(input type)
         tensileProblem.setHighPrecisionAccumulate(sizeof(Tc) > sizeof(Ti));
-
-        // Environment variable to force use of VALU for double precision gemm
-        static bool force_valu_for_dgemm = std::getenv("ROCSPARSELT_INTERNAL_FORCE_VALU_FOR_DGEMM");
-        if(std::is_same<Ti, double>::value && std::is_same<To, double>::value
-           && std::is_same<Tc, double>::value && force_valu_for_dgemm)
-        {
-            tensileProblem.setArithmeticUnit(Tensile::ArithmeticUnit::VALU);
-        }
 
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
@@ -339,7 +331,7 @@ namespace
     }
 
     /***************************************************************
-     * Construct the inputs to a Tensile ContractionProblem        *
+     * Construct the inputs to a Tensile ContractionProblemGemm        *
      ***************************************************************/
     template <typename Ti, typename To, typename Tc>
     auto GetTensileInputs(const RocsparseltContractionProblem<Ti, To, Tc>& prob)
@@ -359,24 +351,18 @@ namespace
                       "Tensile or rocsparselt types are not standard layout types");
 
         // Structure describing the inputs (A, B, C, D, alpha, beta)
-        Tensile::TypedContractionInputs<Tensile_Ti,
-                                        Tensile_Ti,
-                                        Tensile_To,
-                                        Tensile_To,
-                                        Tensile_Talpha_beta,
-                                        Tensile_Talpha_beta>
-            inputs;
+        Tensile::ContractionInputs inputs;
 
         // Set the A, B, C, D matrices pointers in Tensile
-        inputs.a = reinterpret_cast<const Tensile_Ti*>(prob.A);
-        inputs.b = reinterpret_cast<const Tensile_Ti*>(prob.B);
-        inputs.c = reinterpret_cast<const Tensile_To*>(prob.C);
-        inputs.d = reinterpret_cast<Tensile_To*>(prob.D);
+        inputs.a = reinterpret_cast<const void*>(prob.A);
+        inputs.b = reinterpret_cast<const void*>(prob.B);
+        inputs.c = reinterpret_cast<const void*>(prob.C);
+        inputs.d = reinterpret_cast<void*>(prob.D);
 
-        inputs.batchA = reinterpret_cast<Tensile_Ti const* const*>(prob.batch_A);
-        inputs.batchB = reinterpret_cast<Tensile_Ti const* const*>(prob.batch_B);
-        inputs.batchC = reinterpret_cast<Tensile_To const* const*>(prob.batch_C);
-        inputs.batchD = reinterpret_cast<Tensile_To* const*>(prob.batch_D);
+        inputs.batchA = reinterpret_cast<void const* const*>(prob.batch_A);
+        inputs.batchB = reinterpret_cast<void const* const*>(prob.batch_B);
+        inputs.batchC = reinterpret_cast<void const* const*>(prob.batch_C);
+        inputs.batchD = reinterpret_cast<void* const*>(prob.batch_D);
 
         // Set the GSU workspace
         inputs.ws = prob.workspace;
@@ -385,10 +371,10 @@ namespace
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
         // If k==0, we do not need to dereference prob.alpha and can set inputs.alpha=0
         if(prob.k)
-            AlphaBeta<Ti, To, Tc>::copy(&inputs.alpha, prob.alpha);
+            inputs.alpha = static_cast<Tensile_Talpha_beta>((*prob.alpha));
         else
-            memset(&inputs.alpha, 0, sizeof(inputs.alpha));
-        AlphaBeta<Ti, To, Tc>::copy(&inputs.beta, prob.beta);
+            inputs.alpha = static_cast<Tensile_Talpha_beta>(0);
+        inputs.beta = static_cast<Tensile_Talpha_beta>((*prob.beta));
 
         if(prob.sparseA)
             inputs.metadata = reinterpret_cast<const unsigned char*>(prob.metadata);
@@ -406,7 +392,7 @@ namespace
     class TensileHost
     {
         // The library object
-        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>> m_library;
+        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> m_library;
         std::shared_ptr<hipDeviceProp_t>                                             m_deviceProp;
 
         // The adapter object. mutable is used to allow adapters to be modified
@@ -594,12 +580,12 @@ namespace
                     //rocsparselt_abort();
                 }
 
-                auto lib = Tensile::LoadLibraryFile<Tensile::ContractionProblem>(path);
+                auto lib = Tensile::LoadLibraryFile<Tensile::ContractionProblemGemm>(path);
                 if(!lib)
                     hipsparselt_cerr << "\nhipsparselt_error: Could not load " << path << std::endl;
                 else
                 {
-                    using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>;
+                    using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>;
                     m_library = std::dynamic_pointer_cast<MSL>(lib);
                 }
                 return 0;
@@ -621,7 +607,7 @@ namespace
 
     // Return the library and adapter for the current HIP device
     auto& get_library_and_adapter(
-        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>>* library
+        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>>* library
         = nullptr,
         std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr,
         int                               device     = -1)
@@ -717,7 +703,7 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
     try
     {
-        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>> library;
+        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
         std::shared_ptr<hipDeviceProp_t>                                             deviceProp;
         std::shared_ptr<Tensile::Hardware>                                           hardware;
 
@@ -830,7 +816,7 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
                                     int requestConfigs,
                                     std::vector<_rocsparselt_matmul_config> *configs,
                                     int *foundConfigs) {
-    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>> library;
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
     std::shared_ptr<hipDeviceProp_t> deviceProp;
     std::shared_ptr<Tensile::Hardware> hardware;
 
