@@ -227,7 +227,7 @@ rocsparselt_order_ HIPOrderToHCCOrder(hipsparseOrder_t op)
     {
     case HIPSPARSE_ORDER_ROW:
         return rocsparselt_order_row;
-    case HIPSPARSE_ORDER_COLUMN:
+    case HIPSPARSE_ORDER_COL:
         return rocsparselt_order_column;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
@@ -241,7 +241,7 @@ hipsparseOrder_t HCCOrderToHIPOrder(rocsparselt_order_ op)
     case rocsparselt_order_row:
         return HIPSPARSE_ORDER_ROW;
     case rocsparselt_order_column:
-        return HIPSPARSE_ORDER_COLUMN;
+        return HIPSPARSE_ORDER_COL;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
