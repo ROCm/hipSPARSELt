@@ -336,7 +336,7 @@ hipsparseStatus_t hipsparseLtDestroy(const hipsparseLtHandle_t* handle);
  *  @param[in]
  *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
  *  @param[in]
- *  order      memory layout. \p HIPSPARSE_ORDER_COLUMN or \p HIPSPARSE_ORDER_ROW.
+ *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle, \p descr , \p rows , \p cols , \p ld  is invalid.
@@ -373,7 +373,7 @@ hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  han
  *  @param[in]
  *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
  *  @param[in]
- *  order      memory layout. \p HIPSPARSE_ORDER_COLUMN or \p HIPSPARSE_ORDER_ROW.
+ *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW.
  *  @param[in]
  *  sparsity   matrix sparsity ratio. see \ref hipsparseLtSparsity_t
  *
