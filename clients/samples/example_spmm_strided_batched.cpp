@@ -755,14 +755,14 @@ int main(int argc, char* argv[])
                                                                 lda,
                                                                 16,
                                                                 HIPSPARSELT_R_16F,
-                                                                HIPSPARSE_ORDER_COLUMN,
+                                                                HIPSPARSE_ORDER_COL,
                                                                 HIPSPARSELT_SPARSITY_50_PERCENT));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matB, row_b, col_b, ldb, 16, HIPSPARSELT_R_16F, HIPSPARSE_ORDER_COLUMN));
+        &handle, &matB, row_b, col_b, ldb, 16, HIPSPARSELT_R_16F, HIPSPARSE_ORDER_COL));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matC, row_c, col_c, ldc, 16, HIPSPARSELT_R_16F, HIPSPARSE_ORDER_COLUMN));
+        &handle, &matC, row_c, col_c, ldc, 16, HIPSPARSELT_R_16F, HIPSPARSE_ORDER_COL));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matD, row_c, col_c, ldd, 16, HIPSPARSELT_R_16F, HIPSPARSE_ORDER_COLUMN));
+        &handle, &matD, row_c, col_c, ldd, 16, HIPSPARSELT_R_16F, HIPSPARSE_ORDER_COL));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));

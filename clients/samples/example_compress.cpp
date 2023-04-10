@@ -703,14 +703,14 @@ void run(int64_t               m,
                                                                 ld,
                                                                 16,
                                                                 type,
-                                                                HIPSPARSE_ORDER_COLUMN,
+                                                                HIPSPARSE_ORDER_COL,
                                                                 HIPSPARSELT_SPARSITY_50_PERCENT));
     CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matB, n, m, n, 16, type, HIPSPARSE_ORDER_COLUMN));
+        hipsparseLtDenseDescriptorInit(&handle, &matB, n, m, n, 16, type, HIPSPARSE_ORDER_COL));
     CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matC, m, m, m, 16, type, HIPSPARSE_ORDER_COLUMN));
+        hipsparseLtDenseDescriptorInit(&handle, &matC, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
     CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matD, m, m, m, 16, type, HIPSPARSE_ORDER_COLUMN));
+        hipsparseLtDenseDescriptorInit(&handle, &matD, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));

@@ -143,13 +143,13 @@ void testing_spmm_bad_arg(const Arguments& arg)
 
     hipsparselt_local_handle    handle{arg};
     hipsparselt_local_mat_descr matA(
-        hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, HIPSPARSE_ORDER_COLUMN);
+        hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matB(
-        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
@@ -258,18 +258,18 @@ void testing_spmm(const Arguments& arg)
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     HIPSPARSE_ORDER_COLUMN);
+                                     HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matB(hipsparselt_matrix_type_dense,
                                      handle,
                                      B_row,
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     HIPSPARSE_ORDER_COLUMN);
+                                     HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COLUMN);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
 
     hipsparseStatus_t eStatus = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
     EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
