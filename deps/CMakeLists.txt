@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,16 @@ if( BUILD_GTEST )
   set( gtest_custom_target COMMAND cd ${GTEST_BINARY_ROOT}$<SEMICOLON> ${CMAKE_COMMAND} --build . --target install )
 endif( )
 
+option( BUILD_LAPACK "Download and build lapack library" ON )
+
+if( BUILD_LAPACK )
+  include( external-lapack )
+
+  list( APPEND hipblaslt_dependencies lapack )
+  set( lapack_custom_target COMMAND cd ${LAPACK_BINARY_ROOT}$<SEMICOLON> ${CMAKE_COMMAND} --build . --target install )
+endif( )
+
+
 # POLICY CMP0037 - "Target names should not be reserved and should match a validity pattern"
 # Familiar target names like 'install' should be OK at the super-build level
 if( POLICY CMP0037 )
@@ -65,5 +75,6 @@ endif( )
 
 add_custom_target( install
   ${gtest_custom_target}
+  ${lapack_custom_target}
   DEPENDS ${rocsparse_dependencies}
 )
