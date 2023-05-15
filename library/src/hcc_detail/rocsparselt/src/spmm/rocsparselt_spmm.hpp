@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,9 +34,9 @@
 #include "hipsparselt_ostream.hpp"
 #include "utility.hpp"
 #if BUILD_WITH_TENSILE
-    #include "tensile_host.hpp"
+#include "tensile_host.hpp"
 #else
-    #include "kernel_launcher.hpp"
+#include "kernel_launcher.hpp"
 #endif
 
 template <typename Ti, typename To = Ti, typename Tc = To>
@@ -64,7 +64,7 @@ rocsparselt_status spmm_typecasting(const char*                     caller,
         return rocsparselt_status_invalid_size;
     }
 
-    RocsparseltContractionProblem<Ti, To, Tc> *problem;
+    RocsparseltContractionProblem<Ti, To, Tc>* problem;
 
     auto status = ConstructRocSparseLtProblem(caller,
                                               &problem,
@@ -81,13 +81,16 @@ rocsparselt_status spmm_typecasting(const char*                     caller,
                                               streams,
                                               numStreams);
 
-    if (status != rocsparselt_status_success) return status;
+    if(status != rocsparselt_status_success)
+        return status;
 
     status = runContractionProblem<Ti, To, Tc>(*problem,
 #if BUILD_WITH_TENSILE
-                                               plan->alg_selection->configs.get()->data(),
+                                               plan->alg_selection->configs.get(),
 #endif
-                                               config_id, config_max_id, search_iterations);
+                                               config_id,
+                                               config_max_id,
+                                               search_iterations);
 
     delete problem;
 
@@ -108,18 +111,18 @@ inline rocsparselt_status rocsparselt_spmm_template(const char*                 
                                                     int32_t                         numStreams,
                                                     int*                            config_id,
                                                     const int                       config_max_id,
-                                                    const int                       search_iterations)
+                                                    const int search_iterations)
 {
     rocsparselt_status rs_status = rocsparselt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM                                              \
-    caller, handle, plan, alpha, beta, a, b, c, d, workspace,            \
-    streams, numStreams, config_id, config_max_id, search_iterations
+#define EX_TYPECASTING_PARM                                                                   \
+    caller, handle, plan, alpha, beta, a, b, c, d, workspace, streams, numStreams, config_id, \
+        config_max_id, search_iterations
 
-    rocsparselt_datatype a_type           = plan->matmul_descr->matrix_A->type;
-    rocsparselt_datatype b_type           = plan->matmul_descr->matrix_B->type;
-    rocsparselt_datatype c_type           = plan->matmul_descr->matrix_C->type;
-    rocsparselt_datatype d_type           = plan->matmul_descr->matrix_D->type;
+    rocsparselt_datatype     a_type       = plan->matmul_descr->matrix_A->type;
+    rocsparselt_datatype     b_type       = plan->matmul_descr->matrix_B->type;
+    rocsparselt_datatype     c_type       = plan->matmul_descr->matrix_C->type;
+    rocsparselt_datatype     d_type       = plan->matmul_descr->matrix_D->type;
     rocsparselt_compute_type compute_type = plan->matmul_descr->compute_type;
 
     if(a_type == rocsparselt_datatype_f16_r && b_type == rocsparselt_datatype_f16_r)

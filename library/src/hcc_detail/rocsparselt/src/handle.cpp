@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -105,12 +105,12 @@ void _rocsparselt_handle::init()
     asic_rev = 0;
 #endif
 
-    is_init = true;
+    is_init = (uintptr_t)(this);
 }
 
 void _rocsparselt_handle::destroy()
 {
-    is_init = false;
+    is_init = 0;
     // Close log files
     if(log_trace_ofs)
     {
@@ -128,59 +128,6 @@ void _rocsparselt_handle::destroy()
     }
 }
 
-_rocsparselt_attribute::~_rocsparselt_attribute()
-{
-    clear();
-}
-
-_rocsparselt_attribute& _rocsparselt_attribute::operator=(const _rocsparselt_attribute& rhs)
-{
-    clear();
-    set(rhs._data, rhs._data_size);
-    return *this;
-};
-
-void _rocsparselt_attribute::clear()
-{
-    set(nullptr, 0);
-}
-
-const void* _rocsparselt_attribute::data()
-{
-    return _data;
-}
-size_t _rocsparselt_attribute::length()
-{
-    return _data_size;
-}
-
-size_t _rocsparselt_attribute::get(void* out, size_t size) const
-{
-    if(out != nullptr && _data != nullptr && _data_size >= size)
-    {
-        memcpy(out, _data, size);
-        return size;
-    }
-    return 0;
-}
-
-void _rocsparselt_attribute::set(const void* in, size_t size)
-{
-    if(in == nullptr || (_data != nullptr && _data_size != size))
-    {
-        free(_data);
-        _data      = nullptr;
-        _data_size = 0;
-    }
-    if(in != nullptr)
-    {
-        if(_data == nullptr)
-            _data = malloc(size);
-        memcpy(_data, in, size);
-        _data_size = size;
-    }
-}
-
 std::ostream& operator<<(std::ostream& stream, const _rocsparselt_mat_descr& t)
 {
     stream << "{"
@@ -191,11 +138,7 @@ std::ostream& operator<<(std::ostream& stream, const _rocsparselt_mat_descr& t)
     if(t.m_type == rocsparselt_matrix_type_structured)
         stream << ", sparsity=" << rocsparselt_sparsity_to_string(t.sparsity);
 
-    int     num_batches  = 1;
-    int64_t batch_stride = t.n * t.ld;
-    t.attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
-    t.attributes[rocsparselt_mat_num_batches].get(&num_batches);
-    stream << ", batchSize=" << num_batches << ", batchStride=" << batch_stride << "}";
+    stream << ", batchSize=" << t.num_batches << ", batchStride=" << t.batch_stride << "}";
     return stream;
 }
 
@@ -226,7 +169,8 @@ std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_alg_sel
 {
     stream << "{"
            << "ptr=" << (&t) << ", alg=" << t.alg << ", config_id=" << t.config_id
-           << ", config_max_id=" << t.config_max_id <<  ", search_iterations=" << t.search_iterations << "}";
+           << ", config_max_id=" << t.config_max_id << ", search_iterations=" << t.search_iterations
+           << "}";
     return stream;
 }
 

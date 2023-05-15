@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -77,7 +77,14 @@ rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*   
     }
 
     {
-        *workspaceSize = _plan->alg_selection->configs->at(_plan->alg_selection->config_id).max_workspace_bytes;
+        if(_plan->alg_selection->configs.get() == nullptr
+           || _plan->alg_selection->configs->size() == 0)
+            *workspaceSize = 0;
+        else
+        {
+            *workspaceSize = _plan->alg_selection->configs->at(_plan->alg_selection->config_id)
+                                 .max_workspace_bytes;
+        }
         log_api(_handle, __func__, *workspaceSize);
         return rocsparselt_status_success;
     }
@@ -191,9 +198,9 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
     int config_max_id     = _plan->alg_selection->config_max_id;
     int search_iterations = search ? _plan->alg_selection->search_iterations : 0; //default
 
-#define EX_PARM                                                          \
-    caller, _handle, _plan, alpha, beta, d_A, d_B, d_C, d_D, workspace,  \
-    streams, numStreams, &config_id, config_max_id, search_iterations
+#define EX_PARM                                                                              \
+    caller, _handle, _plan, alpha, beta, d_A, d_B, d_C, d_D, workspace, streams, numStreams, \
+        &config_id, config_max_id, search_iterations
 
     log_api(_handle,
             caller,
@@ -284,8 +291,8 @@ rocsparselt_status rocsparselt_matmul_search(const rocsparselt_handle* handle,
 #endif
 
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status ConstructRocSparseLtProblem(const char*                      caller,
-                                               RocsparseltContractionProblem<Ti, To, Tc> **prob,
+rocsparselt_status ConstructRocSparseLtProblem(const char*                                 caller,
+                                               RocsparseltContractionProblem<Ti, To, Tc>** prob,
                                                const _rocsparselt_matmul_descr* matmul_descr,
                                                const Tc*                        alpha,
                                                const Tc*                        beta,
@@ -300,14 +307,14 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
                                                int32_t                          numStreams)
 {
     std::shared_ptr<Tc> _one = std::make_shared<Tc>(static_cast<Tc>(1));
-    if (alpha == nullptr)
-       alpha = _one.get();
+    if(alpha == nullptr)
+        alpha = _one.get();
 
-    if (beta == nullptr)
-       beta = _one.get();
+    if(beta == nullptr)
+        beta = _one.get();
 
-    rocsparselt_operation    opA        = matmul_descr->op_A;
-    rocsparselt_operation    opB        = matmul_descr->op_B;
+    rocsparselt_operation opA = matmul_descr->op_A;
+    rocsparselt_operation opB = matmul_descr->op_B;
 
     // matrix A
     int64_t              num_rows_a     = matmul_descr->matrix_A->m;
@@ -318,37 +325,37 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     int64_t              offset_a       = 0;
     int                  num_batches_a  = 1;
     int64_t              batch_stride_a = 0;
-    matmul_descr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
-    matmul_descr->matrix_A->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_a);
-    int64_t c_batch_stride_a = (batch_stride_a == 0                   ? 0
-                                : (opA == rocsparselt_operation_none) ? c_lda * c_k_a
-                                                                      : c_lda * num_cols_a);
+    num_batches_a                       = matmul_descr->matrix_A->num_batches;
+    batch_stride_a                      = matmul_descr->matrix_A->batch_stride;
+    int64_t c_batch_stride_a            = (batch_stride_a == 0                   ? 0
+                                           : (opA == rocsparselt_operation_none) ? c_lda * c_k_a
+                                                                                 : c_lda * num_cols_a);
 
     // matrix B
-    int64_t              num_rows_b     = matmul_descr->matrix_B->m;
-    int64_t              num_cols_b     = matmul_descr->matrix_B->n;
-    int64_t              ldb            = matmul_descr->matrix_B->ld;
-    int64_t              offset_b       = 0;
-    int                  num_batches_b  = 1;
-    int64_t              batch_stride_b = 0;
-    matmul_descr->matrix_B->attributes[rocsparselt_mat_num_batches].get(&num_batches_b);
-    matmul_descr->matrix_B->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_b);
+    int64_t num_rows_b     = matmul_descr->matrix_B->m;
+    int64_t num_cols_b     = matmul_descr->matrix_B->n;
+    int64_t ldb            = matmul_descr->matrix_B->ld;
+    int64_t offset_b       = 0;
+    int     num_batches_b  = 1;
+    int64_t batch_stride_b = 0;
+    num_batches_b          = matmul_descr->matrix_B->num_batches;
+    batch_stride_b         = matmul_descr->matrix_B->batch_stride;
 
     // matrix C
-    int64_t              ldc            = matmul_descr->matrix_C->ld;
-    int64_t              offset_c       = 0;
-    int                  num_batches_c  = 1;
-    int64_t              batch_stride_c = 0;
-    matmul_descr->matrix_C->attributes[rocsparselt_mat_num_batches].get(&num_batches_c);
-    matmul_descr->matrix_C->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_c);
+    int64_t ldc            = matmul_descr->matrix_C->ld;
+    int64_t offset_c       = 0;
+    int     num_batches_c  = 1;
+    int64_t batch_stride_c = 0;
+    num_batches_c          = matmul_descr->matrix_C->num_batches;
+    batch_stride_c         = matmul_descr->matrix_C->batch_stride;
 
     // matrix D
-    int64_t              ldd            = matmul_descr->matrix_D->ld;
-    int64_t              offset_d       = 0;
-    int                  num_batches_d  = 1;
-    int64_t              batch_stride_d = 0;
-    matmul_descr->matrix_D->attributes[rocsparselt_mat_num_batches].get(&num_batches_d);
-    matmul_descr->matrix_D->attributes[rocsparselt_mat_batch_stride].get(&batch_stride_d);
+    int64_t ldd            = matmul_descr->matrix_D->ld;
+    int64_t offset_d       = 0;
+    int     num_batches_d  = 1;
+    int64_t batch_stride_d = 0;
+    num_batches_d          = matmul_descr->matrix_D->num_batches;
+    batch_stride_d         = matmul_descr->matrix_D->batch_stride;
 
     // activation
     hipsparselt_activation_type act_type    = hipsparselt_activation_type::none;
@@ -395,7 +402,8 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
         c_num_cols_a, c_lda, (batch_stride_a == 0 ? 1 : num_batches_a), type_a);
 
-    const unsigned char* metadata = (a == nullptr) ? nullptr : reinterpret_cast<const unsigned char*>(a) + metadata_offset;
+    const unsigned char* metadata
+        = (a == nullptr) ? nullptr : reinterpret_cast<const unsigned char*>(a) + metadata_offset;
 
     (*prob) = new RocsparseltContractionProblem<Ti, To, Tc>(matmul_descr->handle,
                                                             opA,
@@ -441,11 +449,22 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     return rocsparselt_status_success;
 }
 
-#define GENERATE_DEFINITIONS(Ti, To, Tc)                                                  \
-    template rocsparselt_status ConstructRocSparseLtProblem<Ti, To, Tc>(                  \
-        const char*, RocsparseltContractionProblem<Ti, To, Tc>**,                         \
-        const _rocsparselt_matmul_descr*, const Tc*, const Tc*,                           \
-        const Ti*, const Ti*, const To*, To*, bool, void*, size_t, hipStream_t*, int32_t);
+#define GENERATE_DEFINITIONS(Ti, To, Tc)                                 \
+    template rocsparselt_status ConstructRocSparseLtProblem<Ti, To, Tc>( \
+        const char*,                                                     \
+        RocsparseltContractionProblem<Ti, To, Tc>**,                     \
+        const _rocsparselt_matmul_descr*,                                \
+        const Tc*,                                                       \
+        const Tc*,                                                       \
+        const Ti*,                                                       \
+        const Ti*,                                                       \
+        const To*,                                                       \
+        To*,                                                             \
+        bool,                                                            \
+        void*,                                                           \
+        size_t,                                                          \
+        hipStream_t*,                                                    \
+        int32_t);
 
 GENERATE_DEFINITIONS(__half, __half, float)
 GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float)
