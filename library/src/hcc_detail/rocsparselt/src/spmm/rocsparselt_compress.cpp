@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -241,10 +241,8 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
     rocsparselt_order    order = matrix->order;
     rocsparselt_datatype type  = matrix->type;
 
-    int     num_batches  = 1;
-    int64_t batch_stride = 0;
-    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
-    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+    int     num_batches  = matrix->num_batches;
+    int64_t batch_stride = matrix->batch_stride;
     //set number of batches to 1, since we only care the first batch under the boradcast case.
     if(batch_stride == 0)
     {
@@ -291,14 +289,12 @@ rocsparselt_status rocsparselt_smfmac_compressed_size_impl(_rocsparselt_mat_desc
     int64_t              num_cols;
     int64_t              c_ld;
     rocsparselt_datatype type;
-    int                  num_batches = 1;
-    int64_t              batch_stride;
+    int                  num_batches  = matrix->num_batches;
+    int64_t              batch_stride = matrix->batch_stride;
 
     num_cols = op == rocsparselt_operation_none ? matrix->c_k : matrix->n;
     c_ld     = matrix->c_ld;
     type     = matrix->type;
-    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
-    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
 
     //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
     if(batch_stride == 0) //boardcast case.
@@ -525,7 +521,7 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
             stream);
 
     return rocsparselt_smfmac_compress_impl(
-        *handle, matrix, _plan->matmul_descr->op_A, d_dense, d_compressed, stream);
+        _handle, matrix, _plan->matmul_descr->op_A, d_dense, d_compressed, stream);
 }
 
 /********************************************************************************
@@ -614,7 +610,7 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
             stream);
 
     return rocsparselt_smfmac_compress_impl(
-        *handle, _sparseMatDescr, op, d_dense, d_compressed, stream);
+        _handle, _sparseMatDescr, op, d_dense, d_compressed, stream);
 }
 
 #ifdef __cplusplus

@@ -27,9 +27,9 @@
 #include "definitions.h"
 #include "handle.h"
 #if BUILD_WITH_TENSILE
-  #include "tensile_host.hpp"
+#include "tensile_host.hpp"
 #else
-  #include "kernel_launcher.hpp"
+#include "kernel_launcher.hpp"
 #endif
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
@@ -63,7 +63,9 @@ rocsparselt_status rocsparselt_init(rocsparselt_handle* handle)
         // Allocate
         try
         {
-            auto _handle = reinterpret_cast<_rocsparselt_handle*>(handle);
+            auto                _handle = reinterpret_cast<_rocsparselt_handle*>(handle);
+            _rocsparselt_handle tmpHandle;
+            memcpy(_handle, &tmpHandle, sizeof(_rocsparselt_handle));
             _handle->init();
 
             log_api(_handle, __func__, "handle[out]", _handle);
@@ -130,7 +132,6 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
         hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!_handle->isInit())
     {
@@ -163,17 +164,15 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
             auto                   _matDescr = reinterpret_cast<_rocsparselt_mat_descr*>(matDescr);
             _rocsparselt_mat_descr tmpMatDescr(_handle);
             memcpy(_matDescr, &tmpMatDescr, sizeof(_rocsparselt_mat_descr));
-            _matDescr->m_type    = rocsparselt_matrix_type_dense;
-            _matDescr->m         = rows;
-            _matDescr->n         = cols;
-            _matDescr->ld        = ld;
-            _matDescr->alignment = alignment;
-            _matDescr->type      = valueType;
-            _matDescr->order     = order;
-            int     num_batches  = 1;
-            int64_t batch_stride = cols * ld;
-            _matDescr->attributes[rocsparselt_mat_batch_stride].set(&batch_stride);
-            _matDescr->attributes[rocsparselt_mat_num_batches].set(&num_batches);
+            _matDescr->m_type       = rocsparselt_matrix_type_dense;
+            _matDescr->m            = rows;
+            _matDescr->n            = cols;
+            _matDescr->ld           = ld;
+            _matDescr->alignment    = alignment;
+            _matDescr->type         = valueType;
+            _matDescr->order        = order;
+            _matDescr->num_batches  = 1;
+            _matDescr->batch_stride = cols * ld;
             log_api(_handle,
                     __func__,
                     "_matDescr[out]",
@@ -255,19 +254,16 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
             auto                   _matDescr = reinterpret_cast<_rocsparselt_mat_descr*>(matDescr);
             _rocsparselt_mat_descr tmpMatDescr(_handle);
             memcpy(_matDescr, &tmpMatDescr, sizeof(_rocsparselt_mat_descr));
-            _matDescr->m_type    = rocsparselt_matrix_type_structured;
-            _matDescr->m         = rows;
-            _matDescr->n         = cols;
-            _matDescr->ld        = ld;
-            _matDescr->alignment = alignment;
-            _matDescr->type      = valueType;
-            _matDescr->order     = order;
-            _matDescr->sparsity  = sparsity;
-
-            int     num_batches  = 1;
-            int64_t batch_stride = cols * ld;
-            _matDescr->attributes[rocsparselt_mat_batch_stride].set(&batch_stride);
-            _matDescr->attributes[rocsparselt_mat_num_batches].set(&num_batches);
+            _matDescr->m_type       = rocsparselt_matrix_type_structured;
+            _matDescr->m            = rows;
+            _matDescr->n            = cols;
+            _matDescr->ld           = ld;
+            _matDescr->alignment    = alignment;
+            _matDescr->type         = valueType;
+            _matDescr->order        = order;
+            _matDescr->sparsity     = sparsity;
+            _matDescr->num_batches  = 1;
+            _matDescr->batch_stride = cols * ld;
             log_api(_handle,
                     __func__,
                     "_matDescr[out]",
@@ -390,7 +386,7 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
                     log_error(_handle, __func__, "dataSize is invalid");
                     return status;
                 }
-                const int* num_batches = reinterpret_cast<const int*>(data);
+                auto num_batches = reinterpret_cast<const int*>(data);
                 if(*num_batches < 1)
                 {
                     hipsparselt_cerr
@@ -400,6 +396,7 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
                         _handle, __func__, "The number of batches must be greater or equal to 1");
                     return rocsparselt_status_invalid_value;
                 }
+                _matDescr->num_batches = *num_batches;
                 break;
             }
             case rocsparselt_mat_batch_stride:
@@ -407,7 +404,7 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
                 if((status = validateSetAttributeDataSize<int64_t>(dataSize))
                    != rocsparselt_status_success)
                     return status;
-                const int64_t* batch_stride = reinterpret_cast<const int64_t*>(data);
+                auto batch_stride = reinterpret_cast<const int64_t*>(data);
                 if(*batch_stride != 0)
                 {
                     int64_t expected_batch_stride = _matDescr->n * _matDescr->ld;
@@ -421,10 +418,11 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
                         return rocsparselt_status_invalid_value;
                     }
                 }
+                _matDescr->batch_stride = *batch_stride;
                 break;
             }
             }
-            _matDescr->attributes[matAttribute].set(data, dataSize);
+
             log_api(_handle,
                     __func__,
                     "matDescr[out]",
@@ -499,6 +497,7 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
                     log_error(_handle, __func__, "dataSize is invalid");
                     return status;
                 }
+                memcpy(data, &_matDescr->num_batches, sizeof(int));
                 break;
             }
             case rocsparselt_mat_batch_stride:
@@ -509,16 +508,13 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
                     log_error(_handle, __func__, "dataSize is invalid");
                     return status;
                 }
+                memcpy(data, &_matDescr->batch_stride, sizeof(int64_t));
                 break;
             }
             default:
                 return rocsparselt_status_invalid_value;
             }
 
-            if(_matDescr->attributes[matAttribute].get(data, dataSize) == 0)
-            {
-                return rocsparselt_status_internal_error;
-            }
             log_api(_handle,
                     __func__,
                     "matDescr[in]",
@@ -1082,31 +1078,35 @@ rocsparselt_status
             auto out_type     = _matmulDescr->matrix_D->type;
             auto compute_type = _matmulDescr->compute_type;
 
-            int config_max_id = 0;
+            int                                     config_max_id = 0;
             std::vector<_rocsparselt_matmul_config> configs;
 
 #if BUILD_WITH_TENSILE
-            constexpr int requestConfigs = 10;  // find top 10 configs.
+            constexpr int requestConfigs = 10; // find top 10 configs.
 
             rocsparselt_status status = rocsparselt_status_success;
 
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
             {
-                status = findTopConfigs<__half, __half, float>(_matmulDescr, &configs, &config_max_id, requestConfigs);
+                status = findTopConfigs<__half, __half, float>(
+                    _matmulDescr, &configs, &config_max_id, requestConfigs);
             }
             else if(in_type == rocsparselt_datatype_bf16_r
                     && out_type == rocsparselt_datatype_bf16_r
                     && compute_type == rocsparselt_compute_f32)
             {
-                status = findTopConfigs<hip_bfloat16, hip_bfloat16, float>(_matmulDescr, &configs, &config_max_id, requestConfigs);
+                status = findTopConfigs<hip_bfloat16, hip_bfloat16, float>(
+                    _matmulDescr, &configs, &config_max_id, requestConfigs);
             }
             else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
                     && compute_type == rocsparselt_compute_i32)
             {
-                status = findTopConfigs<int8_t, int8_t, float>(_matmulDescr, &configs, &config_max_id, requestConfigs);
+                status = findTopConfigs<int8_t, int8_t, float>(
+                    _matmulDescr, &configs, &config_max_id, requestConfigs);
             }
-            if(status !=  rocsparselt_status_success) return status;
+            if(status != rocsparselt_status_success)
+                return status;
 #else
             if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
                && compute_type == rocsparselt_compute_f32)
@@ -1139,7 +1139,8 @@ rocsparselt_status
             memcpy(_algSelection, &tmpAlgSelection, sizeof(_rocsparselt_matmul_alg_selection));
             _algSelection->alg           = alg;
             _algSelection->config_max_id = config_max_id;
-            _algSelection->configs = std::make_shared<std::vector<_rocsparselt_matmul_config>>(configs);
+            _algSelection->configs
+                = std::make_shared<std::vector<_rocsparselt_matmul_config>>(configs);
             log_api(_handle,
                     __func__,
                     "algSelection[out]",
@@ -1432,10 +1433,10 @@ rocsparselt_status
         try
         {
             int num_batches_a = 1, num_batches_b = 1, num_batches_c = 1, num_batches_d = 1;
-            _matmulDescr->matrix_A->attributes[rocsparselt_mat_num_batches].get(&num_batches_a);
-            _matmulDescr->matrix_B->attributes[rocsparselt_mat_num_batches].get(&num_batches_b);
-            _matmulDescr->matrix_C->attributes[rocsparselt_mat_num_batches].get(&num_batches_c);
-            _matmulDescr->matrix_D->attributes[rocsparselt_mat_num_batches].get(&num_batches_d);
+            num_batches_a = _matmulDescr->matrix_A->num_batches;
+            num_batches_b = _matmulDescr->matrix_B->num_batches;
+            num_batches_c = _matmulDescr->matrix_C->num_batches;
+            num_batches_d = _matmulDescr->matrix_D->num_batches;
 
             if(num_batches_a != (num_batches_b | num_batches_c | num_batches_d))
             {
@@ -1446,12 +1447,13 @@ rocsparselt_status
                 return rocsparselt_status_invalid_size;
             }
 
+            auto                     _plan = reinterpret_cast<_rocsparselt_matmul_plan*>(plan);
             _rocsparselt_matmul_plan tmpPlan(_handle);
             memcpy(_plan, &tmpPlan, sizeof(_rocsparselt_matmul_plan));
 
-            (_plan)->matmul_descr   = new _rocsparselt_matmul_descr(*_matmulDescr);
-            (_plan)->alg_selection  = const_cast<_rocsparselt_matmul_alg_selection*>(_algSelection);
-            (_plan)->workspace_size = workspaceSize;
+            _plan->matmul_descr   = new _rocsparselt_matmul_descr(*_matmulDescr);
+            _plan->alg_selection  = const_cast<_rocsparselt_matmul_alg_selection*>(_algSelection);
+            _plan->workspace_size = workspaceSize;
             log_api(_handle,
                     __func__,
                     "plan[out]",

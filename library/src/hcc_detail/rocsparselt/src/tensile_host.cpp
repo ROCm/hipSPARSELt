@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,9 +29,9 @@
 #include "tensile_host.hpp"
 #include "activation.hpp"
 #include "definitions.h"
+#include "rocsparselt_spmm_utils.hpp"
 #include "status.h"
 #include "utility.hpp"
-#include "rocsparselt_spmm_utils.hpp"
 /*****************************************************************************
  * This is the only file in rocsparselt which should #include Tensile headers    *
  * or reference Tensile identifiers. tensile_host.hpp defines the interface. *
@@ -95,7 +95,6 @@ namespace
     {
         using tensile_type = Tensile::Half;
     };
-
 
     template <>
     struct rocsparselt_to_tensile_type<hip_bfloat16>
@@ -268,7 +267,6 @@ namespace
                                                        value_category(*prob.beta),
                                                        workspace_size};
 
-
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
 
@@ -299,7 +297,8 @@ namespace
         tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
         Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
 
-        switch (prob.act_type) {
+        switch(prob.act_type)
+        {
         case hipsparselt_activation_type::abs:
             tensileAct = Tensile::ActivationType::Abs;
             break;
@@ -325,7 +324,6 @@ namespace
             break;
         }
         tensileProblem.setActivationEnumArg(tensileAct);
-
 
         return tensileProblem;
     }
@@ -393,7 +391,7 @@ namespace
     {
         // The library object
         std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> m_library;
-        std::shared_ptr<hipDeviceProp_t>                                             m_deviceProp;
+        std::shared_ptr<hipDeviceProp_t> m_deviceProp;
 
         // The adapter object. mutable is used to allow adapters to be modified
         // even when they are stored in a const vector which is immutable in size
@@ -416,7 +414,7 @@ namespace
         }
 
         // TensileHost is not copyable or assignable
-        TensileHost(const TensileHost&) = delete;
+        TensileHost(const TensileHost&)            = delete;
         TensileHost& operator=(const TensileHost&) = delete;
 
         // Get the number of devices
@@ -693,19 +691,19 @@ namespace
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                                         _rocsparselt_matmul_config*                      configs,
+                                         std::vector<_rocsparselt_matmul_config>*         configs,
                                          int*                                             config_id,
-                                         const int                                        config_max_id,
-                                         const int                                        search_iterations)
+                                         const int config_max_id,
+                                         const int search_iterations)
 {
-    rocsparselt_status                              status = rocsparselt_status_internal_error;
+    rocsparselt_status                            status = rocsparselt_status_internal_error;
     std::shared_ptr<Tensile::ContractionSolution> solution;
 
     try
     {
         std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                             deviceProp;
-        std::shared_ptr<Tensile::Hardware>                                           hardware;
+        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+        std::shared_ptr<Tensile::Hardware>                                               hardware;
 
         auto& adapter = get_library_and_adapter(&library, &deviceProp, prob.handle->device);
 
@@ -713,7 +711,7 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         auto tensile_prob = ConstructTensileProblem(prob);
         auto handle       = prob.handle;
 
-        if(!config_max_id || configs == nullptr)
+        if(!config_max_id || configs == nullptr || configs->size() == 0)
         {
             hipsparselt_internal_ostream msg;
             print_once(msg << "\nhipsparselt_error: No Tensile solution found for " << prob);
@@ -725,19 +723,24 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
             if(!search_iterations)
             {
-                std::shared_ptr<Tensile::ContractionSolution> solution =
-                    std::static_pointer_cast<Tensile::ContractionSolution>(configs[*config_id].data.ptr);
+                std::shared_ptr<Tensile::ContractionSolution> solution
+                    = std::static_pointer_cast<Tensile::ContractionSolution>(
+                        (*configs)[*config_id].data.ptr);
 
-                if(configs[*config_id].max_workspace_bytes > prob.workspaceSize || (configs[*config_id].max_workspace_bytes > 0 && prob.workspace == nullptr))
+                if((*configs)[*config_id].max_workspace_bytes > prob.workspaceSize
+                   || (*configs)[*config_id].max_workspace_bytes > 0 && prob.workspace == nullptr)
                 {
-                    hipsparselt_cerr << "config " << *config_id << " need extra workspace " << configs[*config_id].max_workspace_bytes  << " bytes - skip." << std::endl;
+                    hipsparselt_cerr << "config " << *config_id << " need extra workspace "
+                                     << (*configs)[*config_id].max_workspace_bytes
+                                     << " bytes - skip." << std::endl;
                     return rocsparselt_status_internal_error;
                 }
 
-                RETURN_IF_HIP_ERROR(adapter.launchKernels(solution->solve(tensile_prob, tensile_inputs, *hardware),
-                                    prob.streams[0],
-                                    nullptr,
-                                    nullptr));
+                RETURN_IF_HIP_ERROR(
+                    adapter.launchKernels(solution->solve(tensile_prob, tensile_inputs, *hardware),
+                                          prob.streams[0],
+                                          nullptr,
+                                          nullptr));
             }
             else
             {
@@ -748,28 +751,34 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
                 RETURN_IF_HIP_ERROR(hipEventCreate(&stopEvent));
                 for(int id = 0; id < config_max_id; id++)
                 {
-                    std::shared_ptr<Tensile::ContractionSolution> solution =
-                        std::static_pointer_cast<Tensile::ContractionSolution>(configs[id].data.ptr);
+                    std::shared_ptr<Tensile::ContractionSolution> solution
+                        = std::static_pointer_cast<Tensile::ContractionSolution>(
+                            (*configs)[id].data.ptr);
 
-                    if(configs[id].max_workspace_bytes > prob.workspaceSize || (configs[id].max_workspace_bytes > 0 && prob.workspace == nullptr))
+                    if((*configs)[id].max_workspace_bytes > prob.workspaceSize
+                       || ((*configs)[id].max_workspace_bytes > 0 && prob.workspace == nullptr))
                     {
-                        hipsparselt_cerr << "config " << id << " need extra workspace " << configs[id].max_workspace_bytes  << " bytes - skip." << std::endl;
+                        hipsparselt_cerr << "config " << id << " need extra workspace "
+                                         << (*configs)[id].max_workspace_bytes << " bytes - skip."
+                                         << std::endl;
                         continue;
                     }
 
                     //warm up
-                    RETURN_IF_HIP_ERROR(adapter.launchKernels(solution->solve(tensile_prob, tensile_inputs, *hardware),
-                                        prob.streams[0],
-                                        nullptr,
-                                        nullptr));
+                    RETURN_IF_HIP_ERROR(adapter.launchKernels(
+                        solution->solve(tensile_prob, tensile_inputs, *hardware),
+                        prob.streams[0],
+                        nullptr,
+                        nullptr));
 
                     sum_ms = 0.0f;
-                    for(int i= 0; i < search_iterations; i++)
+                    for(int i = 0; i < search_iterations; i++)
                     {
-                        RETURN_IF_HIP_ERROR(adapter.launchKernels(solution->solve(tensile_prob, tensile_inputs, *hardware),
-                                            prob.streams[0],
-                                            startEvent,
-                                            stopEvent));
+                        RETURN_IF_HIP_ERROR(adapter.launchKernels(
+                            solution->solve(tensile_prob, tensile_inputs, *hardware),
+                            prob.streams[0],
+                            startEvent,
+                            stopEvent));
                         RETURN_IF_HIP_ERROR(hipEventSynchronize(stopEvent));
                         RETURN_IF_HIP_ERROR(hipEventElapsedTime(&ms, startEvent, stopEvent));
                         sum_ms += ms;
@@ -777,14 +786,14 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
                     if(sum_ms < min_ms)
                     {
-                        min_ms = sum_ms;
+                        min_ms     = sum_ms;
                         *config_id = id;
                     }
                 }
                 RETURN_IF_HIP_ERROR(hipEventDestroy(startEvent));
                 RETURN_IF_HIP_ERROR(hipEventDestroy(stopEvent));
 
-                if(min_ms==std::numeric_limits<float>::max())
+                if(min_ms == std::numeric_limits<float>::max())
                     return rocsparselt_status_internal_error;
             }
 
@@ -812,28 +821,30 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
  * _rocsparselt_matmul_config.                                                *
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, Tc> &prob,
-                                    int requestConfigs,
-                                    std::vector<_rocsparselt_matmul_config> *configs,
-                                    int *foundConfigs) {
+rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
+                                    int                                              requestConfigs,
+                                    std::vector<_rocsparselt_matmul_config>*         configs,
+                                    int*                                             foundConfigs)
+{
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t> deviceProp;
-    std::shared_ptr<Tensile::Hardware> hardware;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<Tensile::Hardware>                                               hardware;
 
     // auto &adapter =
     get_library_and_adapter(&library, &deviceProp, prob.handle->device);
 
-    hardware = Tensile::hip::GetDevice(*deviceProp);
+    hardware          = Tensile::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);
     // auto handle = prob.handle;
 
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
 
     *foundConfigs = std::min((int)solutions.size(), requestConfigs);
-    for (size_t i = 0; i < *foundConfigs; i++) {
-        auto solution = solutions[i];
+    for(size_t i = 0; i < *foundConfigs; i++)
+    {
+        auto                       solution = solutions[i];
         _rocsparselt_matmul_config config;
-        config.data.ptr = std::static_pointer_cast<void>(solution);
+        config.data.ptr            = std::static_pointer_cast<void>(solution);
         config.max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
         configs->push_back(config);
     }
@@ -863,13 +874,18 @@ std::atomic_bool& rocsparselt_internal_tensile_is_initialized()
  * rocsparselt dependencies. This file's template functions are not defined in a  *
  * header file, in order to keep Tensile and rocsparselt separate.                *
  ******************************************************************************/
-#define GENERATE_DEFINITIONS(Ti, To, Tc)                                                  \
-    template rocsparselt_status runContractionProblem<Ti, To, Tc>(                        \
-        const RocsparseltContractionProblem<Ti, To, Tc>&,                                 \
-        _rocsparselt_matmul_config*, int*, const int, const int);                         \
-    template rocsparselt_status getBestSolutions<Ti, To, Tc>(                             \
-        const RocsparseltContractionProblem<Ti, To, Tc>&, int,                            \
-        std::vector<_rocsparselt_matmul_config> *, int*);                                 \
+#define GENERATE_DEFINITIONS(Ti, To, Tc)                           \
+    template rocsparselt_status runContractionProblem<Ti, To, Tc>( \
+        const RocsparseltContractionProblem<Ti, To, Tc>&,          \
+        std::vector<_rocsparselt_matmul_config>*,                  \
+        int*,                                                      \
+        const int,                                                 \
+        const int);                                                \
+    template rocsparselt_status getBestSolutions<Ti, To, Tc>(      \
+        const RocsparseltContractionProblem<Ti, To, Tc>&,          \
+        int,                                                       \
+        std::vector<_rocsparselt_matmul_config>*,                  \
+        int*);
 
 GENERATE_DEFINITIONS(__half, __half, float)
 GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float)

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -106,7 +106,7 @@ struct RocsparseltContractionProblem
     const void*                 bias_vector;
     int64_t                     bias_stride;
 
-    void *workspace;
+    void*  workspace;
     size_t workspaceSize;
 
     hipStream_t* streams;
@@ -458,16 +458,16 @@ struct RocsparseltContractionProblem
  *******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem,
-                                         _rocsparselt_matmul_config                      *configs,
+                                         std::vector<_rocsparselt_matmul_config>*         configs,
                                          int*                                             config_id,
-                                         const int                                        config_max_id,
-                                         const int                                        search_iterations);
+                                         const int config_max_id,
+                                         const int search_iterations);
 
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, Tc> &prob,
-                                    int requestConfigs,
-                                    std::vector<_rocsparselt_matmul_config> *configs,
-                                    int *foundConfigs);
+rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
+                                    int                                              requestConfigs,
+                                    std::vector<_rocsparselt_matmul_config>*         configs,
+                                    int*                                             foundConfigs);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for testing) *
