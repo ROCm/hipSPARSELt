@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,10 @@
  *  passed to all subsequent library function calls. It should be destroyed at the end
  *  using \ref rocsparselt_destroy_handle.
  */
-typedef struct _rocsparselt_handle* rocsparselt_handle;
+typedef struct
+{
+    uint8_t data[11024];
+} rocsparselt_handle;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix.

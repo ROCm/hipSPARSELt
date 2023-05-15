@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -517,18 +517,18 @@ rocsparselt_status rocsparselt_smfmac_prune_template(const _rocsparselt_handle* 
 }
 
 template <typename Ti>
-rocsparselt_status rocsparselt_smfmac_prune_check_template(const rocsparselt_handle handle,
-                                                           int64_t                  m,
-                                                           int64_t                  n,
-                                                           int64_t                  stride0,
-                                                           int64_t                  stride1,
-                                                           int                      num_batches,
-                                                           int64_t                  batch_stride,
-                                                           rocsparselt_operation    op,
-                                                           rocsparselt_order        order,
-                                                           const Ti*                d_in,
-                                                           int*                     d_out,
-                                                           hipStream_t              stream)
+rocsparselt_status rocsparselt_smfmac_prune_check_template(const _rocsparselt_handle* handle,
+                                                           int64_t                    m,
+                                                           int64_t                    n,
+                                                           int64_t                    stride0,
+                                                           int64_t                    stride1,
+                                                           int                        num_batches,
+                                                           int64_t                    batch_stride,
+                                                           rocsparselt_operation      op,
+                                                           rocsparselt_order          order,
+                                                           const Ti*                  d_in,
+                                                           int*                       d_out,
+                                                           hipStream_t                stream)
 {
     constexpr int SG0I = 16;
     constexpr int SG1J = 4;
@@ -576,10 +576,8 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const _rocsparselt_handle*    h
     rocsparselt_order    order = matrix->order;
     rocsparselt_datatype type  = matrix->type;
 
-    int     num_batches  = 1;
-    int64_t batch_stride = 0;
-    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
-    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+    int     num_batches  = matrix->num_batches;
+    int64_t batch_stride = matrix->batch_stride;
 
     //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
     if(batch_stride == 0) //boardcast case.
@@ -613,7 +611,7 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const _rocsparselt_handle*    h
     }
 }
 
-rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle      handle,
+rocsparselt_status rocsparselt_smfmac_prune_check_impl(const _rocsparselt_handle*    handle,
                                                        const _rocsparselt_mat_descr* matrix,
                                                        rocsparselt_operation         op,
                                                        const void*                   d_in,
@@ -627,10 +625,8 @@ rocsparselt_status rocsparselt_smfmac_prune_check_impl(const rocsparselt_handle 
     rocsparselt_order    order = matrix->order;
     rocsparselt_datatype type  = matrix->type;
 
-    int     num_batches  = 1;
-    int64_t batch_stride = 0;
-    matrix->attributes[rocsparselt_mat_num_batches].get(&num_batches);
-    matrix->attributes[rocsparselt_mat_batch_stride].get(&batch_stride);
+    int     num_batches  = matrix->num_batches;
+    int64_t batch_stride = matrix->batch_stride;
 
     //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
     if(batch_stride == 0) //boardcast case.
@@ -841,7 +837,7 @@ rocsparselt_status rocsparselt_smfmac_prune2(const rocsparselt_handle*    handle
             "stream[in]",
             stream);
     return rocsparselt_smfmac_prune_impl(
-        *handle, _sparseMatDescr, op, d_in, d_out, pruneAlg, stream);
+        _handle, _sparseMatDescr, op, d_in, d_out, pruneAlg, stream);
 }
 
 /********************************************************************************
@@ -912,7 +908,7 @@ rocsparselt_status rocsparselt_smfmac_prune_check(const rocsparselt_handle*     
             "stream[in]",
             stream);
     return rocsparselt_smfmac_prune_check_impl(
-        *handle, matrix, _matmulDescr->op_A, d_in, d_out, stream);
+        _handle, matrix, _matmulDescr->op_A, d_in, d_out, stream);
 }
 
 /********************************************************************************
@@ -998,7 +994,7 @@ rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    
             d_out,
             "stream[in]",
             stream);
-    return rocsparselt_smfmac_prune_check_impl(*handle, _sparseMatDescr, op, d_in, d_out, stream);
+    return rocsparselt_smfmac_prune_check_impl(_handle, _sparseMatDescr, op, d_in, d_out, stream);
 }
 
 #ifdef __cplusplus

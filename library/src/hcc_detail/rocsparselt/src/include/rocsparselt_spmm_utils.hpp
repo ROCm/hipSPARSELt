@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,9 +30,9 @@
 #include "hipsparselt_ostream.hpp"
 #include "utility.hpp"
 #if BUILD_WITH_TENSILE
-  #include "tensile_host.hpp"
+#include "tensile_host.hpp"
 #else
-  #include "kernel_launcher.hpp"
+#include "kernel_launcher.hpp"
 #endif
 #include <cxxabi.h>
 
@@ -196,8 +196,8 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
 
     if(num_rows < num_elements || num_cols < num_elements)
     {
-        hipsparselt_cerr << "row and col must larger than " << num_elements << ", current are " << num_rows << " and "
-                         << num_cols << std::endl;
+        hipsparselt_cerr << "row and col must larger than " << num_elements << ", current are "
+                         << num_rows << " and " << num_cols << std::endl;
         if(handle->layer_mode & rocsparselt_layer_mode_log_error)
         {
             std::ostringstream stream;
@@ -385,29 +385,32 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
 }
 
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status ConstructRocSparseLtProblem(const char*                      caller,
-                                               RocsparseltContractionProblem<Ti, To, Tc> **prob,
-                                               const _rocsparselt_matmul_descr* matDescr,
-                                               const Tc*                        alpha = nullptr,
-                                               const Tc*                        beta = nullptr,
-                                               const Ti*                        a = nullptr,
-                                               const Ti*                        b = nullptr,
-                                               const To*                        c = nullptr,
-                                               To*                              d = nullptr,
-                                               bool                             strided_batch = true,
-                                               void*                            workspace = nullptr,
-                                               size_t                           workspaceSize = ~size_t{0},
-                                               hipStream_t*                     streams = nullptr,
-                                               int32_t                          numStreams = 0);
+rocsparselt_status ConstructRocSparseLtProblem(const char*                                 caller,
+                                               RocsparseltContractionProblem<Ti, To, Tc>** prob,
+                                               const _rocsparselt_matmul_descr*            matDescr,
+                                               const Tc*    alpha         = nullptr,
+                                               const Tc*    beta          = nullptr,
+                                               const Ti*    a             = nullptr,
+                                               const Ti*    b             = nullptr,
+                                               const To*    c             = nullptr,
+                                               To*          d             = nullptr,
+                                               bool         strided_batch = true,
+                                               void*        workspace     = nullptr,
+                                               size_t       workspaceSize = ~size_t{0},
+                                               hipStream_t* streams       = nullptr,
+                                               int32_t      numStreams    = 0);
 
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status findTopConfigs(const _rocsparselt_matmul_descr* matmulDescr,
-                                  std::vector<_rocsparselt_matmul_config> *configs,
-                                  int* config_max_id,
-                                  const int requestConfigs=10)
+rocsparselt_status findTopConfigs(const _rocsparselt_matmul_descr*         matmulDescr,
+                                  std::vector<_rocsparselt_matmul_config>* configs,
+                                  int*                                     config_max_id,
+                                  const int                                requestConfigs = 10)
 {
-    RocsparseltContractionProblem<Ti, To, Tc> *prob;
-    auto status = ConstructRocSparseLtProblem<Ti, To, Tc>(__func__, &prob, matmulDescr);
+    RocsparseltContractionProblem<Ti, To, Tc>* prob;
+    Tc                                         alpha = static_cast<Tc>(1.0f);
+    Tc                                         beta  = static_cast<Tc>(1.0f);
+    auto                                       status
+        = ConstructRocSparseLtProblem<Ti, To, Tc>(__func__, &prob, matmulDescr, &alpha, &beta);
     if(status != rocsparselt_status_success)
         return status;
     getBestSolutions<Ti, To, Tc>(*prob, requestConfigs, configs, config_max_id);

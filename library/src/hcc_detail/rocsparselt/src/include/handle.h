@@ -1,6 +1,6 @@
 /*! \file */
 /* ************************************************************************
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,42 +31,8 @@
 #include <fstream>
 #include <hip/hip_runtime_api.h>
 #include <iostream>
-#include <vector>
 #include <memory>
-
-struct _rocsparselt_attribute
-{
-    _rocsparselt_attribute(){};
-    _rocsparselt_attribute& operator=(const _rocsparselt_attribute& rhs);
-
-    ~_rocsparselt_attribute();
-
-    void clear();
-
-    const void* data();
-
-    size_t length();
-
-    size_t get(void* out, size_t size) const;
-
-    template <typename T>
-    size_t get(T* out) const
-    {
-        return get(out, sizeof(T));
-    }
-
-    void set(const void* in, size_t size);
-
-    template <typename T>
-    void set(const T* in)
-    {
-        set(in, sizeof(T));
-    }
-
-private:
-    void*  _data      = nullptr;
-    size_t _data_size = 0;
-};
+#include <vector>
 
 /********************************************************************************
  * \brief rocsparse_handle is a structure holding the rocsparselt library context.
@@ -78,16 +44,16 @@ private:
 struct _rocsparselt_handle
 {
     // constructor
-    _rocsparselt_handle(){};
+    _rocsparselt_handle() {}
     // destructor
-    ~_rocsparselt_handle(){};
+    ~_rocsparselt_handle() {}
 
     void init();
     void destroy();
 
     bool isInit() const
     {
-        return is_init;
+        return is_init != 0 && is_init == (uintptr_t)(this);
     };
 
     // device id
@@ -95,7 +61,7 @@ struct _rocsparselt_handle
     // device properties
     hipDeviceProp_t properties;
     // device wavefront size
-    int wavefront_size;
+    int wavefront_size = 0;
     // asic revision
     int asic_rev;
 
@@ -106,9 +72,9 @@ struct _rocsparselt_handle
     bool log_bench = false;
 
     // device buffer
-    size_t buffer_size;
-    void*  buffer;
-    bool   is_init = false;
+    size_t    buffer_size;
+    void*     buffer;
+    uintptr_t is_init = 0;
 
     // logging streams
     std::ofstream* log_trace_ofs = nullptr;
@@ -128,7 +94,10 @@ struct _rocsparselt_mat_descr
 {
     // constructor
     _rocsparselt_mat_descr(const _rocsparselt_handle* handle)
-        : handle(handle){};
+        : handle(handle)
+    {
+        is_init = (uintptr_t)handle;
+    };
     _rocsparselt_mat_descr(const _rocsparselt_mat_descr& rhs)
         : handle(rhs.handle)
         , m_type(rhs.m_type)
@@ -139,13 +108,12 @@ struct _rocsparselt_mat_descr
         , type(rhs.type)
         , order(rhs.order)
         , sparsity(rhs.sparsity)
+        , num_batches(rhs.num_batches)
+        , batch_stride(rhs.batch_stride)
         , c_k(rhs.c_k)
         , c_ld(rhs.c_ld)
     {
-        for(int i = 0; i < 2; i++)
-        {
-            attributes[i] = rhs.attributes[i];
-        }
+        is_init = (uintptr_t)handle;
     };
 
     // destructor
@@ -161,23 +129,26 @@ struct _rocsparselt_mat_descr
 
     void clear()
     {
-        m_type = rocsparselt_matrix_type_unknown;
-        for(int i = 0; i < 2; i++)
-        {
-            attributes[i].clear();
-        }
+        m_type  = rocsparselt_matrix_type_unknown;
+        is_init = 0;
     }
 
     bool isInit() const
     {
-        return m_type == rocsparselt_matrix_type_unknown ? false : true;
+        if(is_init != 0 && is_init == (uintptr_t)handle)
+        {
+            return m_type == rocsparselt_matrix_type_unknown ? false : true;
+        }
+        return false;
     };
 
     friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_mat_descr& t);
 
     const _rocsparselt_handle* handle = nullptr;
     // matrix type
-    rocsparselt_matrix_type m_type = rocsparselt_matrix_type_unknown;
+    rocsparselt_matrix_type m_type  = rocsparselt_matrix_type_unknown;
+    uintptr_t               is_init = 0;
+
     // num rows
     int64_t m = 0;
     // num cols
@@ -192,8 +163,10 @@ struct _rocsparselt_mat_descr
     rocsparselt_order order;
     // matrix sparsity ratio
     rocsparselt_sparsity sparsity;
-    // matrix attributes
-    _rocsparselt_attribute attributes[2];
+
+    int num_batches = 1;
+
+    int64_t batch_stride = 0;
 
     // info of compressed matrix, will be auto filled at rocsparselt_matmul_descr_init().
     // numbeer of k after compressed.
@@ -213,7 +186,7 @@ struct _rocsparselt_matmul_descr
     _rocsparselt_matmul_descr(const _rocsparselt_handle* handle)
         : handle(handle)
     {
-        is_init = true;
+        is_init = (uintptr_t)handle;
     };
 
     _rocsparselt_matmul_descr(const _rocsparselt_matmul_descr& rhs)
@@ -235,30 +208,30 @@ struct _rocsparselt_matmul_descr
         , bias_pointer(rhs.bias_pointer)
         , bias_stride(rhs.bias_stride)
     {
-        matrix_A  = rhs.matrix_A->clone();
-        matrix_B  = rhs.matrix_B->clone();
-        matrix_C  = rhs.matrix_C->clone();
-        matrix_D  = rhs.matrix_D->clone();
-        own_by_us = true;
-        is_init   = true;
+        matrix_A     = rhs.matrix_A->clone();
+        matrix_B     = rhs.matrix_B->clone();
+        matrix_C     = rhs.matrix_C->clone();
+        matrix_D     = rhs.matrix_D->clone();
+        is_reference = false;
+        is_init      = (uintptr_t)handle;
     };
 
     // destructor
     ~_rocsparselt_matmul_descr()
     {
-        if(own_by_us)
+        if(!is_reference)
         {
             delete matrix_A;
             delete matrix_B;
             delete matrix_C;
             delete matrix_D;
         }
-        is_init = false;
+        is_init = 0;
     };
 
     bool isInit() const
     {
-        return is_init;
+        return is_init != 0 && is_init == (uintptr_t)handle;
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_descr& t);
@@ -295,35 +268,39 @@ struct _rocsparselt_matmul_descr
     int64_t bias_stride                = 0;
 
 private:
-    bool own_by_us = false;
-    bool is_init   = false;
+    bool      is_reference = true;
+    uintptr_t is_init      = 0;
 };
 
 struct _rocsparselt_matmul_config
 {
-    _rocsparselt_matmul_config(){}
-    ~_rocsparselt_matmul_config(){}
+    _rocsparselt_matmul_config() {}
+    ~_rocsparselt_matmul_config() {}
 
     _rocsparselt_matmul_config(const _rocsparselt_matmul_config& rhs)
     {
-        this->data = rhs.data;
+        this->data                = rhs.data;
         this->max_workspace_bytes = rhs.max_workspace_bytes;
     }
 
-    union u {
+    union u
+    {
 
-        u(): ptr(nullptr){}
-        ~u(){}
+        u()
+            : ptr(nullptr)
+        {
+        }
+        ~u() {}
 
         u& operator=(const u& rhs)
         {
             if(this != &rhs)
-               ptr = std::static_pointer_cast<void>(rhs.ptr);
+                ptr = std::static_pointer_cast<void>(rhs.ptr);
             return *this;
         }
 
         std::shared_ptr<void> ptr;
-        uint8_t data[48];
+        uint8_t               data[48];
     } data;
 
     size_t max_workspace_bytes = 0;
@@ -341,18 +318,17 @@ struct _rocsparselt_matmul_alg_selection
     _rocsparselt_matmul_alg_selection(const _rocsparselt_handle* handle)
         : handle(handle)
     {
-        is_init = true;
-        configs = std::make_shared<std::vector<_rocsparselt_matmul_config>>();
+        is_init = (uintptr_t)handle;
     };
     // destructor
     ~_rocsparselt_matmul_alg_selection()
     {
-        is_init = false;
+        is_init = 0;
     };
 
     bool isInit() const
     {
-        return is_init;
+        return is_init != 0 && is_init == (uintptr_t)handle;
     }
 
     friend std::ostream& operator<<(std::ostream&                            stream,
@@ -365,10 +341,10 @@ struct _rocsparselt_matmul_alg_selection
 
     rocsparselt_matmul_alg alg;
     //data of rocsparselt_matmul_alg_attribute
-    int  config_id         = 0;
-    int  config_max_id     = 0;
-    int  search_iterations = 10;
-    bool is_init           = false;
+    int       config_id         = 0;
+    int       config_max_id     = 0;
+    int       search_iterations = 10;
+    uintptr_t is_init           = 0;
 };
 
 /********************************************************************************
@@ -381,7 +357,10 @@ struct _rocsparselt_matmul_plan
 {
     // constructor
     _rocsparselt_matmul_plan(const _rocsparselt_handle* handle)
-        : handle(handle){};
+        : handle(handle)
+    {
+        is_init = (uintptr_t)handle;
+    };
     // destructor
     ~_rocsparselt_matmul_plan()
     {
@@ -390,7 +369,9 @@ struct _rocsparselt_matmul_plan
 
     bool isInit() const
     {
-        return (matmul_descr == nullptr || alg_selection == nullptr) ? false : true;
+        if(is_init != 0 && is_init == (uintptr_t)handle)
+            return (matmul_descr == nullptr || alg_selection == nullptr) ? false : true;
+        return false;
     }
 
     void clear()
@@ -398,6 +379,7 @@ struct _rocsparselt_matmul_plan
         delete matmul_descr;
         matmul_descr  = nullptr;
         alg_selection = nullptr;
+        is_init       = 0;
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_plan& t);
@@ -409,7 +391,8 @@ struct _rocsparselt_matmul_plan
     _rocsparselt_matmul_alg_selection* alg_selection = nullptr;
 
     //
-    size_t workspace_size;
+    size_t    workspace_size = 0;
+    uintptr_t is_init        = 0;
 };
 
 #endif // HANDLE_H

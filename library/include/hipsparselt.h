@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,7 @@
 #include <cuda_bf16.h>
 #include <cuda_fp16.h>
 #endif
+
 /* Opaque structures holding information */
 // clang-format off
 
@@ -70,7 +71,7 @@
  *  passed to all subsequent library function calls. It should be destroyed at the end
  *  using \ref hipsparseLtDestroy.
  */
-typedef struct hipsparseLtHandle_t {uint8_t data[11024] = {};} hipsparseLtHandle_t;
+typedef struct hipsparseLtHandle_t {uint8_t data[11024];} hipsparseLtHandle_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix.
@@ -81,7 +82,7 @@ typedef struct hipsparseLtHandle_t {uint8_t data[11024] = {};} hipsparseLtHandle
  *  descriptor must be passed to all subsequent library calls that involve the matrix.
  *  It should be destroyed at the end using \ref hipsparseLtMatDescriptorDestroy.
  */
-typedef struct hipsparseLtMatDescriptor_t {uint8_t data[11024] = {};} hipsparseLtMatDescriptor_t;
+typedef struct hipsparseLtMatDescriptor_t {uint8_t data[11024];} hipsparseLtMatDescriptor_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication operation
@@ -91,7 +92,7 @@ typedef struct hipsparseLtMatDescriptor_t {uint8_t data[11024] = {};} hipsparseL
  *  the description of the matrix multiplication operation.
  *  It is initialized with \ref hipsparseLtMatmulDescriptorInit function.
  */
-typedef struct hipsparseLtMatmulDescriptor_t {uint8_t data[11024] = {};} hipsparseLtMatmulDescriptor_t;
+typedef struct hipsparseLtMatmulDescriptor_t {uint8_t data[11024];} hipsparseLtMatmulDescriptor_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication algorithm.
@@ -99,7 +100,7 @@ typedef struct hipsparseLtMatmulDescriptor_t {uint8_t data[11024] = {};} hipspar
  *  \details
  *  It is initialized with \ref hipsparseLtMatmulAlgSelectionInit function.
  */
-typedef struct hipsparseLtMatmulAlgSelection_t {uint8_t data[11024] = {};} hipsparseLtMatmulAlgSelection_t;
+typedef struct hipsparseLtMatmulAlgSelection_t {uint8_t data[11024];} hipsparseLtMatmulAlgSelection_t;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication execution plan
@@ -110,7 +111,7 @@ typedef struct hipsparseLtMatmulAlgSelection_t {uint8_t data[11024] = {};} hipsp
  *  It is initialized and destroyed with \ref hipsparseLtMatmulPlanInit
  *  and \ref hipsparseLtMatmulPlanDestroy functions respectively.
  */
-typedef struct hipsparseLtMatmulPlan_t {uint8_t data[11024] = {};} hipsparseLtMatmulPlan_t;
+typedef struct hipsparseLtMatmulPlan_t {uint8_t data[11024];} hipsparseLtMatmulPlan_t;
 #elif defined(__HIP_PLATFORM_NVCC__)
 typedef __nv_bfloat16 hip_bfloat16;
 typedef struct {uint8_t data[11024];} hipsparseLtHandle_t;
