@@ -44,6 +44,21 @@ Tests:
   function:
     - aux_mat_get_attr_bad_arg: *real_precisions
 
+- name: aux_mat_dense_init_arg
+  category: pre_checkin
+  function:
+    - aux_mat_dense_init_arg: *real_precisions
+
+- name: aux_mat_structured_init
+  category: pre_checkin
+  function:
+    - aux_mat_structured_init: *real_precisions
+
+- name: aux_mat_assign
+  category: pre_checkin
+  function:
+    - aux_mat_assign: *hpa_int8_precision
+
 - name: aux_mat_set_get_attr
   category: pre_checkin
   function:
@@ -58,6 +73,11 @@ Tests:
   category: pre_checkin
   function:
     - aux_matmul_init: *real_precisions
+
+- name: aux_matmul_assign
+  category: pre_checkin
+  function:
+    - aux_matmul_assign: *hpa_int8_precision
 
 - name: aux_matmul_set_attr_bad_arg
   category: pre_checkin
@@ -83,6 +103,11 @@ Tests:
   category: pre_checkin
   function:
     - aux_matmul_alg_init: *real_precisions
+
+- name: aux_matmul_alg_assign
+  category: pre_checkin
+  function:
+    - aux_matmul_alg_assign: *hpa_int8_precision
 
 - name: aux_matmul_alg_set_attr_bad_arg
   category: pre_checkin
