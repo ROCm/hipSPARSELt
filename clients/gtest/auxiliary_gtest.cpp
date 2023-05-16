@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -73,6 +73,8 @@ namespace
                 testing_aux_mat_dense_init(arg);
             else if(!strcmp(arg.function, "aux_mat_structured_init"))
                 testing_aux_mat_structured_init(arg);
+            else if(!strcmp(arg.function, "aux_mat_assign"))
+                testing_aux_mat_assign(arg);
             else if(!strcmp(arg.function, "aux_mat_destroy_bad_arg"))
                 testing_aux_mat_destroy_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_mat_set_attr_bad_arg"))
@@ -85,6 +87,8 @@ namespace
                 testing_aux_matmul_init_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_init"))
                 testing_aux_matmul_init(arg);
+            else if(!strcmp(arg.function, "aux_matmul_assign"))
+                testing_aux_matmul_assign(arg);
             else if(!strcmp(arg.function, "aux_matmul_set_attr_bad_arg"))
                 testing_aux_matmul_set_attr_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_get_attr_bad_arg"))
@@ -95,6 +99,8 @@ namespace
                 testing_aux_matmul_alg_init_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_init"))
                 testing_aux_matmul_alg_init(arg);
+            else if(!strcmp(arg.function, "aux_matmul_alg_assign"))
+                testing_aux_matmul_alg_assign(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_set_attr_bad_arg"))
                 testing_aux_matmul_alg_set_attr_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_get_attr_bad_arg"))
@@ -130,17 +136,20 @@ namespace
                    || !strcmp(arg.function, "aux_mat_init_structured_bad_arg")
                    || !strcmp(arg.function, "aux_mat_dense_init_arg")
                    || !strcmp(arg.function, "aux_mat_structured_init")
+                   || !strcmp(arg.function, "aux_mat_assign")
                    || !strcmp(arg.function, "aux_mat_destroy_bad_arg")
                    || !strcmp(arg.function, "aux_mat_set_attr_bad_arg")
                    || !strcmp(arg.function, "aux_mat_get_attr_bad_arg")
                    || !strcmp(arg.function, "aux_mat_set_get_attr")
                    || !strcmp(arg.function, "aux_matmul_init_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_init")
+                   || !strcmp(arg.function, "aux_matmul_assign")
                    || !strcmp(arg.function, "aux_matmul_set_attr_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_get_attr_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_set_get_attr")
                    || !strcmp(arg.function, "aux_matmul_alg_init_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_alg_init")
+                   || !strcmp(arg.function, "aux_matmul_alg_assign")
                    || !strcmp(arg.function, "aux_matmul_alg_set_attr_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_alg_get_attr_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_plan_init_bad_arg")

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -81,15 +81,13 @@ void testing_aux_mat_init_dense_bad_arg(const Arguments& arg)
             handle_, nullptr, row, col, ld, 16, arg.a_type, HIPSPARSE_ORDER_COL),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtDenseDescriptorInit(
-            handle_, &m_descr, 0, col, ld, 16, arg.a_type, HIPSPARSE_ORDER_COL),
-        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtDenseDescriptorInit(
+                                handle_, &m_descr, 0, col, ld, 16, arg.a_type, HIPSPARSE_ORDER_COL),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtDenseDescriptorInit(
-            handle_, &m_descr, row, 0, ld, 16, arg.a_type, HIPSPARSE_ORDER_COL),
-        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtDenseDescriptorInit(
+                                handle_, &m_descr, row, 0, ld, 16, arg.a_type, HIPSPARSE_ORDER_COL),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtDenseDescriptorInit(
@@ -282,14 +280,43 @@ void testing_aux_mat_structured_init(const Arguments& arg)
     const int64_t ld  = 128;
 
     hipsparselt_local_handle    handle{arg};
-    hipsparselt_local_mat_descr mat(hipsparselt_matrix_type_structured,
-                                    handle,
-                                    row,
-                                    col,
-                                    ld,
-                                    arg.a_type,
-                                    HIPSPARSE_ORDER_COL);
+    hipsparselt_local_mat_descr mat(
+        hipsparselt_matrix_type_structured, handle, row, col, ld, arg.a_type, HIPSPARSE_ORDER_COL);
     EXPECT_HIPSPARSE_STATUS(mat.status(), HIPSPARSE_STATUS_SUCCESS);
+}
+
+void testing_aux_mat_assign(const Arguments& arg)
+{
+    const int64_t row = 128;
+    const int64_t col = 128;
+    const int64_t ld  = 128;
+
+    hipsparselt_local_handle    handle{arg};
+    hipsparselt_local_mat_descr mat(
+        hipsparselt_matrix_type_structured, handle, row, col, ld, arg.a_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(mat.status(), HIPSPARSE_STATUS_SUCCESS);
+    int data  = 1;
+    int data2 = 0;
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatDescSetAttribute(
+                                handle, mat, HIPSPARSELT_MAT_NUM_BATCHES, &data, sizeof(data)),
+                            HIPSPARSE_STATUS_SUCCESS);
+
+    // CHECK mat2 is a copy of mat
+    hipsparseLtMatDescriptor_t mat2 = mat;
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatDescGetAttribute(
+                                handle, &mat2, HIPSPARSELT_MAT_NUM_BATCHES, &data2, sizeof(data2)),
+                            HIPSPARSE_STATUS_SUCCESS);
+    ASSERT_TRUE(data == data2);
+
+    // CHECK mat2 is not a reference of mat
+    data2 = 10;
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatDescSetAttribute(
+                                handle, &mat2, HIPSPARSELT_MAT_NUM_BATCHES, &data2, sizeof(data2)),
+                            HIPSPARSE_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatDescGetAttribute(
+                                handle, mat, HIPSPARSELT_MAT_NUM_BATCHES, &data, sizeof(data)),
+                            HIPSPARSE_STATUS_SUCCESS);
+    ASSERT_TRUE(data != data2);
 }
 
 void testing_aux_mat_destroy_bad_arg(const Arguments& arg)
@@ -307,13 +334,8 @@ void testing_aux_mat_set_attr_bad_arg(const Arguments& arg)
     const int64_t ld  = 128;
 
     hipsparselt_local_handle    handle{arg};
-    hipsparselt_local_mat_descr mat(hipsparselt_matrix_type_structured,
-                                    handle,
-                                    row,
-                                    col,
-                                    ld,
-                                    arg.a_type,
-                                    HIPSPARSE_ORDER_COL);
+    hipsparselt_local_mat_descr mat(
+        hipsparselt_matrix_type_structured, handle, row, col, ld, arg.a_type, HIPSPARSE_ORDER_COL);
     EXPECT_HIPSPARSE_STATUS(mat.status(), HIPSPARSE_STATUS_SUCCESS);
 
     int     data;
@@ -379,13 +401,8 @@ void testing_aux_mat_get_attr_bad_arg(const Arguments& arg)
     const int64_t ld  = 128;
 
     hipsparselt_local_handle    handle{arg};
-    hipsparselt_local_mat_descr mat(hipsparselt_matrix_type_structured,
-                                    handle,
-                                    row,
-                                    col,
-                                    ld,
-                                    arg.a_type,
-                                    HIPSPARSE_ORDER_COL);
+    hipsparselt_local_mat_descr mat(
+        hipsparselt_matrix_type_structured, handle, row, col, ld, arg.a_type, HIPSPARSE_ORDER_COL);
     EXPECT_HIPSPARSE_STATUS(mat.status(), HIPSPARSE_STATUS_SUCCESS);
 
     int     data;
@@ -432,13 +449,8 @@ void testing_aux_mat_set_get_attr(const Arguments& arg)
     const int64_t ld  = 128;
 
     hipsparselt_local_handle    handle{arg};
-    hipsparselt_local_mat_descr mat(hipsparselt_matrix_type_structured,
-                                    handle,
-                                    row,
-                                    col,
-                                    ld,
-                                    arg.a_type,
-                                    HIPSPARSE_ORDER_COL);
+    hipsparselt_local_mat_descr mat(
+        hipsparselt_matrix_type_structured, handle, row, col, ld, arg.a_type, HIPSPARSE_ORDER_COL);
     EXPECT_HIPSPARSE_STATUS(mat.status(), HIPSPARSE_STATUS_SUCCESS);
 
     int data, data_r;
@@ -935,6 +947,71 @@ void testing_aux_matmul_set_get_attr(const Arguments& arg)
     ASSERT_TRUE(dataf == dataf_r);
 }
 
+void testing_aux_matmul_assign(const Arguments& arg)
+{
+    const int64_t M = 128;
+    const int64_t N = 128;
+    const int64_t K = 128;
+
+    const int64_t lda = 128;
+    const int64_t ldb = 128;
+    const int64_t ldc = 128;
+
+    const hipsparseOperation_t opA = HIPSPARSE_OPERATION_TRANSPOSE;
+    const hipsparseOperation_t opB = HIPSPARSE_OPERATION_NON_TRANSPOSE;
+
+    hipsparselt_local_handle handle{arg};
+
+    hipsparselt_local_mat_descr matA(
+        hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matB(
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matD.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparseLtMatmulDescriptor_t matmul;
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulDescriptorInit(
+            handle, &matmul, opA, opB, matA, matB, matC, matD, arg.compute_type),
+        HIPSPARSE_STATUS_SUCCESS);
+
+    int data = 1, data_r = 0;
+
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulDescSetAttribute(
+            handle, &matmul, HIPSPARSELT_MATMUL_ACTIVATION_RELU, &data, sizeof(data)),
+        HIPSPARSE_STATUS_SUCCESS);
+
+    {
+        hipsparseLtMatmulDescriptor_t lMatmul = matmul;
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescGetAttribute(
+                handle, &lMatmul, HIPSPARSELT_MATMUL_ACTIVATION_RELU, &data_r, sizeof(data)),
+            HIPSPARSE_STATUS_SUCCESS);
+        ASSERT_TRUE(data == data_r);
+        data_r = 100;
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescSetAttribute(
+                handle, &lMatmul, HIPSPARSELT_MATMUL_ACTIVATION_RELU, &data_r, sizeof(data_r)),
+            HIPSPARSE_STATUS_SUCCESS);
+    }
+
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulDescGetAttribute(
+            handle, &matmul, HIPSPARSELT_MATMUL_ACTIVATION_RELU, &data, sizeof(data)),
+        HIPSPARSE_STATUS_SUCCESS);
+    ASSERT_TRUE(data != data_r);
+}
+
 void testing_aux_matmul_alg_init_bad_arg(const Arguments& arg)
 {
     const int64_t M = 128;
@@ -1032,6 +1109,75 @@ void testing_aux_matmul_alg_init(const Arguments& arg)
 
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
     EXPECT_HIPSPARSE_STATUS(alg_sel.status(), HIPSPARSE_STATUS_SUCCESS);
+}
+
+void testing_aux_matmul_alg_assign(const Arguments& arg)
+{
+    const int64_t M = 128;
+    const int64_t N = 128;
+    const int64_t K = 128;
+
+    const int64_t lda = 128;
+    const int64_t ldb = 128;
+    const int64_t ldc = 128;
+
+    const hipsparseOperation_t opA = HIPSPARSE_OPERATION_TRANSPOSE;
+    const hipsparseOperation_t opB = HIPSPARSE_OPERATION_NON_TRANSPOSE;
+
+    hipsparselt_local_handle handle{arg};
+
+    hipsparselt_local_mat_descr matA(
+        hipsparselt_matrix_type_structured, handle, K, M, lda, arg.a_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matB(
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matD.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_matmul_descr matmul(
+        handle, opA, opB, matA, matB, matC, matD, arg.compute_type);
+    EXPECT_HIPSPARSE_STATUS(matmul.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
+    EXPECT_HIPSPARSE_STATUS(alg_sel.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    int data  = 20;
+    int data2 = 0;
+
+    // CHECK alg_sel2 is copy from alg_sel
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulAlgSetAttribute(
+            handle, alg_sel, HIPSPARSELT_MATMUL_SEARCH_ITERATIONS, &data, sizeof(data)),
+        HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparseLtMatmulAlgSelection_t alg_sel2 = alg_sel;
+
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulAlgGetAttribute(
+            handle, &alg_sel2, HIPSPARSELT_MATMUL_SEARCH_ITERATIONS, &data2, sizeof(data2)),
+        HIPSPARSE_STATUS_SUCCESS);
+
+    ASSERT_TRUE(data2 == data);
+
+    // CHECK alg_sel2 is not a referenece of alg_sel
+    data2 = 100;
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulAlgSetAttribute(
+            handle, &alg_sel2, HIPSPARSELT_MATMUL_SEARCH_ITERATIONS, &data2, sizeof(data2)),
+        HIPSPARSE_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulAlgGetAttribute(
+            handle, alg_sel, HIPSPARSELT_MATMUL_SEARCH_ITERATIONS, &data, sizeof(data)),
+        HIPSPARSE_STATUS_SUCCESS);
+    ASSERT_TRUE(data2 != data);
 }
 
 void testing_aux_matmul_alg_set_attr_bad_arg(const Arguments& arg)

@@ -479,4 +479,16 @@ Tests:
   activation_arg1 : [-1.0, 0.0, 0.5]
   activation_arg2 : [-1.0, 0.0, 0.5, 1.0, 3.0]
 
+- name: aux_plan_assign
+  category: pre_checkin
+  function:
+    aux_plan_assign: *hpa_int8_precision
+  M: 128
+  N: 128
+  K: 128
+  transA: T
+  transB: N
+  alpha: 1
+  beta: 0
+
 ...

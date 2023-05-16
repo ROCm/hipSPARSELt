@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -67,6 +67,8 @@ namespace
                 testing_spmm<Ti, To, Tc, hipsparselt_batch_type::strided_batched>(arg);
             else if(!strcmp(arg.function, "spmm_bad_arg"))
                 testing_spmm_bad_arg<Ti, To, Tc>(arg);
+            else if(!strcmp(arg.function, "aux_plan_assign"))
+                testing_aux_plan_assign<Ti, To, Tc>(arg);
             else
                 FAIL() << "Internal error: Test called with unknown function: " << arg.function;
         }
@@ -85,7 +87,8 @@ namespace
         {
             return !strcmp(arg.function, "spmm") || !strcmp(arg.function, "spmm_batched")
                    || !strcmp(arg.function, "spmm_strided_batched")
-                   || !strcmp(arg.function, "spmm_bad_arg");
+                   || !strcmp(arg.function, "spmm_bad_arg")
+                   || !strcmp(arg.function, "aux_plan_assign");
         }
 
         // Google Test name suffix based on parameters
