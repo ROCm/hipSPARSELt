@@ -81,6 +81,9 @@ struct _rocsparselt_handle
     std::ofstream* log_bench_ofs = nullptr;
     std::ostream*  log_trace_os  = nullptr;
     std::ostream*  log_bench_os  = nullptr;
+
+    // hold pointers to alg_selection objects for releasing algo configs inside them.
+    std::shared_ptr<std::vector<rocsparselt_matmul_alg_selection*>> alg_selections;
 };
 
 /********************************************************************************
@@ -323,12 +326,20 @@ struct _rocsparselt_matmul_alg_selection
     // destructor
     ~_rocsparselt_matmul_alg_selection()
     {
-        is_init = 0;
+        clear();
     };
 
     bool isInit() const
     {
         return is_init != 0 && is_init == (uintptr_t)handle;
+    }
+
+    void clear()
+    {
+        is_init = 0;
+        if(configs)
+            configs->clear();
+        configs = nullptr;
     }
 
     friend std::ostream& operator<<(std::ostream&                            stream,
