@@ -1041,7 +1041,7 @@ rocsparselt_status
         hipsparselt_cerr << "handle is a NULL pointer" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
-    auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
+    auto _handle = reinterpret_cast<_rocsparselt_handle*>(const_cast<rocsparselt_handle*>(handle));
     if(!_handle->isInit())
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
@@ -1141,6 +1141,7 @@ rocsparselt_status
             _algSelection->config_max_id = config_max_id;
             _algSelection->configs
                 = std::make_shared<std::vector<_rocsparselt_matmul_config>>(configs);
+            _handle->alg_selections->push_back(algSelection);
             log_api(_handle,
                     __func__,
                     "algSelection[out]",
