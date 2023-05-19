@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,11 @@
  *
  *******************************************************************************/
 
-#include "hipsparselt.h"
 #include "exceptions.hpp"
-
 #include "hipsparselt_ostream.hpp"
 #include "utility.hpp"
 #include <hip/hip_runtime_api.h>
+#include <hipsparselt/hipsparselt.h>
 #include <rocsparselt.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,11 @@
 
 #pragma once
 
-#include "hipsparselt.h"
 #include "hipsparselt_datatype2string.hpp"
 #include "hipsparselt_math.hpp"
 #include "hipsparselt_ostream.hpp"
 #include <cstddef>
+#include <hipsparselt/hipsparselt.h>
 #include <istream>
 #include <map>
 #include <ostream>
@@ -116,7 +116,7 @@ struct Arguments
     bool c_noalias_d;
     bool HMM;
 
-    bool search;
+    bool    search;
     int32_t search_iters;
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -319,7 +319,7 @@ namespace ArgumentsHelper
             func("beta", arg.get_beta<decltype(T)>());
         };
 };
-    // clang-format on
+// clang-format on
 
 #else
 

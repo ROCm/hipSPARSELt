@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,11 @@
  *
  *******************************************************************************/
 
-#include "hipsparselt.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <hip/hip_runtime.h>
+#include <hipsparselt/hipsparselt.h>
 #include <iostream>
 #include <limits>
 #include <stdlib.h>

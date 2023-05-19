@@ -43,9 +43,9 @@
 #ifndef _HIPSPARSELT_H_
 #define _HIPSPARSELT_H_
 
-#include "hipsparselt-export.h"
-#include "hipsparselt-version.h"
 #include <hipsparse/hipsparse.h>
+#include <hipsparselt/hipsparselt-export.h>
+#include <hipsparselt/hipsparselt-version.h>
 
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime_api.h>

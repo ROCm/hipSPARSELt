@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@
 
 #include "program_options.hpp"
 
-#include "hipsparselt.h"
 #include "hipsparselt_data.hpp"
 #include "hipsparselt_datatype2string.hpp"
 #include "hipsparselt_parse_data.hpp"
@@ -36,6 +35,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
+#include <hipsparselt/hipsparselt.h>
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -188,10 +188,11 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
 
     // force using min_stride when stride is -1
     // stride_a is zero means the boradcast mode.
-    if(arg.stride_a == -1 || (!any_stride  && arg.stride_a < min_stride_a && arg.stride_a != 0))
+    if(arg.stride_a == -1 || (!any_stride && arg.stride_a < min_stride_a && arg.stride_a != 0))
     {
-        hipsparselt_cout << "hipsparselt-bench INFO: stride_a < min_stride_a and stride_a != 0, set stride_a = "
-                         << min_stride_a << std::endl;
+        hipsparselt_cout
+            << "hipsparselt-bench INFO: stride_a < min_stride_a and stride_a != 0, set stride_a = "
+            << min_stride_a << std::endl;
         arg.stride_a = min_stride_a;
     }
     if(arg.stride_b == -1 || (!any_stride && arg.stride_b < min_stride_b))

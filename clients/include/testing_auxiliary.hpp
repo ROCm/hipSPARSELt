@@ -27,7 +27,6 @@
 #pragma once
 
 #include "flops.hpp"
-#include "hipsparselt.h"
 #include "hipsparselt_datatype2string.hpp"
 #include "hipsparselt_init.hpp"
 #include "hipsparselt_math.hpp"
@@ -36,6 +35,7 @@
 #include "hipsparselt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
+#include <hipsparselt/hipsparselt.h>
 
 void testing_aux_handle_init_bad_arg(const Arguments& arg)
 {

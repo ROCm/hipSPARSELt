@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2019-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
  *******************************************************************************/
 
 #pragma once
-#include "hipsparselt-export.h"
+#include <hipsparselt/hipsparselt-export.h>
 #include <iostream>
 #include <string>
 

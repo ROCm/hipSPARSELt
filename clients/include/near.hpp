@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,10 +34,10 @@
 
 #pragma once
 
-#include "hipsparselt.h"
 #include "hipsparselt_math.hpp"
 #include "hipsparselt_test.hpp"
 #include "hipsparselt_vector.hpp"
+#include <hipsparselt/hipsparselt.h>
 
 #ifndef GOOGLE_TEST
 #define NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, err, NEAR_ASSERT)
