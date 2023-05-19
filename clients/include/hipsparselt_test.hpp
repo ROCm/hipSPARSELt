@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@
 #endif
 
 #include "argument_model.hpp"
-#include "hipsparselt.h"
 #include "hipsparselt_arguments.hpp"
 #include "test_cleanup.hpp"
 #include <algorithm>
@@ -40,6 +39,7 @@
 #include <cstring>
 #include <functional>
 #include <future>
+#include <hipsparselt/hipsparselt.h>
 #include <iostream>
 #include <mutex>
 #include <queue>
@@ -321,8 +321,8 @@ public:
         return std::move(name);
     }
 
-    RocSparseLt_TestName()                            = default;
-    RocSparseLt_TestName(const RocSparseLt_TestName&) = delete;
+    RocSparseLt_TestName()                                       = default;
+    RocSparseLt_TestName(const RocSparseLt_TestName&)            = delete;
     RocSparseLt_TestName& operator=(const RocSparseLt_TestName&) = delete;
 };
 

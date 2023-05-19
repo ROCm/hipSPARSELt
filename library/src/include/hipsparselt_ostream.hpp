@@ -1,12 +1,11 @@
 /* ************************************************************************
- * Copyright (c) 2020-2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2020-2023 Advanced Micro Devices, Inc.
  * ************************************************************************ */
 
 #pragma once
 
 #include "activation.hpp"
 #include "auxiliary.hpp"
-#include "hipsparselt.h"
 #include <cmath>
 #include <complex>
 #include <condition_variable>
@@ -14,6 +13,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <future>
+#include <hipsparselt/hipsparselt.h>
 #include <iomanip>
 #include <map>
 #include <memory>
