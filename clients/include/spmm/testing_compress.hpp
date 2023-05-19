@@ -27,7 +27,6 @@
 #pragma once
 
 #include "flops.hpp"
-#include "hipsparselt.h"
 #include "hipsparselt_datatype2string.hpp"
 #include "hipsparselt_init.hpp"
 #include "hipsparselt_math.hpp"
@@ -36,6 +35,7 @@
 #include "hipsparselt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
+#include <hipsparselt/hipsparselt.h>
 
 inline void extract_metadata(unsigned metadata, int& a, int& b, int& c, int& d)
 {
@@ -339,13 +339,8 @@ void testing_compress(const Arguments& arg)
                                      lda,
                                      arg.a_type,
                                      HIPSPARSE_ORDER_COL);
-    hipsparselt_local_mat_descr matB(hipsparselt_matrix_type_dense,
-                                     handle,
-                                     B_row,
-                                     B_col,
-                                     ldb,
-                                     arg.b_type,
-                                     HIPSPARSE_ORDER_COL);
+    hipsparselt_local_mat_descr matB(
+        hipsparselt_matrix_type_dense, handle, B_row, B_col, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matC(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matD(

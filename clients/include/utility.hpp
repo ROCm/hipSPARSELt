@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "hipsparselt.h"
 #include "hipsparselt_vector.hpp"
 #include <cstdio>
+#include <hipsparselt/hipsparselt.h>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -532,8 +532,8 @@ void print_strided_batched(
     hipsparselt_cout << std::flush;
 }
 
-
-inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int m, int n, int ld)
+inline hipsparseStatus_t
+    expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int m, int n, int ld)
 {
     int elements = 8;
     switch(type)

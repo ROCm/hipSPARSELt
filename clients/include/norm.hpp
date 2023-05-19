@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,11 +27,11 @@
 #pragma once
 
 #include "cblas.h"
-#include "hipsparselt.h"
 #include "hipsparselt_vector.hpp"
 #include "norm.hpp"
 #include "utility.hpp"
 #include <cstdio>
+#include <hipsparselt/hipsparselt.h>
 #include <limits>
 #include <memory>
 
