@@ -140,9 +140,9 @@ endif()
 # Target link libraries
 if(NOT BUILD_CUDA)
 # Target link libraries
-  target_link_libraries(hipsparselt PRIVATE hip::device roc::hipsparse ${DL_LIB})
+  target_link_libraries(hipsparselt PRIVATE hip::device ${DL_LIB})
 else()
-  target_link_libraries(hipsparselt PRIVATE /usr/lib/x86_64-linux-gnu/libcusparseLt.so ${CUDA_CUSPARSE_LIBRARY} roc::hipsparse )
+  target_link_libraries(hipsparselt PRIVATE /usr/lib/x86_64-linux-gnu/libcusparseLt.so ${CUDA_CUSPARSE_LIBRARY})
 endif()
 
 # Target properties

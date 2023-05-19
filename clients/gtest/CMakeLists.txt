@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ target_include_directories( hipsparselt-test
     $<BUILD_INTERFACE:${GTEST_INCLUDE_DIRS}>
 )
 message("BLIS_INCLUDE_DIR=" ${BLIS_INCLUDE_DIR})
-target_link_libraries( hipsparselt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipsparse roc::hipsparselt )
+target_link_libraries( hipsparselt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipsparselt )
 
 if( NOT BUILD_CUDA )
   target_link_libraries( hipsparselt-test PRIVATE hip::host hip::device )
