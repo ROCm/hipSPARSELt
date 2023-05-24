@@ -120,9 +120,6 @@ namespace
     constexpr auto tensile_datatype<int8_t> = Tensile::DataType::Int8;
 
     template <>
-    constexpr auto tensile_datatype<int32_t> = Tensile::DataType::Int32;
-
-    template <>
     constexpr auto tensile_datatype<__half> = Tensile::DataType::Half;
 
     template <>
@@ -130,10 +127,6 @@ namespace
 
     template <>
     constexpr auto tensile_datatype<float> = Tensile::DataType::Float;
-
-    // The workspace sizes for Tensile are rounded to multiples of HPA_GSU_WORKSPACE_SIZE_GRANULARITY
-    // to reduce fragmentation in the Tensile Solution cache
-    constexpr size_t HPA_GSU_WORKSPACE_SIZE_GRANULARITY = 256;
 
     /*************************************************************************
      * Class for converting alpha and beta between rocsparselt and Tensile types *
@@ -533,7 +526,7 @@ namespace
             if(!g)
             {
                 for(size_t i = 0; i < glob_result.gl_pathc; ++i)
-                    adapter.loadCodeObjectFile(glob_result.gl_pathv[i]);
+                    (void)adapter.loadCodeObjectFile(glob_result.gl_pathv[i]);
             }
             else if(g == GLOB_NOMATCH)
             {
@@ -548,6 +541,7 @@ namespace
                                                           : g == GLOB_NOSPACE ? "GLOB_NOSPACE"
                                                                               : "an unknown error")
                                     << "." << std::endl;
+                (void)once;
                 // clang-format on
             }
             globfree(&glob_result);
@@ -559,6 +553,7 @@ namespace
                       << "\nrocsparselt warning: No paths matched " << dir
                       << ". Make sure that ROCSPARSELT_TENSILE_LIBPATH is set correctly."
                       << std::endl;
+                (void)once;
             }
 
             // We initialize a local static variable with a lambda function call to avoid
@@ -580,7 +575,10 @@ namespace
 
                 auto lib = Tensile::LoadLibraryFile<Tensile::ContractionProblemGemm>(path);
                 if(!lib)
+                {
                     hipsparselt_cerr << "\nhipsparselt_error: Could not load " << path << std::endl;
+                    return -1;
+                }
                 else
                 {
                     using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>;
@@ -589,7 +587,7 @@ namespace
                 return 0;
             }();
 
-            if(!m_library)
+            if(!m_library && once != 0)
             {
                 hipsparselt_cerr << "\nhipsparselt_error: Could not initialize Tensile library"
                                  << std::endl;
@@ -615,7 +613,8 @@ namespace
         static TensileHost host;
 
         if(device == -1)
-            hipGetDevice(&device);
+            if(hipGetDevice(&device) != hipSuccess)
+                throw "Invalid Device";
 
         // Adapter entry for the current HIP device ID
         auto& a       = host.get_adapters().at(device);
@@ -678,6 +677,7 @@ namespace
                                 << msg
                                 << "\nThis message will be only be displayed once, unless the "
                                 << varname << " environment variable is set." << std::endl;
+            (void)once;
         }
         else
             hipsparselt_cerr << msg << std::endl;
@@ -709,7 +709,6 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
         hardware          = Tensile::hip::GetDevice(*deviceProp);
         auto tensile_prob = ConstructTensileProblem(prob);
-        auto handle       = prob.handle;
 
         if(!config_max_id || configs == nullptr || configs->size() == 0)
         {
@@ -723,12 +722,11 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
             if(!search_iterations)
             {
-                std::shared_ptr<Tensile::ContractionSolution> solution
-                    = std::static_pointer_cast<Tensile::ContractionSolution>(
-                        (*configs)[*config_id].data.ptr);
+                solution = std::static_pointer_cast<Tensile::ContractionSolution>(
+                    (*configs)[*config_id].data.ptr);
 
                 if((*configs)[*config_id].max_workspace_bytes > prob.workspaceSize
-                   || (*configs)[*config_id].max_workspace_bytes > 0 && prob.workspace == nullptr)
+                   || ((*configs)[*config_id].max_workspace_bytes > 0 && prob.workspace == nullptr))
                 {
                     hipsparselt_cerr << "config " << *config_id << " need extra workspace "
                                      << (*configs)[*config_id].max_workspace_bytes
@@ -751,9 +749,8 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
                 RETURN_IF_HIP_ERROR(hipEventCreate(&stopEvent));
                 for(int id = 0; id < config_max_id; id++)
                 {
-                    std::shared_ptr<Tensile::ContractionSolution> solution
-                        = std::static_pointer_cast<Tensile::ContractionSolution>(
-                            (*configs)[id].data.ptr);
+                    solution = std::static_pointer_cast<Tensile::ContractionSolution>(
+                        (*configs)[id].data.ptr);
 
                     if((*configs)[id].max_workspace_bytes > prob.workspaceSize
                        || ((*configs)[id].max_workspace_bytes > 0 && prob.workspace == nullptr))

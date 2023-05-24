@@ -1427,9 +1427,7 @@ rocsparselt_status
             log_error(_handle, __func__, "algSelection did not initialized or already destroyed");
             return rocsparselt_status_invalid_handle;
         }
-        // Allocate
-        auto _plan = reinterpret_cast<_rocsparselt_matmul_plan*>(plan);
-        // Allocate
+
         try
         {
             int num_batches_a = 1, num_batches_b = 1, num_batches_c = 1, num_batches_d = 1;
