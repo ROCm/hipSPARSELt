@@ -811,6 +811,8 @@ int main(int argc, char* argv[])
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompress(&handle, &plan, da_p, d_compressed, stream));
+    if(workspace_size > 0)
+        CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmul(&handle,
                                               &plan,
@@ -934,6 +936,8 @@ int main(int argc, char* argv[])
     CHECK_HIP_ERROR(hipFree(dc));
     CHECK_HIP_ERROR(hipFree(dd));
     CHECK_HIP_ERROR(hipFree(d_compressed));
+    if(workspace_size > 0)
+        CHECK_HIP_ERROR(hipFree(d_workspace));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan_tmp));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matA));
