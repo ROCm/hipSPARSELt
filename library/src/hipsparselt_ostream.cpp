@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +83,7 @@ extern "C" void hipsparselt_abort()
 {
     // If multiple threads call hipsparselt_abort(), the first one wins
     static int once = (hipsparselt_abort_once(), 0);
+    (void)once;
 }
 
 // Get worker for writing to a file descriptor
