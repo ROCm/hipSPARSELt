@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ add_library(roc::hipsparselt ALIAS hipsparselt)
 
 # Target compile definitions
 if(NOT BUILD_CUDA)
-  target_compile_options(hipsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
+  target_compile_options(hipsparselt PRIVATE -Wno-unused-command-line-argument -Wall -Werror)
   target_compile_definitions(hipsparselt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
 
   if( BUILD_WITH_TENSILE )
