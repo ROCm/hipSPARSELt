@@ -42,7 +42,7 @@ if( NOT DEFINED CMAKE_CONFIGURATION_TYPES AND NOT DEFINED CMAKE_BUILD_TYPE )
 endif()
 
 # The superbuild does not build anything itself; all compiling is done in external projects
-project( rocsparselt-dependencies NONE )
+project( hipsparselt_dependencies-dependencies NONE )
 
 option( BUILD_GTEST "Download and build googletest library" ON )
 
@@ -53,7 +53,7 @@ include( get-cli-arguments )
 if( BUILD_GTEST )
   include( external-gtest )
 
-  list( APPEND rocsparse_dependencies googletest )
+  list( APPEND hipsparselt_dependencies googletest )
   set( gtest_custom_target COMMAND cd ${GTEST_BINARY_ROOT}$<SEMICOLON> ${CMAKE_COMMAND} --build . --target install )
 endif( )
 
@@ -62,7 +62,7 @@ option( BUILD_LAPACK "Download and build lapack library" ON )
 if( BUILD_LAPACK )
   include( external-lapack )
 
-  list( APPEND hipblaslt_dependencies lapack )
+  list( APPEND hipsparselt_dependencie lapack )
   set( lapack_custom_target COMMAND cd ${LAPACK_BINARY_ROOT}$<SEMICOLON> ${CMAKE_COMMAND} --build . --target install )
 endif( )
 
@@ -76,5 +76,5 @@ endif( )
 add_custom_target( install
   ${gtest_custom_target}
   ${lapack_custom_target}
-  DEPENDS ${rocsparse_dependencies}
+  DEPENDS ${hipsparselt_dependencie}
 )
