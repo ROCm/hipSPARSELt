@@ -77,12 +77,11 @@ rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*   
     }
 
     {
-        if(_plan->alg_selection->configs.get() == nullptr
-           || _plan->alg_selection->configs->size() == 0)
+        if(_plan->alg_selection->config_max_id == 0)
             *workspaceSize = 0;
         else
         {
-            *workspaceSize = _plan->alg_selection->configs->at(_plan->alg_selection->config_id)
+            *workspaceSize = _plan->alg_selection->configs[_plan->alg_selection->config_id]
                                  .max_workspace_bytes;
         }
         log_api(_handle, __func__, *workspaceSize);

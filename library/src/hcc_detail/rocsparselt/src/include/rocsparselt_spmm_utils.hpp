@@ -401,10 +401,10 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
                                                int32_t      numStreams    = 0);
 
 template <typename Ti, typename To, typename Tc>
-rocsparselt_status findTopConfigs(const _rocsparselt_matmul_descr*         matmulDescr,
-                                  std::vector<_rocsparselt_matmul_config>* configs,
-                                  int*                                     config_max_id,
-                                  const int                                requestConfigs = 10)
+rocsparselt_status findTopConfigs(const _rocsparselt_matmul_descr* matmulDescr,
+                                  _rocsparselt_matmul_config*      configs,
+                                  int*                             config_max_id,
+                                  const int                        requestConfigs = 10)
 {
     RocsparseltContractionProblem<Ti, To, Tc>* prob;
     Tc                                         alpha = static_cast<Tc>(1.0f);

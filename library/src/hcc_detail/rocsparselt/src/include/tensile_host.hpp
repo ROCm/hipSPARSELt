@@ -458,7 +458,7 @@ struct RocsparseltContractionProblem
  *******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status runContractionProblem(RocsparseltContractionProblem<Ti, To, Tc> const& problem,
-                                         std::vector<_rocsparselt_matmul_config>*         configs,
+                                         _rocsparselt_matmul_config*                      configs,
                                          int*                                             config_id,
                                          const int config_max_id,
                                          const int search_iterations);
@@ -466,7 +466,7 @@ rocsparselt_status runContractionProblem(RocsparseltContractionProblem<Ti, To, T
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
                                     int                                              requestConfigs,
-                                    std::vector<_rocsparselt_matmul_config>*         configs,
+                                    _rocsparselt_matmul_config*                      configs,
                                     int*                                             foundConfigs);
 
 /***********************************************************************************

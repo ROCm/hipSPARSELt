@@ -275,38 +275,20 @@ private:
     uintptr_t is_init      = 0;
 };
 
-struct _rocsparselt_matmul_config
+struct __attribute__((packed, aligned(8))) _rocsparselt_matmul_config
 {
     _rocsparselt_matmul_config() {}
     ~_rocsparselt_matmul_config() {}
 
     _rocsparselt_matmul_config(const _rocsparselt_matmul_config& rhs)
     {
-        this->data                = rhs.data;
+        this->index               = rhs.index;
         this->max_workspace_bytes = rhs.max_workspace_bytes;
     }
 
-    union u
-    {
-
-        u()
-            : ptr(nullptr)
-        {
-        }
-        ~u() {}
-
-        u& operator=(const u& rhs)
-        {
-            if(this != &rhs)
-                ptr = std::static_pointer_cast<void>(rhs.ptr);
-            return *this;
-        }
-
-        std::shared_ptr<void> ptr;
-        uint8_t               data[48];
-    } data;
-
-    size_t max_workspace_bytes = 0;
+    int     index;
+    uint8_t reserved[4];
+    size_t  max_workspace_bytes = 0;
 };
 
 /********************************************************************************
@@ -326,20 +308,12 @@ struct _rocsparselt_matmul_alg_selection
     // destructor
     ~_rocsparselt_matmul_alg_selection()
     {
-        clear();
+        is_init = 0;
     };
 
     bool isInit() const
     {
         return is_init != 0 && is_init == (uintptr_t)handle;
-    }
-
-    void clear()
-    {
-        is_init = 0;
-        if(configs)
-            configs->clear();
-        configs = nullptr;
     }
 
     friend std::ostream& operator<<(std::ostream&                            stream,
@@ -348,7 +322,7 @@ struct _rocsparselt_matmul_alg_selection
     const _rocsparselt_handle* handle = nullptr;
     //
 
-    std::shared_ptr<std::vector<_rocsparselt_matmul_config>> configs;
+    _rocsparselt_matmul_config configs[100];
 
     rocsparselt_matmul_alg alg;
     //data of rocsparselt_matmul_alg_attribute
