@@ -128,18 +128,6 @@ void _rocsparselt_handle::destroy()
         delete log_bench_ofs;
         log_bench_ofs = nullptr;
     }
-
-    for(auto it = alg_selections->begin(); it != alg_selections->end(); it++)
-    {
-        _rocsparselt_matmul_alg_selection* _alg_sel
-            = reinterpret_cast<_rocsparselt_matmul_alg_selection*>(*it);
-        if(_alg_sel != nullptr && _alg_sel->isInit())
-        {
-            _alg_sel->clear();
-        }
-    }
-
-    alg_selections = nullptr;
 }
 
 std::ostream& operator<<(std::ostream& stream, const _rocsparselt_mat_descr& t)

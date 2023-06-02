@@ -1078,8 +1078,8 @@ rocsparselt_status
             auto out_type     = _matmulDescr->matrix_D->type;
             auto compute_type = _matmulDescr->compute_type;
 
-            int                                     config_max_id = 0;
-            std::vector<_rocsparselt_matmul_config> configs;
+            int                               config_max_id = 0;
+            _rocsparselt_matmul_alg_selection tmpAlgSelection(_handle);
 
 #if BUILD_WITH_TENSILE
             constexpr int requestConfigs = 10; // find top 10 configs.
@@ -1090,20 +1090,20 @@ rocsparselt_status
                && compute_type == rocsparselt_compute_f32)
             {
                 status = findTopConfigs<__half, __half, float>(
-                    _matmulDescr, &configs, &config_max_id, requestConfigs);
+                    _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
             }
             else if(in_type == rocsparselt_datatype_bf16_r
                     && out_type == rocsparselt_datatype_bf16_r
                     && compute_type == rocsparselt_compute_f32)
             {
                 status = findTopConfigs<hip_bfloat16, hip_bfloat16, float>(
-                    _matmulDescr, &configs, &config_max_id, requestConfigs);
+                    _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
             }
             else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
                     && compute_type == rocsparselt_compute_i32)
             {
                 status = findTopConfigs<int8_t, int8_t, float>(
-                    _matmulDescr, &configs, &config_max_id, requestConfigs);
+                    _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
             }
             if(status != rocsparselt_status_success)
                 return status;
@@ -1123,9 +1123,7 @@ rocsparselt_status
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
             for(int i = 0; i < config_max_id; i++)
             {
-                _rocsparselt_matmul_config config;
-                config.max_workspace_bytes = 0;
-                configs.push_back(config);
+                configs[i].max_workspace_bytes = 0;
             }
 #endif
             if(!config_max_id)
@@ -1134,14 +1132,9 @@ rocsparselt_status
                 log_error(_handle, __func__, "There are no solutions for this problem size");
                 return rocsparselt_status_not_implemented;
             }
-
-            _rocsparselt_matmul_alg_selection tmpAlgSelection(_handle);
             memcpy(_algSelection, &tmpAlgSelection, sizeof(_rocsparselt_matmul_alg_selection));
             _algSelection->alg           = alg;
             _algSelection->config_max_id = config_max_id;
-            _algSelection->configs
-                = std::make_shared<std::vector<_rocsparselt_matmul_config>>(configs);
-            _handle->alg_selections->push_back(algSelection);
             log_api(_handle,
                     __func__,
                     "algSelection[out]",
