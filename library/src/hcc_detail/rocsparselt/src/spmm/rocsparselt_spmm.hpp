@@ -86,7 +86,7 @@ rocsparselt_status spmm_typecasting(const char*                     caller,
 
     status = runContractionProblem<Ti, To, Tc>(*problem,
 #if BUILD_WITH_TENSILE
-                                               plan->alg_selection->configs.get(),
+                                               &plan->alg_selection->configs[0],
 #endif
                                                config_id,
                                                config_max_id,

@@ -691,7 +691,7 @@ namespace
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                                         std::vector<_rocsparselt_matmul_config>*         configs,
+                                         _rocsparselt_matmul_config*                      configs,
                                          int*                                             config_id,
                                          const int config_max_id,
                                          const int search_iterations)
@@ -710,7 +710,7 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         hardware          = Tensile::hip::GetDevice(*deviceProp);
         auto tensile_prob = ConstructTensileProblem(prob);
 
-        if(!config_max_id || configs == nullptr || configs->size() == 0)
+        if(!config_max_id || configs == nullptr)
         {
             hipsparselt_internal_ostream msg;
             print_once(msg << "\nhipsparselt_error: No Tensile solution found for " << prob);
@@ -722,16 +722,22 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
             if(!search_iterations)
             {
-                solution = std::static_pointer_cast<Tensile::ContractionSolution>(
-                    (*configs)[*config_id].data.ptr);
-
-                if((*configs)[*config_id].max_workspace_bytes > prob.workspaceSize
-                   || ((*configs)[*config_id].max_workspace_bytes > 0 && prob.workspace == nullptr))
+                if(configs[*config_id].max_workspace_bytes > prob.workspaceSize
+                   || (configs[*config_id].max_workspace_bytes > 0 && prob.workspace == nullptr))
                 {
                     hipsparselt_cerr << "config " << *config_id << " need extra workspace "
-                                     << (*configs)[*config_id].max_workspace_bytes
-                                     << " bytes - skip." << std::endl;
+                                     << configs[*config_id].max_workspace_bytes << " bytes - skip."
+                                     << std::endl;
                     return rocsparselt_status_internal_error;
+                }
+
+                solution = library->getSolutionByIndex(
+                    tensile_prob, *hardware, configs[*config_id].index);
+                if(!solution)
+                {
+                    hipsparselt_cerr << "Solution of config:" << *config_id
+                                     << " does not exists - skip" << std::endl;
+                    return rocsparselt_status_not_implemented;
                 }
 
                 RETURN_IF_HIP_ERROR(
@@ -749,14 +755,20 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
                 RETURN_IF_HIP_ERROR(hipEventCreate(&stopEvent));
                 for(int id = 0; id < config_max_id; id++)
                 {
-                    solution = std::static_pointer_cast<Tensile::ContractionSolution>(
-                        (*configs)[id].data.ptr);
-
-                    if((*configs)[id].max_workspace_bytes > prob.workspaceSize
-                       || ((*configs)[id].max_workspace_bytes > 0 && prob.workspace == nullptr))
+                    if(configs[id].max_workspace_bytes > prob.workspaceSize
+                       || (configs[id].max_workspace_bytes > 0 && prob.workspace == nullptr))
                     {
                         hipsparselt_cerr << "config " << id << " need extra workspace "
-                                         << (*configs)[id].max_workspace_bytes << " bytes - skip."
+                                         << configs[id].max_workspace_bytes << " bytes - skip."
+                                         << std::endl;
+                        continue;
+                    }
+
+                    solution
+                        = library->getSolutionByIndex(tensile_prob, *hardware, configs[id].index);
+                    if(!solution)
+                    {
+                        hipsparselt_cerr << "Solution of config:" << id << " does not exists - skip"
                                          << std::endl;
                         continue;
                     }
@@ -820,7 +832,7 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 template <typename Ti, typename To, typename Tc>
 rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
                                     int                                              requestConfigs,
-                                    std::vector<_rocsparselt_matmul_config>*         configs,
+                                    _rocsparselt_matmul_config*                      configs,
                                     int*                                             foundConfigs)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
@@ -839,11 +851,9 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
     *foundConfigs = std::min((int)solutions.size(), requestConfigs);
     for(size_t i = 0; i < *foundConfigs; i++)
     {
-        auto                       solution = solutions[i];
-        _rocsparselt_matmul_config config;
-        config.data.ptr            = std::static_pointer_cast<void>(solution);
-        config.max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
-        configs->push_back(config);
+        auto solution                  = solutions[i];
+        configs[i].index               = solution->index;
+        configs[i].max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
     }
     return rocsparselt_status_success;
 }
@@ -874,15 +884,12 @@ std::atomic_bool& rocsparselt_internal_tensile_is_initialized()
 #define GENERATE_DEFINITIONS(Ti, To, Tc)                           \
     template rocsparselt_status runContractionProblem<Ti, To, Tc>( \
         const RocsparseltContractionProblem<Ti, To, Tc>&,          \
-        std::vector<_rocsparselt_matmul_config>*,                  \
+        _rocsparselt_matmul_config*,                               \
         int*,                                                      \
         const int,                                                 \
         const int);                                                \
     template rocsparselt_status getBestSolutions<Ti, To, Tc>(      \
-        const RocsparseltContractionProblem<Ti, To, Tc>&,          \
-        int,                                                       \
-        std::vector<_rocsparselt_matmul_config>*,                  \
-        int*);
+        const RocsparseltContractionProblem<Ti, To, Tc>&, int, _rocsparselt_matmul_config*, int*);
 
 GENERATE_DEFINITIONS(__half, __half, float)
 GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float)
