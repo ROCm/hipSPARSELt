@@ -4,7 +4,16 @@ hipSPARSELt is a SPARSE marshalling library, with multiple supported backends. I
 ## Installing pre-built packages
 Download pre-built packages either from [ROCm's package servers](https://rocm.github.io/install.html#installing-from-amd-rocm-repositories) or by clicking the github releases tab and manually downloading, which could be newer. Release notes are available for each release on the releases tab.
 * `sudo apt update && sudo apt install hipsparselt`
-* (TDB - hipsparselt needs to be published to ROCm's package servers )
+
+## Requirements
+* Git
+* CMake 3.16.8 or later
+* python3.7 or later
+* python3.7-venv or later
+* AMD [ROCm] 6.0 platform or later
+
+## Required ROCM library
+* hipSPARSE (for the header file)
 
 ## Quickstart hipSPARSELt build
 
@@ -51,7 +60,6 @@ The root of this repository has a helper bash script `install.sh` to build and i
   - Support cusparseLt v0.3
 
 ## Documentation
-The latest hipSPARSELt documentation and API description can be found [here](docs/data/hipSPARSELt_api.docx) or downloaded as [pdf](docs/data/hipSPARSELt_api.pdf).
 
 ### How to build documentation
 
