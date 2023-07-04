@@ -168,7 +168,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -414,7 +413,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -660,7 +658,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -906,7 +903,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -1152,7 +1148,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -1398,7 +1393,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -1644,7 +1638,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -1890,7 +1883,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -2136,7 +2128,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -2382,7 +2373,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -2628,7 +2618,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -2874,7 +2863,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -3120,7 +3108,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -3366,7 +3353,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -3612,7 +3598,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -3858,7 +3843,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -4104,7 +4088,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -4350,7 +4333,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -4596,7 +4578,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -4842,7 +4823,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -5088,7 +5068,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -5334,7 +5313,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -5580,7 +5558,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -5826,7 +5803,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -6072,7 +6048,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -6327,7 +6302,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -6589,7 +6563,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -6851,7 +6824,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -7113,7 +7085,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -7375,7 +7346,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -7637,7 +7607,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -7899,7 +7868,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -8161,7 +8129,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -8423,7 +8390,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -8685,7 +8651,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -8947,7 +8912,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -9209,7 +9173,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -9471,7 +9434,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -9733,7 +9695,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -9995,7 +9956,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -10257,7 +10217,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -10519,7 +10478,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -10781,7 +10739,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -11043,7 +11000,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -11305,7 +11261,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -11567,7 +11522,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -11829,7 +11783,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -12091,7 +12044,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -12353,7 +12305,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -12615,7 +12566,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -12877,7 +12827,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -13139,7 +13088,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
@@ -13401,7 +13349,6 @@
     MatrixInstruction: [32, 32, 32, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
-    MemoryModifierFormat: SC0
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
