@@ -113,6 +113,9 @@ struct Arguments
     float                       activation_arg1; // threshold when activation type is relu
     float                       activation_arg2; // upperbound when activation type is relu
 
+    bool    bias_vector;
+    int64_t bias_stride;
+
     bool c_noalias_d;
     bool HMM;
 
@@ -172,6 +175,8 @@ struct Arguments
     OPER(activation_type) SEP        \
     OPER(activation_arg1) SEP        \
     OPER(activation_arg2) SEP        \
+    OPER(bias_vector) SEP            \
+    OPER(bias_stride) SEP            \
     OPER(c_noalias_d) SEP            \
     OPER(HMM) SEP
 

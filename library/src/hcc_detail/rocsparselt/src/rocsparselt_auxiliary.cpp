@@ -810,44 +810,32 @@ rocsparselt_status
             case rocsparselt_matmul_activation_tanh_beta:
                 assign_data(&_matmulDescr->activation_tanh_beta);
                 break;
-#if ENABLE_BIAS
+
             case rocsparselt_matmul_bias_pointer:
             {
-                if((status = validateSetAttributeDataSize<float*>(dataSize))
-                   != rocsparselt_status_success)
-                {
-                    log_error(_handle, __func__, "dataSize is invalid");
-                    return status;
-                }
-                _matmulDescr->bias_pointer = reinterpret_cast<float*>(data);
-
+                _matmulDescr->bias_pointer = reinterpret_cast<float*>(const_cast<void*>(data));
+                status                     = rocsparselt_status_success;
                 break;
             }
             case rocsparselt_matmul_bias_stride:
             {
-                if((status = validateSetAttributeDataSize<int64_t>(dataSize))
-                   != rocsparselt_status_success)
-                {
-                    log_error(_handle, __func__, "dataSize is invalid");
-                    return status;
-                }
-                const int64_t* bias_stride = reinterpret_cast<const int64_t*>(data);
-                if(*bias_stride != 0 && *bias_stride < _matmulDescr->matrix_D.m)
+                assign_data(&_matmulDescr->bias_stride);
+                if(_matmulDescr->bias_stride != 0
+                   && _matmulDescr->bias_stride < _matmulDescr->matrix_D->m)
                 {
                     hipsparselt_cerr << "The bias stride must be 0 or at least the number of rows "
                                         "of the output matrix (D) ("
-                                     << _matmulDescr->matrix_D.m << "), current: " << *bias_stride
-                                     << std::endl;
+                                     << _matmulDescr->matrix_D->m
+                                     << "), current: " << _matmulDescr->bias_stride << std::endl;
                     log_error(_handle,
                               __func__,
                               "The bias stride must be 0 or at least the number of rows of the "
                               "output matrix (D)");
                     return rocsparselt_status_invalid_value;
                 }
-                _matmulDescr->bias_stride = *bias_stride;
                 break;
             }
-#endif
+
             default:
                 log_error(
                     _handle, __func__, "matmulAttribute", matmulAttribute, "is not implemented");
@@ -973,32 +961,15 @@ rocsparselt_status
             case rocsparselt_matmul_activation_tanh_beta:
                 retrive_data(_matmulDescr->activation_tanh_beta);
                 break;
-#if ENABLE_BIAS
-            case rocsparselt_matmul_bias_pointer:
-                if((status = validateGetAttributeDataSize<float*>(dataSize))
-                   != rocsparselt_status_success)
-                {
-                    log_error(_handle, __func__, "dataSize is invalid");
-                    return status;
-                }
 
-                if(_matmulDescr->bias_pointer.get(data, dataSize) == 0)
-                {
-                    log_error(_handle, __func__, "read bias_pointer failed");
-                    return rocsparselt_status_internal_error;
-                }
+            case rocsparselt_matmul_bias_pointer:
+                data   = reinterpret_cast<void*>(_matmulDescr->bias_pointer);
+                status = rocsparselt_status_success;
                 break;
             case rocsparselt_matmul_bias_stride:
-                if((status = validateGetAttributeDataSize<int64_t>(dataSize))
-                   != rocsparselt_status_success)
-                {
-                    log_error(_handle, __func__, "dataSize is invalid");
-                    return status;
-                }
-
-                *(reinterpret_cast<int64_t*>(data)) = _matmulDescr->bias_stride;
+                retrive_data(_matmulDescr->bias_stride);
                 break;
-#endif
+
             default:
                 log_error(
                     _handle, __func__, "matmulAttribute", matmulAttribute, "is not implemented");

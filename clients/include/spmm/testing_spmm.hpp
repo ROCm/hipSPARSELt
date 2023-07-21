@@ -42,6 +42,38 @@
 #include <hipsparselt/hipsparselt.h>
 #include <omp.h>
 
+template <typename T, typename Tb = T, typename To = T>
+void bias(int64_t m, int64_t n, int64_t ld, T* src, To* dest, Tb* bias)
+{
+    auto saturate_i8 = [](Tb val) {
+        auto _val = std::nearbyint(static_cast<double>(val));
+        _val      = _val > 127.f ? 127.f : _val < -128.f ? -128.f : _val;
+        return static_cast<To>(_val);
+    };
+
+    auto saturate_o = [](Tb val) { return static_cast<To>(val); };
+
+    To (*saturate)(Tb val);
+    saturate = std::is_same<int8_t, To>() ? saturate_i8 : saturate_o;
+
+    for(int i = 0; i < m; i++)
+    {
+        Tb _bias = *(bias + i);
+#pragma omp parallel for
+        for(int j = 0; j < n; j++)
+        {
+            auto pos = j * ld + i;
+            Tb   src_Tb;
+            if constexpr(std::is_same<T, Tb>())
+                src_Tb = *(src + pos);
+            else
+                src_Tb = static_cast<Tb>(*(src + pos));
+
+            *(dest + pos) = saturate(src_Tb + _bias);
+        }
+    }
+}
+
 template <typename Ti, typename To, typename Tact, typename F>
 void activation(int64_t m, int64_t n, int64_t ld, Ti* in, To* out, Tact arg1, Tact arg2, F& func)
 {
@@ -251,6 +283,7 @@ void testing_spmm(const Arguments& arg)
     int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
     int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * N;
     int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * N;
+    int64_t bias_stride = do_strided_batched ? arg.bias_stride == -1 ? M : arg.bias_stride : 0;
 
     hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
@@ -427,6 +460,27 @@ void testing_spmm(const Arguments& arg)
         break;
     }
 
+    const size_t size_bias
+        = arg.bias_vector ? (bias_stride == 0 ? M : bias_stride * num_batches) : 0;
+    device_vector<Talpha> dBias(size_bias, 1, HMM);
+    CHECK_DEVICE_ALLOCATION(dBias.memcheck());
+    host_vector<Talpha> hBias(size_bias);
+    if(arg.bias_vector)
+    {
+
+        hipsparselt_init<Talpha>(hBias, M, 1, M, bias_stride, num_batches);
+
+        CHECK_HIP_ERROR(dBias.transfer_from(hBias));
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescSetAttribute(
+                handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, dBias, sizeof(Talpha*)),
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescSetAttribute(
+                handle, matmul, HIPSPARSELT_MATMUL_BIAS_STRIDE, &bias_stride, sizeof(int64_t)),
+            HIPSPARSE_STATUS_SUCCESS);
+    }
+
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
     size_t workspace_size = 0, compressed_size = 0;
@@ -555,7 +609,7 @@ void testing_spmm(const Arguments& arg)
 
     if(size_D_copy)
     {
-        if(activation_on)
+        if(activation_on || arg.bias_vector)
         {
             std::transform(hC.begin(), hC.end(), hD_gold_act.begin(), [](To c) -> Talpha {
                 return static_cast<Talpha>(c);
@@ -597,7 +651,7 @@ void testing_spmm(const Arguments& arg)
 
         for(int i = 0; i < num_batches; i++)
         {
-            if(activation_on)
+            if(activation_on || arg.bias_vector)
             {
                 cblas_gemm<Ti, Talpha, Talpha>(transA,
                                                transB,
@@ -614,31 +668,48 @@ void testing_spmm(const Arguments& arg)
                                                ldd,
                                                false);
                 auto pos = stride_d * i;
-                switch(arg.activation_type)
+                if(arg.bias_vector)
                 {
-                case hipsparselt_activation_type::clippedrelu:
-                    activation(activation_param, ::_clippedrelu);
-                    break;
-                case hipsparselt_activation_type::gelu:
-                    activation(activation_param, ::_gelu);
-                    break;
-                case hipsparselt_activation_type::relu:
-                    activation(activation_param, ::_relu);
-                    break;
-                case hipsparselt_activation_type::abs:
-                    activation(activation_param, ::_abs);
-                    break;
-                case hipsparselt_activation_type::leakyrelu:
-                    activation(activation_param, ::_leakyrelu);
-                    break;
-                case hipsparselt_activation_type::sigmoid:
-                    activation(activation_param, ::_sigmoid);
-                    break;
-                case hipsparselt_activation_type::tanh:
-                    activation(activation_param, ::_tanh);
-                    break;
-                default:
-                    continue;
+                    if(activation_on)
+                        bias<Talpha>(M,
+                                     N,
+                                     ldd,
+                                     hD_gold_act + pos,
+                                     hD_gold_act + pos,
+                                     hBias + bias_stride * i);
+                    else
+                        bias<Talpha, Talpha, To>(
+                            M, N, ldd, hD_gold_act + pos, hD_gold + pos, hBias + bias_stride * i);
+                }
+
+                if(activation_on)
+                {
+                    switch(arg.activation_type)
+                    {
+                    case hipsparselt_activation_type::clippedrelu:
+                        activation(activation_param, ::_clippedrelu);
+                        break;
+                    case hipsparselt_activation_type::gelu:
+                        activation(activation_param, ::_gelu);
+                        break;
+                    case hipsparselt_activation_type::relu:
+                        activation(activation_param, ::_relu);
+                        break;
+                    case hipsparselt_activation_type::abs:
+                        activation(activation_param, ::_abs);
+                        break;
+                    case hipsparselt_activation_type::leakyrelu:
+                        activation(activation_param, ::_leakyrelu);
+                        break;
+                    case hipsparselt_activation_type::sigmoid:
+                        activation(activation_param, ::_sigmoid);
+                        break;
+                    case hipsparselt_activation_type::tanh:
+                        activation(activation_param, ::_tanh);
+                        break;
+                    default:
+                        continue;
+                    }
                 }
             }
 
@@ -679,6 +750,13 @@ void testing_spmm(const Arguments& arg)
             hipsparselt_error = std::abs(
                 norm_check_general<To>('F', M, N, ldd, stride_d, hD_gold, hD_1, num_batches));
         }
+
+        // Debug
+        //print_strided_batched("C", &hC[0], M, N, num_batches, ldc, 1, stride_c);
+        //if(arg.bias_vector)
+        //    print_strided_batched("bias", &hBias[0], M, N, num_batches, M, 1, bias_stride);
+        //print_strided_batched("hD_gold", &hD_gold[0], M, N, num_batches, ldd, 1, stride_d);
+        //print_strided_batched("hD1", &hD_1[0], M, N, num_batches, ldd, 1, stride_d);
     }
 
     if(arg.timing)
