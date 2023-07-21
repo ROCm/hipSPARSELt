@@ -108,6 +108,8 @@ Arguments:
   - activation_type: hipsparselt_activation_type
   - activation_arg1: c_float
   - activation_arg2: c_float
+  - bias_vector: c_bool
+  - bias_stride: c_int64
   - c_noalias_d: c_bool
   - HMM: c_bool
   - search: c_bool
@@ -181,5 +183,7 @@ Defaults:
   activation_type: none
   activation_arg1: 0
   activation_arg2: 0
+  bias_vector: false
+  bias_stride: -1
   search: false
   search_iters: 10

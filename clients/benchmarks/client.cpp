@@ -181,10 +181,11 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         arg.ldd = min_ldd;
     }
 
-    int64_t min_stride_a = arg.lda * (arg.transA == 'N' ? arg.K : arg.M);
-    int64_t min_stride_b = arg.ldb * (arg.transB == 'N' ? arg.N : arg.K);
-    int64_t min_stride_c = arg.ldc * arg.N;
-    int64_t min_stride_d = arg.ldd * arg.N;
+    int64_t min_stride_a    = arg.lda * (arg.transA == 'N' ? arg.K : arg.M);
+    int64_t min_stride_b    = arg.ldb * (arg.transB == 'N' ? arg.N : arg.K);
+    int64_t min_stride_c    = arg.ldc * arg.N;
+    int64_t min_stride_d    = arg.ldd * arg.N;
+    int64_t min_bias_stride = arg.M;
 
     // force using min_stride when stride is -1
     // stride_a is zero means the boradcast mode.
@@ -213,7 +214,14 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
                          << min_stride_d << std::endl;
         arg.stride_d = min_stride_d;
     }
-
+    if(arg.bias_stride == -1
+       || (!any_stride && arg.bias_stride < min_bias_stride && arg.bias_stride != 0))
+    {
+        hipsparselt_cout << "hipsparselt-bench INFO: bias_stride < min_bias_stride and bias_stride "
+                            "!=0, set bias_stride = "
+                         << min_bias_stride << std::endl;
+        arg.bias_stride = min_bias_stride;
+    }
     hipsparselt_spmm_dispatch<perf_sparse>(arg);
     return 0;
 }
@@ -408,6 +416,14 @@ try
         ("activation_arg2",
          value<float>(&arg.activation_arg2)->default_value(std::numeric_limits<float>::infinity()),
          "activation argument #2, when activation_type is clippedrelu, this argument used to be the upperbound.")
+
+        ("bias_vector",
+         bool_switch(&arg.bias_vector)->default_value(false),
+         "Apply bias vector")
+
+        ("bias_stride",
+         value<int64_t>(&arg.bias_stride)->default_value(0),
+         "Specific stride of strided_batched vector bias. (defalut:0, broadcast)")
 
         ("device",
          value<int>(&device_id)->default_value(0),

@@ -318,6 +318,13 @@ namespace
         }
         tensileProblem.setActivationEnumArg(tensileAct);
 
+        // set bias mode
+        if(prob.bias_vector != nullptr)
+        {
+            tensileProblem.setUseBias(true);
+            tensileProblem.setBias(tensile_datatype<float>, d.sizes()[0], prob.bias_stride);
+        }
+
         return tensileProblem;
     }
 
@@ -357,6 +364,9 @@ namespace
 
         // Set the GSU workspace
         inputs.ws = prob.workspace;
+
+        // set bias vector
+        inputs.bias = reinterpret_cast<const void*>(prob.bias_vector);
 
         // alpha and beta are stored by value in Tensile::TypedContractionInputs
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
