@@ -58,6 +58,8 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  bias_vector: [false, true]
+  bias_stride: [0, -1, 256]
 
 - name: spmm_medium
   category: pre_checkin

@@ -49,6 +49,8 @@ Tests:
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   batch_count: [ 1, 3 ]
+  bias_vector: [false, true]
+  bias_stride: [0, -1, 256]
 
 - name: spmm_batched_medium
   category: pre_checkin
