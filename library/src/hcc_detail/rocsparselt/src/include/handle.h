@@ -287,7 +287,8 @@ struct __attribute__((packed, aligned(8))) _rocsparselt_matmul_config
     }
 
     int     index;
-    uint8_t reserved[4];
+    bool    use_bias = false;
+    uint8_t reserved[3];
     size_t  max_workspace_bytes = 0;
 };
 
