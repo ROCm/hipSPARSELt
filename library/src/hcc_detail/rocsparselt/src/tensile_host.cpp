@@ -150,7 +150,8 @@ namespace
      * Construct a Tensile Problem from a RocsparseltContractionProblem *
      ****************************************************************/
     template <typename Ti, typename To, typename Tc>
-    auto ConstructTensileProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob)
+    auto ConstructTensileProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
+                                 bool                                             useBias = false)
     {
         // Tensile DataTypes corresponding to rocsparselt data types
         static constexpr Tensile::DataType Tensile_Ti = tensile_datatype<Ti>;
@@ -319,7 +320,7 @@ namespace
         tensileProblem.setActivationEnumArg(tensileAct);
 
         // set bias mode
-        if(prob.bias_vector != nullptr)
+        if(prob.bias_vector != nullptr || useBias)
         {
             tensileProblem.setUseBias(true);
             tensileProblem.setBias(tensile_datatype<float>, d.sizes()[0], prob.bias_stride);
@@ -717,8 +718,7 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
 
         auto& adapter = get_library_and_adapter(&library, &deviceProp, prob.handle->device);
 
-        hardware          = Tensile::hip::GetDevice(*deviceProp);
-        auto tensile_prob = ConstructTensileProblem(prob);
+        hardware = Tensile::hip::GetDevice(*deviceProp);
 
         if(!config_max_id || configs == nullptr)
         {
@@ -728,6 +728,8 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         }
         else
         {
+            auto tensile_prob = ConstructTensileProblem(prob, configs[*config_id].use_bias);
+
             auto tensile_inputs = GetTensileInputs(prob);
 
             if(!search_iterations)
@@ -855,15 +857,38 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
     hardware          = Tensile::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);
     // auto handle = prob.handle;
-
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
 
     *foundConfigs = std::min((int)solutions.size(), requestConfigs);
+
+    // Finding alternative solutions.
+    bool useBias = tensile_prob.useBias();
+    if(*foundConfigs == 0)
+    {
+        log_info(prob.handle, __func__, "No solution founds, try to find alternative solutions");
+
+        bool hasUpdated = false;
+        if(!useBias && prob.bias_vector == nullptr)
+        {
+            log_info(prob.handle, __func__, "Try bias.");
+            hasUpdated = useBias = true;
+        }
+
+        if(hasUpdated)
+        {
+            tensile_prob  = ConstructTensileProblem(prob, useBias);
+            solutions     = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
+            *foundConfigs = std::min((int)solutions.size(), requestConfigs);
+            log_info(prob.handle, __func__, *foundConfigs, " alternative solutions found");
+        }
+    }
+
     for(size_t i = 0; i < *foundConfigs; i++)
     {
         auto solution                  = solutions[i];
         configs[i].index               = solution->index;
         configs[i].max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
+        configs[i].use_bias            = useBias;
     }
     return rocsparselt_status_success;
 }
