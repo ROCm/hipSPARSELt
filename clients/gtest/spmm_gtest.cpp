@@ -125,6 +125,11 @@ namespace
                     }
                 }
 
+                if(arg.bias_vector)
+                {
+                    name << "_bias_" << arg.bias_stride;
+                }
+
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.alpha << '_'
