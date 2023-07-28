@@ -155,35 +155,35 @@ hipsparseLtDatatype_t CuSparseLtDatatypeToHIPDatatype(cudaDataType type)
     }
 }
 
-cusparseComputeType HIPComputetypeToCuSparseComputetype(hipsparseComputetype_t type)
+cusparseComputeType HIPComputetypeToCuSparseComputetype(hipsparseLtComputetype_t type)
 {
     switch(type)
     {
-    case HIPSPARSE_COMPUTE_16F:
+    case HIPSPARSELT_COMPUTE_16F:
         return CUSPARSE_COMPUTE_16F;
-    case HIPSPARSE_COMPUTE_32I:
+    case HIPSPARSELT_COMPUTE_32I:
         return CUSPARSE_COMPUTE_32I;
-    case HIPSPARSE_COMPUTE_TF32:
+    case HIPSPARSELT_COMPUTE_TF32:
         return CUSPARSE_COMPUTE_TF32;
-    case HIPSPARSE_COMPUTE_TF32_FAST:
+    case HIPSPARSELT_COMPUTE_TF32_FAST:
         return CUSPARSE_COMPUTE_TF32_FAST;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
 }
 
-hipsparseComputetype_t CuSparseLtComputetypeToHIPComputetype(cusparseComputeType type)
+hipsparseLtComputetype_t CuSparseLtComputetypeToHIPComputetype(cusparseComputeType type)
 {
     switch(type)
     {
     case CUSPARSE_COMPUTE_16F:
-        return HIPSPARSE_COMPUTE_16F;
+        return HIPSPARSELT_COMPUTE_16F;
     case CUSPARSE_COMPUTE_32I:
-        return HIPSPARSE_COMPUTE_32I;
+        return HIPSPARSELT_COMPUTE_32I;
     case CUSPARSE_COMPUTE_TF32:
-        return HIPSPARSE_COMPUTE_TF32;
+        return HIPSPARSELT_COMPUTE_TF32;
     case CUSPARSE_COMPUTE_TF32_FAST:
-        return HIPSPARSE_COMPUTE_TF32_FAST;
+        return HIPSPARSELT_COMPUTE_TF32_FAST;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -582,7 +582,7 @@ hipsparseStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*    
                                                   const hipsparseLtMatDescriptor_t* matB,
                                                   const hipsparseLtMatDescriptor_t* matC,
                                                   const hipsparseLtMatDescriptor_t* matD,
-                                                  hipsparseComputetype_t            computeType)
+                                                  hipsparseLtComputetype_t          computeType)
 {
     return hipCUSPARSEStatusToHIPStatus(
         cusparseLtMatmulDescriptorInit((const cusparseLtHandle_t*)handle,

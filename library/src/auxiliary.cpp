@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,15 +36,15 @@ const hipsparseLtDatatype_t string_to_hipsparselt_datatype(const std::string& va
         static_cast<hipsparseLtDatatype_t>(-1);
 }
 
-const hipsparseComputetype_t string_to_hipsparselt_computetype(const std::string& value)
+const hipsparseLtComputetype_t string_to_hipsparselt_computetype(const std::string& value)
 {
     return
-        value == "f32_r" || value == "s" ? HIPSPARSE_COMPUTE_32F  :
-        value == "i32_r"                 ? HIPSPARSE_COMPUTE_32I  :
-        value == "f16_r" || value == "h" ? HIPSPARSE_COMPUTE_16F  :
-        value == "tf32_r"                ? HIPSPARSE_COMPUTE_TF32  :
-        value == "tf32f_r"               ? HIPSPARSE_COMPUTE_TF32_FAST  :
-        static_cast<hipsparseComputetype_t>(-1);
+        value == "f32_r" || value == "s" ? HIPSPARSELT_COMPUTE_32F  :
+        value == "i32_r"                 ? HIPSPARSELT_COMPUTE_32I  :
+        value == "f16_r" || value == "h" ? HIPSPARSELT_COMPUTE_16F  :
+        value == "tf32_r"                ? HIPSPARSELT_COMPUTE_TF32  :
+        value == "tf32f_r"               ? HIPSPARSELT_COMPUTE_TF32_FAST  :
+        static_cast<hipsparseLtComputetype_t>(-1);
 }
 // clang-format on
 

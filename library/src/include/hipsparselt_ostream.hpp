@@ -401,9 +401,9 @@ public:
         return os;
     }
 
-    // hipsparseComputetype_t output
+    // hipsparseLtComputetype_t output
     friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
-                                                    hipsparseComputetype_t        d)
+                                                    hipsparseLtComputetype_t      d)
     {
         os.m_os << hipsparselt_computetype_to_string(d);
         return os;

@@ -115,19 +115,19 @@ constexpr const char* hipsparselt_datatype_to_string(hipsparseLtDatatype_t type)
 
 // return precision string for hipsparseLtDatatype_t
 HIPSPARSELT_EXPORT
-constexpr const char* hipsparselt_computetype_to_string(hipsparseComputetype_t type)
+constexpr const char* hipsparselt_computetype_to_string(hipsparseLtComputetype_t type)
 {
     switch(type)
     {
-    case HIPSPARSE_COMPUTE_16F:
+    case HIPSPARSELT_COMPUTE_16F:
         return "f16_r";
-    case HIPSPARSE_COMPUTE_32I:
+    case HIPSPARSELT_COMPUTE_32I:
         return "i32_r";
-    case HIPSPARSE_COMPUTE_32F:
+    case HIPSPARSELT_COMPUTE_32F:
         return "f32_r";
-    case HIPSPARSE_COMPUTE_TF32:
+    case HIPSPARSELT_COMPUTE_TF32:
         return "tf32_r";
-    case HIPSPARSE_COMPUTE_TF32_FAST:
+    case HIPSPARSELT_COMPUTE_TF32_FAST:
         return "tf32f_r";
     }
     return "invalid";
@@ -138,7 +138,7 @@ HIPSPARSELT_EXPORT
 const hipsparseLtDatatype_t string_to_hipsparselt_datatype(const std::string& value);
 
 HIPSPARSELT_EXPORT
-const hipsparseComputetype_t string_to_hipsparselt_computetype(const std::string& value);
+const hipsparseLtComputetype_t string_to_hipsparselt_computetype(const std::string& value);
 
 // clang-format on
 

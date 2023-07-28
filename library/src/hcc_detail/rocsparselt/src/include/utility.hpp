@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,9 +40,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-hipsparseLtDatatype_t  RocSparseLtDatatypeToHIPDatatype(rocsparselt_datatype_ type);
-hipsparseComputetype_t RocSparseLtComputetypeToHIPComputetype(rocsparselt_compute_type_ type);
-hipsparseOperation_t   HCCOperationToHIPOperation(rocsparselt_operation_ op);
+hipsparseLtDatatype_t    RocSparseLtDatatypeToHIPDatatype(rocsparselt_datatype_ type);
+hipsparseLtComputetype_t RocSparseLtComputetypeToHIPComputetype(rocsparselt_compute_type_ type);
+hipsparseOperation_t     HCCOperationToHIPOperation(rocsparselt_operation_ op);
 #ifdef __cplusplus
 }
 #endif

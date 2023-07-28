@@ -593,18 +593,18 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
             HIPSPARSE_STATUS_NOT_SUPPORTED);
 #endif
 
-    hipsparseComputetype_t tmpComputeType;
+    hipsparseLtComputetype_t tmpComputeType;
     switch(arg.a_type)
     {
     case HIPSPARSELT_R_16F:
     case HIPSPARSELT_R_16BF:
-        tmpComputeType = HIPSPARSE_COMPUTE_32I;
+        tmpComputeType = HIPSPARSELT_COMPUTE_32I;
         break;
     default:
 #ifdef __HIP_PLATFORM_HCC__
-        tmpComputeType = HIPSPARSE_COMPUTE_32F;
+        tmpComputeType = HIPSPARSELT_COMPUTE_32F;
 #else
-        tmpComputeType = HIPSPARSE_COMPUTE_16F;
+        tmpComputeType = HIPSPARSELT_COMPUTE_16F;
 #endif
         break;
     }
