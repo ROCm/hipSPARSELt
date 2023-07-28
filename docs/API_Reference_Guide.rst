@@ -151,9 +151,9 @@ hipsparseLtMatDescAttribute_t
 
 .. doxygenenum:: hipsparseLtMatDescAttribute_t
 
-hipsparseComputetype_t
+hipsparseLtComputetype_t
 ^^^^^^^^^^^^^^^^^^^^^^
-.. doxygenenum:: hipsparseComputetype_t
+.. doxygenenum:: hipsparseLtComputetype_t
 
 hipsparseLtMatmulDescAttribute_t
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

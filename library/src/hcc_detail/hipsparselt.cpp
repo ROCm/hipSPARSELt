@@ -164,28 +164,28 @@ hipsparseLtDatatype_t RocSparseLtDatatypeToHIPDatatype(rocsparselt_datatype_ typ
     }
 }
 
-rocsparselt_compute_type_ HIPComputetypeToRocSparseLtComputetype(hipsparseComputetype_t type)
+rocsparselt_compute_type_ HIPComputetypeToRocSparseLtComputetype(hipsparseLtComputetype_t type)
 {
     switch(type)
     {
-    case HIPSPARSE_COMPUTE_32F:
+    case HIPSPARSELT_COMPUTE_32F:
         return rocsparselt_compute_f32;
-    case HIPSPARSE_COMPUTE_32I:
+    case HIPSPARSELT_COMPUTE_32I:
         return rocsparselt_compute_i32;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
 }
 
-hipsparseComputetype_t RocSparseLtComputetypeToHIPComputetype(rocsparselt_compute_type_ type)
+hipsparseLtComputetype_t RocSparseLtComputetypeToHIPComputetype(rocsparselt_compute_type_ type)
 {
     switch(type)
     {
     case rocsparselt_compute_f32:
-        return HIPSPARSE_COMPUTE_32F;
+        return HIPSPARSELT_COMPUTE_32F;
 
     case rocsparselt_compute_i32:
-        return HIPSPARSE_COMPUTE_32I;
+        return HIPSPARSELT_COMPUTE_32I;
     }
     throw HIPSPARSE_STATUS_NOT_SUPPORTED;
 }
@@ -646,7 +646,7 @@ hipsparseStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*    
                                                   const hipsparseLtMatDescriptor_t* matB,
                                                   const hipsparseLtMatDescriptor_t* matC,
                                                   const hipsparseLtMatDescriptor_t* matD,
-                                                  hipsparseComputetype_t            computeType)
+                                                  hipsparseLtComputetype_t          computeType)
 try
 {
     return RocSparseLtStatusToHIPStatus(

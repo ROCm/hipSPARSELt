@@ -783,9 +783,9 @@ int main(int argc, char* argv[])
 
     auto compute_type =
 #ifdef __HIP_PLATFORM_HCC__
-        HIPSPARSE_COMPUTE_32F;
+        HIPSPARSELT_COMPUTE_32F;
 #else
-        HIPSPARSE_COMPUTE_16F;
+        HIPSPARSELT_COMPUTE_16F;
 #endif
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(

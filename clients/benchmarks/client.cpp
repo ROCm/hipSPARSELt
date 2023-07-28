@@ -505,14 +505,14 @@ try
     bool is_f32      = arg.a_type == HIPSPARSELT_R_32F;
     arg.compute_type = compute_type == ""
 #ifdef __HIP_PLATFORM_HCC__
-                           ? (is_f16 ? HIPSPARSE_COMPUTE_32F : HIPSPARSE_COMPUTE_32I)
+                           ? (is_f16 ? HIPSPARSELT_COMPUTE_32F : HIPSPARSELT_COMPUTE_32I)
 #else
-                           ? (is_f16   ? HIPSPARSE_COMPUTE_16F
-                              : is_f32 ? HIPSPARSE_COMPUTE_TF32
-                                       : HIPSPARSE_COMPUTE_32I)
+                           ? (is_f16   ? HIPSPARSELT_COMPUTE_16F
+                              : is_f32 ? HIPSPARSELT_COMPUTE_TF32
+                                       : HIPSPARSELT_COMPUTE_32I)
 #endif
                            : string_to_hipsparselt_computetype(compute_type);
-    if(arg.compute_type == static_cast<hipsparseComputetype_t>(-1))
+    if(arg.compute_type == static_cast<hipsparseLtComputetype_t>(-1))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
     arg.initialization = string2hipsparselt_initialization(initialization);

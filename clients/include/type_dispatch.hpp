@@ -77,23 +77,23 @@ auto hipsparselt_spmm_dispatch(const Arguments& arg)
 
     if(arg.b_type == Ti && arg.d_type == To)
     {
-        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSE_COMPUTE_32F)
+        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSELT_COMPUTE_32F)
         {
             return TEST<__half, __half, float>{}(arg);
         }
-        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSE_COMPUTE_32F)
+        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSELT_COMPUTE_32F)
         {
             return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
-        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSE_COMPUTE_16F)
+        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSELT_COMPUTE_16F)
         {
             return TEST<__half, __half, __half>{}(arg);
         }
-        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSE_COMPUTE_16F)
+        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSELT_COMPUTE_16F)
         {
             return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16>{}(arg);
         }
-        else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSE_COMPUTE_32I)
+        else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSELT_COMPUTE_32I)
         {
             return TEST<int8_t, int8_t, int32_t>{}(arg);
         }

@@ -224,7 +224,7 @@ public:
                                    const hipsparseLtMatDescriptor_t* matB,
                                    const hipsparseLtMatDescriptor_t* matC,
                                    const hipsparseLtMatDescriptor_t* matD,
-                                   hipsparseComputetype_t            compute_type)
+                                   hipsparseLtComputetype_t          compute_type)
     {
         this->m_status = hipsparseLtMatmulDescriptorInit(
             handle, &this->m_descr, opA, opB, matA, matB, matC, matD, compute_type);

@@ -171,14 +171,14 @@ typedef enum {
  *  \details
  */
 typedef enum {
-   HIPSPARSE_COMPUTE_16F = 0,     /**< 16-bit floating-point precision. CUDA backend only. */
-   HIPSPARSE_COMPUTE_32I,         /**< 32-bit integer precision */
-   HIPSPARSE_COMPUTE_32F,         /**< 32-bit floating-point precision. HIP backend only. */
-   HIPSPARSE_COMPUTE_TF32,        /**< 32-bit floating point value are rounded to TF32 before the computation.
+   HIPSPARSELT_COMPUTE_16F = 0,     /**< 16-bit floating-point precision. CUDA backend only. */
+   HIPSPARSELT_COMPUTE_32I,         /**< 32-bit integer precision */
+   HIPSPARSELT_COMPUTE_32F,         /**< 32-bit floating-point precision. HIP backend only. */
+   HIPSPARSELT_COMPUTE_TF32,        /**< 32-bit floating point value are rounded to TF32 before the computation.
                                        CUDA backend only. */
-   HIPSPARSE_COMPUTE_TF32_FAST    /**< 32-bit floating point value are truncated to TF32 before the computation.
+   HIPSPARSELT_COMPUTE_TF32_FAST    /**< 32-bit floating point value are truncated to TF32 before the computation.
                                        CUDA backend only. */
-} hipsparseComputetype_t;
+} hipsparseLtComputetype_t;
 
 /*! \ingroup types_module
  *  \brief Specify the additional attributes of a matrix multiplication descriptor
@@ -504,7 +504,7 @@ hipsparseStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*    
                                                   const hipsparseLtMatDescriptor_t* matB,
                                                   const hipsparseLtMatDescriptor_t* matC,
                                                   const hipsparseLtMatDescriptor_t* matD,
-                                                  hipsparseComputetype_t            computeType);
+                                                  hipsparseLtComputetype_t          computeType);
 
 /*! \ingroup matmul_desc_module
  *  \brief Specify the matrix attribute of a matrix descriptor

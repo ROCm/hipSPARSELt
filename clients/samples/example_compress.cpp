@@ -729,11 +729,11 @@ void run(int64_t               m,
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
-    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSE_COMPUTE_32I :
+    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I :
 #ifdef __HIP_PLATFORM_HCC__
-                                                 HIPSPARSE_COMPUTE_32F;
+                                                 HIPSPARSELT_COMPUTE_32F;
 #else
-                                                 HIPSPARSE_COMPUTE_16F;
+                                                 HIPSPARSELT_COMPUTE_16F;
 #endif
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(&handle,
