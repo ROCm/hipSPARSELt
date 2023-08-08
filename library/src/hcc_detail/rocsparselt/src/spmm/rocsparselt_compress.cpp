@@ -202,6 +202,7 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
                                                     rocsparselt_operation         op,
                                                     const void*                   d_in,
                                                     void*                         d_out,
+                                                    void*                         d_ws,
                                                     hipStream_t                   stream)
 {
 
@@ -284,7 +285,8 @@ extern "C" {
 
 rocsparselt_status rocsparselt_smfmac_compressed_size_impl(_rocsparselt_mat_descr* matrix,
                                                            rocsparselt_operation   op,
-                                                           size_t*                 compressedSize)
+                                                           size_t*                 compressedSize,
+                                                           size_t* compressBufferSize)
 {
     int64_t              num_cols;
     int64_t              c_ld;
@@ -305,7 +307,8 @@ rocsparselt_status rocsparselt_smfmac_compressed_size_impl(_rocsparselt_mat_desc
     int64_t metadata_offset
         = rocsparselt_metadata_offset_in_compressed_matrix(num_cols, c_ld, num_batches, type);
 
-    *compressedSize = c_ld * num_cols / 4 * num_batches + metadata_offset;
+    *compressedSize     = c_ld * num_cols / 4 * num_batches + metadata_offset;
+    *compressBufferSize = 0;
     return rocsparselt_status_success;
 }
 
@@ -314,7 +317,8 @@ rocsparselt_status rocsparselt_smfmac_compressed_size_impl(_rocsparselt_mat_desc
  *******************************************************************************/
 rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle*      handle,
                                                       const rocsparselt_matmul_plan* plan,
-                                                      size_t*                        compressedSize)
+                                                      size_t*                        compressedSize,
+                                                      size_t* compressBufferSize)
 
 {
     // Check if handle is valid
@@ -348,7 +352,11 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
         log_error(_handle, __func__, "compressedSize is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
-
+    if(compressBufferSize == nullptr)
+    {
+        log_error(_handle, __func__, "compressBufferSize is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
     {
         // Only support when Matrix A is a structured matrix.
         _rocsparselt_mat_descr* matrix;
@@ -363,9 +371,16 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
             return rocsparselt_status_not_implemented;
         }
 
-        log_api(_handle, __func__, "plan[in]", *_plan, "compressedSize[in]", compressedSize);
+        log_api(_handle,
+                __func__,
+                "plan[in]",
+                *_plan,
+                "compressedSize[in]",
+                compressedSize,
+                "compressBufferSize[in]",
+                compressBufferSize);
         return rocsparselt_smfmac_compressed_size_impl(
-            matrix, _plan->matmul_descr->op_A, compressedSize);
+            matrix, _plan->matmul_descr->op_A, compressedSize, compressBufferSize);
     }
 }
 
@@ -374,7 +389,8 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
  *******************************************************************************/
 rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*    handle,
                                                        const rocsparselt_mat_descr* sparseMatDescr,
-                                                       size_t*                      compressedSize)
+                                                       size_t*                      compressedSize,
+                                                       size_t* compressBufferSize)
 
 {
     // Check if handle is valid
@@ -409,7 +425,11 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
         log_error(_handle, __func__, "compressedSize is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
-
+    if(compressBufferSize == nullptr)
+    {
+        log_error(_handle, __func__, "compressBufferSize is a NULL pointer");
+        return rocsparselt_status_invalid_pointer;
+    }
     {
         // Only support when Matrix A is a structured matrix.
         if(_sparseMatDescr->m_type != rocsparselt_matrix_type_structured)
@@ -446,8 +466,11 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
                 "sparseMatDescr[in]",
                 *_sparseMatDescr,
                 "compressedSize[in]",
-                compressedSize);
-        return rocsparselt_smfmac_compressed_size_impl(_sparseMatDescr, op, compressedSize);
+                compressedSize,
+                "compresseBufferSize[in]",
+                compressBufferSize);
+        return rocsparselt_smfmac_compressed_size_impl(
+            _sparseMatDescr, op, compressedSize, compressBufferSize);
     }
 }
 
@@ -458,6 +481,7 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
                                                const rocsparselt_matmul_plan* plan,
                                                const void*                    d_dense,
                                                void*                          d_compressed,
+                                               void*                          d_compressBuffer,
                                                hipStream_t                    stream)
 
 {
@@ -517,11 +541,18 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
             d_dense,
             "d_compressed[out]",
             d_compressed,
+            "d_compressBuffer[out]",
+            d_compressBuffer,
             "stream[in]",
             stream);
 
-    return rocsparselt_smfmac_compress_impl(
-        _handle, matrix, _plan->matmul_descr->op_A, d_dense, d_compressed, stream);
+    return rocsparselt_smfmac_compress_impl(_handle,
+                                            matrix,
+                                            _plan->matmul_descr->op_A,
+                                            d_dense,
+                                            d_compressed,
+                                            d_compressBuffer,
+                                            stream);
 }
 
 /********************************************************************************
@@ -533,6 +564,7 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
                                                 rocsparselt_operation        op,
                                                 const void*                  d_dense,
                                                 void*                        d_compressed,
+                                                void*                        d_compressBuffer,
                                                 hipStream_t                  stream)
 
 {
@@ -606,11 +638,13 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
             d_dense,
             "d_compressed[out]",
             d_compressed,
+            "d_compressBuffer[out]",
+            d_compressBuffer,
             "stream[in]",
             stream);
 
     return rocsparselt_smfmac_compress_impl(
-        _handle, _sparseMatDescr, op, d_dense, d_compressed, stream);
+        _handle, _sparseMatDescr, op, d_dense, d_compressed, d_compressBuffer, stream);
 }
 
 #ifdef __cplusplus

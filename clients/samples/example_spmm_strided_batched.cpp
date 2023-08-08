@@ -724,7 +724,7 @@ int main(int argc, char* argv[])
     }
 
     // allocate memory on device
-    __half *    da, *da_p, *db, *dc, *dd, *d_compressed;
+    __half *    da, *da_p, *db, *dc, *dd, *d_compressed, *d_compressBuffer;
     void*       d_workspace;
     int         num_streams = 1;
     hipStream_t stream      = nullptr;
@@ -797,20 +797,21 @@ int main(int argc, char* argv[])
     CHECK_HIPSPARSELT_ERROR(
         hipsparseLtSpMMAPrune(&handle, &matmul, da, da_p, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream));
 
-    size_t workspace_size, compressed_size;
+    size_t workspace_size, compressed_size, compress_buffer_size;
     CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtMatmulPlanInit(&handle, &plan_tmp, &matmul, &alg_sel, workspace_size));
+        hipsparseLtMatmulPlanInit(&handle, &plan_tmp, &matmul, &alg_sel));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan_tmp, &workspace_size));
 
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel, workspace_size));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size, &compress_buffer_size));
 
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
+    CHECK_HIP_ERROR(hipMalloc(&d_compressBuffer, compress_buffer_size));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompress(&handle, &plan, da_p, d_compressed, stream));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtSpMMACompress(&handle, &plan, da_p, d_compressed, d_compressBuffer, stream));
     if(workspace_size > 0)
         CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
 
@@ -936,6 +937,7 @@ int main(int argc, char* argv[])
     CHECK_HIP_ERROR(hipFree(dc));
     CHECK_HIP_ERROR(hipFree(dd));
     CHECK_HIP_ERROR(hipFree(d_compressed));
+    CHECK_HIP_ERROR(hipFree(d_compressBuffer));
     if(workspace_size > 0)
         CHECK_HIP_ERROR(hipFree(d_workspace));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan));

@@ -469,6 +469,36 @@ hipsparseLtSplitKMode_t CuSparseLtSplitKModeToHIPSplitKMode(cusparseLtSplitKMode
     }
 }
 
+libraryPropertyType HIPLibraryPropertyTypeToCuLibraryPoropertyType(hipLibraryPropertyType property)
+{
+    switch(property)
+    {
+    case HIP_LIBRARY_MAJOR_VERSION:
+        return MAJOR_VERSION;
+    case HIP_LIBRARY_MINOR_VERSION:
+        return MINOR_VERSION;
+    case HIP_LIBRARY_PATCH_LEVEL:
+        return PATCH_LEVEL;
+    default:
+        throw HIPSPARSE_STATUS_NOT_SUPPORTED;
+    }
+}
+
+hipLibraryPropertyType CuLibraryPropertyTypeToHIPLibraryPoropertyType(libraryPropertyType property)
+{
+    switch(property)
+    {
+    case MAJOR_VERSION:
+        return HIP_LIBRARY_MAJOR_VERSION;
+    case MINOR_VERSION:
+        return HIP_LIBRARY_MINOR_VERSION;
+    case PATCH_LEVEL:
+        return HIP_LIBRARY_PATCH_LEVEL;
+    default:
+        throw HIPSPARSE_STATUS_NOT_SUPPORTED;
+    }
+}
+
 hipsparseStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle)
 {
     char* log_env;
@@ -492,6 +522,18 @@ hipsparseStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle)
 hipsparseStatus_t hipsparseLtDestroy(const hipsparseLtHandle_t* handle)
 {
     return hipCUSPARSEStatusToHIPStatus(cusparseLtDestroy((const cusparseLtHandle_t*)handle));
+}
+
+hipsparseStatus_t hipsparseLtGetVersion(const hipsparseLtHandle_t* handle, int* version)
+{
+    return hipCUSPARSEStatusToHIPStatus(
+        cusparseLtGetVersion((const cusparseLtHandle_t*)handle, version));
+}
+
+hipsparseStatus_t hipsparseLtGetProperty(hipLibraryPropertyType propertyType, int* value)
+{
+    return hipCUSPARSEStatusToHIPStatus(
+        cusparseLtGetProperty(HIPLibraryPropertyTypeToCuLibraryPoropertyType(propertyType), value));
 }
 
 /* matrix descriptor */
@@ -681,15 +723,13 @@ hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*     h
 hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*             handle,
                                             hipsparseLtMatmulPlan_t*               plan,
                                             const hipsparseLtMatmulDescriptor_t*   matmulDescr,
-                                            const hipsparseLtMatmulAlgSelection_t* algSelection,
-                                            size_t                                 workspaceSize)
+                                            const hipsparseLtMatmulAlgSelection_t* algSelection)
 {
     return hipCUSPARSEStatusToHIPStatus(
         cusparseLtMatmulPlanInit((const cusparseLtHandle_t*)handle,
                                  (cusparseLtMatmulPlan_t*)plan,
                                  (const cusparseLtMatmulDescriptor_t*)matmulDescr,
-                                 (const cusparseLtMatmulAlgSelection_t*)algSelection,
-                                 workspaceSize));
+                                 (const cusparseLtMatmulAlgSelection_t*)algSelection));
 }
 
 hipsparseStatus_t hipsparseLtMatmulPlanDestroy(const hipsparseLtMatmulPlan_t* plan)
@@ -823,33 +863,41 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck2(const hipsparseLtHandle_t*        
 // compression
 hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     handle,
                                                  const hipsparseLtMatmulPlan_t* plan,
-                                                 size_t*                        compressedSize)
+                                                 size_t*                        compressedSize,
+                                                 size_t*                        compressBufferSize)
 {
-    return hipCUSPARSEStatusToHIPStatus(cusparseLtSpMMACompressedSize(
-        (const cusparseLtHandle_t*)handle, (const cusparseLtMatmulPlan_t*)plan, compressedSize));
+    return hipCUSPARSEStatusToHIPStatus(
+        cusparseLtSpMMACompressedSize((const cusparseLtHandle_t*)handle,
+                                      (const cusparseLtMatmulPlan_t*)plan,
+                                      compressedSize,
+                                      compressBufferSize));
 }
 
 hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle,
                                            const hipsparseLtMatmulPlan_t* plan,
                                            const void*                    d_dense,
                                            void*                          d_compressed,
+                                           void*                          d_compressBuffer,
                                            hipStream_t                    stream)
 {
     return hipCUSPARSEStatusToHIPStatus(cusparseLtSpMMACompress((const cusparseLtHandle_t*)handle,
                                                                 (const cusparseLtMatmulPlan_t*)plan,
                                                                 d_dense,
                                                                 d_compressed,
+                                                                d_compressBuffer,
                                                                 stream));
 }
 
 hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*        handle,
                                                   const hipsparseLtMatDescriptor_t* sparseMatDescr,
-                                                  size_t*                           compressedSize)
+                                                  size_t*                           compressedSize,
+                                                  size_t*                           compressBufferSize)
 {
     return hipCUSPARSEStatusToHIPStatus(
         cusparseLtSpMMACompressedSize2((const cusparseLtHandle_t*)handle,
                                        (const cusparseLtMatDescriptor_t*)sparseMatDescr,
-                                       compressedSize));
+                                       compressedSize,
+                                       compressBufferSize));
 }
 
 hipsparseStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        handle,
@@ -858,6 +906,7 @@ hipsparseStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        ha
                                             hipsparseOperation_t              op,
                                             const void*                       d_dense,
                                             void*                             d_compressed,
+                                            void*                             d_compressBuffer,
                                             hipStream_t                       stream)
 {
     return hipCUSPARSEStatusToHIPStatus(
@@ -867,23 +916,11 @@ hipsparseStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        ha
                                  hipOperationToCudaOperation(op),
                                  d_dense,
                                  d_compressed,
+                                 d_compressBuffer,
                                  stream));
 }
 
 void hipsparseLtInitialize() {}
-
-hipsparseStatus_t hipsparseLtGetVersion(hipsparseLtHandle_t handle, int* version)
-try
-{
-    *version = hipsparseltVersionMajor * 100000 + hipsparseltVersionMinor * 100
-               + hipsparseltVersionPatch;
-
-    return HIPSPARSE_STATUS_SUCCESS;
-}
-catch(...)
-{
-    return exception_to_hipsparselt_status();
-}
 
 hipsparseStatus_t hipsparseLtGetGitRevision(hipsparseLtHandle_t handle, char* rev)
 try

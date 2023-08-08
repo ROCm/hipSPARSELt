@@ -780,16 +780,14 @@ catch(...)
 hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*             handle,
                                             hipsparseLtMatmulPlan_t*               plan,
                                             const hipsparseLtMatmulDescriptor_t*   matmulDescr,
-                                            const hipsparseLtMatmulAlgSelection_t* algSelection,
-                                            size_t                                 workspaceSize)
+                                            const hipsparseLtMatmulAlgSelection_t* algSelection)
 try
 {
     return RocSparseLtStatusToHIPStatus(
         rocsparselt_matmul_plan_init((const rocsparselt_handle*)handle,
                                      (rocsparselt_matmul_plan*)plan,
                                      (const rocsparselt_matmul_descr*)matmulDescr,
-                                     (const rocsparselt_matmul_alg_selection*)algSelection,
-                                     workspaceSize));
+                                     (const rocsparselt_matmul_alg_selection*)algSelection));
 }
 catch(...)
 {
@@ -961,11 +959,15 @@ catch(...)
 // compression
 hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     handle,
                                                  const hipsparseLtMatmulPlan_t* plan,
-                                                 size_t*                        compressedSize)
+                                                 size_t*                        compressedSize,
+                                                 size_t*                        compressBufferSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_smfmac_compressed_size(
-        (const rocsparselt_handle*)handle, (const rocsparselt_matmul_plan*)plan, compressedSize));
+    return RocSparseLtStatusToHIPStatus(
+        rocsparselt_smfmac_compressed_size((const rocsparselt_handle*)handle,
+                                           (const rocsparselt_matmul_plan*)plan,
+                                           compressedSize,
+                                           compressBufferSize));
 }
 catch(...)
 {
@@ -976,6 +978,7 @@ hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle
                                            const hipsparseLtMatmulPlan_t* plan,
                                            const void*                    d_dense,
                                            void*                          d_compressed,
+                                           void*                          d_compressBuffer,
                                            hipStream_t                    stream)
 try
 {
@@ -984,6 +987,7 @@ try
                                     (const rocsparselt_matmul_plan*)plan,
                                     d_dense,
                                     d_compressed,
+                                    d_compressBuffer,
                                     stream));
 }
 catch(...)
@@ -993,13 +997,15 @@ catch(...)
 
 hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*        handle,
                                                   const hipsparseLtMatDescriptor_t* sparseMatDescr,
-                                                  size_t*                           compressedSize)
+                                                  size_t*                           compressedSize,
+                                                  size_t* compressBufferSize)
 try
 {
     return RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_compressed_size2((const rocsparselt_handle*)handle,
                                             (const rocsparselt_mat_descr*)sparseMatDescr,
-                                            compressedSize));
+                                            compressedSize,
+                                            compressBufferSize));
 }
 catch(...)
 {
@@ -1012,6 +1018,7 @@ hipsparseStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        ha
                                             hipsparseOperation_t              op,
                                             const void*                       d_dense,
                                             void*                             d_compressed,
+                                            void*                             d_compressBuffer,
                                             hipStream_t                       stream)
 try
 {
@@ -1022,6 +1029,7 @@ try
                                      HIPOperationToHCCOperation(op),
                                      d_dense,
                                      d_compressed,
+                                     d_compressBuffer,
                                      stream));
 }
 catch(...)
@@ -1034,12 +1042,34 @@ void hipsparseLtInitialize()
     rocsparselt_initialize();
 }
 
-hipsparseStatus_t hipsparseLtGetVersion(hipsparseLtHandle_t handle, int* version)
+hipsparseStatus_t hipsparseLtGetVersion(const hipsparseLtHandle_t* handle, int* version)
 try
 {
     *version = hipsparseltVersionMajor * 100000 + hipsparseltVersionMinor * 100
                + hipsparseltVersionPatch;
 
+    return HIPSPARSE_STATUS_SUCCESS;
+}
+catch(...)
+{
+    return exception_to_hipsparselt_status();
+}
+
+hipsparseStatus_t hipsparseLtGetPorperty(hipLibraryPropertyType propertyType, int* value)
+try
+{
+    switch(propertyType)
+    {
+    case HIP_LIBRARY_MAJOR_VERSION:
+        *value = hipsparseltVersionMajor;
+        break;
+    case HIP_LIBRARY_MINOR_VERSION:
+        *value = hipsparseltVersionMinor;
+        break;
+    case HIP_LIBRARY_PATCH_LEVEL:
+        *value = hipsparseltVersionPatch;
+        break;
+    }
     return HIPSPARSE_STATUS_SUCCESS;
 }
 catch(...)

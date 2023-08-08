@@ -1,5 +1,5 @@
 /* ************************************************************************
-* Copyright (c) 2022 Advanced Micro Devices, Inc.
+* Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -327,7 +327,9 @@ rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    
  *
  *
  *  @param[out]
- *  compressedSize     size in bytes of the compressed matrix.
+ *  compressedSize      size in bytes of the compressed matrix.
+ *  @param[out]
+ *  compressBufferSize  size in bytes for the buffer needed for the matrix compression
  *
  *  @param[in]
  *  handle             rocsparselt library handle
@@ -340,7 +342,8 @@ rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    
  */
 rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle*      handle,
                                                       const rocsparselt_matmul_plan* plan,
-                                                      size_t* compressedSize);
+                                                      size_t*                        compressedSize,
+                                                      size_t* compressBufferSize);
 
 /*! \ingroup spmm_module
  *  \brief provide the size of the compressed matrix.
@@ -351,7 +354,9 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
  *
  *
  *  @param[out]
- *  compressedSize     size in bytes of the compressed matrix.
+ *  compressedSize      size in bytes of the compressed matrix.
+ *  @param[out]
+ *  compressBufferSize  size in bytes for the buffer needed for the matrix compression
  *
  *  @param[in]
  *  handle             rocsparselt library handle
@@ -364,7 +369,8 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
  */
 rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*    handle,
                                                        const rocsparselt_mat_descr* sparseMatDescr,
-                                                       size_t*                      compressedSize);
+                                                       size_t*                      compressedSize,
+                                                       size_t* compresseBufferSize);
 
 /*! \ingroup spmm_module
  *  \brief compresses a dense matrix to structured matrix.
@@ -375,7 +381,9 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
  *  in the rocsparselt_matmul() function.
  *
  *  @param[out]
- *  d_compressed   compressed matrix and metadata
+ *  d_compressed       compressed matrix and metadata
+ *  @param[out]
+ *  d_compressBuffer   temporary buffer for the compression
  *
  *  @param[in]
  *  handle         handle to the rocsparselt library context queue.
@@ -392,6 +400,7 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
                                                const rocsparselt_matmul_plan* plan,
                                                const void*                    d_dense,
                                                void*                          d_compressed,
+                                               void*                          d_compressBuffer,
                                                hipStream_t                    stream);
 
 /*! \ingroup spmm_module
@@ -403,7 +412,9 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
  *  in the rocsparselt_matmul() function.
  *
  *  @param[out]
- *  d_compressed   compressed matrix and metadata
+ *  d_compressed       compressed matrix and metadata
+ *  @param[out]
+ *  d_compressBuffer   temporary buffer for the compression
  *
  *  @param[in]
  *  handle         handle to the rocsparselt library context queue.
@@ -425,6 +436,7 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
                                                 rocsparselt_operation        op,
                                                 const void*                  d_dense,
                                                 void*                        d_compressed,
+                                                void*                        d_compressBuffer,
                                                 hipStream_t                  stream);
 
 #ifdef __cplusplus

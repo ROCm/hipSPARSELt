@@ -319,12 +319,11 @@ class hipsparselt_local_matmul_plan
 public:
     hipsparselt_local_matmul_plan(const hipsparseLtHandle_t*             handle,
                                   const hipsparseLtMatmulDescriptor_t*   matmul,
-                                  const hipsparseLtMatmulAlgSelection_t* alg_sel,
-                                  size_t                                 workspace_size)
+                                  const hipsparseLtMatmulAlgSelection_t* alg_sel)
     {
 
         this->m_status
-            = hipsparseLtMatmulPlanInit(handle, &this->m_plan, matmul, alg_sel, workspace_size);
+            = hipsparseLtMatmulPlanInit(handle, &this->m_plan, matmul, alg_sel);
     }
 
     ~hipsparselt_local_matmul_plan()
