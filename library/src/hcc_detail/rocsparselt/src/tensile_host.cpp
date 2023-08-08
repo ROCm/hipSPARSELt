@@ -241,11 +241,12 @@ namespace
                                     {prob.m, prob.n, prob.batch_count},
                                     {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d}};
 
-        size_t workspace_size = prob.workspaceSize;
-
         Tensile::TensorDescriptor e{"e"};
         Tensile::TensorDescriptor bias{"bias"};
-        Tensile::TensorDescriptor scaleD{"scaleD"};
+        Tensile::TensorDescriptor scaleA{"scaleA"};
+        Tensile::TensorDescriptor scaleB{"scaleB"};
+        Tensile::TensorDescriptor scaleDVec{"scaleDVec"};
+        Tensile::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
 
         // The ContractionProblemGemm
         Tensile::ContractionProblemGemm tensileProblem{a,
@@ -254,12 +255,15 @@ namespace
                                                        d,
                                                        e,
                                                        bias,
-                                                       scaleD,
+                                                       scaleA,
+                                                       scaleB,
+                                                       scaleDVec,
+                                                       scaleAlphaVec,
                                                        freeIndex,
                                                        batchIndex,
                                                        boundIndex,
-                                                       value_category(*prob.beta),
-                                                       workspace_size};
+                                                       *prob.beta,
+                                                       prob.workspaceSize};
 
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
@@ -288,7 +292,7 @@ namespace
 
         // set Actvation
         tensileProblem.setActivationType(Tensile::ActivationType::All);
-        tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+        tensileProblem.setActivationComputeType(Tensile_Tc);
         Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
 
         switch(prob.act_type)
