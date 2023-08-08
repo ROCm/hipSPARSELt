@@ -1339,8 +1339,7 @@ rocsparselt_status
     rocsparselt_matmul_plan_init(const rocsparselt_handle*               handle,
                                  rocsparselt_matmul_plan*                plan,
                                  const rocsparselt_matmul_descr*         matmulDescr,
-                                 const rocsparselt_matmul_alg_selection* algSelection,
-                                 size_t                                  workspaceSize)
+                                 const rocsparselt_matmul_alg_selection* algSelection)
 
 {
     // Check if plan is valid
@@ -1371,70 +1370,61 @@ rocsparselt_status
         log_error(_handle, __func__, "plan is a NULL pointer");
         return rocsparselt_status_invalid_pointer;
     }
-    else if(workspaceSize < 0)
+
+    auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
+    if(!_matmulDescr->isInit())
     {
-        log_error(_handle, __func__, "workspaceSize is invalid");
-        return rocsparselt_status_invalid_size;
+        log_error(_handle, __func__, "matmulDescr did not initialized or already destroyed");
+        return rocsparselt_status_invalid_handle;
     }
-    else
+
+    const _rocsparselt_matmul_alg_selection* _algSelection
+        = reinterpret_cast<const _rocsparselt_matmul_alg_selection*>(algSelection);
+    if(!_algSelection->isInit())
     {
-        auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
-        if(!_matmulDescr->isInit())
-        {
-            log_error(_handle, __func__, "matmulDescr did not initialized or already destroyed");
-            return rocsparselt_status_invalid_handle;
-        }
-
-        const _rocsparselt_matmul_alg_selection* _algSelection
-            = reinterpret_cast<const _rocsparselt_matmul_alg_selection*>(algSelection);
-        if(!_algSelection->isInit())
-        {
-            log_error(_handle, __func__, "algSelection did not initialized or already destroyed");
-            return rocsparselt_status_invalid_handle;
-        }
-
-        try
-        {
-            int num_batches_a = 1, num_batches_b = 1, num_batches_c = 1, num_batches_d = 1;
-            num_batches_a = _matmulDescr->matrix_A->num_batches;
-            num_batches_b = _matmulDescr->matrix_B->num_batches;
-            num_batches_c = _matmulDescr->matrix_C->num_batches;
-            num_batches_d = _matmulDescr->matrix_D->num_batches;
-
-            if(num_batches_a != (num_batches_b | num_batches_c | num_batches_d))
-            {
-                hipsparselt_cerr << " number of batches of matrics A,B,C,D must be the same"
-                                 << std::endl;
-                log_error(
-                    _handle, __func__, "number of batches of matrics A,B,C,D must be the same");
-                return rocsparselt_status_invalid_size;
-            }
-
-            auto                     _plan = reinterpret_cast<_rocsparselt_matmul_plan*>(plan);
-            _rocsparselt_matmul_plan tmpPlan(_handle);
-            memcpy(_plan, &tmpPlan, sizeof(_rocsparselt_matmul_plan));
-
-            _plan->matmul_descr   = new _rocsparselt_matmul_descr(*_matmulDescr);
-            _plan->alg_selection  = const_cast<_rocsparselt_matmul_alg_selection*>(_algSelection);
-            _plan->workspace_size = workspaceSize;
-            log_api(_handle,
-                    __func__,
-                    "plan[out]",
-                    plan,
-                    "matmulDescr[in]",
-                    matmulDescr,
-                    "algSelection[in]",
-                    algSelection,
-                    "workspaceSize[in]",
-                    workspaceSize);
-        }
-        catch(const rocsparselt_status& status)
-        {
-            log_info(_handle, __func__, "status", status);
-            return status;
-        }
-        return rocsparselt_status_success;
+        log_error(_handle, __func__, "algSelection did not initialized or already destroyed");
+        return rocsparselt_status_invalid_handle;
     }
+
+    try
+    {
+        int num_batches_a = 1, num_batches_b = 1, num_batches_c = 1, num_batches_d = 1;
+        num_batches_a = _matmulDescr->matrix_A->num_batches;
+        num_batches_b = _matmulDescr->matrix_B->num_batches;
+        num_batches_c = _matmulDescr->matrix_C->num_batches;
+        num_batches_d = _matmulDescr->matrix_D->num_batches;
+
+        if(num_batches_a != (num_batches_b | num_batches_c | num_batches_d))
+        {
+            hipsparselt_cerr << " number of batches of matrics A,B,C,D must be the same"
+                             << std::endl;
+            log_error(
+                _handle, __func__, "number of batches of matrics A,B,C,D must be the same");
+            return rocsparselt_status_invalid_size;
+        }
+
+        auto                     _plan = reinterpret_cast<_rocsparselt_matmul_plan*>(plan);
+        _rocsparselt_matmul_plan tmpPlan(_handle);
+        memcpy(_plan, &tmpPlan, sizeof(_rocsparselt_matmul_plan));
+
+        _plan->matmul_descr   = new _rocsparselt_matmul_descr(*_matmulDescr);
+        _plan->alg_selection  = const_cast<_rocsparselt_matmul_alg_selection*>(_algSelection);
+        log_api(_handle,
+                __func__,
+                "plan[out]",
+                plan,
+                "matmulDescr[in]",
+                matmulDescr,
+                "algSelection[in]",
+                algSelection);
+    }
+    catch(const rocsparselt_status& status)
+    {
+        log_info(_handle, __func__, "status", status);
+        return status;
+    }
+    return rocsparselt_status_success;
+
 }
 
 /********************************************************************************

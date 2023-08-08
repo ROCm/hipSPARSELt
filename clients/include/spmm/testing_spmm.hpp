@@ -187,7 +187,7 @@ void testing_spmm_bad_arg(const Arguments& arg)
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
     size_t                        workspace_size = 0;
-    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel);
 
     void* workspace = nullptr;
     float alpha = 1.0, beta = 0.0;
@@ -226,17 +226,6 @@ void testing_spmm_bad_arg(const Arguments& arg)
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmul(handle, plan, &alpha, dA, dB, &beta, dC, dD, workspace, nullptr, 1),
         HIPSPARSE_STATUS_INVALID_VALUE);
-
-    workspace_size = 1;
-    hipsparselt_local_matmul_plan plan2(handle, matmul, alg_sel, workspace_size);
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmul(handle, plan2, &alpha, dA, dB, &beta, dC, dD, workspace, &stream, 0),
-#ifdef __HIP_PLATFORM_HCC__
-        HIPSPARSE_STATUS_INVALID_VALUE
-#else
-        HIPSPARSE_STATUS_SUCCESS
-#endif
-    );
 }
 
 template <typename Ti,
@@ -483,7 +472,7 @@ void testing_spmm(const Arguments& arg)
 
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
-    size_t workspace_size = 0, compressed_size = 0;
+    size_t workspace_size = 0, compressed_size = 0, compress_buffer_size = 0;
 
     {
 
@@ -496,7 +485,7 @@ void testing_spmm(const Arguments& arg)
             {
                 hipsparseLtMatmulAlgSetAttribute(
                     handle, alg_sel, HIPSPARSELT_MATMUL_ALG_CONFIG_ID, &i, sizeof(int));
-                hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel, workspace_size);
+                hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel);
                 size_t                        ws = 0;
                 EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, plan_tmp, &ws),
                                         HIPSPARSE_STATUS_SUCCESS);
@@ -510,17 +499,18 @@ void testing_spmm(const Arguments& arg)
         }
         else
         {
-            hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel, workspace_size);
+            hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel);
             EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtMatmulGetWorkspace(handle, plan_tmp, &workspace_size),
                 HIPSPARSE_STATUS_SUCCESS);
         }
     }
 
-    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel);
 
-    EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
-                            HIPSPARSE_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size, &compress_buffer_size),
+        HIPSPARSE_STATUS_SUCCESS);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
@@ -537,6 +527,7 @@ void testing_spmm(const Arguments& arg)
     device_vector<To>            dC(size_C, 1, HMM);
     device_vector<To>            dD(size_D, 1, HMM);
     device_vector<unsigned char> dA_compressd(compressed_size, 1, HMM);
+    device_vector<unsigned char> dA_compressBuffer(compress_buffer_size, 1, HMM);
     device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
@@ -624,8 +615,9 @@ void testing_spmm(const Arguments& arg)
         hipsparseLtSpMMAPrune(handle, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
         HIPSPARSE_STATUS_SUCCESS);
 
-    EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
-                            HIPSPARSE_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, dA_compressBuffer, stream),
+        HIPSPARSE_STATUS_SUCCESS);
 
     if(arg.search)
         EXPECT_HIPSPARSE_STATUS(
@@ -998,7 +990,7 @@ void testing_aux_plan_assign(const Arguments& arg)
 
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
-    size_t workspace_size = 0, compressed_size = 0;
+    size_t workspace_size = 0, compressed_size = 0, compress_buffer_size = 0;
     int    search_iters  = 10;
     int    config_max_id = 0;
     hipsparseLtMatmulAlgGetAttribute(
@@ -1007,7 +999,7 @@ void testing_aux_plan_assign(const Arguments& arg)
     {
         hipsparseLtMatmulAlgSetAttribute(
             handle, alg_sel, HIPSPARSELT_MATMUL_ALG_CONFIG_ID, &i, sizeof(int));
-        hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel, workspace_size);
+        hipsparselt_local_matmul_plan plan_tmp(handle, matmul, alg_sel);
         size_t                        ws = 0;
         EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, plan_tmp, &ws),
                                 HIPSPARSE_STATUS_SUCCESS);
@@ -1016,10 +1008,11 @@ void testing_aux_plan_assign(const Arguments& arg)
     hipsparseLtMatmulAlgSetAttribute(
         handle, alg_sel, HIPSPARSELT_MATMUL_SEARCH_ITERATIONS, &search_iters, sizeof(int));
 
-    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, workspace_size);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel);
 
-    EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size),
-                            HIPSPARSE_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size, &compress_buffer_size),
+        HIPSPARSE_STATUS_SUCCESS);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
@@ -1036,6 +1029,7 @@ void testing_aux_plan_assign(const Arguments& arg)
     device_vector<To>            dC(size_C, 1, HMM);
     device_vector<To>            dD(size_D, 1, HMM);
     device_vector<unsigned char> dA_compressd(compressed_size, 1, HMM);
+    device_vector<unsigned char> dA_compressBuffer(compress_buffer_size, 1, HMM);
     device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
@@ -1123,8 +1117,9 @@ void testing_aux_plan_assign(const Arguments& arg)
         hipsparseLtSpMMAPrune(handle, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
         HIPSPARSE_STATUS_SUCCESS);
 
-    EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, stream),
-                            HIPSPARSE_STATUS_SUCCESS);
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, dA_compressBuffer, stream),
+        HIPSPARSE_STATUS_SUCCESS);
 
     {
         auto check
