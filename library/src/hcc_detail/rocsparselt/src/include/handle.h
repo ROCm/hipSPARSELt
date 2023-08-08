@@ -377,7 +377,6 @@ struct _rocsparselt_matmul_plan
     _rocsparselt_matmul_alg_selection* alg_selection = nullptr;
 
     //
-    size_t    workspace_size = 0;
     uintptr_t is_init        = 0;
 };
 

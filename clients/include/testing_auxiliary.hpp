@@ -1383,32 +1383,26 @@ void testing_aux_matmul_plan_init_bad_arg(const Arguments& arg)
     hipsparseLtMatmulDescriptor_t   matmul_;
     hipsparseLtMatmulAlgSelection_t alg_sel_;
     hipsparseLtMatmulPlan_t         plan;
-    size_t                          workspace_size = 0;
 
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulPlanInit(nullptr, &plan, matmul, alg_sel, workspace_size),
-        HIPSPARSE_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulPlanInit(&handle_, &plan, matmul, alg_sel, workspace_size),
-        HIPSPARSE_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulPlanInit(handle, nullptr, matmul, alg_sel, workspace_size),
-        HIPSPARSE_STATUS_INVALID_VALUE);
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulPlanInit(handle, &plan, nullptr, alg_sel, workspace_size),
-        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(nullptr, &plan, matmul, alg_sel),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(&handle_, &plan, matmul, alg_sel),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulPlanInit(handle, &plan, &matmul_, alg_sel, workspace_size),
-        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(handle, nullptr, matmul, alg_sel),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(handle, &plan, &matmul_, alg_sel),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulPlanInit(handle, &plan, matmul, nullptr, workspace_size),
-        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(handle, &plan, nullptr, alg_sel),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(handle, &plan, &matmul_, alg_sel),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulPlanInit(handle, &plan, matmul, &alg_sel_, workspace_size),
-        HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(handle, &plan, matmul, nullptr),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
+    EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulPlanInit(handle, &plan, matmul, &alg_sel_),
+                            HIPSPARSE_STATUS_INVALID_VALUE);
 }
 
 void testing_aux_matmul_plan_init(const Arguments& arg)
@@ -1449,7 +1443,7 @@ void testing_aux_matmul_plan_init(const Arguments& arg)
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
     EXPECT_HIPSPARSE_STATUS(alg_sel.status(), HIPSPARSE_STATUS_SUCCESS);
 
-    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, 0);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel);
     EXPECT_HIPSPARSE_STATUS(plan.status(), HIPSPARSE_STATUS_SUCCESS);
 }
 
@@ -1491,7 +1485,7 @@ void testing_aux_get_workspace_size_bad_arg(const Arguments& arg)
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
     EXPECT_HIPSPARSE_STATUS(alg_sel.status(), HIPSPARSE_STATUS_SUCCESS);
 
-    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, 0);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel);
     EXPECT_HIPSPARSE_STATUS(plan.status(), HIPSPARSE_STATUS_SUCCESS);
 
     hipsparseLtHandle_t     handle_;
@@ -1556,7 +1550,7 @@ void testing_aux_get_workspace_size(const Arguments& arg)
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
     EXPECT_HIPSPARSE_STATUS(alg_sel.status(), HIPSPARSE_STATUS_SUCCESS);
 
-    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel, 0);
+    hipsparselt_local_matmul_plan plan(handle, matmul, alg_sel);
     EXPECT_HIPSPARSE_STATUS(plan.status(), HIPSPARSE_STATUS_SUCCESS);
 
     size_t workspace_size = 0;

@@ -165,12 +165,12 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
         return rocsparselt_status_invalid_pointer;
     }
 
-    size_t workspaceSize = _plan->workspace_size;
-    if(workspace == nullptr && _plan->workspace_size != 0)
+    size_t workspaceSize = _plan->alg_selection->config_max_id == 0 ? 0 : _plan->alg_selection->configs[_plan->alg_selection->config_id].max_workspace_bytes,e;
+    if(workspace == nullptr && workspaceSize != 0)
     {
         hipsparselt_cerr << "The parameter number 9 (workspace) had an illegal value "
                             "expected a device memroy with "
-                         << _plan->workspace_size << " bytes, but current is nullptr" << std::endl;
+                         << workspaceSize << " bytes, but current is nullptr" << std::endl;
         log_error(_handle, caller, "expected workspace is not a NULL pointer");
         return rocsparselt_status_invalid_value;
     }

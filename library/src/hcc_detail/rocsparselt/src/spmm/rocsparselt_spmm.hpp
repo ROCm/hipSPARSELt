@@ -77,7 +77,7 @@ rocsparselt_status spmm_typecasting(const char*                     caller,
                                               (To*)d,
                                               true,
                                               workspace,
-                                              plan->workspace_size,
+                                              plan->alg_selection->config_max_id == 0 ? 0 : plan->alg_selection->configs[plan->alg_selection->config_id].max_workspace_bytes,
                                               streams,
                                               numStreams);
 

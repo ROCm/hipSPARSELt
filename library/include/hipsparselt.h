@@ -53,6 +53,7 @@
 #if defined(__HIP_PLATFORM_HCC__)
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_fp16.h>
+#include <hip/library_types.h>
 #else
 #include <cuda_bf16.h>
 #include <cuda_fp16.h>
@@ -271,8 +272,38 @@ extern "C" {
 HIPSPARSELT_EXPORT
 void hipsparseLtInitialize();
 
+/*! \ingroup library_module
+ *  \brief Retrive the version number of the hipSPARSELt library.
+ *
+ *  \details
+ *  \p hipsparseLtGetVersion return the version number of the hipSPARSELt library.
+ *
+ *  @param[in]
+ *  handle   hipsparselt library handle.
+ *  @param[out]
+ *  version  the version number of the library.
+ *
+ *  \retval HIPSPARSE_STATUS_SUCCESS
+ *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle is invalid.
+ */
 HIPSPARSELT_EXPORT
-hipsparseStatus_t hipsparseLtGetVersion(hipsparseLtHandle_t handle, int* version);
+hipsparseStatus_t hipsparseLtGetVersion(const hipsparseLtHandle_t* handle, int* version);
+
+/*! \ingroup library_module
+ *  \brief Retrive the value of the requested property.
+ *
+ *  \details
+ *  \p hipsparseLtGetProperty return the value of the requested property.
+ *
+ *  @param[in]
+ *  propertyType   property type. hipLibraryPropertyType (defined in library_types.h)
+ *  @param[out]
+ *  value          value of the requested property.
+ *
+ *  \retval HIPSPARSE_STATUS_SUCCESS
+ */
+HIPSPARSELT_EXPORT
+hipsparseStatus_t hipsparseLtGetProperty(hipLibraryPropertyType propertyType, int* value);
 
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtGetGitRevision(hipsparseLtHandle_t handle, char* rev);
@@ -687,8 +718,6 @@ hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*     h
  *  matmulDescr      the matrix multiplication descriptor
  *  @param[in]
  *  algSelection     the algorithm selection descriptor
- *  @param[in]
- *  workspaceSize    Workspace size in bytes
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p plan , \p matmulDescr , \p algSelection or \p workspaceSize is invalid. \ref HIPSPARSELT_MAT_NUM_BATCHES from matrix A to D are inconisistent
@@ -697,8 +726,7 @@ HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*             handle,
                                             hipsparseLtMatmulPlan_t*               plan,
                                             const hipsparseLtMatmulDescriptor_t*   matmulDescr,
-                                            const hipsparseLtMatmulAlgSelection_t* algSelection,
-                                            size_t                                 workspaceSize);
+                                            const hipsparseLtMatmulAlgSelection_t* algSelection);
 
 /*! \ingroup matmul_module
  *  \brief Destroy a matrix multiplication plan descriptor
@@ -934,7 +962,7 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck(const hipsparseLtHandle_t*         
  *  @param[in]
  *  d_in           pointer to the dense matrix.
  *  @param[out]
- *  d_out       pointer to the pruned matrix.
+ *  d_out          pointer to the pruned matrix.
  *  @param[in]
  *  pruneAlg       pruning algorithm.
  *  @param[in]
@@ -972,7 +1000,7 @@ hipsparseStatus_t hipsparseLtSpMMAPrune2(const hipsparseLtHandle_t*        handl
  *  @param[in]
  *  d_in           pointer to the matrix to check.
  *  @param[out]
- *  d_valid     validation results (0 correct, 1 wrong).
+ *  d_valid        validation results (0 correct, 1 wrong).
  *  @param[in]
  *  stream         HIP stream for the computation.
  *
@@ -998,19 +1026,22 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck2(const hipsparseLtHandle_t*        
  *  to be allocated before calling \ref hipsparseLtSpMMACompress() or \ref hipsparseLtSpMMACompress2().
  *
  *  @param[in]
- *  handle             hipsparselt library handle
+ *  handle                hipsparselt library handle
  *  @param[in]
- *  plan               matrix multiplication plan descriptor.
+ *  plan                  matrix multiplication plan descriptor.
  *  @param[out]
- *  compressedSize     size in bytes of the compressed matrix.
+ *  compressedSize        size in bytes of the compressed matrix.
+ *  @param[out]
+ *  compressBufferSize    size in bytes for the buffer needed for the matrix compression.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
- *  \retval     HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p plan or \p compressedSize is invalid.
+ *  \retval     HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p plan , \p compressedSize or \p compressBufferSize is invalid.
  */
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     handle,
                                                  const hipsparseLtMatmulPlan_t* plan,
-                                                 size_t*                        compressedSize);
+                                                 size_t*                        compressedSize,
+                                                 size_t*                        compressBufferSize);
 
 /*! \ingroup helper_module
  *  \brief compresses a dense matrix to structured matrix.
@@ -1021,15 +1052,17 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     
  *  in the \ref hipsparseLtMatmul() function.
  *
  *  @param[in]
- *  handle         handle to the hipsparselt library context queue.
+ *  handle             handle to the hipsparselt library context queue.
  *  @param[in]
- *  plan           matrix multiplication plan descriptor.
+ *  plan               matrix multiplication plan descriptor.
  *  @param[in]
- *  d_dense        pointer to the dense matrix.
+ *  d_dense            pointer to the dense matrix.
  *  @param[out]
- *  d_compressed   compressed matrix and metadata
+ *  d_compressed       compressed matrix and metadata.
+ *  @param[out]
+ *  d_compressBuffer   temporary buffer for the compression.
  *  @param[in]
- *  stream         HIP stream for the computation.
+ *  stream             HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval     HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p plan , \p d_dense or \p d_compressed is invalid.
@@ -1040,6 +1073,7 @@ hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle
                                            const hipsparseLtMatmulPlan_t* plan,
                                            const void*                    d_dense,
                                            void*                          d_compressed,
+                                           void*                          d_compressBuffer,
                                            hipStream_t                    stream);
 
 /*! \ingroup helper_module
@@ -1050,20 +1084,23 @@ hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle
  *  to be allocated before calling \ref hipsparseLtSpMMACompress or \ref hipsparseLtSpMMACompress2
  *
  *  @param[in]
- *  handle             hipsparselt library handle
+ *  handle                hipsparselt library handle
  *  @param[in]
- *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  sparseMatDescr        structured(sparse) matrix descriptor.
  *  @param[out]
- *  compressedSize     size in bytes of the compressed matrix.
+ *  compressedSize        size in bytes of the compressed matrix.
+ *  @param[out]
+ *  compressBufferSize    size in bytes for the buffer needed for the matrix compression.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
- *  \retval     HIPSPARSE_STATUS_NOT_INITIALIZED \p handle , \p sparseMatDescr \p compressedSize is invalid.
+ *  \retval     HIPSPARSE_STATUS_NOT_INITIALIZED \p handle , \p sparseMatDescr , \p compressedSize or \p compressBufferSize is invalid.
  *  \retval     HIPSPARSE_STATUS_NOT_SUPPORTED the problem is not support
  */
 HIPSPARSELT_EXPORT
 hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*        handle,
                                                   const hipsparseLtMatDescriptor_t* sparseMatDescr,
-                                                  size_t*                           compressedSize);
+                                                  size_t*                           compressedSize,
+                                                  size_t* compressBufferSize);
 
 /*! \ingroup helper_module
  *  \brief compresses a dense matrix to structured matrix.
@@ -1074,19 +1111,21 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*    
  *  in the \ref hipsparseLtMatmul() function.
  *
  *  @param[in]
- *  handle         handle to the hipsparselt library context queue.
+ *  handle             handle to the hipsparselt library context queue.
  *  @param[in]
- *  sparseMatDescr structured(sparse) matrix descriptor.
+ *  sparseMatDescr     structured(sparse) matrix descriptor.
  *  @param[in]
- *  isSparseA      specify if the structured (sparse) matrix is in the first position (matA or matB) (HIP backend only support matA)
+ *  isSparseA          specify if the structured (sparse) matrix is in the first position (matA or matB) (HIP backend only support matA)
  *  @param[in]
- *  op             operation that will be applied to the structured (sparse) matrix in the multiplication
+ *  op                 operation that will be applied to the structured (sparse) matrix in the multiplication
  *  @param[in]
- *  d_dense        pointer to the dense matrix.
+ *  d_dense            pointer to the dense matrix.
  *  @param[out]
- *  d_compressed   compressed matrix and metadata
+ *  d_compressed       compressed matrix and metadata
+ *  @param[out]
+ *  d_compressBuffer   temporary buffer for the compression.
  *  @param[in]
- *  stream         HIP stream for the computation.
+ *  stream             HIP stream for the computation.
  *
  *  \retval     HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval     HIPSPARSE_STATUS_INVALID_VALUE \p handle , \p sparseMatDescr , \p op , \p d_dense or \p d_compressed is invalid.
@@ -1099,6 +1138,7 @@ hipsparseStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        ha
                                             hipsparseOperation_t              op,
                                             const void*                       d_dense,
                                             void*                             d_compressed,
+                                            void*                             d_compressBuffer,
                                             hipStream_t                       stream);
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -376,14 +376,13 @@ rocsparselt_status
  *  \retval rocsparselt_status_success the operation completed successfully.
  *  \retval rocsparselt_status_invalid_pointer \p plan pointer is invalid.
  *  \retval rocsparselt_status_invalid_handle \p handle or \p matmulDescr or \p algSelection is invalid.
- *  \retval rocsparselt_status_invalid_size \p workspaceSize is invalid or values of \p rocsparselt_mat_num_batches from matrix A to D are inconisistent
+ *  \retval rocsparselt_status_invalid_size values of \p rocsparselt_mat_num_batches from matrix A to D are inconisistent
  */
 rocsparselt_status
     rocsparselt_matmul_plan_init(const rocsparselt_handle*               handle,
                                  rocsparselt_matmul_plan*                plan,
                                  const rocsparselt_matmul_descr*         matmulDescr,
-                                 const rocsparselt_matmul_alg_selection* algSelection,
-                                 size_t                                  workspaceSize);
+                                 const rocsparselt_matmul_alg_selection* algSelection);
 
 /*! \ingroup aux_module
  *  \brief Destroy a matrix multiplication plan descriptor

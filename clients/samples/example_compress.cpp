@@ -763,21 +763,25 @@ void run(int64_t               m,
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulAlgSelectionInit(
         &handle, &alg_sel, &matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT));
 
-    size_t workspace_size, compressed_size;
+    size_t workspace_size, compressed_size, compress_buffer_size;
     CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel, workspace_size));
+        hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan, &workspace_size));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size, &compress_buffer_size));
 
     printf("compressed_size = %ld\n", compressed_size);
 
-    T*             d_compressed;
+    T *            d_compressed, *d_compressBuffer;
     std::vector<T> hp_gold(compressed_size / sizeof(T));
     std::vector<T> hp_compressed(compressed_size / sizeof(T));
+    std::vector<T> hp_compressBuffer(compress_buffer_size / sizeof(T));
     CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompress(&handle, &plan, d_test, d_compressed, stream));
+    CHECK_HIP_ERROR(hipMalloc(&d_compressBuffer, compress_buffer_size));
+    CHECK_HIPSPARSELT_ERROR(
+        hipsparseLtSpMMACompress(&handle, &plan, d_test, d_compressed, d_compressBuffer, stream));
     hipStreamSynchronize(stream);
     CHECK_HIP_ERROR(
         hipMemcpy(hp_compressed.data(), d_compressed, compressed_size, hipMemcpyDeviceToHost));
@@ -882,6 +886,8 @@ void run(int64_t               m,
 
     CHECK_HIP_ERROR(hipFree(d));
     CHECK_HIP_ERROR(hipFree(d_test));
+    CHECK_HIP_ERROR(hipFree(d_compressed));
+    CHECK_HIP_ERROR(hipFree(d_compressBuffer));
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matA));
