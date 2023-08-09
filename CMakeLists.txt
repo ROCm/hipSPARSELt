@@ -112,6 +112,7 @@ endif()
 include(cmake/Dependencies.cmake)
 
 if (BUILD_CUDA)
+    set (HIP_ROOT_DIR ${HIP_PATH})
     find_package( CUDA REQUIRED )
     # Hip headers required of all clients; clients use hip to allocate device memory
     find_package( HIP MODULE REQUIRED )
