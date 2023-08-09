@@ -152,7 +152,7 @@ hipsparseLtMatDescAttribute_t
 .. doxygenenum:: hipsparseLtMatDescAttribute_t
 
 hipsparseLtComputetype_t
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 .. doxygenenum:: hipsparseLtComputetype_t
 
 hipsparseLtMatmulDescAttribute_t
@@ -194,6 +194,10 @@ Library Management Functions
 |:cpp:func:`hipsparseLtInit`               |
 +------------------------------------------+
 |:cpp:func:`hipsparseLtDestroy`            |
++------------------------------------------+
+|:cpp:func:`hipsparseLtGetVersion`         |
++------------------------------------------+
+|:cpp:func:`hipsparseLtGetProperty`        |
 +------------------------------------------+
 
 Matrix Descriptor Functions
@@ -292,185 +296,199 @@ Helper Functions
 
 
 Asynchronous API
-^^^^^^^^^^^^^^^^
+----------------
 Except a functions having memory allocation inside preventing asynchronicity, all hipSPARSELt functions are configured to operate in non-blocking fashion with respect to CPU, meaning these library functions return immediately.
 
 .. _hipsparselt_library_managment_functions_:
 
 Library Management Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 This library management describe functions that provide the library handle.
 
 .. _hipsparselt_init:
 
 hipsparseLtInit()
-'''''''''''''''''
+^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtInit
 
 .. _hipsparselt_destroy:
 
 hipsparseLtDestroy()
-''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtDestroy
+
+.. _hipsparselt_get_version:
+
+hipsparseLtGetVersion()
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxygenfunction:: hipsparseLtGetVersion
+
+.. _hipsparselt_get_property:
+
+hipsparseLtGetProperty()
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxygenfunction:: hipsparseLtGetProperty
 
 .. _hipsparselt_matrix_descriptor_functions_:
 
 Matrix Descriptor Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 The matrix descriptor describe fuctions that used to define sparse and dense matrix
 
 hipsparseLtDenseDescriptorInit()
-''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtDenseDescriptorInit
 
 hipsparseLtStructuredDescriptorInit()
-'''''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtStructuredDescriptorInit
 
 hipsparseLtMatDescriptorDestroy()
-'''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatDescriptorDestroy
 
 hipsparseLtMatDescSetAttribute()
-''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatDescSetAttribute
 
 hipsparseLtMatDescGetAttribute()
-''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatDescGetAttribute
 
 .. _hipsparselt_matmul_descriptor_functions_:
 
 Matmul Descriptor Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 This matmul descriptor describe fuctions that used to define how to do the matrix multiply.
 
 hipsparseLtMatmulDescriptorInit()
-'''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulDescriptorInit
 
 hipsparseLtMatmulDescSetAttribute()
-'''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulDescSetAttribute
 
 hipsparseLtMatmulDescGetAttribute()
-'''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulDescGetAttribute
 
 .. _hipsparselt_matmul_algorithm_functions_:
 
 Matmul Algorithm Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 This matmul algorithm describe functions that provide algortithms for doing the matrix multiply.
 
 hipsparseLtMatmulAlgSelectionInit()
-'''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulAlgSelectionInit
 
 hipsparseLtMatmulAlgSetAttribute()
-''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulAlgSetAttribute
 
 hipsparseLtMatmulAlgGetAttribute()
-''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulAlgGetAttribute
 
 .. _hipsparselt_matmul_functions_:
 
 Matmul Functions
-^^^^^^^^^^^^^^^^
+----------------
 
 This matmul describe operations that provide multiply of sparse matrices.
 
 hipsparseLtMatmulGetWorkspace()
-'''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulGetWorkspace
 
 hipsparseLtMatmulPlanInit()
-'''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulPlanInit
 
 hipsparseLtMatmulPlanDestroy()
-''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulPlanDestroy
 
 .. _hipsparselt_matmul:
 
 hipsparseLtMatmul()
-'''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmul
 
 hipsparseLtMatmulSearch()
-'''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtMatmulSearch
 
 .. _hipsparselt_helper_functions_:
 
 Helper Functions
-^^^^^^^^^^^^^^^^
+----------------
 
 This module holds available helper functions that are required for subsequent library calls
 
 .. _hipsparselt_spmma_prune:
 
 hipsparseLtSpMMAPrune()
-'''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMAPrune
 
 hipsparseLtSpMMAPruneCheck()
-''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMAPruneCheck
 
 hipsparseLtSpMMAPrune2()
-''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMAPrune2
 
 hipsparseLtSpMMAPruneCheck2()
-'''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMAPruneCheck2
 
 hipsparseLtSpMMACompressedSize()
-''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMACompressedSize
 
 hipsparseLtSpMMACompress()
-''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMACompress
 
 hipsparseLtSpMMACompressedSize2()
-'''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMACompressedSize2
 
 hipsparseLtSpMMACompress2()
-'''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: hipsparseLtSpMMACompress2
