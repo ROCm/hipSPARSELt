@@ -813,7 +813,13 @@ rocsparselt_status
 
             case rocsparselt_matmul_bias_pointer:
             {
-                _matmulDescr->bias_pointer = reinterpret_cast<float*>(const_cast<void*>(data));
+                if((status = validateGetAttributeDataSize<void*>(dataSize))
+                   != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
+                    return status;
+                }
+                memcpy(&_matmulDescr->bias_pointer, data, dataSize);
                 status                     = rocsparselt_status_success;
                 break;
             }
@@ -963,7 +969,13 @@ rocsparselt_status
                 break;
 
             case rocsparselt_matmul_bias_pointer:
-                data   = reinterpret_cast<void*>(_matmulDescr->bias_pointer);
+                if((status = validateGetAttributeDataSize<void*>(dataSize))
+                   != rocsparselt_status_success)
+                {
+                    log_error(_handle, __func__, "dataSize is invalid");
+                    return status;
+                }
+                memcpy(data, &_matmulDescr->bias_pointer, dataSize);
                 status = rocsparselt_status_success;
                 break;
             case rocsparselt_matmul_bias_stride:
