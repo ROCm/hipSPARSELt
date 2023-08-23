@@ -94,6 +94,11 @@ Tests:
   function:
     - aux_matmul_set_get_attr: *real_precisions
 
+- name: aux_matmul_set_get_bias_vector
+  category: pre_checkin
+  function:
+    - aux_matmul_set_get_bias_vector: *hpa_int8_precision
+
 - name: aux_matmul_alg_init_bad_arg
   category: pre_checkin
   function:
