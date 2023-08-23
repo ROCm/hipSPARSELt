@@ -449,6 +449,8 @@ void testing_spmm(const Arguments& arg)
         break;
     }
 
+    hipsparselt_seedrand();
+
     const size_t size_bias
         = arg.bias_vector ? (bias_stride == 0 ? M : bias_stride * num_batches) : 0;
     device_vector<Talpha> dBias(size_bias, 1, HMM);
@@ -456,13 +458,12 @@ void testing_spmm(const Arguments& arg)
     host_vector<Talpha> hBias(size_bias);
     if(arg.bias_vector)
     {
-
         hipsparselt_init<Talpha>(hBias, M, 1, M, bias_stride, num_batches);
-
         CHECK_HIP_ERROR(dBias.transfer_from(hBias));
+        void * _dBias = dBias;
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(
-                handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, dBias, sizeof(Talpha*)),
+                handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &_dBias, sizeof(void*)),
             HIPSPARSE_STATUS_SUCCESS);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(
@@ -545,7 +546,6 @@ void testing_spmm(const Arguments& arg)
     host_vector<Talpha> hD_gold_act(size_D_copy);
     host_vector<To>     hD_1(size_D_copy);
 
-    hipsparselt_seedrand();
 
     // Initial Data on CPU
     if(arg.alpha_isnan<Tc>())

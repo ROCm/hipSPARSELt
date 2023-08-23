@@ -95,6 +95,8 @@ namespace
                 testing_aux_matmul_get_attr_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_set_get_attr"))
                 testing_aux_matmul_set_get_attr(arg);
+            else if(!strcmp(arg.function, "aux_matmul_set_get_bias_vector"))
+                testing_aux_matmul_set_get_bias_vector(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_init_bad_arg"))
                 testing_aux_matmul_alg_init_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_init"))
@@ -147,6 +149,7 @@ namespace
                    || !strcmp(arg.function, "aux_matmul_set_attr_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_get_attr_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_set_get_attr")
+                   || !strcmp(arg.function, "aux_matmul_set_get_bias_vector")
                    || !strcmp(arg.function, "aux_matmul_alg_init_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_alg_init")
                    || !strcmp(arg.function, "aux_matmul_alg_assign")

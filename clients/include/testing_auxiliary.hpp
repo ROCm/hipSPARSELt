@@ -885,6 +885,69 @@ void testing_aux_matmul_get_attr_bad_arg(const Arguments& arg)
 #endif
 }
 
+void testing_aux_matmul_set_get_bias_vector(const Arguments& arg)
+{
+    const int64_t M = 128;
+    const int64_t N = 128;
+    const int64_t K = 128;
+
+    const int64_t lda = 128;
+    const int64_t ldb = 128;
+    const int64_t ldc = 128;
+
+    const hipsparseOperation_t opA = HIPSPARSE_OPERATION_TRANSPOSE;
+    const hipsparseOperation_t opB = HIPSPARSE_OPERATION_NON_TRANSPOSE;
+
+    hipsparselt_local_handle handle{arg};
+
+    hipsparselt_local_mat_descr matA(
+        hipsparselt_matrix_type_structured, handle, K, M, lda, arg.a_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matA.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matB(
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matB.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matC(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matC.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_mat_descr matD(
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
+    EXPECT_HIPSPARSE_STATUS(matD.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    hipsparselt_local_matmul_descr matmul(
+        handle, opA, opB, matA, matB, matC, matD, arg.compute_type);
+    EXPECT_HIPSPARSE_STATUS(matmul.status(), HIPSPARSE_STATUS_SUCCESS);
+
+    device_vector<float> dBias(M, 1);
+    CHECK_DEVICE_ALLOCATION(dBias.memcheck());
+    host_vector<float> hBias_gold(M);
+    host_vector<float> hBias(M);
+
+    hipsparselt_seedrand();
+    hipsparselt_init<float>(hBias_gold, M, 1, M, M, 1);
+    CHECK_HIP_ERROR(dBias.transfer_from(hBias_gold));
+
+    void * _dBias = dBias;
+
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulDescSetAttribute(
+            handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &_dBias, sizeof(void *)),
+        HIPSPARSE_STATUS_SUCCESS);
+  
+    void *dBias_r;
+    EXPECT_HIPSPARSE_STATUS(
+        hipsparseLtMatmulDescGetAttribute(
+            handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &dBias_r, sizeof(void *)),
+        HIPSPARSE_STATUS_SUCCESS);
+
+    CHECK_HIP_ERROR(
+        hipMemcpy(hBias, dBias_r, sizeof(float) * M, hipMemcpyDeviceToHost));
+   
+    unit_check_general<float>(M, 1, M, M, hBias_gold, hBias, 1);
+}
+
 void testing_aux_matmul_set_get_attr(const Arguments& arg)
 {
     const int64_t M = 128;
