@@ -153,16 +153,12 @@ std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_descr& 
     if(t.matrix_C != t.matrix_D)
         stream << ", matD=" << *(t.matrix_D);
     stream << ", computeType=" << rocsparselt_compute_type_to_string(t.compute_type)
-           << ", activation_relu=" << t.activation_relu
+           << ", activation=" << rocsparselt_activation_type_to_string(t.activation)
            << ", activation_relu_upperbound=" << t.activation_relu_upperbound
            << ", activation_relu_threshold=" << t.activation_relu_threshold
-           << ", activation_gelu=" << t.activation_gelu << ", activation_abs=" << t.activation_abs
-           << ", activation_leakyrelu=" << t.activation_leakyrelu
            << ", activation_leakyrelu_alpha=" << t.activation_leakyrelu_alpha
-           << ", activation_sigmoid=" << t.activation_sigmoid
-           << ", activation_tanh=" << t.activation_tanh
            << ", activation_tanh_alpha=" << t.activation_tanh_alpha
-           << ", alignactivation_tanh_betament=" << t.activation_tanh_beta
+           << ", activation_tanh_beta=" << t.activation_tanh_beta
            << ", bias_pointer=" << t.bias_pointer << ", bias_stride=" << t.bias_stride << "}";
     return stream;
 }

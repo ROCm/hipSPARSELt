@@ -755,10 +755,46 @@ rocsparselt_status
                 *val   = *(reinterpret_cast<const val_type*>(data));
                 status = rocsparselt_status_success;
             };
+
+            auto assign_activation = [&](auto act_type) {
+                int enable = 0;
+                assign_data(&enable);
+                if(status != rocsparselt_status_success)
+                    return;
+                if(enable)
+                {
+                    if(act_type == rocsparselt_matmul_activation_sigmoid
+                       || act_type == rocsparselt_matmul_activation_tanh)
+                    {
+                        if(_matmulDescr->matrix_D->type == rocsparselt_datatype_i8_r)
+                        {
+                            hipsparselt_cerr << rocsparselt_activation_type_to_string(act_type)
+                                             << " activation function is not support for int8"
+                                             << std::endl;
+                            log_error(_handle,
+                                      __func__,
+                                      "Sigmoid activation function is not support for int8");
+
+                            status                   = rocsparselt_status_not_implemented;
+                            _matmulDescr->activation = rocsparselt_matmul_activation_none;
+                            return;
+                        }
+                    }
+                    _matmulDescr->activation = act_type;
+                }
+                else
+                    _matmulDescr->activation = rocsparselt_matmul_activation_none;
+            };
+
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
-                assign_data(&_matmulDescr->activation_relu);
+            case rocsparselt_matmul_activation_gelu:
+            case rocsparselt_matmul_activation_abs:
+            case rocsparselt_matmul_activation_leakyrelu:
+            case rocsparselt_matmul_activation_sigmoid:
+            case rocsparselt_matmul_activation_tanh:
+                assign_activation(matmulAttribute);
                 break;
             case rocsparselt_matmul_activation_relu_upperbound:
                 assign_data(&_matmulDescr->activation_relu_upperbound);
@@ -766,43 +802,8 @@ rocsparselt_status
             case rocsparselt_matmul_activation_relu_threshold:
                 assign_data(&_matmulDescr->activation_relu_threshold);
                 break;
-            case rocsparselt_matmul_activation_gelu:
-                assign_data(&_matmulDescr->activation_gelu);
-                break;
-            case rocsparselt_matmul_activation_abs:
-                assign_data(&_matmulDescr->activation_abs);
-                break;
-            case rocsparselt_matmul_activation_leakyrelu:
-                assign_data(&_matmulDescr->activation_leakyrelu);
-                break;
             case rocsparselt_matmul_activation_leakyrelu_alpha:
                 assign_data(&_matmulDescr->activation_leakyrelu_alpha);
-                break;
-            case rocsparselt_matmul_activation_sigmoid:
-                assign_data(&_matmulDescr->activation_sigmoid);
-                if(_matmulDescr->activation_sigmoid
-                   && _matmulDescr->matrix_D->type == rocsparselt_datatype_i8_r)
-                {
-                    hipsparselt_cerr << "Sigmoid activation function is not support for int8"
-                                     << std::endl;
-                    log_error(
-                        _handle, __func__, "Sigmoid activation function is not support for int8");
-                    _matmulDescr->activation_sigmoid = 0;
-                    return rocsparselt_status_not_implemented;
-                }
-                break;
-            case rocsparselt_matmul_activation_tanh:
-                assign_data(&_matmulDescr->activation_tanh);
-                if(_matmulDescr->activation_tanh
-                   && _matmulDescr->matrix_D->type == rocsparselt_datatype_i8_r)
-                {
-                    hipsparselt_cerr << "Tanh activation function is not support for int8"
-                                     << std::endl;
-                    log_error(
-                        _handle, __func__, "Tanh activation function is not support for int8");
-                    _matmulDescr->activation_tanh = 0;
-                    return rocsparselt_status_not_implemented;
-                }
                 break;
             case rocsparselt_matmul_activation_tanh_alpha:
                 assign_data(&_matmulDescr->activation_tanh_alpha);
@@ -820,7 +821,7 @@ rocsparselt_status
                     return status;
                 }
                 memcpy(&_matmulDescr->bias_pointer, data, dataSize);
-                status                     = rocsparselt_status_success;
+                status = rocsparselt_status_success;
                 break;
             }
             case rocsparselt_matmul_bias_stride:
@@ -852,7 +853,7 @@ rocsparselt_status
             log_api(_handle,
                     __func__,
                     "matmulDescr[out]",
-                    matmulDescr,
+                    *_matmulDescr,
                     "matmulAttribute[in]",
                     matmulAttribute,
                     "data[in]",
@@ -932,13 +933,20 @@ rocsparselt_status
                 status                                    = rocsparselt_status_success;
             };
 
+            auto retrive_activation = [&](auto act_type) {
+                int enable = (_matmulDescr->activation == act_type) ? 1 : 0;
+                retrive_data(enable);
+            };
+
             switch(matmulAttribute)
             {
             case rocsparselt_matmul_activation_relu:
-                retrive_data(_matmulDescr->activation_relu);
-                break;
             case rocsparselt_matmul_activation_gelu:
-                retrive_data(_matmulDescr->activation_gelu);
+            case rocsparselt_matmul_activation_abs:
+            case rocsparselt_matmul_activation_leakyrelu:
+            case rocsparselt_matmul_activation_sigmoid:
+            case rocsparselt_matmul_activation_tanh:
+                retrive_activation(matmulAttribute);
                 break;
             case rocsparselt_matmul_activation_relu_upperbound:
                 retrive_data(_matmulDescr->activation_relu_upperbound);
@@ -946,20 +954,8 @@ rocsparselt_status
             case rocsparselt_matmul_activation_relu_threshold:
                 retrive_data(_matmulDescr->activation_relu_threshold);
                 break;
-            case rocsparselt_matmul_activation_abs:
-                retrive_data(_matmulDescr->activation_abs);
-                break;
-            case rocsparselt_matmul_activation_leakyrelu:
-                retrive_data(_matmulDescr->activation_leakyrelu);
-                break;
             case rocsparselt_matmul_activation_leakyrelu_alpha:
                 retrive_data(_matmulDescr->activation_leakyrelu_alpha);
-                break;
-            case rocsparselt_matmul_activation_sigmoid:
-                retrive_data(_matmulDescr->activation_sigmoid);
-                break;
-            case rocsparselt_matmul_activation_tanh:
-                retrive_data(_matmulDescr->activation_tanh);
                 break;
             case rocsparselt_matmul_activation_tanh_alpha:
                 retrive_data(_matmulDescr->activation_tanh_alpha);
@@ -992,7 +988,7 @@ rocsparselt_status
             log_api(_handle,
                     __func__,
                     "matmulDescr[in]",
-                    matmulDescr,
+                    *_matmulDescr,
                     "matmulAttribute[in]",
                     matmulAttribute,
                     "data[out]",
@@ -1410,8 +1406,7 @@ rocsparselt_status
         {
             hipsparselt_cerr << " number of batches of matrics A,B,C,D must be the same"
                              << std::endl;
-            log_error(
-                _handle, __func__, "number of batches of matrics A,B,C,D must be the same");
+            log_error(_handle, __func__, "number of batches of matrics A,B,C,D must be the same");
             return rocsparselt_status_invalid_size;
         }
 
@@ -1419,8 +1414,8 @@ rocsparselt_status
         _rocsparselt_matmul_plan tmpPlan(_handle);
         memcpy(_plan, &tmpPlan, sizeof(_rocsparselt_matmul_plan));
 
-        _plan->matmul_descr   = new _rocsparselt_matmul_descr(*_matmulDescr);
-        _plan->alg_selection  = const_cast<_rocsparselt_matmul_alg_selection*>(_algSelection);
+        _plan->matmul_descr  = new _rocsparselt_matmul_descr(*_matmulDescr);
+        _plan->alg_selection = const_cast<_rocsparselt_matmul_alg_selection*>(_algSelection);
         log_api(_handle,
                 __func__,
                 "plan[out]",
@@ -1436,7 +1431,6 @@ rocsparselt_status
         return status;
     }
     return rocsparselt_status_success;
-
 }
 
 /********************************************************************************

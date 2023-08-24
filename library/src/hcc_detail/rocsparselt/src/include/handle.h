@@ -197,15 +197,10 @@ struct _rocsparselt_matmul_descr
         , op_A(rhs.op_A)
         , op_B(rhs.op_B)
         , compute_type(rhs.compute_type)
-        , activation_relu(rhs.activation_relu)
+        , activation(rhs.activation)
         , activation_relu_upperbound(rhs.activation_relu_upperbound)
         , activation_relu_threshold(rhs.activation_relu_threshold)
-        , activation_gelu(rhs.activation_gelu)
-        , activation_abs(rhs.activation_abs)
-        , activation_leakyrelu(rhs.activation_leakyrelu)
         , activation_leakyrelu_alpha(rhs.activation_leakyrelu_alpha)
-        , activation_sigmoid(rhs.activation_sigmoid)
-        , activation_tanh(rhs.activation_tanh)
         , activation_tanh_alpha(rhs.activation_tanh_alpha)
         , activation_tanh_beta(rhs.activation_tanh_beta)
         , bias_pointer(rhs.bias_pointer)
@@ -256,19 +251,14 @@ struct _rocsparselt_matmul_descr
     //
     rocsparselt_compute_type compute_type;
     //data of rocsparselt_matmul_descr_attribute
-    int     activation_relu            = 0;
-    float   activation_relu_upperbound = std::numeric_limits<float>::infinity();
-    float   activation_relu_threshold  = 0.0f;
-    int     activation_gelu            = 0;
-    int     activation_abs             = 0;
-    int     activation_leakyrelu       = 0;
-    float   activation_leakyrelu_alpha = 1.0f;
-    int     activation_sigmoid         = 0;
-    int     activation_tanh            = 0;
-    float   activation_tanh_alpha      = 1.0f;
-    float   activation_tanh_beta       = 1.0f;
-    float*  bias_pointer               = nullptr;
-    int64_t bias_stride                = 0;
+    rocsparselt_matmul_descr_attribute activation = rocsparselt_matmul_activation_none;
+    float   activation_relu_upperbound            = std::numeric_limits<float>::infinity();
+    float   activation_relu_threshold             = 0.0f;
+    float   activation_leakyrelu_alpha            = 1.0f;
+    float   activation_tanh_alpha                 = 1.0f;
+    float   activation_tanh_beta                  = 1.0f;
+    float*  bias_pointer                          = nullptr;
+    int64_t bias_stride                           = 0;
 
 private:
     bool      is_reference = true;
@@ -377,7 +367,7 @@ struct _rocsparselt_matmul_plan
     _rocsparselt_matmul_alg_selection* alg_selection = nullptr;
 
     //
-    uintptr_t is_init        = 0;
+    uintptr_t is_init = 0;
 };
 
 #endif // HANDLE_H
