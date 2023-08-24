@@ -307,6 +307,7 @@ typedef enum rocsparselt_matmul_descr_attribute_
     = 14, /**< Alpha value of the Tanh activation function. */
     rocsparselt_matmul_activation_tanh_beta
     = 15, /**< Beta value of the Tanh activation function. */
+    rocsparselt_matmul_activation_none, /**< activation function is disabled. */
 } rocsparselt_matmul_descr_attribute;
 
 /*! \ingroup types_module

@@ -165,7 +165,11 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
         return rocsparselt_status_invalid_pointer;
     }
 
-    size_t workspaceSize = _plan->alg_selection->config_max_id == 0 ? 0 : _plan->alg_selection->configs[_plan->alg_selection->config_id].max_workspace_bytes,e;
+    size_t workspaceSize
+        = _plan->alg_selection->config_max_id == 0
+              ? 0
+              : _plan->alg_selection->configs[_plan->alg_selection->config_id].max_workspace_bytes,
+        e;
     if(workspace == nullptr && workspaceSize != 0)
     {
         hipsparselt_cerr << "The parameter number 9 (workspace) had an illegal value "
@@ -353,7 +357,8 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     // activation
     hipsparselt_activation_type act_type    = hipsparselt_activation_type::none;
     float                       act_args[2] = {0.0f, 0.0f};
-    if(matmul_descr->activation_relu)
+
+    if(matmul_descr->activation == rocsparselt_matmul_activation_relu)
     {
         act_args[0] = matmul_descr->activation_relu_threshold;
         act_args[1] = matmul_descr->activation_relu_upperbound;
@@ -362,23 +367,24 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
         else
             act_type = hipsparselt_activation_type::clippedrelu;
     }
-    else if(matmul_descr->activation_gelu)
+    else if(matmul_descr->activation == rocsparselt_matmul_activation_gelu)
         act_type = hipsparselt_activation_type::gelu;
-    else if(matmul_descr->activation_abs)
+    else if(matmul_descr->activation == rocsparselt_matmul_activation_abs)
         act_type = hipsparselt_activation_type::abs;
-    else if(matmul_descr->activation_leakyrelu)
+    else if(matmul_descr->activation == rocsparselt_matmul_activation_leakyrelu)
     {
         act_type    = hipsparselt_activation_type::leakyrelu;
         act_args[0] = matmul_descr->activation_leakyrelu_alpha;
     }
-    else if(matmul_descr->activation_sigmoid)
+    else if(matmul_descr->activation == rocsparselt_matmul_activation_sigmoid)
         act_type = hipsparselt_activation_type::sigmoid;
-    else if(matmul_descr->activation_tanh)
+    else if(matmul_descr->activation == rocsparselt_matmul_activation_tanh)
     {
         act_type    = hipsparselt_activation_type::tanh;
         act_args[0] = matmul_descr->activation_tanh_alpha;
         act_args[1] = matmul_descr->activation_tanh_beta;
     }
+
     float*  bias_vector = matmul_descr->bias_pointer;
     int64_t bias_stride = matmul_descr->bias_stride;
 
