@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,9 +64,10 @@ constexpr double clippedrelu_gflop_count(int64_t m, int64_t n)
 }
 
 template <typename T>
-constexpr double gelu_gflop_count(int64_t m, int64_t n)
+constexpr double gelu_gflop_count(int64_t m, int64_t n, bool scaling = false)
 {
-    return (9.0 * m * n) / 1e9;
+    int ops = scaling ? 10.0f : 9.0f;
+    return (ops * m * n) / 1e9;
 }
 
 template <typename T>

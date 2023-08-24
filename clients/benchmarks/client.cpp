@@ -412,8 +412,8 @@ try
          "Options: None, clippedrelu, gelu, relu")
 
         ("activation_arg1",
-         value<float>(&arg.activation_arg1)->default_value(0),
-         "activation argument #1, when activation_type is clippedrelu, this argument used to be the threshold.")
+         value<float>(&arg.activation_arg1)->default_value(std::numeric_limits<float>::quiet_NaN()),
+         "activation argument #1, when activation_type is clippedrelu, this argument used to be the threshold(default=0). when type is gelu, this argument used to be the gelu scaling. (default=1)")
 
         ("activation_arg2",
          value<float>(&arg.activation_arg2)->default_value(std::numeric_limits<float>::infinity()),
@@ -559,6 +559,13 @@ try
     arg.activation_type = string_to_hipsparselt_activation_type(activation_type);
     if(arg.activation_type == static_cast<hipsparselt_activation_type>(-1))
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
+    if(std::isnan(arg.activation_arg1))
+    {
+        if(arg.activation_type == hipsparselt_activation_type::gelu)
+            arg.activation_arg1 = 1.f;
+        else
+            arg.activation_arg1 = 0.f;
+    }
 
     if(arg.M < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M));
