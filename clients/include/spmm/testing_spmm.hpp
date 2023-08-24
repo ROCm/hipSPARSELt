@@ -113,15 +113,17 @@ auto _clippedrelu = [](auto in, auto arg1, auto arg2) -> decltype(in) {
         return static_cast<decltype(in)>(0);
 };
 
-auto _gelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
+auto _gelu = [](auto in, auto arg1, auto /*arg2*/) -> decltype(in) {
     using Tc = float;
 
     constexpr auto k0    = static_cast<Tc>(0.7978845608028654);
     constexpr auto k1    = static_cast<Tc>(0.044715);
     Tc             in_Tc = static_cast<Tc>(in);
 
-    return static_cast<decltype(in)>(
-        0.5f * (in_Tc * (1.f + std::tanh(k0 * (in_Tc * (1.f + k1 * (in_Tc * in_Tc)))))));
+    auto out = 0.5f * (in_Tc * (1.f + std::tanh(k0 * (in_Tc * (1.f + k1 * (in_Tc * in_Tc))))));
+    if(arg1 != 1) out *= arg1;
+
+    return static_cast<decltype(in)>(out);
 };
 
 auto _abs = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
@@ -393,6 +395,14 @@ void testing_spmm(const Arguments& arg)
                                               &activation_on,
                                               sizeof(activation_on)),
             HIPSPARSE_STATUS_SUCCESS);
+            if(arg.activation_arg1 != 1)
+                EXPECT_HIPSPARSE_STATUS(
+                    hipsparseLtMatmulDescSetAttribute(handle,
+                                                    matmul,
+                                                    HIPSPARSELT_MATMUL_ACTIVATION_GELU_SCALING,
+                                                    &arg.activation_arg1,
+                                                    sizeof(float)),
+                    HIPSPARSE_STATUS_SUCCESS);
         break;
     case hipsparselt_activation_type::abs:
         EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescSetAttribute(handle,
@@ -814,7 +824,7 @@ void testing_spmm(const Arguments& arg)
             flops += clippedrelu_gflop_count<float>(M, N);
             break;
         case hipsparselt_activation_type::gelu:
-            flops += gelu_gflop_count<float>(M, N);
+            flops += gelu_gflop_count<float>(M, N, arg.activation_arg1!=1);
             break;
         case hipsparselt_activation_type::abs:
             flops += abs_gflop_count<float>(M, N);
