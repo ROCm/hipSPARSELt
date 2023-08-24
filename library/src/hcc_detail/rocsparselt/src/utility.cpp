@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -142,5 +142,26 @@ const char* rocsparselt_layer_mode2string(rocsparselt_layer_mode layer_mode)
         return "Api";
     default:
         return "Invalid";
+    }
+}
+
+const char* rocsparselt_activation_type_to_string(rocsparselt_matmul_descr_attribute type)
+{
+    switch(type)
+    {
+    case rocsparselt_matmul_activation_abs:
+        return "abs";
+    case rocsparselt_matmul_activation_gelu:
+        return "gelu";
+    case rocsparselt_matmul_activation_leakyrelu:
+        return "leakyrelu";
+    case rocsparselt_matmul_activation_relu:
+        return "relu";
+    case rocsparselt_matmul_activation_sigmoid:
+        return "sigmoid";
+    case rocsparselt_matmul_activation_tanh:
+        return "tanh";
+    default:
+        return "none";
     }
 }

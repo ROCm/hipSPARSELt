@@ -104,6 +104,8 @@ const char* rocsparselt_matrix_type_to_string(rocsparselt_matrix_type type);
 
 const char* rocsparselt_layer_mode2string(rocsparselt_layer_mode layer_mode);
 
+const char* rocsparselt_activation_type_to_string(rocsparselt_matmul_descr_attribute type);
+
 // if trace logging is turned on with
 // (handle->layer_mode & rocsparselt_layer_mode_log_trace) == true
 // then
