@@ -146,6 +146,27 @@ namespace
         }
     };
 
+    /******************************************************
+    * Map a rocsparselt data type to a corresponding Tensile type *
+    ******************************************************/
+    inline Tensile::DataType rocsparselt_datatype_to_tensile_type(rocsparselt_datatype type)
+    {
+        switch(type)
+        {
+        case rocsparselt_datatype_f16_r:
+            return Tensile::DataType::Half;
+        case rocsparselt_datatype_f32_r:
+            return Tensile::DataType::Float;
+        case rocsparselt_datatype_bf16_r:
+            return Tensile::DataType::BFloat16;
+        case rocsparselt_datatype_i8_r:
+            return Tensile::DataType::Int8;
+        default:
+            assert(!"hipblasltDatatype_to_tensile_type: non-supported type");
+            return Tensile::DataType::None;
+        }
+    }
+
     /****************************************************************
      * Construct a Tensile Problem from a RocsparseltContractionProblem *
      ****************************************************************/
@@ -327,7 +348,9 @@ namespace
         if(prob.bias_vector != nullptr || useBias)
         {
             tensileProblem.setUseBias(true);
-            tensileProblem.setBias(tensile_datatype<float>, d.sizes()[0], prob.bias_stride);
+            tensileProblem.setBias(rocsparselt_datatype_to_tensile_type(prob.bias_type),
+                                   d.sizes()[0],
+                                   prob.bias_stride);
         }
 
         return tensileProblem;
