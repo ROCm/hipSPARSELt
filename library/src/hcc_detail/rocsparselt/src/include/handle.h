@@ -205,6 +205,7 @@ struct _rocsparselt_matmul_descr
         , activation_tanh_beta(rhs.activation_tanh_beta)
         , bias_pointer(rhs.bias_pointer)
         , bias_stride(rhs.bias_stride)
+        , bias_type(rhs.bias_type)
     {
         matrix_A     = rhs.matrix_A->clone();
         matrix_B     = rhs.matrix_B->clone();
@@ -251,14 +252,15 @@ struct _rocsparselt_matmul_descr
     //
     rocsparselt_compute_type compute_type;
     //data of rocsparselt_matmul_descr_attribute
-    rocsparselt_matmul_descr_attribute activation = rocsparselt_matmul_activation_none;
-    float   activation_relu_upperbound            = std::numeric_limits<float>::infinity();
-    float   activation_relu_threshold             = 0.0f;
-    float   activation_leakyrelu_alpha            = 1.0f;
-    float   activation_tanh_alpha                 = 1.0f;
-    float   activation_tanh_beta                  = 1.0f;
-    float*  bias_pointer                          = nullptr;
-    int64_t bias_stride                           = 0;
+    rocsparselt_matmul_descr_attribute activation   = rocsparselt_matmul_activation_none;
+    float                activation_relu_upperbound = std::numeric_limits<float>::infinity();
+    float                activation_relu_threshold  = 0.0f;
+    float                activation_leakyrelu_alpha = 1.0f;
+    float                activation_tanh_alpha      = 1.0f;
+    float                activation_tanh_beta       = 1.0f;
+    float*               bias_pointer               = nullptr;
+    int64_t              bias_stride                = 0;
+    rocsparselt_datatype bias_type;
 
 private:
     bool      is_reference = true;

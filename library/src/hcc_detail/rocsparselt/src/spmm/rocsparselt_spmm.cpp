@@ -441,6 +441,7 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
                                                             act_args[1],
                                                             bias_vector,
                                                             bias_stride,
+                                                            matmul_descr->bias_type,
                                                             workspace,
                                                             workspaceSize,
                                                             streams,

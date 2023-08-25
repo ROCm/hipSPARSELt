@@ -665,6 +665,18 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             _matmulDescr->matrix_C     = _matC;
             _matmulDescr->matrix_D     = _matD;
             _matmulDescr->compute_type = computeType;
+            switch(_matA->type)
+            {
+            case rocsparselt_datatype_bf16_r:
+            case rocsparselt_datatype_f16_r:
+                _matmulDescr->bias_type = _matA->type;
+                break;
+            case rocsparselt_datatype_i8_r:
+                _matmulDescr->bias_type = rocsparselt_datatype_f32_r;
+                break;
+            default:
+                break;
+            }
             log_api(_handle,
                     __func__,
                     "matmulDescr",

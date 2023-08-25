@@ -159,7 +159,8 @@ std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_descr& 
            << ", activation_leakyrelu_alpha=" << t.activation_leakyrelu_alpha
            << ", activation_tanh_alpha=" << t.activation_tanh_alpha
            << ", activation_tanh_beta=" << t.activation_tanh_beta
-           << ", bias_pointer=" << t.bias_pointer << ", bias_stride=" << t.bias_stride << "}";
+           << ", bias_pointer=" << t.bias_pointer << ", bias_stride=" << t.bias_stride
+           << ", bias_type=" << rocsparselt_datatype_to_string(t.bias_type) << "}";
     return stream;
 }
 

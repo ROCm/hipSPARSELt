@@ -56,20 +56,22 @@ void bias(int64_t m, int64_t n, int64_t ld, T* src, To* dest, Tb* bias)
     To (*saturate)(Tb val);
     saturate = std::is_same<int8_t, To>() ? saturate_i8 : saturate_o;
 
+    using TAccum = std::conditional_t<std::is_same<__half, Tb>::value, float, Tb>;
+
     for(int i = 0; i < m; i++)
     {
         Tb _bias = *(bias + i);
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
         {
-            auto pos = j * ld + i;
-            Tb   src_Tb;
-            if constexpr(std::is_same<T, Tb>())
-                src_Tb = *(src + pos);
+            auto   pos = j * ld + i;
+            TAccum src_Taccum;
+            if constexpr(std::is_same<T, TAccum>())
+                src_Taccum = *(src + pos);
             else
-                src_Tb = static_cast<Tb>(*(src + pos));
+                src_Taccum = static_cast<TAccum>(*(src + pos));
 
-            *(dest + pos) = saturate(src_Tb + _bias);
+            *(dest + pos) = saturate(src_Taccum + static_cast<TAccum>(_bias));
         }
     }
 }
@@ -453,14 +455,17 @@ void testing_spmm(const Arguments& arg)
 
     const size_t size_bias
         = arg.bias_vector ? (bias_stride == 0 ? M : bias_stride * num_batches) : 0;
-    device_vector<Talpha> dBias(size_bias, 1, HMM);
+
+    using TBias = std::conditional_t<std::is_same<Ti, int8_t>::value, Talpha, Ti>;
+
+    device_vector<TBias> dBias(size_bias, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dBias.memcheck());
-    host_vector<Talpha> hBias(size_bias);
+    host_vector<TBias> hBias(size_bias);
     if(arg.bias_vector)
     {
-        hipsparselt_init<Talpha>(hBias, M, 1, M, bias_stride, num_batches);
+        hipsparselt_init<TBias>(hBias, M, 1, M, bias_stride, num_batches);
         CHECK_HIP_ERROR(dBias.transfer_from(hBias));
-        void * _dBias = dBias;
+        void* _dBias = dBias;
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescSetAttribute(
                 handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &_dBias, sizeof(void*)),
@@ -545,7 +550,6 @@ void testing_spmm(const Arguments& arg)
     host_vector<To>     hD_gold(size_D_copy);
     host_vector<Talpha> hD_gold_act(size_D_copy);
     host_vector<To>     hD_1(size_D_copy);
-
 
     // Initial Data on CPU
     if(arg.alpha_isnan<Tc>())
@@ -663,14 +667,14 @@ void testing_spmm(const Arguments& arg)
                 if(arg.bias_vector)
                 {
                     if(activation_on)
-                        bias<Talpha>(M,
-                                     N,
-                                     ldd,
-                                     hD_gold_act + pos,
-                                     hD_gold_act + pos,
-                                     hBias + bias_stride * i);
+                        bias<Talpha, TBias>(M,
+                                            N,
+                                            ldd,
+                                            hD_gold_act + pos,
+                                            hD_gold_act + pos,
+                                            hBias + bias_stride * i);
                     else
-                        bias<Talpha, Talpha, To>(
+                        bias<Talpha, TBias, To>(
                             M, N, ldd, hD_gold_act + pos, hD_gold + pos, hBias + bias_stride * i);
                 }
 
