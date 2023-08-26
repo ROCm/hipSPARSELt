@@ -671,10 +671,8 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             case rocsparselt_datatype_f16_r:
                 _matmulDescr->bias_type = _matA->type;
                 break;
-            case rocsparselt_datatype_i8_r:
-                _matmulDescr->bias_type = rocsparselt_datatype_f32_r;
-                break;
             default:
+                _matmulDescr->bias_type = rocsparselt_datatype_f32_r;
                 break;
             }
             log_api(_handle,
@@ -854,7 +852,11 @@ rocsparselt_status
                 }
                 break;
             }
-
+            case rocsparselt_matmul_bias_type:
+            {
+                assign_data(&_matmulDescr->bias_type);
+                break;
+            }
             default:
                 log_error(
                     _handle, __func__, "matmulAttribute", matmulAttribute, "is not implemented");
@@ -989,7 +991,11 @@ rocsparselt_status
             case rocsparselt_matmul_bias_stride:
                 retrive_data(_matmulDescr->bias_stride);
                 break;
-
+            case rocsparselt_matmul_bias_type:
+            {
+                retrive_data(_matmulDescr->bias_type);
+                break;
+            }
             default:
                 log_error(
                     _handle, __func__, "matmulAttribute", matmulAttribute, "is not implemented");
