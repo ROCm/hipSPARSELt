@@ -233,6 +233,7 @@ void testing_spmm_bad_arg(const Arguments& arg)
 template <typename Ti,
           typename To,
           typename Tc,
+          typename TBias,
           hipsparselt_batch_type btype = hipsparselt_batch_type::none>
 void testing_spmm(const Arguments& arg)
 {
@@ -275,6 +276,9 @@ void testing_spmm(const Arguments& arg)
     int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * N;
     int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * N;
     int64_t bias_stride = do_strided_batched ? arg.bias_stride == -1 ? M : arg.bias_stride : 0;
+    hipsparseLtDatatype_t bias_type
+        = arg.bias_type == 0 ? (arg.a_type == HIPSPARSELT_R_8I ? HIPSPARSELT_R_32F : arg.a_type)
+                             : arg.bias_type;
 
     hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
                                      handle,
@@ -456,8 +460,6 @@ void testing_spmm(const Arguments& arg)
     const size_t size_bias
         = arg.bias_vector ? (bias_stride == 0 ? M : bias_stride * num_batches) : 0;
 
-    using TBias = std::conditional_t<std::is_same<Ti, int8_t>::value, Talpha, Ti>;
-
     device_vector<TBias> dBias(size_bias, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dBias.memcheck());
     host_vector<TBias> hBias(size_bias);
@@ -474,6 +476,14 @@ void testing_spmm(const Arguments& arg)
             hipsparseLtMatmulDescSetAttribute(
                 handle, matmul, HIPSPARSELT_MATMUL_BIAS_STRIDE, &bias_stride, sizeof(int64_t)),
             HIPSPARSE_STATUS_SUCCESS);
+#ifdef __HIP_PLATFORM_HCC__
+        EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescSetAttribute(handle,
+                                                                  matmul,
+                                                                  HIPSPARSELT_MATMUL_BIAS_TYPE,
+                                                                  &bias_type,
+                                                                  sizeof(hipsparseLtDatatype_t)),
+                                HIPSPARSE_STATUS_SUCCESS);
+#endif
     }
 
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);

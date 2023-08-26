@@ -73,29 +73,53 @@ template <template <typename...> class TEST>
 auto hipsparselt_spmm_dispatch(const Arguments& arg)
 {
     const auto Ti = arg.a_type, To = arg.c_type;
-    auto       Tc = arg.compute_type;
+    auto       Tc    = arg.compute_type;
+    auto       TBias = arg.bias_type == 0
+                           ? (arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF
+                                  ? arg.a_type
+                                  : HIPSPARSELT_R_32F)
+                           : arg.bias_type;
 
     if(arg.b_type == Ti && arg.d_type == To)
     {
         if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSELT_COMPUTE_32F)
         {
-            return TEST<__half, __half, float>{}(arg);
+            switch(TBias)
+            {
+            case HIPSPARSELT_R_16F:
+                return TEST<__half, __half, float, __half>{}(arg);
+            case HIPSPARSELT_R_32F:
+                return TEST<__half, __half, float, float>{}(arg);
+            default:
+                break;
+            }
         }
         else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSELT_COMPUTE_32F)
         {
-            return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
+            switch(TBias)
+            {
+            case HIPSPARSELT_R_16BF:
+                return TEST<hip_bfloat16, hip_bfloat16, float, hip_bfloat16>{}(arg);
+            case HIPSPARSELT_R_32F:
+                return TEST<hip_bfloat16, hip_bfloat16, float, float>{}(arg);
+            default:
+                break;
+            }
         }
-        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSELT_COMPUTE_16F)
+        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSELT_COMPUTE_16F
+           && TBias == HIPSPARSELT_R_16F)
         {
-            return TEST<__half, __half, __half>{}(arg);
+            return TEST<__half, __half, __half, __half>{}(arg);
         }
-        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSELT_COMPUTE_16F)
+        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSELT_COMPUTE_16F
+                && TBias == HIPSPARSELT_R_16BF)
         {
-            return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16>{}(arg);
+            return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16, hip_bfloat16>{}(arg);
         }
-        else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSELT_COMPUTE_32I)
+        else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSELT_COMPUTE_32I
+                && TBias == HIPSPARSELT_R_32F)
         {
-            return TEST<int8_t, int8_t, int32_t>{}(arg);
+            return TEST<int8_t, int8_t, int32_t, float>{}(arg);
         }
     }
     return TEST<void>{}(arg);

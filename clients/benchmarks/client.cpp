@@ -78,16 +78,17 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
 
 // Template to dispatch testing_gemm_strided_batched_ex for performance tests
 // the test is marked invalid when (Ti, To, Tc) not in (H/H/S, B/B/S, I8/I8/32)
-template <typename Ti, typename To = Ti, typename Tc = To, typename = void>
+template <typename Ti, typename To = Ti, typename Tc = To, typename TBias = Ti, typename = void>
 struct perf_sparse : hipsparselt_test_invalid
 {
 };
 
-template <typename Ti, typename To, typename Tc>
+template <typename Ti, typename To, typename Tc, typename TBias>
 struct perf_sparse<
     Ti,
     To,
     Tc,
+    TBias,
     std::enable_if_t<
 #ifdef __HIP_PLATFORM_HCC__
         (std::is_same<Ti, To>{} && (std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{})
@@ -111,10 +112,10 @@ struct perf_sparse<
             {"compress_batched", testing_compress<Ti, To, Tc, hipsparselt_batch_type::batched>},
             {"compress_strided_batched",
              testing_compress<Ti, To, Tc, hipsparselt_batch_type::strided_batched>},
-            {"spmm", testing_spmm<Ti, To, Tc>},
-            {"spmm_batched", testing_spmm<Ti, To, Tc, hipsparselt_batch_type::batched>},
+            {"spmm", testing_spmm<Ti, To, Tc, TBias>},
+            {"spmm_batched", testing_spmm<Ti, To, Tc, TBias, hipsparselt_batch_type::batched>},
             {"spmm_strided_batched",
-             testing_spmm<Ti, To, Tc, hipsparselt_batch_type::strided_batched>},
+             testing_spmm<Ti, To, Tc, TBias, hipsparselt_batch_type::strided_batched>},
         };
         run_function(map, arg);
     }
@@ -264,6 +265,7 @@ try
     std::string c_type;
     std::string d_type;
     std::string compute_type;
+    std::string bias_type;
     std::string initialization;
     std::string filter;
     std::string activation_type;
@@ -425,6 +427,10 @@ try
          value<int64_t>(&arg.bias_stride)->default_value(0),
          "Specific stride of strided_batched vector bias. (defalut:0, broadcast)")
 
+        ("bias_type",
+         value<std::string>(&bias_type), "Precision of bias. (default: f16_r - when input precision is f16_r, bf16_r - when input precision is bf16_r, f32_r - when input precision is i8_r ) "
+         "Options: s,f32_r,h,f16_r,b,bf16_r")
+
         ("device",
          value<int>(&device_id)->default_value(0),
          "Set default device to be used for subsequent program runs")
@@ -530,6 +536,21 @@ try
                            : string_to_hipsparselt_computetype(compute_type);
     if(arg.compute_type == static_cast<hipsparseLtComputetype_t>(-1))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
+
+    if(bias_type == "")
+    {
+        arg.bias_type = (arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF)
+                            ? arg.a_type
+                            : HIPSPARSELT_R_32F;
+    }
+    else
+    {
+        arg.bias_type = string_to_hipsparselt_datatype(bias_type);
+        if(!(arg.a_type == arg.bias_type || arg.bias_type == HIPSPARSELT_R_32F))
+            arg.bias_type = static_cast<hipsparseLtDatatype_t>(-1);
+    }
+    if(arg.bias_type == static_cast<hipsparseLtDatatype_t>(-1))
+        throw std::invalid_argument("Invalid value for --bias_type " + bias_type);
 
     arg.initialization = string2hipsparselt_initialization(initialization);
     if(arg.initialization == static_cast<hipsparselt_initialization>(-1))

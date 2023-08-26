@@ -410,7 +410,7 @@ struct hipsparselt_test_invalid
                          << " c: " << hipsparselt_datatype_to_string(arg.c_type)
                          << " d: " << hipsparselt_datatype_to_string(arg.d_type)
                          << " compute:" << hipsparselt_computetype_to_string(arg.compute_type)
-                         << std::endl;
+                         << " bias:" << hipsparselt_datatype_to_string(arg.bias_type) << std::endl;
         hipsparselt_abort();
 #endif
     }
