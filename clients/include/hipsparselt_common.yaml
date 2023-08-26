@@ -4,8 +4,10 @@ Datatypes:
   - hipsparseLtDatatype_t:
       bases: [ c_int ]
       attr:
+        none: 0
         f16_r: 150
-        i8_r:  160
+        f32_r: 151
+        i8_r: 160
         bf16_r: 168
   - hipsparseLtComputetype_t:
       bases: [ c_int ]
@@ -110,6 +112,7 @@ Arguments:
   - activation_arg2: c_float
   - bias_vector: c_bool
   - bias_stride: c_int64
+  - bias_type: hipsparseLtDatatype_t
   - c_noalias_d: c_bool
   - HMM: c_bool
   - search: c_bool
@@ -185,5 +188,6 @@ Defaults:
   activation_arg2: 0
   bias_vector: false
   bias_stride: -1
+  bias_type: none
   search: false
   search_iters: 10

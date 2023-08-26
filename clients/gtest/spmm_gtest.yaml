@@ -60,6 +60,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   bias_vector: [false, true]
   bias_stride: [0, -1, 256]
+  bias_type: [f32_r, f16_r]
 
 - name: spmm_medium
   category: pre_checkin

@@ -73,6 +73,7 @@ void Arguments::init()
     c_type       = HIPSPARSELT_R_16F;
     d_type       = HIPSPARSELT_R_16F;
     compute_type = HIPSPARSELT_COMPUTE_32F;
+    bias_type    = HIPSPARSELT_R_16F;
 
     prune_algo = HIPSPARSELT_PRUNE_SPMMA_STRIP;
 

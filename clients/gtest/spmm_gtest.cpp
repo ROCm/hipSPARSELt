@@ -42,29 +42,30 @@ namespace
     // In the general case of <Ti, To, Tc>, these tests do not apply, and if this
     // functor is called, an internal error message is generated. When converted
     // to bool, this functor returns false.
-    template <typename Ti, typename To = Ti, typename Tc = To, typename = void>
+    template <typename Ti, typename To = Ti, typename Tc = To, typename TBias = Ti, typename = void>
     struct spmm_testing : hipsparselt_test_invalid
     {
     };
 
     // When Ti = To = Tc != void, this test applies.
     // When converted to bool, this functor returns true.
-    template <typename Ti, typename To, typename Tc>
+    template <typename Ti, typename To, typename Tc, typename TBias>
     struct spmm_testing<
         Ti,
         To,
         Tc,
+        TBias,
         std::enable_if_t<std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{}
                          || std::is_same<Ti, int8_t>{}>> : hipsparselt_test_valid
     {
         void operator()(const Arguments& arg)
         {
             if(!strcmp(arg.function, "spmm"))
-                testing_spmm<Ti, To, Tc>(arg);
+                testing_spmm<Ti, To, Tc, TBias>(arg);
             else if(!strcmp(arg.function, "spmm_batched"))
-                testing_spmm<Ti, To, Tc, hipsparselt_batch_type::batched>(arg);
+                testing_spmm<Ti, To, Tc, TBias, hipsparselt_batch_type::batched>(arg);
             else if(!strcmp(arg.function, "spmm_strided_batched"))
-                testing_spmm<Ti, To, Tc, hipsparselt_batch_type::strided_batched>(arg);
+                testing_spmm<Ti, To, Tc, TBias, hipsparselt_batch_type::strided_batched>(arg);
             else if(!strcmp(arg.function, "spmm_bad_arg"))
                 testing_spmm_bad_arg<Ti, To, Tc>(arg);
             else if(!strcmp(arg.function, "aux_plan_assign"))
@@ -127,7 +128,8 @@ namespace
 
                 if(arg.bias_vector)
                 {
-                    name << "_bias_" << arg.bias_stride;
+                    name << "_bias_" << arg.bias_stride << "_"
+                         << hipsparselt_datatype_to_string(arg.bias_type);
                 }
 
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);

@@ -305,6 +305,8 @@ rocsparselt_matmul_descr_attribute_
         return rocsparselt_matmul_activation_tanh_alpha;
     case HIPSPARSELT_MATMUL_ACTIVATION_TANH_BETA:
         return rocsparselt_matmul_activation_tanh_beta;
+    case HIPSPARSELT_MATMUL_BIAS_TYPE:
+        return rocsparselt_matmul_bias_type;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -347,6 +349,8 @@ hipsparseLtMatmulDescAttribute_t
         return HIPSPARSELT_MATMUL_ACTIVATION_TANH_ALPHA;
     case rocsparselt_matmul_activation_tanh_beta:
         return HIPSPARSELT_MATMUL_ACTIVATION_TANH_BETA;
+    case rocsparselt_matmul_bias_type:
+        return HIPSPARSELT_MATMUL_BIAS_TYPE;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }

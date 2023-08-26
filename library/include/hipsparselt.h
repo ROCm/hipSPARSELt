@@ -205,6 +205,10 @@ typedef enum {
    HIPSPARSELT_MATMUL_ACTIVATION_TANH = 13,            /**< Tanh activation function. HIP backend only */
    HIPSPARSELT_MATMUL_ACTIVATION_TANH_ALPHA = 14,      /**< Alpha value of the Tanh activation function. HIP backend only */
    HIPSPARSELT_MATMUL_ACTIVATION_TANH_BETA = 15,       /**< Beta value of the Tanh activation function. HIP backend only */
+   HIPSPARSELT_MATMUL_BIAS_TYPE = 16,                  /**< Precision of Bias. HIP backend only,
+                                                            When Input's datatype is FP16 - Bias type can be FP16 or FP32. (default FP16)
+                                                            When Input's datatype is BF16 - Bias type can be BF16 or FP32. (default BF16)
+                                                            In other cases - Bias type is FP32.*/
 } hipsparseLtMatmulDescAttribute_t;
 
 /*! \ingroup types_module
