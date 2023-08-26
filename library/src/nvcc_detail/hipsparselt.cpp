@@ -300,7 +300,7 @@ hipsparseLtMatmulDescAttribute_t
 {
     switch(attr)
     {
-    case HIPSPARSELT_MATMUL_ACTIVATION_RELU:
+    case CUSPARSELT_MATMUL_ACTIVATION_RELU:
         return HIPSPARSELT_MATMUL_ACTIVATION_RELU;
     case CUSPARSELT_MATMUL_ACTIVATION_RELU_UPPERBOUND:
         return HIPSPARSELT_MATMUL_ACTIVATION_RELU_UPPERBOUND;
@@ -891,7 +891,7 @@ hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle
 hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*        handle,
                                                   const hipsparseLtMatDescriptor_t* sparseMatDescr,
                                                   size_t*                           compressedSize,
-                                                  size_t*                           compressBufferSize)
+                                                  size_t* compressBufferSize)
 {
     return hipCUSPARSEStatusToHIPStatus(
         cusparseLtSpMMACompressedSize2((const cusparseLtHandle_t*)handle,
