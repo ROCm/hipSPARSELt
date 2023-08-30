@@ -744,7 +744,7 @@ int main(int argc, char* argv[])
     hipsparseLtMatDescriptor_t      matA, matB, matC, matD;
     hipsparseLtMatmulDescriptor_t   matmul;
     hipsparseLtMatmulAlgSelection_t alg_sel;
-    hipsparseLtMatmulPlan_t         plan, plan_tmp;
+    hipsparseLtMatmulPlan_t         plan;
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtInit(&handle));
 
@@ -799,9 +799,9 @@ int main(int argc, char* argv[])
 
     size_t workspace_size, compressed_size, compress_buffer_size;
     CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtMatmulPlanInit(&handle, &plan_tmp, &matmul, &alg_sel));
+        hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan_tmp, &workspace_size));
+    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan, &workspace_size));
 
 
     CHECK_HIPSPARSELT_ERROR(
@@ -941,7 +941,6 @@ int main(int argc, char* argv[])
     if(workspace_size > 0)
         CHECK_HIP_ERROR(hipFree(d_workspace));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan_tmp));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matA));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matB));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matC));
