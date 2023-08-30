@@ -155,7 +155,7 @@ install_packages( )
 
   # dependencies needed for library and clients to build
   local library_dependencies_ubuntu=( "gfortran" "make" "pkg-config" "libnuma1" )
-  local library_dependencies_centos=( "epel-release" "make" "gcc-c++" "rpm-build" )
+  local library_dependencies_centos=( "epel-release" "make" "gcc-c++" "rpm-build" "devtoolset-7-gcc-gfortran" )
   local library_dependencies_centos8=( "gcc-gfortran" "epel-release" "make" "gcc-c++" "rpm-build" "numactl-libs" )
   local library_dependencies_fedora=( "gcc-gfortran" "make" "cmake" "gcc-c++" "libcxx-devel" "rpm-build" "numactl-libs" )
   local library_dependencies_sles=( "gcc-fortran" "make" "cmake" "gcc-c++" "libcxxtools9" "rpm-build" )
@@ -653,7 +653,7 @@ pushd .
 
   # Build library with AMD toolchain because of existense of device kernels
   if [[ "${build_relocatable}" == true ]]; then
-    FC=gfortran CXX=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF \
+    FC=gfortran CXX=${compiler} CC=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF \
       -DCMAKE_INSTALL_PREFIX=${install_prefix} \
       -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} \
       -DCMAKE_SHARED_LINKER_FLAGS="${rocm_rpath}" \
@@ -662,7 +662,7 @@ pushd .
       -DROCM_DISABLE_LDCONFIG=ON \
       -DROCM_PATH="${rocm_path}" ../..
   else
-    FC=gfortran CXX=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} -DROCM_PATH="${rocm_path}" ../..
+    FC=gfortran CXX=${compiler} CC=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} -DROCM_PATH="${rocm_path}" ../..
   fi
   check_exit_code "$?"
 
