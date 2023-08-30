@@ -55,7 +55,7 @@ endif()
 
 if(NOT BUILD_CUDA)
 # Adding CMAKE_PREFIX_PATH, needed for static builds
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+list( APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/llvm ${ROCM_PATH} ${ROCM_PATH}/hip /opt/rocm/llvm /opt/rocm /opt/rocm/hip )
 endif()
 
 if( NOT DEFINED ENV{HIP_PATH})
