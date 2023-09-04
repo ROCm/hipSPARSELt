@@ -402,7 +402,7 @@ Tests:
   transB: N
   alpha: 1
   beta: 0
-  activation_type: [ none, relu, gelu, abs]
+  activation_type: [ none, relu, abs]
 
 - name: spmm_128_activation_leakyrelu
   category: pre_checkin
@@ -415,7 +415,7 @@ Tests:
   transB: N
   alpha: 1
   beta: 0
-  activation_type: [leakyrelu]
+  activation_type: [leakyrelu, gelu]
   activation_arg1 : [-1.0, 0.0, 0.5, 1.0]
 
 - name: spmm_128_activation_clippedrelu

@@ -367,7 +367,10 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
             act_type = hipsparselt_activation_type::clippedrelu;
     }
     else if(matmul_descr->activation == rocsparselt_matmul_activation_gelu)
-        act_type = hipsparselt_activation_type::gelu;
+    {
+        act_type    = hipsparselt_activation_type::gelu;
+        act_args[0] = matmul_descr->activation_gelu_scaling;
+    }
     else if(matmul_descr->activation == rocsparselt_matmul_activation_abs)
         act_type = hipsparselt_activation_type::abs;
     else if(matmul_descr->activation == rocsparselt_matmul_activation_leakyrelu)
