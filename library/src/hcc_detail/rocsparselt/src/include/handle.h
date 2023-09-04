@@ -203,6 +203,7 @@ struct _rocsparselt_matmul_descr
         , activation_leakyrelu_alpha(rhs.activation_leakyrelu_alpha)
         , activation_tanh_alpha(rhs.activation_tanh_alpha)
         , activation_tanh_beta(rhs.activation_tanh_beta)
+        , activation_gelu_scaling(rhs.activation_gelu_scaling)
         , bias_pointer(rhs.bias_pointer)
         , bias_stride(rhs.bias_stride)
         , bias_type(rhs.bias_type)
@@ -258,6 +259,7 @@ struct _rocsparselt_matmul_descr
     float                activation_leakyrelu_alpha = 1.0f;
     float                activation_tanh_alpha      = 1.0f;
     float                activation_tanh_beta       = 1.0f;
+    float                activation_gelu_scaling    = 1.0f;
     float*               bias_pointer               = nullptr;
     int64_t              bias_stride                = 0;
     rocsparselt_datatype bias_type;

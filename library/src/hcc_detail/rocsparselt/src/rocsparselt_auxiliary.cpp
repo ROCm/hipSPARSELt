@@ -821,7 +821,11 @@ rocsparselt_status
             case rocsparselt_matmul_activation_tanh_beta:
                 assign_data(&_matmulDescr->activation_tanh_beta);
                 break;
-
+            case rocsparselt_matmul_activation_gelu_scaling:
+                assign_data(&_matmulDescr->activation_gelu_scaling);
+                if(status == rocsparselt_status_success)
+                    _matmulDescr->activation = rocsparselt_matmul_activation_gelu;
+                break;
             case rocsparselt_matmul_bias_pointer:
             {
                 if((status = validateGetAttributeDataSize<void*>(dataSize))
