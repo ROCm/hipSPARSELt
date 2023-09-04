@@ -119,6 +119,7 @@ namespace
                         name << '_' << arg.activation_arg1 << '_' << arg.activation_arg2;
                         break;
                     case hipsparselt_activation_type::leakyrelu:
+                    case hipsparselt_activation_type::gelu:
                         name << '_' << arg.activation_arg1;
                         break;
                     default:

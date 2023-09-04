@@ -329,7 +329,10 @@ namespace
             tensileAct = Tensile::ActivationType::Clippedrelu;
             break;
         case hipsparselt_activation_type::gelu:
-            tensileAct = Tensile::ActivationType::Gelu;
+            if(prob.act_arg0 == 1.f)
+                tensileAct = Tensile::ActivationType::Gelu;
+            else
+                tensileAct = Tensile::ActivationType::Geluscaling;
             break;
         case hipsparselt_activation_type::leakyrelu:
             tensileAct = Tensile::ActivationType::Leakyrelu;
