@@ -963,5 +963,6 @@ std::atomic_bool& rocsparselt_internal_tensile_is_initialized()
 GENERATE_DEFINITIONS(__half, __half, float)
 GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float)
 GENERATE_DEFINITIONS(int8_t, int8_t, float)
+GENERATE_DEFINITIONS(int8_t, __half, float)
 
 #undef GENERATE_DEFINITIONS

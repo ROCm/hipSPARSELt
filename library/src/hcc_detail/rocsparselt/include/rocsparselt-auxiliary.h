@@ -85,7 +85,7 @@ rocsparselt_status rocsparselt_destroy(const rocsparselt_handle* handle);
  *  \retval rocsparselt_status_invalid_handle \p handle is invalid.
  *  \retval rocsparselt_status_invalid_pointer \p descr pointer is invalid.
  *  \retval rocsparselt_status_invalid_size \p row, \p cols or \p ld is invalid.
- *  \retval rocsparselt_status_not_implement \ref rocsparselt_datatype or \ref rocsparselt_order is invalid.
+ *  \retval rocsparselt_status_not_implemented \ref rocsparselt_datatype or \ref rocsparselt_order is invalid.
  */
 rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle,
                                                 rocsparselt_mat_descr*    matDescr,
@@ -110,7 +110,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
  *  \retval rocsparselt_status_invalid_handle \p handle is invalid.
  *  \retval rocsparselt_status_invalid_pointer \p descr pointer is invalid.
  *  \retval rocsparselt_status_invalid_size \p row, \p cols or \p ld is invalid.
- *  \retval rocsparselt_status_not_implement \ref rocsparselt_datatype or \ref rocsparselt_order is invalid.
+ *  \retval rocsparselt_status_not_implemented \ref rocsparselt_datatype or \ref rocsparselt_order is invalid.
  */
 rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* handle,
                                                      rocsparselt_mat_descr*    matDescr,
