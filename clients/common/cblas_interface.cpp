@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,12 +33,12 @@ CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipsparseOperation_t trans)
 {
     switch(trans)
     {
-        case HIPSPARSE_OPERATION_NON_TRANSPOSE:
-            return CblasNoTrans;
-        case HIPSPARSE_OPERATION_TRANSPOSE:
-            return CblasTrans;
-        case HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE:
-            return CblasConjTrans;
+    case HIPSPARSE_OPERATION_NON_TRANSPOSE:
+        return CblasNoTrans;
+    case HIPSPARSE_OPERATION_TRANSPOSE:
+        return CblasTrans;
+    case HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE:
+        return CblasConjTrans;
     }
 }
 
@@ -384,4 +384,61 @@ void cblas_gemm<int8_t, float, float>(hipsparseOperation_t transA,
 
     for(size_t i = 0; i < sizeC; i++)
         C[i] = static_cast<float>(C_double[i]);
+}
+
+template <>
+void cblas_gemm<int8_t, __half, float>(hipsparseOperation_t transA,
+                                       hipsparseOperation_t transB,
+                                       int64_t              m,
+                                       int64_t              n,
+                                       int64_t              k,
+                                       float                alpha,
+                                       const int8_t*        A,
+                                       int64_t              lda,
+                                       const int8_t*        B,
+                                       int64_t              ldb,
+                                       float                beta,
+                                       __half*              C,
+                                       int64_t              ldc,
+                                       bool                 alt)
+{
+    // cblas does not support int8_t input / int8_t output, however non-overflowing
+    // 32-bit integer operations can be represented accurately with double-precision
+    // floats, so convert to doubles and downcast result down to int32_t.
+    // NOTE: This will not properly account for 32-bit integer overflow, however
+    //       the result should be acceptable for testing.
+
+    size_t const sizeA = ((transA == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
+    size_t const sizeB = ((transB == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
+    size_t const sizeC = n * size_t(ldc);
+
+    host_vector<double> A_double(sizeA);
+    host_vector<double> B_double(sizeB);
+    host_vector<double> C_double(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_double[i] = static_cast<double>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_double[i] = static_cast<double>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_double[i] = static_cast<double>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    cblas_dgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_double,
+                lda,
+                B_double,
+                ldb,
+                beta,
+                C_double,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = __half(C_double[i]);
 }
