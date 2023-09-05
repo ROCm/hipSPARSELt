@@ -67,7 +67,6 @@ rocsparselt_status rocsparselt_init(rocsparselt_handle* handle)
             _rocsparselt_handle tmpHandle;
             memcpy(_handle, &tmpHandle, sizeof(_rocsparselt_handle));
             _handle->init();
-
             log_api(_handle, __func__, "handle[out]", _handle);
         }
         catch(const rocsparselt_status& status)
@@ -1104,6 +1103,12 @@ rocsparselt_status
                     && compute_type == rocsparselt_compute_i32)
             {
                 status = findTopConfigs<int8_t, int8_t, float>(
+                    _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
+            }
+            else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_f16_r
+                    && compute_type == rocsparselt_compute_i32)
+            {
+                status = findTopConfigs<int8_t, __half, float>(
                     _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
             }
             if(status != rocsparselt_status_success)

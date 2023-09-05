@@ -324,13 +324,6 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
         return rocsparselt_status_invalid_size;
     }
 
-    // data type of matrics must be the same
-    if(type_a != (type_b | type_c | type_d))
-    {
-        log_error(handle, __func__, "datatype of matrices are inconsistent");
-        return rocsparselt_status_not_implemented;
-    }
-
     switch(type_a)
     {
     case rocsparselt_datatype_bf16_r:

@@ -77,7 +77,7 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
 }
 
 // Template to dispatch testing_gemm_strided_batched_ex for performance tests
-// the test is marked invalid when (Ti, To, Tc) not in (H/H/S, B/B/S, I8/I8/32)
+// the test is marked invalid when (Ti, To, Tc) not in (H/H/S, B/B/S, I8/I8/32, I8/H/I32)
 template <typename Ti, typename To = Ti, typename Tc = To, typename TBias = Ti, typename = void>
 struct perf_sparse : hipsparselt_test_invalid
 {
@@ -98,8 +98,9 @@ struct perf_sparse<
          && ((std::is_same<Ti, __half>{} && std::is_same<Tc, __half>{})
              || (std::is_same<Ti, hip_bfloat16>{} && std::is_same<Tc, hip_bfloat16>{})))
 #endif
-        || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})>>
-    : hipsparselt_test_valid
+        || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})
+        || (std::is_same<Ti, int8_t>{} && (std::is_same<To, __half>{})
+            && std::is_same<Tc, int32_t>{})>> : hipsparselt_test_valid
 {
     void operator()(const Arguments& arg)
     {

@@ -66,20 +66,23 @@ rocsparselt_status spmm_typecasting(const char*                     caller,
 
     RocsparseltContractionProblem<Ti, To, Tc>* problem;
 
-    auto status = ConstructRocSparseLtProblem(caller,
-                                              &problem,
-                                              plan->matmul_descr,
-                                              reinterpret_cast<const Tc*>(alpha),
-                                              reinterpret_cast<const Tc*>(beta),
-                                              reinterpret_cast<const Ti*>(a),
-                                              reinterpret_cast<const Ti*>(b),
-                                              reinterpret_cast<const To*>(c),
-                                              (To*)d,
-                                              true,
-                                              workspace,
-                                              plan->alg_selection->config_max_id == 0 ? 0 : plan->alg_selection->configs[plan->alg_selection->config_id].max_workspace_bytes,
-                                              streams,
-                                              numStreams);
+    auto status = ConstructRocSparseLtProblem(
+        caller,
+        &problem,
+        plan->matmul_descr,
+        reinterpret_cast<const Tc*>(alpha),
+        reinterpret_cast<const Tc*>(beta),
+        reinterpret_cast<const Ti*>(a),
+        reinterpret_cast<const Ti*>(b),
+        reinterpret_cast<const To*>(c),
+        (To*)d,
+        true,
+        workspace,
+        plan->alg_selection->config_max_id == 0
+            ? 0
+            : plan->alg_selection->configs[plan->alg_selection->config_id].max_workspace_bytes,
+        streams,
+        numStreams);
 
     if(status != rocsparselt_status_success)
         return status;
@@ -153,6 +156,13 @@ inline rocsparselt_status rocsparselt_spmm_template(const char*                 
             if(compute_type == rocsparselt_compute_i32)
             {
                 rs_status = spmm_typecasting<int8_t, int8_t, float>(EX_TYPECASTING_PARM);
+            }
+        }
+        else if(c_type == rocsparselt_datatype_f16_r && d_type == rocsparselt_datatype_f16_r)
+        {
+            if(compute_type == rocsparselt_compute_i32)
+            {
+                rs_status = spmm_typecasting<int8_t, __half, float>(EX_TYPECASTING_PARM);
             }
         }
     }
