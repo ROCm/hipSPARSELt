@@ -266,6 +266,8 @@ namespace
         Tensile::TensorDescriptor bias{"bias"};
         Tensile::TensorDescriptor scaleA{"scaleA"};
         Tensile::TensorDescriptor scaleB{"scaleB"};
+        Tensile::TensorDescriptor scaleC{"scaleC"};
+        Tensile::TensorDescriptor scaleD{"scaleD"};
         Tensile::TensorDescriptor scaleDVec{"scaleDVec"};
         Tensile::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
 
@@ -278,6 +280,8 @@ namespace
                                                        bias,
                                                        scaleA,
                                                        scaleB,
+                                                       scaleC,
+                                                       scaleD,
                                                        scaleDVec,
                                                        scaleAlphaVec,
                                                        freeIndex,
@@ -285,7 +289,7 @@ namespace
                                                        boundIndex,
                                                        *prob.beta,
                                                        prob.workspaceSize};
-
+        tensileProblem.setComputeInputType(Tensile_Ti);
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
 

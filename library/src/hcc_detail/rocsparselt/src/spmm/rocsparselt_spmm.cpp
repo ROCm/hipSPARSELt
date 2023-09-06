@@ -168,8 +168,7 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
     size_t workspaceSize
         = _plan->alg_selection->config_max_id == 0
               ? 0
-              : _plan->alg_selection->configs[_plan->alg_selection->config_id].max_workspace_bytes,
-        e;
+              : _plan->alg_selection->configs[_plan->alg_selection->config_id].max_workspace_bytes;
     if(workspace == nullptr && workspaceSize != 0)
     {
         hipsparselt_cerr << "The parameter number 9 (workspace) had an illegal value "
