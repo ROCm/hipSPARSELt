@@ -532,7 +532,7 @@ void print_strided_batched(
 }
 
 inline hipsparseStatus_t
-    expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int m, int n, int ld)
+    expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int64_t m, int64_t n, int64_t ld)
 {
     int elements = 8;
     switch(type)
@@ -558,3 +558,12 @@ inline hipsparseStatus_t
         return HIPSPARSE_STATUS_INVALID_VALUE;
     return HIPSPARSE_STATUS_SUCCESS;
 }
+
+inline hipsparseStatus_t
+    expected_hipsparse_status_of_matrix_stride(int64_t stride, int64_t m, int64_t n, int64_t ld)
+    {
+        if (stride == 0 || stride >= (ld * n))
+           return HIPSPARSE_STATUS_SUCCESS;
+        else
+           return HIPSPARSE_STATUS_INVALID_VALUE;
+    }
