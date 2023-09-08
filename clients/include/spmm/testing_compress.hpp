@@ -403,10 +403,13 @@ void testing_compress(const Arguments& arg)
     }
     if(do_strided_batched)
     {
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_a, A_row, A_col, lda);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
-            HIPSPARSE_STATUS_SUCCESS);
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
     }
 
     hipsparselt_local_matmul_descr matmul(

@@ -339,22 +339,34 @@ void testing_spmm(const Arguments& arg)
 
     if(do_strided_batched)
     {
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_a, A_row, A_col, lda);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
-            HIPSPARSE_STATUS_SUCCESS);
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_b, B_row, B_col, ldb);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(int64_t)),
-            HIPSPARSE_STATUS_SUCCESS);
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_c, M, N, ldc);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(int64_t)),
-            HIPSPARSE_STATUS_SUCCESS);
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_d, M, N, ldd);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(int64_t)),
-            HIPSPARSE_STATUS_SUCCESS);
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
     }
 
     hipsparselt_local_matmul_descr matmul(
@@ -768,11 +780,13 @@ void testing_spmm(const Arguments& arg)
         }
 
         // Debug
-        //print_strided_batched("C", &hC[0], M, N, num_batches, ldc, 1, stride_c);
+        //print_strided_batched("A", &hA[0], A_row, A_col, num_batches, 1, lda, stride_a);
+        //print_strided_batched("B", &hB[0], B_row, B_col, num_batches, 1, ldb, stride_b);
+        //print_strided_batched("C", &hC[0], M, N, num_batches, 1, ldc, stride_c);
         //if(arg.bias_vector)
-        //    print_strided_batched("bias", &hBias[0], M, N, num_batches, M, 1, bias_stride);
-        //print_strided_batched("hD_gold", &hD_gold[0], M, N, num_batches, ldd, 1, stride_d);
-        //print_strided_batched("hD1", &hD_1[0], M, N, num_batches, ldd, 1, stride_d);
+        //    print_strided_batched("bias", &hBias[0], M, N, num_batches, 1, M, bias_stride);
+        //print_strided_batched("hD_gold", &hD_gold[0], M, N, num_batches, 1, ldd, stride_d);
+        //print_strided_batched("hD1", &hD_1[0], M, N, num_batches, 1, ldd, stride_d);
     }
 
     if(arg.timing)
