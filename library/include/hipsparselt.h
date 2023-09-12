@@ -67,7 +67,7 @@
  *  \brief Handle to the hipSPARSELt library context queue.
  *
  *  \details
- *  The hhipSPARSELt handle is a structure holding the hipSPARSELt library context. It must
+ *  The hipSPARSELt handle is a structure holding the hipSPARSELt library context. It must
  *  be initialized using \ref hipsparseLtInit and the returned handle must be
  *  passed to all subsequent library function calls. It should be destroyed at the end
  *  using \ref hipsparseLtDestroy.
@@ -108,7 +108,7 @@ typedef struct hipsparseLtMatmulAlgSelection_t {uint8_t data[11024];} hipsparseL
  *
  *  \details
  *  The hipSPARSELt matrix multiplication execution plan descriptor is a structure holding
- *  all the information necessary to execute the hipsparseLtMatmul() operation.
+ *  all the information necessary to execute the \ref hipsparseLtMatmul operation.
  *  It is initialized and destroyed with \ref hipsparseLtMatmulPlanInit
  *  and \ref hipsparseLtMatmulPlanDestroy functions respectively.
  */
@@ -244,8 +244,8 @@ typedef enum {
  *  The \ref hipsparseLtPruneAlg_t is used in the \ref hipsparseLtSpMMAPrune and \ref hipsparseLtSpMMAPrune2 function.
  */
 typedef enum {
-   HIPSPARSELT_PRUNE_SPMMA_TILE  = 0,
-   HIPSPARSELT_PRUNE_SPMMA_STRIP = 1
+   HIPSPARSELT_PRUNE_SPMMA_TILE  = 0, /**< Zero out eight elements in a 4x4 tile, nonzero elements have the maximum L1-norm value in all combinations in the tile. Exactly two elements in each row and column. */
+   HIPSPARSELT_PRUNE_SPMMA_STRIP = 1, /**< Zero out two elements in a 1x4 strip, nonzero elements have the maximum L1-norm value in all combinations in the strip.*/
 } hipsparseLtPruneAlg_t;
 
 /*! \ingroup types_module
@@ -256,7 +256,7 @@ typedef enum {
  */
 typedef enum {
    HIPSPARSELT_SPLIT_K_MODE_ONE_KERNEL = 0,  /**< Use the same SP-MM kernel to do the final reduction */
-   HIPSPARSELT_SPLIT_K_MODE_TWO_KERNELS = 1, /**< Use anoghter kernel to do the final reduction */
+   HIPSPARSELT_SPLIT_K_MODE_TWO_KERNELS = 1, /**< Use another kernel to do the final reduction */
 } hipsparseLtSplitKMode_t;
 
 // clang-format on
@@ -368,11 +368,11 @@ hipsparseStatus_t hipsparseLtDestroy(const hipsparseLtHandle_t* handle);
  *  @param[in]
  *  ld         leading dimension
  *  @param[in]
- *  alignment  memory alignment in bytes
+ *  alignment  memory alignment in bytes (not used by HIP backend)
  *  @param[in]
  *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
  *  @param[in]
- *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW.
+ *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW. (HIP backend only support HIPSPARSE_ORDER_COL.)
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle, \p descr , \p rows , \p cols , \p ld  is invalid.
@@ -405,11 +405,12 @@ hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  han
  *  @param[in]
  *  ld         leading dimension
  *  @param[in]
- *  alignment  memory alignment in bytes
+ *  alignment  memory alignment in bytes (not used by HIP backend)
  *  @param[in]
  *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
  *  @param[in]
- *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW.
+ *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW. (HIP backend only support HIPSPARSE_ORDER_COL.)
+
  *  @param[in]
  *  sparsity   matrix sparsity ratio. see \ref hipsparseLtSparsity_t
  *
@@ -482,7 +483,7 @@ hipsparseStatus_t hipsparseLtMatDescSetAttribute(const hipsparseLtHandle_t*    h
  *  @param[in]
  *  handle          the hipsparselt handle
  *  @param[in]
- *  matDescr     the matrix descriptor
+ *  matDescr        the matrix descriptor
  *  @param[in]
  *  matAttribute    \ref HIPSPARSELT_MAT_NUM_BATCHES, \ref HIPSPARSELT_MAT_BATCH_STRIDE.
  *  @param[inout]
@@ -516,13 +517,13 @@ hipsparseStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*     
  *  @param[in]
  *  opB             hipsparse operation for Matrix B. \p HIPSPARSE_OPERATION_NON_TRANSPOSE or \p HIPSPARSE_OPERATION_TRANSPOSE
  *  @param[in]
- *  matA            the matrix descriptor
+ *  matA            the matrix descriptor (HIP backend only structured (sparse) matrix matrix)
  *  @param[in]
- *  matB            the matrix descriptor
+ *  matB            the matrix descriptor (HIP backend only support dense matrix)
  *  @param[in]
- *  matC            the matrix descriptor
+ *  matC            the matrix descriptor (dense matrix)
  *  @param[in]
- *  matD            the matrix descriptor
+ *  matD            the matrix descriptor (dense matrix)
  *  @param[in]
  *  computeType     size in bytes of the attribute value used for verification.
  *
@@ -581,7 +582,7 @@ hipsparseStatus_t
  *  @param[in]
  *  handle           the hipsparselt handle
  *  @param[in]
- *  matmulDescr     the matrix multiplication descriptor
+ *  matmulDescr      the matrix multiplication descriptor
  *  @param[in]
  *  matmulAttribute  see \ref hipsparseLtMatmulDescAttribute_t
  *  @param[inout]
@@ -712,7 +713,7 @@ hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*     h
  *  \brief Initializes the matrix multiplication plan descriptor
  *  \details
  *  \p hipsparseLtMatmulPlanInit creates a matrix multiplication plan descriptor.
- *  It should be destroyed at the end using \ref hipsparseLtMatmulPlanDestroy().
+ *  It should be destroyed at the end using \ref hipsparseLtMatmulPlanDestroy.
  *
  *  @param[in]
  *  handle           hipsparselt library handle
@@ -756,7 +757,7 @@ hipsparseStatus_t hipsparseLtMatmulPlanDestroy(const hipsparseLtMatmulPlan_t* pl
  *  \p hipsparseLtMatmul computes the matrix multiplication of matrices A and B to
  *  produce the output matrix D, according to the following operation:
  *  \f[
- *    D := Activation(\alpha \cdot op(A) \cdot op(B) + \beta \cdot C) + scale
+ *    D := Activation(\alpha \cdot op(A) \cdot op(B) + \beta \cdot C + bias) * scale
  *  \f]
  *
  *  \note
