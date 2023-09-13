@@ -301,6 +301,7 @@ build_release=true
 build_cuda=false
 build_hip_clang=true
 compiler=g++
+compiler_c=cc
 build_static=false
 build_release_debug=false
 build_codecoverage=false
@@ -592,6 +593,7 @@ pushd .
     fi
     cmake_common_options="{cmake_common_options} -DBUILD_SHARED_LIBS=OFF"
     compiler="${rocm_path}/bin/hipcc" #force hipcc for static libs, g++ doesn't work
+    compiler_c="${compiler}"
     printf "Forcing compiler to hipcc for static library.\n"
   fi
 
@@ -645,6 +647,7 @@ pushd .
 
   if [[ "${build_hip_clang}" == true ]]; then
     compiler="${rocm_path}/bin/hipcc"
+    compiler_c="${compiler}"
   fi
 
   if [[ "${build_clients}" == false ]]; then
@@ -653,7 +656,7 @@ pushd .
 
   # Build library with AMD toolchain because of existense of device kernels
   if [[ "${build_relocatable}" == true ]]; then
-    FC=gfortran CXX=${compiler} CC=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF \
+    FC=gfortran CXX=${compiler} CC=${compiler_c} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF \
       -DCMAKE_INSTALL_PREFIX=${install_prefix} \
       -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} \
       -DCMAKE_SHARED_LINKER_FLAGS="${rocm_rpath}" \
@@ -662,7 +665,7 @@ pushd .
       -DROCM_DISABLE_LDCONFIG=ON \
       -DROCM_PATH="${rocm_path}" ../..
   else
-    FC=gfortran CXX=${compiler} CC=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} -DROCM_PATH="${rocm_path}" ../..
+    FC=gfortran CXX=${compiler} CC=${compiler_c} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} -DROCM_PATH="${rocm_path}" ../..
   fi
   check_exit_code "$?"
 
