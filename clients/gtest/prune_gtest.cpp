@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,18 +42,19 @@ namespace
     // In the general case of <Ti, To, Tc>, these tests do not apply, and if this
     // functor is called, an internal error message is generated. When converted
     // to bool, this functor returns false.
-    template <typename Ti, typename To = Ti, typename Tc = To, typename = void>
+    template <typename Ti, typename To = Ti, typename Tc = To, typename TBias = Ti, typename = void>
     struct prune_testing : hipsparselt_test_invalid
     {
     };
 
     // When Ti = To = Tc != void, this test applies.
     // When converted to bool, this functor returns true.
-    template <typename Ti, typename To, typename Tc>
+    template <typename Ti, typename To, typename Tc, typename TBias>
     struct prune_testing<
         Ti,
         To,
         Tc,
+        TBias,
         std::enable_if_t<std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{}
                          || std::is_same<Ti, int8_t>{}>> : hipsparselt_test_valid
     {
