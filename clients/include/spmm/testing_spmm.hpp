@@ -297,7 +297,7 @@ void testing_spmm(const Arguments& arg)
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
 
     hipsparseStatus_t eStatus
-        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
+        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda, true);
     EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;
@@ -940,7 +940,7 @@ void testing_aux_plan_assign(const Arguments& arg)
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
 
     hipsparseStatus_t eStatus
-        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
+        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda, true);
     EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;

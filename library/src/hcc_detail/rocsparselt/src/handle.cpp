@@ -161,7 +161,8 @@ std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_descr& 
            << ", activation_tanh_beta=" << t.activation_tanh_beta
            << ", activation_gelu_scaling=" << t.activation_gelu_scaling
            << ", bias_pointer=" << t.bias_pointer << ", bias_stride=" << t.bias_stride
-           << ", bias_type=" << rocsparselt_datatype_to_string(t.bias_type) << "}";
+           << ", bias_type=" << rocsparselt_datatype_to_string(t.bias_type) << ", m=" << t.m
+           << ", n=" << t.n << ", k=" << t.k << ", is_sparse_a=" << t.is_sparse_a << "}";
     return stream;
 }
 

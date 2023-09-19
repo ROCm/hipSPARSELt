@@ -230,6 +230,7 @@ static void show_usage(char* argv[])
         << "\t--trans \t\ttrans \tGEMM_STRIDED_BATCHED argument trans_a\n"
         << "\t--stride \t\tstride \tGEMM_STRIDED_BATCHED argument stride_a\n"
         << "\t--batch_count \t\tbatch_count \tGEMM_STRIDED_BATCHED argument batch count\n"
+        << "\t--sparse_b \t\tsparse_b \t\tStructurted Sparsity Matrix B (A is Dense Matrix)\n"
         << "\t-r \t\tprecision \tGEMM_STRIDED_BATCHED argument precsion, etc., h=half, b=bfloat16\n"
         << "\t--header \t\theader \t\tprint header for output\n"
         << std::endl;
@@ -245,6 +246,7 @@ static int parse_arguments(int                    argc,
                            hipsparseOperation_t&  trans,
                            hipsparseLtDatatype_t& type,
                            bool&                  header,
+                           bool&                  sparse_b,
                            bool&                  verbose)
 {
     if(argc >= 2)
@@ -327,6 +329,10 @@ static int parse_arguments(int                    argc,
                         return EXIT_FAILURE;
                     }
                 }
+                else if(arg == "--sparse_b")
+                {
+                    sparse_b = true;
+                }
                 else
                 {
                     std::cerr << "error with " << arg << std::endl;
@@ -402,6 +408,7 @@ void run(int64_t               m,
          int                   batch_count,
          hipsparseOperation_t  trans,
          hipsparseLtDatatype_t type,
+         bool                  sparse_b,
          bool                  verbose)
 {
     int64_t stride_1, stride_2;
@@ -471,21 +478,45 @@ void run(int64_t               m,
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtInit(&handle));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtStructuredDescriptorInit(&handle,
-                                                                &matA,
-                                                                row,
-                                                                col,
-                                                                ld,
-                                                                16,
-                                                                type,
-                                                                HIPSPARSE_ORDER_COL,
-                                                                HIPSPARSELT_SPARSITY_50_PERCENT));
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matB, n, m, n, 16, type, HIPSPARSE_ORDER_COL));
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matC, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matD, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
+    if(!sparse_b)
+    {
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtStructuredDescriptorInit(&handle,
+                                                &matA,
+                                                row,
+                                                col,
+                                                ld,
+                                                16,
+                                                type,
+                                                HIPSPARSE_ORDER_COL,
+                                                HIPSPARSELT_SPARSITY_50_PERCENT));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matB, n, m, n, 16, type, HIPSPARSE_ORDER_COL));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matC, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matD, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
+    }
+    else
+    {
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matA, n, m, n, 16, type, HIPSPARSE_ORDER_COL));
+
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtStructuredDescriptorInit(&handle,
+                                                &matB,
+                                                row,
+                                                col,
+                                                ld,
+                                                16,
+                                                type,
+                                                HIPSPARSE_ORDER_COL,
+                                                HIPSPARSELT_SPARSITY_50_PERCENT));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matC, n, n, n, 16, type, HIPSPARSE_ORDER_COL));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matD, n, n, n, 16, type, HIPSPARSE_ORDER_COL));
+    }
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
@@ -496,7 +527,7 @@ void run(int64_t               m,
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matD, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
+        &handle, sparse_b? &matB : &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
     auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I :
 #ifdef __HIP_PLATFORM_AMD__
@@ -507,8 +538,8 @@ void run(int64_t               m,
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(&handle,
                                                             &matmul,
-                                                            trans,
-                                                            HIPSPARSE_OPERATION_NON_TRANSPOSE,
+                                                            sparse_b? HIPSPARSE_OPERATION_NON_TRANSPOSE : trans,
+                                                            sparse_b? trans : HIPSPARSE_OPERATION_NON_TRANSPOSE,
                                                             &matA,
                                                             &matB,
                                                             &matC,
@@ -521,7 +552,12 @@ void run(int64_t               m,
 
     CHECK_HIP_ERROR(hipMemcpy(hp_test.data(), d_test, sizeof(T) * size, hipMemcpyDeviceToHost));
 
-    prune_strip<T, float>(hp.data(), hp_gold.data(), m, n, stride_1, stride_2, batch_count, stride);
+    if(!sparse_b)
+        prune_strip<T, float>(
+            hp.data(), hp_gold.data(), m, n, stride_1, stride_2, batch_count, stride);
+    else
+        prune_strip<T, float>(
+            hp.data(), hp_gold.data(), n, m, stride_2, stride_1, batch_count, stride);
 
     if(verbose)
     {
@@ -562,10 +598,12 @@ int main(int argc, char* argv[])
     int                   batch_count = invalid_int;
     hipsparseLtDatatype_t type        = HIPSPARSELT_R_16F;
 
-    bool verbose = false;
-    bool header  = false;
+    bool verbose  = false;
+    bool header   = false;
+    bool sparse_b = false;
 
-    if(parse_arguments(argc, argv, m, n, ld, stride, batch_count, trans, type, header, verbose))
+    if(parse_arguments(
+           argc, argv, m, n, ld, stride, batch_count, trans, type, header, sparse_b, verbose))
     {
         show_usage(argv);
         return EXIT_FAILURE;
@@ -600,15 +638,15 @@ int main(int argc, char* argv[])
     {
     case HIPSPARSELT_R_16F:
         std::cout << "H";
-        run<__half>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<__half>(m, n, ld, stride, batch_count, trans, type, sparse_b, verbose);
         break;
     case HIPSPARSELT_R_16BF:
         std::cout << "BF16";
-        run<hip_bfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<hip_bfloat16>(m, n, ld, stride, batch_count, trans, type, sparse_b, verbose);
         break;
     case HIPSPARSELT_R_8I:
         std::cout << "I8";
-        run<int8_t>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<int8_t>(m, n, ld, stride, batch_count, trans, type, sparse_b, verbose);
         break;
     default:
         break;

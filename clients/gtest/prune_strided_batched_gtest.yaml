@@ -54,6 +54,8 @@ Tests:
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
   batch_count: [ 3 ]
+  prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 - name: prune_strided_batched_medium_alt
   category: pre_checkin

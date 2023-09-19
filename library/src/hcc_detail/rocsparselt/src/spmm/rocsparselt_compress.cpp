@@ -212,31 +212,31 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
     int64_t stride0, stride1, c_stride0, c_stride1, m_stride0, m_stride1;
     int64_t c_batch_stride, m_batch_stride;
 
-    if(op == rocsparselt_operation_transpose)
+    if(!sparse_b)
     {
-        m              = matrix->n;
-        n              = matrix->m;
-        stride0        = ld;
-        stride1        = 1;
-        c_stride0      = matrix->c_ld;
-        c_stride1      = 1;
-        m_stride0      = matrix->c_k / 4;
-        m_stride1      = 1;
-        c_batch_stride = c_stride0 * matrix->n;
-        m_batch_stride = m_stride0 * m;
+        m       = op == rocsparselt_operation_transpose ? matrix->n : matrix->m;
+        n       = op == rocsparselt_operation_transpose ? matrix->m : matrix->n;
+        stride0 = (op == rocsparselt_operation_transpose) ? ld : 1;
+        stride1 = (op == rocsparselt_operation_transpose) ? 1 : ld;
+        c_stride_0 = (op == rocsparselt_operation_transpose) ? matrix->c_ld: 1;
+        c_stride_1 = (op == rocsparselt_operation_transpose) ? 1 : matrix->c_ld;
+        m_stride_0 = matrix->c_k / 4;
+        m_stride_1 = 1;
+        c_batch_stride = (op == rocsparselt_operation_transpose) ? c_stride0 * matrix->n : c_stride1 * matrix->c_k;
+        m_batch_stride = m_stride_0 * m;
     }
     else
     {
-        m              = matrix->m;
-        n              = matrix->n;
-        stride0        = 1;
-        stride1        = ld;
-        c_stride0      = 1;
-        c_stride1      = matrix->c_ld;
-        m_stride0      = matrix->c_k / 4;
-        m_stride1      = 1;
-        c_batch_stride = c_stride1 * matrix->c_k;
-        m_batch_stride = m_stride0 * m;
+        m       = op == rocsparselt_operation_transpose ? matrix->m : matrix->n;
+        n       = op == rocsparselt_operation_transpose ? matrix->n : matrix->m;
+        stride0 = (op == rocsparselt_operation_transpose) ? 1 : ld;
+        stride1 = (op == rocsparselt_operation_transpose) ? ld : 1;
+        c_stride_0 = (op == rocsparselt_operation_transpose) ? 1 : matrix->c_ld;
+        c_stride_1 = (op == rocsparselt_operation_transpose) ? matrix->c_ld: 1;
+        m_stride_0 = matrix->c_k / 4;
+        m_stride_1 = 1;
+        c_batch_stride = (op == rocsparselt_operation_transpose) ? c_stride1 * matrix->n : c_stride0 * matrix->c_k;
+        m_batch_stride = m_stride_0 * m;
     }
 
     rocsparselt_order    order = matrix->order;

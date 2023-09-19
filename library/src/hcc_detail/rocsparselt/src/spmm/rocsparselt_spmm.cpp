@@ -348,6 +348,8 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     batch_stride_c         = matmul_descr->matrix_C->batch_stride;
 
     // matrix D
+    int64_t num_rows_d     = matmul_descr->matrix_D->m;
+    int64_t num_cols_d     = matmul_descr->matrix_D->n;
     int64_t ldd            = matmul_descr->matrix_D->ld;
     int64_t offset_d       = 0;
     int64_t batch_stride_d = 0;
