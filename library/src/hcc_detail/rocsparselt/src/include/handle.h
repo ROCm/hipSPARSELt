@@ -115,6 +115,7 @@ struct _rocsparselt_mat_descr
         , batch_stride(rhs.batch_stride)
         , c_k(rhs.c_k)
         , c_ld(rhs.c_ld)
+        , c_n(rhs.c_n)
     {
         is_init = (uintptr_t)handle;
     };
@@ -176,6 +177,8 @@ struct _rocsparselt_mat_descr
     int64_t c_k = -1;
     // leading dimension of compressed matrix.
     int64_t c_ld = -1;
+
+    int64_t c_n = -1;
 };
 
 /********************************************************************************
@@ -207,6 +210,10 @@ struct _rocsparselt_matmul_descr
         , bias_pointer(rhs.bias_pointer)
         , bias_stride(rhs.bias_stride)
         , bias_type(rhs.bias_type)
+        , m(rhs.m)
+        , n(rhs.n)
+        , k(rhs.k)
+        , is_sparse_a(rhs.is_sparse_a)
     {
         matrix_A     = rhs.matrix_A->clone();
         matrix_B     = rhs.matrix_B->clone();
@@ -263,6 +270,10 @@ struct _rocsparselt_matmul_descr
     float*               bias_pointer               = nullptr;
     int64_t              bias_stride                = 0;
     rocsparselt_datatype bias_type;
+    int64_t              m           = 0;
+    int64_t              n           = 0;
+    int64_t              k           = 0;
+    bool                 is_sparse_a = true;
 
 private:
     bool      is_reference = true;

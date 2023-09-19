@@ -122,6 +122,8 @@ struct Arguments
 
     bool    search;
     int32_t search_iters;
+
+    bool sparse_b;
     /*************************************************************************
      *                     End Of Arguments                                  *
      *************************************************************************/
@@ -180,7 +182,10 @@ struct Arguments
     OPER(bias_stride) SEP            \
     OPER(bias_type) SEP              \
     OPER(c_noalias_d) SEP            \
-    OPER(HMM) SEP
+    OPER(HMM) SEP                    \
+    OPER(search) SEP                 \
+    OPER(search_iters) SEP            \
+    OPER(sparse_b) SEP
 
     // clang-format on
 

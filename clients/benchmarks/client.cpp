@@ -452,6 +452,10 @@ try
          value<int32_t>(&arg.search_iters)->default_value(10),
          "Iterations to run inside timing loop of each algorithms when search is on. (default: 10)")
 
+        ("sparse_b",
+         bool_switch(&arg.sparse_b)->default_value(false),
+         "Structurted Sparsity Matrix B (A is Dense Matrix)")
+
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
          "Function name precedes other itmes.")

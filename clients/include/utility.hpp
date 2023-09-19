@@ -532,30 +532,61 @@ void print_strided_batched(
 }
 
 inline hipsparseStatus_t
-    expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int64_t m, int64_t n, int64_t ld)
+    expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int64_t m, int64_t n, int64_t ld, bool isSparse = false)
 {
-    int elements = 8;
+    int row_ = 8;
+    int col_ = 8;
+    int ld_ = -1;
+#ifdef __HIP_PLATFORM_NVCC__
     switch(type)
     {
     case HIPSPARSELT_R_8I:
     case HIPSPARSELT_R_8F:
     case HIPSPARSELT_R_8BF:
-        elements = 16;
+        if(isSparse)
+            row_ = col_ = ld_ = 32;
+        else
+            row_ = ld_ = 16;
+        break;
+    case HIPSPARSELT_R_16BF:
+    case HIPSPARSELT_R_16F:
+        if(isSparse)
+            row_ = col_ = ld_ = 16;
+        else
+            ld_ = 8;
         break;
     default:
         break;
     }
+#else
+    switch(type)
+    {
+    case HIPSPARSELT_R_8I:
+    case HIPSPARSELT_R_8F:
+    case HIPSPARSELT_R_8BF:
+        row_ = col_ = 16;
+        break;
+    default:
+        break;
+    }
+#endif
 
     if(m <= 0 || n <= 0)
         return HIPSPARSE_STATUS_INVALID_VALUE;
 
-    if(m < elements || n < elements)
+    if(m < row_ || n < col_)
         return HIPSPARSE_STATUS_NOT_SUPPORTED;
-    if(m % elements != 0 || n % elements != 0)
+
+    if(m % row_ != 0 || n % col_ != 0)
         return HIPSPARSE_STATUS_NOT_SUPPORTED;
+
 
     if(m > ld)
         return HIPSPARSE_STATUS_INVALID_VALUE;
+
+    if(ld_ != -1 && ld % ld_ !=0)
+        return HIPSPARSE_STATUS_INVALID_VALUE;
+
     return HIPSPARSE_STATUS_SUCCESS;
 }
 

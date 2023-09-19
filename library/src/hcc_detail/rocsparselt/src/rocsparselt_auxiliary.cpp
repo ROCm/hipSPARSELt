@@ -649,21 +649,67 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             if(status != rocsparselt_status_success)
                 return status;
 
-            int64_t m, n, k;
-            //don't need to check the status here, since which was done in validateMatmulDescrArgs().
-            getOriginalSizes(opA, opB, _matA->m, _matA->n, _matB->m, _matB->n, m, n, k);
-            _matA->c_k        = k / 2;
-            _matA->c_ld       = (opA == rocsparselt_operation_transpose ? _matA->c_k : m);
             auto _matmulDescr = reinterpret_cast<_rocsparselt_matmul_descr*>(matmulDescr);
             _rocsparselt_matmul_descr tmpDescr(_handle);
             memcpy(_matmulDescr, &tmpDescr, sizeof(_rocsparselt_matmul_descr));
-            _matmulDescr->op_A         = opA;
-            _matmulDescr->op_B         = opB;
-            _matmulDescr->matrix_A     = _matA;
-            _matmulDescr->matrix_B     = _matB;
+
+            log_api(_handle,
+                    __func__,
+                    "matmulDescr",
+                    _matmulDescr,
+                    "opA",
+                    rocsparselt_operation_to_string(opA),
+                    "opB",
+                    rocsparselt_operation_to_string(opB),
+                    "matA",
+                    *_matA,
+                    "matB",
+                    *_matB,
+                    "matC",
+                    *_matC,
+                    "matD",
+                    *_matD,
+                    "computeType",
+                    rocsparselt_compute_type_to_string(computeType));
+
+            int64_t m, n, k;
+            bool    isSparseA         = _matA->m_type == rocsparselt_matrix_type_structured;
+            _matmulDescr->is_sparse_a = isSparseA;
+            if(isSparseA)
+            {
+                getOriginalSizes(opA, opB, _matA->m, _matA->n, _matB->m, _matB->n, m, n, k);
+                _matA->c_k             = k / 2;
+                _matA->c_ld            = (opA == rocsparselt_operation_transpose ? _matA->c_k : m);
+                _matA->c_n             = (opA == rocsparselt_operation_transpose ? m : _matA->c_k);
+                _matmulDescr->op_A     = opA;
+                _matmulDescr->op_B     = opB;
+                _matmulDescr->matrix_A = _matA;
+                _matmulDescr->matrix_B = _matB;
+            }
+            else
+            {
+                auto opA_
+                    = (opB == rocsparselt_operation_transpose ? rocsparselt_operation_none
+                                                              : rocsparselt_operation_transpose);
+                auto opB_
+                    = (opA == rocsparselt_operation_transpose ? rocsparselt_operation_none
+                                                              : rocsparselt_operation_transpose);
+                getOriginalSizes(opA_, opB_, _matB->m, _matB->n, _matA->m, _matA->n, m, n, k);
+                _matB->c_k             = k / 2;
+                _matB->c_ld            = (opA_ == rocsparselt_operation_transpose ? _matB->c_k : m);
+                _matB->c_n             = (opA_ == rocsparselt_operation_transpose ? m : _matB->c_k);
+                _matmulDescr->op_A     = opA_;
+                _matmulDescr->op_B     = opB_;
+                _matmulDescr->matrix_A = _matB;
+                _matmulDescr->matrix_B = _matA;
+            }
+
             _matmulDescr->matrix_C     = _matC;
             _matmulDescr->matrix_D     = _matD;
             _matmulDescr->compute_type = computeType;
+            _matmulDescr->m            = m;
+            _matmulDescr->n            = n;
+            _matmulDescr->k            = k;
             switch(_matA->type)
             {
             case rocsparselt_datatype_bf16_r:
@@ -674,24 +720,6 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
                 _matmulDescr->bias_type = rocsparselt_datatype_f32_r;
                 break;
             }
-            log_api(_handle,
-                    __func__,
-                    "matmulDescr",
-                    _matmulDescr,
-                    "opA",
-                    rocsparselt_operation_to_string(opA),
-                    "opB",
-                    rocsparselt_operation_to_string(opB),
-                    "matA",
-                    _matA,
-                    "matB",
-                    _matB,
-                    "matC",
-                    _matC,
-                    "matD",
-                    _matD,
-                    "computeType",
-                    rocsparselt_compute_type_to_string(computeType));
         }
         catch(const rocsparselt_status& status)
         {

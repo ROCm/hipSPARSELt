@@ -21,6 +21,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   batch_count: [ 1, 3 ]
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 # Tests confirm no NaN propagation when alpha = 0, 2 and beta = 0. Value .NaN is converted into zero
 - {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *real_precisions_2b, batch_count: 1,
@@ -35,6 +36,7 @@ Tests:
   transA_transB: *transA_transB_range
   batch_count: [ 1, 3 ]
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 - name: prune_batched_medium
   category: pre_checkin
@@ -45,6 +47,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   batch_count: [ 1, 3 ]
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 - name: prune_batched_large
   category: pre_checkin
@@ -55,6 +58,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   batch_count: [  1, 3 ]
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 - name: prune_batched_deepbench
   category: nightly
@@ -67,6 +71,7 @@ Tests:
   transB: T
   batch_count: [ 2 ]
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 - name: prune_batched_conv_resnet50_bwddata
   category: nightly
@@ -79,6 +84,7 @@ Tests:
   transB: T
   batch_count: 4
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 - name: prune_batched_conv_inception4_bwddata
   category: nightly
@@ -91,6 +97,7 @@ Tests:
   transB: T
   batch_count: 4
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 - name: prune_batched_conv_ctest_fwd
   category: nightly
@@ -103,5 +110,6 @@ Tests:
   transB: N
   batch_count: 1
   prune_algo: [ 0, 1 ]
+  sparse_b: [ true, false]
 
 ...
