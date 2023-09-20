@@ -34,6 +34,7 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
 
 - name: compress_medium
   category: pre_checkin
@@ -42,6 +43,7 @@ Tests:
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
 
 - name: compress_medium_alt
   category: pre_checkin
@@ -52,6 +54,7 @@ Tests:
   alpha: 1
   beta: 0
   initialization: special
+  sparse_b: [ true, false]
 
 - name: compress_medium_HMM
   category: HMM
@@ -63,6 +66,7 @@ Tests:
   alpha: 1
   beta: 1
   HMM: true
+  sparse_b: [ true, false]
 
 - name: compress_chunk
   category: pre_checkin
@@ -72,6 +76,7 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 2
   beta: 3
+  sparse_b: [ true, false]
 
 # Split *int8_half_single_precisions into *int8 and *half_single_precisions. Since int8 has flags 0,1
 
@@ -81,7 +86,9 @@ Tests:
     compress: *real_precisions_1b
   matrix_size: *deepbench_sizes
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
+
 
 - name: compress_deepbench_alt
   category: nightly
@@ -93,6 +100,7 @@ Tests:
   flags: 4
   initialization: special
   transA_transB: *transA_transB_range
+  sparse_b: [ true, false]
 
 - name: resnet50_fwd
   category: nightly
@@ -103,6 +111,7 @@ Tests:
   matrix_size: *resnet50_fwd_sizes
   alpha: 1
   beta: 0
+  sparse_b: [ true, false]
 
 - name: resnet50_fwd_alt
   category: nightly
@@ -114,6 +123,7 @@ Tests:
   alpha: 1
   beta: 0
   initialization: special
+  sparse_b: [ true, false]
 
 - name: resnet50_bwdwrw
   category: nightly
@@ -124,6 +134,7 @@ Tests:
   matrix_size: *resnet50_bwdwrw_sizes
   alpha: 1
   beta: 1
+  sparse_b: [ true, false]
 
 - name: resnet50_bwddata
   category: nightly
@@ -134,6 +145,7 @@ Tests:
   matrix_size: *resnet50_bwddata_sizes
   alpha: 1
   beta: 0
+  sparse_b: [ true, false]
 
 - name: inception4_fwd
   category: nightly
@@ -144,6 +156,7 @@ Tests:
   matrix_size: *inception4_fwd_sizes
   alpha: 1
   beta: 0
+  sparse_b: [ true, false]
 
 - name: inception4_bwdwrw
   category: nightly
@@ -154,6 +167,7 @@ Tests:
   matrix_size: *inception4_bwdwrw_sizes
   alpha: 1
   beta: 1
+  sparse_b: [ true, false]
 
 - name: inception4_bwddata
   category: nightly
@@ -164,6 +178,7 @@ Tests:
   matrix_size: *inception4_bwddata_sizes
   alpha: 1
   beta: 0
+  sparse_b: [ true, false]
 
 - name: ctest_bwdwrw
   category: nightly
@@ -174,6 +189,7 @@ Tests:
   alpha: 1
   beta: 1
   matrix_size: *ctest_bwdwrw_sizes
+  sparse_b: [ true, false]
 
 - name: ctest_fwd
   category: nightly
@@ -184,6 +200,7 @@ Tests:
   alpha: 1
   beta: 0
   matrix_size: *ctest_fwd_sizes
+  sparse_b: [ true, false]
 
 - name: compress_8
   category: quick
@@ -193,6 +210,7 @@ Tests:
   N: 8
   K: 8
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_16
@@ -203,6 +221,7 @@ Tests:
   N: 16
   K: 16
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_24
@@ -213,6 +232,7 @@ Tests:
   N: 24
   K: 24
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_32_16_128
@@ -223,6 +243,7 @@ Tests:
   N: 32
   K: 32
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_48_16_128
@@ -233,6 +254,7 @@ Tests:
   N: [16, 32, 48, 64, 80, 96, 112, 128]
   K: 48
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_64_16_128
@@ -243,6 +265,7 @@ Tests:
   N: 64
   K: [16, 32, 48, 64, 80, 96, 112, 128]
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_64_16_16
@@ -253,6 +276,7 @@ Tests:
   N: 16
   K: 16
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_16_64
@@ -263,6 +287,7 @@ Tests:
   N: 16
   K: 64
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_96
@@ -273,6 +298,7 @@ Tests:
   N: 96
   K: 96
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_128
@@ -283,6 +309,7 @@ Tests:
   N: 128
   K: 128
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_256
@@ -293,6 +320,7 @@ Tests:
   N: 256
   K: 256
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_256_9_12_16
@@ -303,6 +331,7 @@ Tests:
   N: 16
   K: 16
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_16_256_16
@@ -313,6 +342,7 @@ Tests:
   N: 256
   K: 16
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_16_16_256
@@ -324,6 +354,7 @@ Tests:
   N: 16
   K: 256
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_512
@@ -334,6 +365,7 @@ Tests:
   N: 512
   K: 512
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_1024
@@ -344,6 +376,7 @@ Tests:
   N: 1023..1025
   K: 1024
   alpha_beta: *alpha_beta_range
+  sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
 - name: compress_small2
@@ -358,4 +391,5 @@ Tests:
     - { M: 1024, N: 1024, K: 1024 }
   alpha: [ 0.0, 0.5, 1.0 ]
   beta:  [ 0.0, 0.5, 1.0 ]
+  sparse_b: [ true, false]
 ...

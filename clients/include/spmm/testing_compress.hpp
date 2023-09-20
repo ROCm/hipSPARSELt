@@ -95,11 +95,11 @@ void self_validate(T*             A,
                     else
                     {
                         a_pos = ((i1 * 8 + i) * s1) + (i2 * s2) + (i3 * s3);
-                        c_pos = ((i1 * 4+ m_idx)* c_s1) + (i2 * c_s2) + (i3 * c_s3);
+                        c_pos = ((i1 * 4 + m_idx) * c_s1) + (i2 * c_s2) + (i3 * c_s3);
                     }
 
-                    T    a     = A[a_pos];
-                    T    b     = static_cast<T>(0.0f);
+                    T a = A[a_pos];
+                    T b = static_cast<T>(0.0f);
                     if(i == idx[m_idx])
                     {
 
@@ -296,12 +296,6 @@ void testing_compress_bad_arg(const Arguments& arg)
         hipsparseLtSpMMACompress2(handle, nullptr, true, transA, dA, dA_1, dA_ws, stream),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_AMD__
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtSpMMACompress2(handle, matA, false, transA, dA, dA_1, dA_ws, stream),
-        HIPSPARSE_STATUS_INTERNAL_ERROR);
-#endif
-
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMACompress2(handle, matA, true, transA, nullptr, dA_1, dA_ws, stream),
         HIPSPARSE_STATUS_INVALID_VALUE);
@@ -359,7 +353,7 @@ void testing_compress(const Arguments& arg)
     int64_t        stride_a           = do_strided_batched ? arg.stride_a : lda * A_col;
     int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
     int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * M;
-    int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * M;
+    int64_t        stride_d           = do_strided_batched ? arg.stride_d : ldd * M;
 
     hipsparselt_local_mat_descr matA(arg.sparse_b ? hipsparselt_matrix_type_dense
                                                   : hipsparselt_matrix_type_structured,
@@ -474,7 +468,8 @@ void testing_compress(const Arguments& arg)
     else if(run_version == 2)
     {
         EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtSpMMACompressedSize2(handle, arg.sparse_b ? matB : matA, &compressed_size, &compress_buffer_size),
+            hipsparseLtSpMMACompressedSize2(
+                handle, arg.sparse_b ? matB : matA, &compressed_size, &compress_buffer_size),
             HIPSPARSE_STATUS_SUCCESS);
     }
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
@@ -496,7 +491,8 @@ void testing_compress(const Arguments& arg)
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
     host_vector<Ti>            hT(arg.sparse_b ? size_B : size_A);
     host_vector<Ti>            hT_pruned(arg.sparse_b ? size_B_pruned_copy : size_A_pruned_copy);
-    host_vector<unsigned char> hT_gold(arg.sparse_b ? size_B_compressed_copy : size_A_compressed_copy);
+    host_vector<unsigned char> hT_gold(arg.sparse_b ? size_B_compressed_copy
+                                                    : size_A_compressed_copy);
     host_vector<unsigned char> hT_1(arg.sparse_b ? size_B_compressed_copy : size_A_compressed_copy);
 
     hipsparselt_seedrand();
@@ -547,10 +543,15 @@ void testing_compress(const Arguments& arg)
     }
     else if(run_version == 2)
     {
-        EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtSpMMAPrune2(
-                handle, arg.sparse_b ? matB : matA, !arg.sparse_b, arg.sparse_b ? transB : transA, dT, dT, hipsparseLtPruneAlg_t(arg.prune_algo), stream),
-            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMAPrune2(handle,
+                                                       arg.sparse_b ? matB : matA,
+                                                       !arg.sparse_b,
+                                                       arg.sparse_b ? transB : transA,
+                                                       dT,
+                                                       dT,
+                                                       hipsparseLtPruneAlg_t(arg.prune_algo),
+                                                       stream),
+                                HIPSPARSE_STATUS_SUCCESS);
     }
 
     if(arg.unit_check || arg.norm_check)
@@ -594,7 +595,8 @@ void testing_compress(const Arguments& arg)
             m_stride   = stride_b == 0 ? 0 : m_stride_r;
         }
 
-        auto metadata_offset = c_stride_r * sizeof(Ti) * ((arg.sparse_b? stride_b : stride_a) == 0 ? 1 : num_batches);
+        auto metadata_offset = c_stride_r * sizeof(Ti)
+                               * ((arg.sparse_b ? stride_b : stride_a) == 0 ? 1 : num_batches);
 
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(hT_pruned.transfer_from(dT));
@@ -604,10 +606,15 @@ void testing_compress(const Arguments& arg)
                 hipsparseLtSpMMACompress(handle, plan, dT, dT_compressd, dT_compressBuffer, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         else if(run_version == 2)
-            EXPECT_HIPSPARSE_STATUS(
-                hipsparseLtSpMMACompress2(
-                    handle, arg.sparse_b? matB : matA, !arg.sparse_b, arg.sparse_b ? transB : transA, dT, dT_compressd, dT_compressBuffer, stream),
-                HIPSPARSE_STATUS_SUCCESS);
+            EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress2(handle,
+                                                              arg.sparse_b ? matB : matA,
+                                                              !arg.sparse_b,
+                                                              arg.sparse_b ? transB : transA,
+                                                              dT,
+                                                              dT_compressd,
+                                                              dT_compressBuffer,
+                                                              stream),
+                                    HIPSPARSE_STATUS_SUCCESS);
 
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(hT_1.transfer_from(dT_compressd));
@@ -620,36 +627,36 @@ void testing_compress(const Arguments& arg)
 
         if(!arg.sparse_b)
             compress<Ti, Tc>(hT_pruned,
-                            reinterpret_cast<Ti*>(hT_gold.data()),
-                            hT_gold.data() + metadata_offset,
-                            M,
-                            K,
-                            stride_1_a,
-                            stride_2_a,
-                            stride_a,
-                            c_stride_1,
-                            c_stride_2,
-                            c_stride,
-                            m_stride_1,
-                            m_stride_2,
-                            m_stride,
-                            num_batches);
+                             reinterpret_cast<Ti*>(hT_gold.data()),
+                             hT_gold.data() + metadata_offset,
+                             M,
+                             K,
+                             stride_1_a,
+                             stride_2_a,
+                             stride_a,
+                             c_stride_1,
+                             c_stride_2,
+                             c_stride,
+                             m_stride_1,
+                             m_stride_2,
+                             m_stride,
+                             num_batches);
         else
             compress<Ti, Tc>(hT_pruned,
-                            reinterpret_cast<Ti*>(hT_gold.data()),
-                            hT_gold.data() + metadata_offset,
-                            N,
-                            K,
-                            stride_2_b,
-                            stride_1_b,
-                            stride_b,
-                            c_stride_2,
-                            c_stride_1,
-                            c_stride,
-                            m_stride_2,
-                            m_stride_1,
-                            m_stride,
-                            num_batches);
+                             reinterpret_cast<Ti*>(hT_gold.data()),
+                             hT_gold.data() + metadata_offset,
+                             N,
+                             K,
+                             stride_2_b,
+                             stride_1_b,
+                             stride_b,
+                             c_stride_2,
+                             c_stride_1,
+                             c_stride,
+                             m_stride_2,
+                             m_stride_1,
+                             m_stride,
+                             num_batches);
 
         if(arg.timing)
         {
@@ -691,9 +698,9 @@ void testing_compress(const Arguments& arg)
                                    num_batches);
 // cusparselt' metadata has different layout so skip metadata check.
 #ifdef __HIP_PLATFORM_HCC__
-            unit_check_general<int8_t>(arg.sparse_b ? K/8 : M,
+            unit_check_general<int8_t>(arg.sparse_b ? K / 8 : M,
                                        arg.sparse_b ? N : K / 8,
-                                       arg.sparse_b ? K/8 : M,
+                                       arg.sparse_b ? K / 8 : M,
                                        m_stride,
                                        reinterpret_cast<int8_t*>(hT_gold + metadata_offset),
                                        reinterpret_cast<int8_t*>(hT_1 + metadata_offset),
@@ -712,9 +719,9 @@ void testing_compress(const Arguments& arg)
 // cusparselt' metadata has different layout so skip metadata check.
 #ifdef __HIP_PLATFORM_AMD__
             hipsparselt_error_m
-                = unit_check_diff<int8_t>(arg.sparse_b ? K/8 : M,
+                = unit_check_diff<int8_t>(arg.sparse_b ? K / 8 : M,
                                           arg.sparse_b ? N : K / 8,
-                                          arg.sparse_b ? K/8 : M,
+                                          arg.sparse_b ? K / 8 : M,
                                           m_stride,
                                           reinterpret_cast<int8_t*>(hT_gold + metadata_offset),
                                           reinterpret_cast<int8_t*>(hT_1 + metadata_offset),
