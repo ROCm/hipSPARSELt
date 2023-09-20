@@ -101,15 +101,18 @@ namespace
             }
             else
             {
+                name << '_' << (arg.sparse_b ? "SB" : "SA");
+
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
-                name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.lda;
+                name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_'
+                     << (arg.sparse_b ? arg.ldb : arg.lda);
 
                 if(strstr(arg.function, "_batched") != nullptr)
                     name << '_' << arg.batch_count;
 
                 if(strstr(arg.function, "_strided_batched") != nullptr)
-                    name << '_' << arg.stride_a;
+                    name << '_' << (arg.sparse_b ? arg.stride_b : arg.stride_a);
             }
             return std::move(name);
         }
