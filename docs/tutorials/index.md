@@ -4,7 +4,7 @@
 :gutter: 1
 
 :::{grid-item-card}
-**[Installing hipSPARSELt](./install/linux.md)**
+**[Installing hipSPARSELt (Linux)](./install/linux.md)**
 
 Learn how to install HipSPARSELt on Linux.
 

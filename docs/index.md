@@ -49,6 +49,8 @@ Collated information
 Topic overviews & background information
 ^^^
 
+* [Interface examples](./conceptual/interface-examples.md)
+
 :::
 
 ::::

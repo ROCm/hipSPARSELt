@@ -18,3 +18,5 @@ cmake directly, but it's a great way to get started quickly and can serve as an 
 
 ./install.sh -dc
 ```
+
+For a more in-depth installation guide, see [Installing hipSPARSELt (Linux)](../install/linux.md).

@@ -1,11 +1,15 @@
-# How-to material
+# How-to documentation
 
-:::::{grid} 1 1 2 2
+:::::{grid} 1 1 1 1
 :gutter: 1
 
 :::{grid-item-card}
-**[Running unit tests](./unit-tests.md)**
 **[Running benchmarks](./benchmarks.md)**
+
+:::
+
+:::{grid-item-card}
+**[Running unit tests](./unit-tests.md)**
 
 :::
 

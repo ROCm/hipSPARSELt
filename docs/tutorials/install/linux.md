@@ -1,4 +1,4 @@
-# Installing and building hipSPARSELt for Linux
+# Installing hipSPARSELt (Linux)
 
 ## Prerequisites
 
