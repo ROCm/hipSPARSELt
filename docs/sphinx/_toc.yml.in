@@ -43,3 +43,6 @@ subtrees:
     - entries:
       - file: conceptual/interface-examples.md
         title: Interface examples
+
+  - file: .doxygen/html/index
+    title: API reference
