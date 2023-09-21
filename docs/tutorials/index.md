@@ -6,7 +6,7 @@
 :::{grid-item-card}
 **[Installing hipSPARSELt (Linux)](./install/linux.md)**
 
-Learn how to install HipSPARSELt on Linux.
+Learn how to install hipSPARSELt on Linux.
 
 :::
 

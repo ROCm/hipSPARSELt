@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-HipSPARSELt requires a [ROCm-enabled platform](https://rocm.github.io/) and the
+hipSPARSELt requires a [ROCm-enabled platform](https://rocm.github.io/) and the
 [hipSPARSE ROCm library](https://github.com/ROCmSoftwarePlatform/hipSPARSE) (for the header file).
 
 ## Installing pre-built packages
@@ -102,7 +102,7 @@ We recommended installing hipSPARSELt using the `install.sh` script.
 
     GoogleTest is required in order to build hipSPARSELt clients.
 
-    Build HipSPARSELt with dependencies and clients using the following commands:
+    Build hipSPARSELt with dependencies and clients using the following commands:
 
     ```bash
         # Install googletest

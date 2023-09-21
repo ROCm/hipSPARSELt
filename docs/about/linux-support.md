@@ -1,6 +1,6 @@
 # Supported targets
 
-HipSPARSELt is supported on these operating systems:
+hipSPARSELt is supported on these operating systems:
 
 - [Ubuntu 18.04](https://ubuntu.com/)
 - [Ubuntu 20.04](https://ubuntu.com/)

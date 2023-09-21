@@ -39,6 +39,8 @@ Collated information
 ^^^
 
 * [Supported functions](./reference/supported-functions.md)
+* [Interface examples](./reference/interface-examples.md)
+* [API reference](./doxygen/html/index.html)
 
 :::
 
@@ -49,7 +51,7 @@ Collated information
 Topic overviews & background information
 ^^^
 
-* [Interface examples](./conceptual/interface-examples.md)
+* [About the API reference](./conceptual/api-about.md)
 
 :::
 

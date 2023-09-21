@@ -1,4 +1,4 @@
-# HipSPARSELt interface examples
+# hipSPARSELt interface examples
 
 The hipSPARSELt interface is compatible with cuSPARSELt APIs. Porting a CUDA application that
 originally calls the cuSPARSELt API to an application that calls the hipSPARSELt API should be relatively straightforward.
@@ -22,4 +22,4 @@ hipsparseStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
 
 ```
 
-HipSPARSELt assumes matrix A, B, C, D and workspace are allocated in GPU memory space filled with data. Users are responsible for copying data from/to the host and device memory.
+hipSPARSELt assumes matrix A, B, C, D and workspace are allocated in GPU memory space filled with data. Users are responsible for copying data from/to the host and device memory.

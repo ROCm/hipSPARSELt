@@ -4,7 +4,7 @@
 :gutter: 1
 
 :::{grid-item-card}
-**[Interface examples](./interface-examples.md)**
+**[About the API reference](./api-about.md)**
 
 :::
 

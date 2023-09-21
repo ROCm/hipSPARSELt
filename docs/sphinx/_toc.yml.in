@@ -36,13 +36,14 @@ subtrees:
     - entries:
       - file: reference/supported-functions.md
         title: Supported functions
+      - file: reference/interface-examples.md
+        title: Interface examples
+      - file: reference/api-index.md
+        title: API reference
 
   - file: conceptual/index.md
     title: Conceptual
     subtrees:
     - entries:
-      - file: conceptual/interface-examples.md
-        title: Interface examples
-
-  - file: .doxygen/docBin/html/index
-    title: API reference
+      - file: conceptual/api-about.md
+        title: API information

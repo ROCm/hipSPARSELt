@@ -1,12 +1,10 @@
-===================
-API Reference Guide
-===================
+# About hipSPARSELt
 
-Introduction
-------------
 hipSPARSELt is a library that contains basic linear algebra subroutines for sparse matrices written in HIP for GPU devices.
+
 It is designed to be used from C and C++ code.
-The functionality of hipSPARSELt is organized in the following categories:
+
+The hipSPARSELt API is organized in the following categories:
 
 * :ref:`hipsparselt_library_managment_functions_` describe functions that provide the library handle.
 * :ref:`hipsparselt_matrix_descriptor_functions_` describe functions that used to define sparse and dense matrix.
