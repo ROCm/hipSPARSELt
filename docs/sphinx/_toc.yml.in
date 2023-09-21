@@ -44,5 +44,5 @@ subtrees:
       - file: conceptual/interface-examples.md
         title: Interface examples
 
-  - file: .doxygen/html/index
+  - file: .doxygen/docBin/html/index
     title: API reference
