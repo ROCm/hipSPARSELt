@@ -134,14 +134,3 @@ You can test the installation by running one of the hipSPARSELt examples, after 
    # Execute hipSPARSELt example
    $ ./example_spmm_strided_batched -m 32 -n 32 -k 32 --batch_count 1
 
-Supported Targets
------------------
-Currently, hipSPARSELt is supported under the following operating systems
-
-- `Ubuntu 18.04 <https://ubuntu.com/>`_
-- `Ubuntu 20.04 <https://ubuntu.com/>`_
-- `CentOS 7 <https://www.centos.org/>`_
-- `CentOS 8 <https://www.centos.org/>`_
-- `SLES 15 <https://www.suse.com/solutions/enterprise-linux/>`_
-
-To compile and run hipSPARSELt, `AMD ROCm Platform <https://github.com/RadeonOpenCompute/ROCm>`_ is required.

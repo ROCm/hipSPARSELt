@@ -6,7 +6,9 @@
 
 from rocm_docs import ROCmDocs
 
-docs_core = ROCmDocs("hipSPARSELt Documentation")
+external_toc_path = "./sphinx/_toc.yml"
+
+docs_core = ROCmDocs("hipSPARSELt documentation")
 docs_core.run_doxygen()
 docs_core.setup()
 

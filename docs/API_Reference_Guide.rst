@@ -9,9 +9,9 @@ It is designed to be used from C and C++ code.
 The functionality of hipSPARSELt is organized in the following categories:
 
 * :ref:`hipsparselt_library_managment_functions_` describe functions that provide the library handle.
-* :ref:`hipsparselt_matrix_descriptor_functions_` describe fuctions that used to define sparse and dense matrix.
-* :ref:`hipsparselt_matmul_descriptor_functions_` describe fuctions that used to define how to do the matrix multiply.
-* :ref:`hipsparselt_matmul_algorithm_functions_` describe functions that provide algortithms for doing the matrix multiply.
+* :ref:`hipsparselt_matrix_descriptor_functions_` describe functions that used to define sparse and dense matrix.
+* :ref:`hipsparselt_matmul_descriptor_functions_` describe functions that used to define how to do the matrix multiply.
+* :ref:`hipsparselt_matmul_algorithm_functions_` describe functions that provide algorithms for doing the matrix multiply.
 * :ref:`hipsparselt_matmul_functions_` describe operations that provide multiply of sparse matrices.
 * :ref:`hipsparselt_helper_functions_` describe available helper functions that are required for subsequent library calls.
 
@@ -68,9 +68,9 @@ The Structured sparsity storage format represents a :math:`m \times n` matrix by
 ================ =====================================================================================================
 m                number of rows (integer).
 n                number of columns (integer).
-sparsity         50%, ratio of ``nnz`` elemetns in every 2:1 (int) or 4:2 (others) element along the row.
+sparsity         50%, ratio of ``nnz`` elements in every 2:1 (int) or 4:2 (others) element along the row.
                  4:2 means every 4 continuous elements will only have 2 ``nnz`` elements.
-compresed_matrix matrix of ``nnz`` elements containing the data
+compressed_matrix matrix of ``nnz`` elements containing the data
 metadata         matrix of ``nnz`` elements containing the element indices in every 4:2 or 2:1 array along the row.
                  contents or structure of metadata is dependent on the chosen solution by backend implementation.
 ================ =====================================================================================================
@@ -299,7 +299,7 @@ Asynchronous API
 ----------------
 Except a functions having memory allocation inside preventing asynchronicity, all hipSPARSELt functions are configured to operate in non-blocking fashion with respect to CPU, meaning these library functions return immediately.
 
-.. _hipsparselt_library_managment_functions_:
+.. _hipsparselt_library_management_functions_:
 
 Library Management Functions
 ----------------------------
@@ -339,7 +339,7 @@ hipsparseLtGetProperty()
 Matrix Descriptor Functions
 ---------------------------
 
-The matrix descriptor describe fuctions that used to define sparse and dense matrix
+The matrix descriptor describe functions that used to define sparse and dense matrix
 
 hipsparseLtDenseDescriptorInit()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -371,7 +371,7 @@ hipsparseLtMatDescGetAttribute()
 Matmul Descriptor Functions
 ---------------------------
 
-This matmul descriptor describe fuctions that used to define how to do the matrix multiply.
+This matmul descriptor describe functions that used to define how to do the matrix multiply.
 
 hipsparseLtMatmulDescriptorInit()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -393,7 +393,7 @@ hipsparseLtMatmulDescGetAttribute()
 Matmul Algorithm Functions
 --------------------------
 
-This matmul algorithm describe functions that provide algortithms for doing the matrix multiply.
+This matmul algorithm describe functions that provide algorithms for doing the matrix multiply.
 
 hipsparseLtMatmulAlgSelectionInit()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
