@@ -4,7 +4,7 @@
 :gutter: 1
 
 :::{grid-item-card}
-**[API reference](./supported-functions.md)**
+**[API reference](../doxygen/html/index)**
 
 :::
 

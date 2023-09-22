@@ -75,7 +75,7 @@ device.
 
 ## Storage formats
 
-The structured sparsity storage format represents a $m \times n$ matrix by
+The structured sparsity storage format represents a ```{eval-rst} :math:`m \times n` ``` matrix by
 
 |                |                                                 |
 |-----------|----------------------------------|
@@ -85,14 +85,35 @@ The structured sparsity storage format represents a $m \times n$ matrix by
 | compressed_matrix | Matrix of ``nnz`` elements containing the data) |
 | metadata | Matrix of `nnz` elements containing the element indices in every 4:2 or 2:1 array along the row. The contents or structure of metadata is dependent on the chosen solution by backend implementation. |
 
-Consider the following $4 \times 4$ matrix and the structured sparsity structures, with $m=4$, $n=4$:
+Consider the following ```{eval-rst} :math:`4 \times 4` ``` matrix and the structured sparsity structures, with ```{eval-rst} :math:`m = 4, n = 4` ```:
 
-$A = \begin{bmatrix}1.0 & 2.0 & 0.0 & 0.0\\0.0 & 0.0 & 3.0 & 4.0\\0.0 & 6.0 & 7.0 & 0.0
-\\0.0 & 6.0 & 0.0 & 8.0\end{bmatrix}$
+```{eval-rst}
+.. math::
+
+  A = \begin{pmatrix}
+        1.0 & 2.0 & 0.0 & 0.0 \\
+        0.0 & 0.0 & 3.0 & 4.0 \\
+        0.0 & 6.0 & 7.0 & 0.0 \\
+        0.0 & 6.0 & 0.0 & 8.0 \\
+      \end{pmatrix}
 
 where
 
-$Compressed A = \begin{bmatrix}1.0 & 2.0 \\3.0 & 4.0\\6.0 & 7.0\\6.0 & 8.0\end{bmatrix} Metadata =  \begin{bmatrix}0 & 1\\2 & 3\\1 & 2\\1 & 3\end{bmatrix}$
+.. math::
+
+  Compressed A = \begin{pmatrix}
+                  1.0 & 2.0 \\
+                  3.0 & 4.0 \\
+                  6.0 & 7.0 \\
+                  6.0 & 8.0 \\
+                \end{pmatrix}
+  metadata =    \begin{pmatrix}
+                  0 & 1 \\
+                  2 & 3 \\
+                  1 & 2 \\
+                  1 & 3 \\
+                \end{pmatrix}
+```
 
 ## Data type support
 
