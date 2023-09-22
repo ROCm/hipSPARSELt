@@ -318,28 +318,48 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     rocsparselt_operation opA = matmul_descr->op_A;
     rocsparselt_operation opB = matmul_descr->op_B;
 
+    int64_t c_num_cols; 
+    int64_t metadata_offset;
+    const unsigned char* metadata;
+       
     // matrix A
-    int64_t              num_rows_a     = matmul_descr->matrix_A->m;
-    int64_t              num_cols_a     = matmul_descr->matrix_A->n;
-    int64_t              c_k_a          = matmul_descr->matrix_A->c_k;
-    int64_t              c_lda          = matmul_descr->matrix_A->c_ld;
-    rocsparselt_datatype type_a         = matmul_descr->matrix_A->type;
-    int64_t              offset_a       = 0;
-    int                  num_batches_a  = 1;
-    int64_t              batch_stride_a = 0;
-    num_batches_a                       = matmul_descr->matrix_A->num_batches;
-    batch_stride_a                      = matmul_descr->matrix_A->batch_stride;
-    int64_t c_batch_stride_a            = (batch_stride_a == 0                   ? 0
-                                           : (opA == rocsparselt_operation_none) ? c_lda * c_k_a
-                                                                                 : c_lda * num_cols_a);
+    int64_t lda            = matmul_descr->matrix_A->ld;
+    int64_t offset_a       = 0;
+    int64_t batch_stride_a = matmul_descr->matrix_A->batch_stride;
+    int     num_batches_a  = matmul_descr->matrix_A->num_batches;
+    int64_t c_k            = matmul_descr->matrix_A->c_k;
+    int64_t c_ld           = matmul_descr->matrix_A->c_ld;
+
+    if(matmul_descr->is_sparse_a)
+    {
+
+        batch_stride_a = (batch_stride_a == 0 ? 0
+                         : (opA == rocsparselt_operation_none) ? c_ld * c_k
+                                                               : c_ld * matmul_descr->matrix_A->n);
+        lda            = c_ld;
+
+        c_num_cols      = (opA == rocsparselt_operation_none ? c_k : matmul_descr->matrix_A->n);
+        metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(c_num_cols, c_ld, (batch_stride_a == 0 ? 1 : num_batches_a), matmul_descr->matrix_A->type);
+        metadata = (a == nullptr) ? nullptr : reinterpret_cast<const unsigned char*>(a) + metadata_offset;
+    }
 
     // matrix B
-    int64_t num_rows_b     = matmul_descr->matrix_B->m;
-    int64_t num_cols_b     = matmul_descr->matrix_B->n;
     int64_t ldb            = matmul_descr->matrix_B->ld;
     int64_t offset_b       = 0;
     int64_t batch_stride_b = 0;
     batch_stride_b         = matmul_descr->matrix_B->batch_stride;
+    if(!matmul_descr->is_sparse_a)
+    {
+        c_k            = matmul_descr->matrix_B->c_k;
+        c_ld           = matmul_descr->matrix_B->c_ld;
+        batch_stride_b = (batch_stride_b == 0 ? 0
+                         : (opB == rocsparselt_operation_none) ? c_ld * matmul_descr->matrix_B->n
+                                                               : c_ld * c_k);
+        ldb            = c_ld;
+        c_num_cols      = (opB == rocsparselt_operation_none ? matmul_descr->matrix_B->n : c_k);
+        metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(c_num_cols, c_ld, (batch_stride_b == 0 ? 1 : num_batches_a), matmul_descr->matrix_B->type);
+        metadata = (b == nullptr) ? nullptr : reinterpret_cast<const unsigned char*>(b) + metadata_offset;
+    }
 
     // matrix C
     int64_t ldc            = matmul_descr->matrix_C->ld;
@@ -348,8 +368,6 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     batch_stride_c         = matmul_descr->matrix_C->batch_stride;
 
     // matrix D
-    int64_t num_rows_d     = matmul_descr->matrix_D->m;
-    int64_t num_cols_d     = matmul_descr->matrix_D->n;
     int64_t ldd            = matmul_descr->matrix_D->ld;
     int64_t offset_d       = 0;
     int64_t batch_stride_d = 0;
@@ -392,33 +410,17 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
     float*  bias_vector = matmul_descr->bias_pointer;
     int64_t bias_stride = matmul_descr->bias_stride;
 
-    int64_t m, n, k;
-    auto    status
-        = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
-    if(status != rocsparselt_status_success)
-    {
-        log_error(matmul_descr->handle, caller, "A, B matrix size are not matched");
-        return status;
-    }
-
-    int64_t c_num_cols_a    = (opA == rocsparselt_operation_none ? c_k_a : num_cols_a);
-    int64_t metadata_offset = rocsparselt_metadata_offset_in_compressed_matrix(
-        c_num_cols_a, c_lda, (batch_stride_a == 0 ? 1 : num_batches_a), type_a);
-
-    const unsigned char* metadata
-        = (a == nullptr) ? nullptr : reinterpret_cast<const unsigned char*>(a) + metadata_offset;
-
     (*prob) = new RocsparseltContractionProblem<Ti, To, Tc>(matmul_descr->handle,
                                                             opA,
                                                             opB,
-                                                            m,
-                                                            n,
-                                                            k,
+                                                            matmul_descr->m,
+                                                            matmul_descr->n,
+                                                            matmul_descr->k,
                                                             alpha,
                                                             a,
                                                             nullptr,
-                                                            c_lda,
-                                                            c_batch_stride_a,
+                                                            lda,
+                                                            batch_stride_a,
                                                             offset_a,
                                                             b,
                                                             nullptr,
@@ -438,7 +440,7 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
                                                             offset_d,
                                                             num_batches_a,
                                                             strided_batch,
-                                                            true,
+                                                            matmul_descr->is_sparse_a,
                                                             metadata,
                                                             act_type,
                                                             act_args[0],

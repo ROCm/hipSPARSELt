@@ -198,7 +198,7 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
             << min_stride_a << std::endl;
         arg.stride_a = min_stride_a;
     }
-    if(arg.stride_b == -1 || (!any_stride && arg.stride_b < min_stride_b))
+    if(arg.stride_b == -1 || (!any_stride && arg.stride_b < min_stride_b && arg.stride_b != 0))
     {
         hipsparselt_cout << "hipsparselt-bench INFO: stride_b < min_stride_b, set stride_b = "
                          << min_stride_b << std::endl;
