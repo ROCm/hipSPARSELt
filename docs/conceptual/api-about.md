@@ -3,14 +3,14 @@
 hipSPARSELt is a library that contains basic linear algebra subroutines for sparse matrices written in HIP
 for GPU devices. It is designed to be used from C and C++ code.
 
-The hipSPARSELt API is organized in the following categories:
+The hipSPARSELt API is organized in the following functions:
 
-* Library management functions: Describe functions that provide the library handle
-* Matrix descriptor functions: Describe functions that used to define sparse and dense matrix.
-* Matmul descriptor functions: Describe functions that used to define how to do the matrix multiply.
-* Matmul algorithm functions: Describe functions that provide algorithms for doing the matrix multiply.
-* Matmul functions: Describe operations that provide multiply of sparse matrices.
-* Helper functions: Describe available helper functions that are required for subsequent library calls.
+* Library management: Provides the library handle
+* Matrix descriptor: Used to define sparse and dense matrix
+* Matmul descriptor: Used to define how to do the matrix multiply
+* Matmul algorithm: Provides algorithms for doing the matrix multiply
+* Matmul: Operations that provide multiply of sparse matrices
+* Helper: Helper functions that are required for subsequent library calls
 
 The code is open and hosted here: https://github.com/ROCmSoftwarePlatform/hipSPARSELt
 
@@ -38,7 +38,7 @@ previously executed hipSPARSELt functions on the device/this particular stream h
 
 ## HIP device management
 
-Before a HIP kernel invocation, you need to call `hipSetDevice` to set a device, e.g., device 1. If you
+Before a HIP kernel invocation, you need to call `hipSetDevice` to set a device (e.g., device 1). If you
 don't explicitly call this device, the system sets it as device 0 by default. Unless you explicitly call
 `hipSetDevice` to set to another device, HIP kernels are always launched on device 0.
 
