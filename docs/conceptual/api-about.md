@@ -1,4 +1,4 @@
-# hipSPARSELt API library
+<!-- # hipSPARSELt API library
 
 hipSPARSELt is a library that contains basic linear algebra subroutines for sparse matrices written in HIP
 for GPU devices. It is designed to be used from C and C++ code.
@@ -126,4 +126,4 @@ where
 | HIPSPARSELT_R_16F   | HIPSPARSELT_R_16F    | HIPSPARSELT_COMPUTE_16F           | CUDA |
 | HIPSPARSELT_R_16BF | HIPSPARSELT_R_16BF  | HIPSPARSELT_COMPUTE_16F           | CUDA |
 | HIPSPARSELT_R_32F   | HIPSPARSELT_R_32F    | HIPSPARSELT_COMPUTE_TF32          | CUDA |
-| HIPSPARSELT_R_32F   | HIPSPARSELT_R_32F    | HIPSPARSELT_COMPUTE_TF32_FAST | CUDA |
+| HIPSPARSELT_R_32F   | HIPSPARSELT_R_32F    | HIPSPARSELT_COMPUTE_TF32_FAST | CUDA | -->
