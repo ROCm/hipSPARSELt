@@ -109,6 +109,8 @@ namespace
                      << hipsparselt_datatype_to_string(arg.d_type)
                      << hipsparselt_computetype_to_string(arg.compute_type);
 
+                name << '_' << (arg.sparse_b ? "SB" : "SA");
+
                 if(arg.activation_type != hipsparselt_activation_type::none)
                 {
                     name << '_' << hipsparselt_activation_type_to_string(arg.activation_type);
