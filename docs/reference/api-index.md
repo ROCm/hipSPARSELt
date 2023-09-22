@@ -5,6 +5,8 @@ For information on hipSPARSELt API structure and use, see
 
 The hipSPARSELt API reference is structured as follows:
 
-* [Classes](annotated_classes.html)
-
-* [Functions](functions.html)
+*Classes
+    * [Class list](annotated.html)
+*Files
+  * [File list](files.html)
+  * [File members](globals.html)
