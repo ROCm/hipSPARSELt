@@ -40,7 +40,7 @@ Collated information
 
 * [Supported functions](./reference/supported-functions.md)
 * [Interface examples](./reference/interface-examples.md)
-* [API reference](./doxygen/html/index.html)
+* [API reference](./reference/api-index.md)
 
 :::
 
