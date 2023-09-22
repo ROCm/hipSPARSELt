@@ -40,7 +40,7 @@ Collated information
 
 * [Supported functions](./reference/supported-functions.md)
 * [Interface examples](./reference/interface-examples.md)
-* [API reference](./reference/api-index.md)
+* [API reference](./reference/api-index.html)
 
 :::
 

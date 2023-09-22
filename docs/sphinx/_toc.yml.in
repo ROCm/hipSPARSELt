@@ -38,7 +38,7 @@ subtrees:
         title: Supported functions
       - file: reference/interface-examples.md
         title: Interface examples
-      - file: reference/api-index.md
+      - file: doxygen/html/index
         title: API reference
 
   - file: conceptual/index.md
