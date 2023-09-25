@@ -10,40 +10,22 @@ subtrees:
     title: What is hipSPARSELt?
   - file: tutorials/quick-start/linux.md
     title: Quick-start
+  - file: reference/api-guide.md
+    title: API reference
+    subtrees:
+    - entries
+      - file: reference/supported-functions.md
+        title: Supported functions
 
-  - file: about/linux-support.md
-    title: Compatibility & support
+
+  - file: porting.md
+    title: Porting from CUDA
 
   - file: tutorials/index.md
-    title: Tutorials
+    title: Tutorials & examples
     subtrees:
     - entries:
       - file: tutorials/install/linux.md
         title: Installing and building hipSPARSELt for Linux
-
-  - file: how-to/index.md
-    title: How-to
-    subtrees:
-    - entries:
-      - file: how-to/benchmarks.md
-        title: Running benchmarks
-      - file: how-to/unit-tests.md
-        title: Running unit tests
-
-  - file: reference/index.md
-    title: Reference
-    subtrees:
-    - entries:
-      - file: reference/supported-functions.md
-        title: Supported functions
-      - file: reference/interface-examples.md
-        title: Interface examples
-      - file: doxygen/html/index
-        title: API reference
-
-  - file: conceptual/index.md
-    title: Conceptual
-    subtrees:
-    - entries:
-      - file: conceptual/api-about.md
-        title: API information
+      - file: tutorials/benchmarks-unit-tests.md
+        title: Running benchmarks & unit tests

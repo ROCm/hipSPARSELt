@@ -2,7 +2,7 @@
 
 Welcome to the hipSPARSELt docs home page!
 
-Our documentation is divided into four main categories:
+Our documentation is divided into the following categories:
 
 ::::{grid} 1 2 2 2
 :class-container: rocm-doc-grid
@@ -20,38 +20,17 @@ Instructional material
 
 :::{grid-item-card}
 :padding: 2
-**[How-to](./how-to/index.md)**
-
-Task-oriented walkthroughs
-^^^
-
-* [Running unit tests](./how-to/unit-tests.md)
-* [Running benchmarks](./how-to/benchmarks.md)
-
-
-:::
-
-:::{grid-item-card}
-:padding: 2
 **[Reference](./reference/index.md)**
 
 Collated information
 ^^^
 
-* [Supported functions](./reference/supported-functions.md)
-* [Interface examples](./reference/interface-examples.md)
-* [API reference](./doxygen/html/index)
+* [API reference](./reference/api-guide.md)
 
-:::
 
-:::{grid-item-card}
-:padding: 2
-**[Conceptual](./conceptual/index.md)**
-
-Topic overviews & background information
-^^^
-
-* [About the API reference](./conceptual/api-about.md)
+* [Supported functions](./supported-functions.md)
+* [Benchmarks & unit tests](./benchmarks-unit-tests.md)
+* [Porting from CUDA](./porting.md)
 
 :::
 
