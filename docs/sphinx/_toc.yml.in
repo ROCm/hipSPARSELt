@@ -1,0 +1,40 @@
+# Anywhere {branch} is used, the branch name will be substituted.
+# These comments will also be removed.
+defaults:
+  numbered: False
+  maxdepth: 7
+root: index
+subtrees:
+- entries:
+  - file: what-is-hipsparselt.md
+    title: What is hipSPARSELt?
+  - file: tutorials/quick-start/linux.md
+    title: Quick-start
+  - file: reference/index.md
+    title: API reference
+    subtrees:
+    - entries:
+      - file: reference/api-guide.md
+        title: API library introduction
+      - file: reference/supported-functions.md
+        title: Supported functions
+      - file: reference/device-stream-manage.md
+        title: Device & stream management
+      - file: reference/storage-format.md
+        title: Storage formats
+      - file: doxygen/docBin/html/index
+        title: API library
+      - file: reference/data-types.md
+        title: Data types
+
+  - file: reference/porting.md
+    title: Porting from CUDA
+
+  - file: tutorials/index.md
+    title: Tutorials & how-to
+    subtrees:
+    - entries:
+      - file: tutorials/install/linux.md
+        title: Installing and building hipSPARSELt for Linux
+      - file: tutorials/benchmarks-unit-tests.md
+        title: Running benchmarks & unit tests
