@@ -16,7 +16,10 @@ subtrees:
     - entries
       - file: reference/supported-functions.md
         title: Supported functions
-
+      - file: reference/device-stream-manage.md
+        title: Device & stream management
+      - file: reference/storage-format.md
+        title: Storage formats
 
   - file: porting.md
     title: Porting from CUDA
