@@ -1,9 +1,9 @@
-# Device and stream management
+# HIP device and stream management
 
 `hipSetDevice` and `hipGetDevice` are HIP device management APIs. They are *not* part of the
 hipSPARSELt API.
 
-## HIP device management
+## Device management
 
 hipSPARSELt assumes that you've already set the device before making a hipSPARSELt call.
 
@@ -19,7 +19,7 @@ To ensure device safety, it's your responsibility to provide hipSPARSELt with a 
 Yoy can't switch devices between `hipsparselt_init` and `hipsparselt_destroy`. If you want to change
 devices, you must first destroy the current handle and then create a new one.
 
-## HIP Stream Management
+## Stream management
 
 HIP kernels are always launched in a queue (also known as a stream).
 
@@ -29,7 +29,7 @@ system. You can't create or destroy the default stream. However, you can create 
 `hipsparselt_matmul`. HIP kernels are invoked in hipSPARSELt routines. Note that if you create a stream,
 you're also responsible for destroying it.
 
-## Multiple Streams and Multiple Devices
+## Multiple streams and devices
 
 If the system under test has multiple HIP devices, you can run multiple hipSPARSELt handles
 concurrently. Each handle is associated with a specific device; therefore, a new handle must be created for
