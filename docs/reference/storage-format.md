@@ -1,7 +1,7 @@
 # Storage format
 
 hipSPARSELt uses a structured sparsity storage format, which is represented by an
-```{eval-rst} `m \times n` ``` matrix, where:
+{math}`m \times n` matrix, where:
 
 * **m** = number of rows (integer)
 * **n** = number of columns (integer)
@@ -10,8 +10,8 @@ means every 4 continuous elements will only have 2 `nnz` elements)
 * **compressed matrix** = matrix of `nnz` elements containing data
 * **metadata** = matrix of `nnz` elements containing the element indices in every 4:2 or 2:1 array along the row (contents or structure of metadata is dependent on the chosen solution by backend implementation)
 
-Consider the following ```{eval-rst} `4 \times 4` ``` matrix and the structured sparsity structures using
-```{eval-rst} `m = 4, n = 4` ```:
+Consider the following {math}`4 \times 4` matrix and the structured sparsity structures using
+{math}`m = 4, n = 4`:
 
 ```{math}
   A = \begin{pmatrix}
