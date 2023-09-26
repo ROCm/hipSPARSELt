@@ -14,8 +14,6 @@ subtrees:
     title: API reference
     subtrees:
     - entries:
-      - file: reference/api-guide.md
-        title: API library introduction
       - file: reference/supported-functions.md
         title: Supported functions
       - file: reference/device-stream-manage.md

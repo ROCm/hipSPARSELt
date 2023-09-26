@@ -39,22 +39,22 @@
 //! cuSPARSELt "version 0.3".
 //
 
-/*! \defgroup types_module Data types
- *  \brief This is a test of 'brief'
-/*! \defgroup library_module Library management functions
-  * \brief Provides the library handle
-/*! \defgroup matrix_desc_module Matrix descriptor functions
-  * \brief Defines sparse and dense matrices
- /*! \defgroup matmul_module Matrix multiply (matmul) functions
-   * \brief Multiplies sparse matrices
- /*! \defgroup matmul_desc_module Matmul descriptor functions
-   * \brief Defines how to matrix multiply
- /*! \defgroup matmul_algo_module Matmul algorithm functions
-   * \brief Provides algorithms for matrix multiply
-/*! \defgroup helper_module Helper functions
-  * \brief Required for subsequent library calls
-/*! \defgroup aux_module Auxilary functions
-  * \brief Initializes hipSPARSELt for the current HIP device
+
+/** @defgroup types_module Data types
+/** @defgroup library_module Library management functions
+  * Provides the library handle
+/** @defgroup matrix_desc_module Matrix descriptor functions
+  * Defines sparse and dense matrices
+/** @defgroup matmul_module Matrix multiply (matmul) functions
+   * Multiplies sparse matrices
+/** @defgroup matmul_desc_module Matmul descriptor functions
+   * Defines how to matrix multiply
+/** @defgroup matmul_algo_module Matmul algorithm functions
+   * Provides algorithms for matrix multiply
+/** @defgroup helper_module Helper functions
+  *  Required for subsequent library calls
+/** @defgroup aux_module Auxilary functions
+  * Initializes hipSPARSELt for the current HIP device
 */
 
 #pragma once
