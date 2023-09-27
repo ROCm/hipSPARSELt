@@ -9,6 +9,23 @@ Our documentation is divided into the following categories:
 
 :::{grid-item-card}
 :padding: 2
+**[Reference](./reference/api-library.md)**
+
+Collated information related to the hipSPARSELt API
+^^^
+
+* [Supported functions](./reference/supported-functions.md)
+* [Device & stream management](./reference/device-stream-manage.md)
+* [Storage formats](./reference/storage-format.md)
+* [Functions](./reference/functions.md)
+* [API library](../doxygen/docBin/html/index)
+
+* [Porting from CUDA](./reference/porting.md)
+
+:::
+
+:::{grid-item-card}
+:padding: 2
 **[Tutorials & how-to](./tutorials/index.md)**
 
 Instructional material
@@ -16,24 +33,6 @@ Instructional material
 
 * [Installing hipSPARSELt](./tutorials/install/linux.md)
 * [Running benchmarks & unit tests](./tutorials/benchmarks-unit-tests.md)
-
-:::
-
-:::{grid-item-card}
-:padding: 2
-**[Reference](./reference/index.md)**
-
-Collated information
-^^^
-
-* [API reference](./reference/api-guide.md)
-  * [Supported functions](./reference/supported-functions.md)
-  * [Device & stream management](./reference/device-stream-manage.md)
-  * [Storage formats](./reference/storage-format.md)
-  * [Data types](./reference/data-types.md)
-  * [Functions](./reference/functions.md)
-
-* [Porting from CUDA](./reference/porting.md)
 
 :::
 
