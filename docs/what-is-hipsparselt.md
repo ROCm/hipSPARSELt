@@ -1,3 +1,9 @@
+<head>
+  <meta name="description" content="hipSPARSELt is a SPARSE marshalling library with multiple
+  supported backends">
+  <meta name="keywords" content="hipSPARSELt, ROCm, SPARSE library, API">
+</head>
+
 # What is hipSPARSELt?
 
 hipSPARSELt is a SPARSE marshalling library with multiple supported backends. It exposes a common
