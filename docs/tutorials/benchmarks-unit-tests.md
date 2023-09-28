@@ -1,3 +1,6 @@
+<meta name="description" content="Running benchmarks & unit tests">
+<meta name="keywords" content="hipSPARSELt, ROCm, benchmarks, unit tests">
+
 # Running benchmarks & unit tests
 
 ## Running benchmarks

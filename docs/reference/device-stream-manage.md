@@ -1,3 +1,7 @@
+<meta name="description" content="HIP device and stream management with hipSPARSELt">
+<meta name="keywords" content="hipSPARSELt, ROCm, API library, API reference, stream
+management, device management">
+
 # HIP device and stream management
 
 `hipSetDevice` and `hipGetDevice` are HIP device management APIs. They are *not* part of the

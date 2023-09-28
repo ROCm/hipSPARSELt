@@ -1,3 +1,6 @@
+<meta name="description" content="hipSPARSELt API reference guide">
+<meta name="keywords" content="hipSPARSELt, ROCm, API library, API reference">
+
 # hipSPARSELt API reference guide
 
 hipSPARSELt is a library that contains basic linear algebra subroutines (BLAS) for SPARSE matrices that

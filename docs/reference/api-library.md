@@ -1,3 +1,6 @@
+<meta name="description" content="hipSPARSELt API library">
+<meta name="keywords" content="hipSPARSELt, ROCm, API library, API reference, matmul">
+
 # hipSPARSELt API library
 
 The hipSPARSELt library is organized as follows:

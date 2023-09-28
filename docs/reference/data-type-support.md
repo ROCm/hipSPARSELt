@@ -1,3 +1,6 @@
+<meta name="description" content="hipSPARSELt API library data type support">
+<meta name="keywords" content="hipSPARSELt, ROCm, API library, API reference, data type, support">
+
 # Data type support
 
 | Input | Output | Compute Type | Backend |

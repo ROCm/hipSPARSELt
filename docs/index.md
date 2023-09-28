@@ -20,8 +20,6 @@ Collated information related to the hipSPARSELt API
 * [Functions](./reference/functions.md)
 * [API library](../doxygen/docBin/html/index)
 
-* [Porting from CUDA](./reference/porting.md)
-
 :::
 
 :::{grid-item-card}
@@ -33,6 +31,7 @@ Instructional material
 
 * [Installing hipSPARSELt](./tutorials/install/linux.md)
 * [Running benchmarks & unit tests](./tutorials/benchmarks-unit-tests.md)
+* [Porting from CUDA](./tutorials/porting.md)
 
 :::
 

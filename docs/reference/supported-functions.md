@@ -1,3 +1,7 @@
+<meta name="description" content="ROCm & CUDA supported functions">
+<meta name="keywords" content="hipSPARSELt, ROCm, API library, API reference, supported
+functions">
+
 # ROCm & CUDA supported functions
 
 * ROCm
@@ -23,6 +27,6 @@
     * Add support for Mixed-precision computation
       * FP8 input/output, FP32 Matrix Core accumulate
       * BF8 input/output, FP32 Matrix Core accumulate
-      * Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
+      * Add kernel selection and generator, used to provide the appropriate solution for the specific problem.
 * CUDA
   * Support cusparseLt v0.3

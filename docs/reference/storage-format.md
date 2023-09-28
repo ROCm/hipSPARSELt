@@ -1,3 +1,6 @@
+<meta name="description" content="hipSPARSELt storage formats">
+<meta name="keywords" content="hipSPARSELt, ROCm, API library, API reference, storage formats">
+
 # Storage format
 
 hipSPARSELt uses a structured sparsity storage format, which is represented by an

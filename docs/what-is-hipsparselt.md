@@ -1,6 +1,6 @@
-  <meta name="description" content="hipSPARSELt is a SPARSE marshalling library with multiple
-  supported backends">
-  <meta name="keywords" content="hipSPARSELt, ROCm, SPARSE library, API">
+<meta name="description" content="hipSPARSELt is a SPARSE marshalling library that supports
+rocSPARSELt and cuSPARSELt v0.3 backends">
+<meta name="keywords" content="hipSPARSELt, ROCm, SPARSE, library, API, HIP">
 
 # What is hipSPARSELt?
 

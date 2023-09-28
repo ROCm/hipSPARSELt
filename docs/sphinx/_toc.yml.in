@@ -25,9 +25,6 @@ subtrees:
       - file: reference/data-types.md
         title: Data types
 
-  - file: reference/porting.md
-    title: Porting from CUDA
-
   - file: tutorials/index.md
     title: Tutorials & how-to
     subtrees:
@@ -36,3 +33,5 @@ subtrees:
         title: Installing and building hipSPARSELt for Linux
       - file: tutorials/benchmarks-unit-tests.md
         title: Running benchmarks & unit tests
+      - file: reference/porting.md
+        title: Porting from CUDA

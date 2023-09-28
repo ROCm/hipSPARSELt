@@ -1,3 +1,6 @@
+<meta name="description" content="Quick-start: Installing hipSPARSELt on Linux">
+<meta name="keywords" content="hipSPARSELt, ROCm, install, Linux, quick-start">
+
 # Quick-start installation (Ubuntu)
 
 The root of the

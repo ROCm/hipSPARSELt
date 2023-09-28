@@ -1,3 +1,6 @@
+<meta name="description" content="Porting from CUDA to hipSPARSELt">
+<meta name="keywords" content="hipSPARSELt, ROCm, porting from CUDA">
+
 # Porting from CUDA to hipSPARSELt
 
 The hipSPARSELt interface is compatible with cuSPARSELt APIs. Porting a CUDA application that

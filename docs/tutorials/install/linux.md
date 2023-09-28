@@ -1,3 +1,6 @@
+<meta name="description" content="Installing hipSPARSELt on Linux">
+<meta name="keywords" content="hipSPARSELt, ROCm, install, Linux">
+
 # Installing hipSPARSELt (Linux)
 
 ## Prerequisites
