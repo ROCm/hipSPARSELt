@@ -2,44 +2,30 @@
 
 Welcome to the hipSPARSELt docs home page!
 
-Our documentation is divided into the following categories:
+To learn more about hipSPARSELt, see [What is hipSPARSELt?](./what-is-hipsparselt.md) If you want to
+get up and running quickly, refer to the [Quick-start installation guide](./tutorials/quick-start/linux.md).
 
-::::{grid} 1 2 2 2
-:class-container: rocm-doc-grid
+Our documentation is structured as follows:
 
-:::{grid-item-card}
-:padding: 2
-**[Reference](./reference/api-library.md)**
+* **[API reference guide](./reference/api-library.md)**
+  * [Supported functions](./reference/supported-functions.md)
+  * [Data type support](./reference/data-type-support.md)
+  * [Device & stream management](./reference/device-stream-manage.md)
+  * [Storage formats](./reference/storage-format.md)
+  * [Porting from CUDA](./reference/porting.md)
+  * [API library](../doxygen/docBin/html/index)
+* **[Tutorials](./tutorials/index.md)**
+  * [Installing hipSPARSELt (Linux)](./tutorials/install/linux.md)
 
-Collated information related to the hipSPARSELt API
-^^^
-
-* [Supported functions](./reference/supported-functions.md)
-* [Device & stream management](./reference/device-stream-manage.md)
-* [Storage formats](./reference/storage-format.md)
-* [Functions](./reference/functions.md)
-* [API library](../doxygen/docBin/html/index)
-
-:::
-
-:::{grid-item-card}
-:padding: 2
-**[Tutorials & how-to](./tutorials/index.md)**
-
-Instructional material
-^^^
-
-* [Installing hipSPARSELt](./tutorials/install/linux.md)
-* [Running benchmarks & unit tests](./tutorials/benchmarks-unit-tests.md)
-* [Porting from CUDA](./tutorials/porting.md)
-
-:::
-
-::::
+## Contributing to this documentation
 
 We welcome collaboration! If you'd like to contribute to our documentation, you can find instructions
-on our [Contributing to ROCm](https://rocm.docs.amd.com/en/latest/contribute/index.md) page.
-Known issues are listed on [GitHub](https://github.com/ROCmSoftwarePlatform/hipSPARSELt/issues).
+in our [Contributing to ROCm](https://rocm.docs.amd.com/en/latest/contribute/index.md) section, which discusses:
+
+* [Document structure](https://rocm.docs.amd.com/en/develop/contribute/index.html#supported-formats)
+* [Toolchains](https://rocm.docs.amd.com/en/develop/contribute/toolchain.html)
+* [Documentation builds](https://rocm.docs.amd.com/en/develop/contribute/building.html)
+* [How to provide feedback](https://rocm.docs.amd.com/en/develop/contribute/feedback.html)
 
 Licensing information for all ROCm components is listed on our
 [Licensing](https://rocm.docs.amd.com/en/latest/about/license.md) page.

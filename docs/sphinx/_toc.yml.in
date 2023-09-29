@@ -16,22 +16,20 @@ subtrees:
     - entries:
       - file: reference/supported-functions.md
         title: Supported functions
+      - file: reference/data-type-support.md
+        title: Data type support
       - file: reference/device-stream-manage.md
         title: Device & stream management
       - file: reference/storage-format.md
         title: Storage formats
+      - file: reference/porting.md
+        title: Porting from CUDA
       - file: doxygen/docBin/html/index
         title: API library
-      - file: reference/data-types.md
-        title: Data types
 
   - file: tutorials/index.md
-    title: Tutorials & how-to
+    title: Tutorials
     subtrees:
     - entries:
       - file: tutorials/install/linux.md
         title: Installing and building hipSPARSELt for Linux
-      - file: tutorials/benchmarks-unit-tests.md
-        title: Running benchmarks & unit tests
-      - file: reference/porting.md
-        title: Porting from CUDA

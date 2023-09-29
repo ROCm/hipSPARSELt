@@ -18,10 +18,11 @@ Code for hipSPARSELt is open source and hosted on
 [GitHub](https://github.com/ROCmSoftwarePlatform/hipSPARSELt).
 ```
 
-The API reference guide is organized as follows:
+The API reference guide is organized into the following sections:
 
 * [Supported functions](./supported-functions.md)
 * [Data type support](./data-type-support.md)
 * [Device & stream management](./device-stream-manage.md)
 * [Storage formats](./storage-format.md)
+* [Porting from CUDA](./porting.md)
 * [API library](../doxygen/docBin/html/index)

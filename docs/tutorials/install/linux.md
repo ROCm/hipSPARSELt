@@ -126,7 +126,7 @@ We recommended installing hipSPARSELt using the `install.sh` script.
         $ make install
      ```
 
-### Testing the installation
+## Testing the installation
 
 After successfully compiling the library with clients, you can test the installation by running a hipSPARSELt example:
 
@@ -136,4 +136,26 @@ After successfully compiling the library with clients, you can test the installa
 
    # Execute hipSPARSELt example
    $ ./example_spmm_strided_batched -m 32 -n 32 -k 32 --batch_count 1
+```
+
+### Running benchmarks & unit tests
+
+To run **benchmarks**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_BENCHMARKS=ON (or using ./install.sh -c).
+
+```bash
+# Go to hipSPARSELt build directory
+cd hipSPARSELt/build/release
+
+# Run benchmark, e.g.
+./clients/staging/hipsparselt-bench -f spmm -i 200 -m 256 -n 256 -k 256
+```
+
+To run **unit tests**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_TESTS=ON (or using ./install.sh -c)
+
+```bash
+# Go to hipSPARSELt build directory
+cd hipSPARSELt; cd build/release
+
+# Run all tests
+./clients/staging/hipsparselt-test
 ```
