@@ -1,8 +1,12 @@
-<meta name="description" content="ROCm & CUDA supported functions">
-<meta name="keywords" content="hipSPARSELt, ROCm, API library, API reference, supported
-functions">
+.. meta::
+   :description: ROCm & CUDA supported functions
+   :keywords: hipSPARSELt, ROCm, API library, API reference, supported
+functions
 
-# ROCm & CUDA supported functions
+.. _supported-functions:
+************************************
+ ROCm & CUDA supported functions
+************************************
 
 * ROCm
   * AMD sparse MFMA matrix core support
@@ -11,8 +15,8 @@ functions">
     * BFLOAT16 input/output, FP32 Matrix Core accumulate
     * INT8 input/output, INT32 Matrix Core accumulate
   * Matrix pruning and compression functionalities
-  * Auto-tuning functionality (see `hipsparseLtMatmulSearch()`)
-  * Batched Sparse Gemm support:
+  * Auto-tuning functionality (see ``hipsparseLtMatmulSearch()``)
+  * Batched sparse Gemm support:
     * Single sparse matrix/Multiple dense matrices (Broadcast)
     * Multiple sparse and dense matrices
   * Activation function fuse in spmm kernel support:
@@ -23,7 +27,7 @@ functions">
     * LeakyReLU
     * Sigmoid
     * Tanh
-  * On Going Feature Development
+  * On-going feature development
     * Add support for Mixed-precision computation
       * FP8 input/output, FP32 Matrix Core accumulate
       * BF8 input/output, FP32 Matrix Core accumulate

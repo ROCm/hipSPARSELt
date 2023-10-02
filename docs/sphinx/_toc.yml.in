@@ -6,30 +6,30 @@ defaults:
 root: index
 subtrees:
 - entries:
-  - file: what-is-hipsparselt.md
+  - file: what-is-hipsparselt.rst
     title: What is hipSPARSELt?
-  - file: tutorials/quick-start/linux.md
+  - file: tutorials/quick-start/linux.rst
     title: Quick-start
-  - file: reference/index.md
+  - file: reference/index.rst
     title: API reference
     subtrees:
     - entries:
-      - file: reference/supported-functions.md
+      - file: reference/supported-functions.rst
         title: Supported functions
-      - file: reference/data-type-support.md
+      - file: reference/data-type-support.rst
         title: Data type support
-      - file: reference/device-stream-manage.md
+      - file: reference/device-stream-manage.rst
         title: Device & stream management
-      - file: reference/storage-format.md
+      - file: reference/storage-format.rst
         title: Storage formats
-      - file: reference/porting.md
+      - file: reference/porting.rst
         title: Porting from CUDA
       - file: doxygen/docBin/html/index
         title: API library
 
-  - file: tutorials/index.md
+  - file: tutorials/index.rst
     title: Tutorials
     subtrees:
     - entries:
-      - file: tutorials/install/linux.md
+      - file: tutorials/install/linux.rst
         title: Installing and building hipSPARSELt for Linux

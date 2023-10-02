@@ -1,62 +1,72 @@
-<meta name="description" content="Installing hipSPARSELt on Linux">
-<meta name="keywords" content="hipSPARSELt, ROCm, install, Linux">
+.. meta::
+   :description: Installing hipSPARSELt on Linux
+   :keywords: hipSPARSELt, ROCm, install, Linux
 
-# Installing hipSPARSELt (Linux)
+.. _install-linux:
+*****************************
+Installing hipSPARSELt (Linux)
+*****************************
 
-## Prerequisites
+Prerequisites
+=========
 
-hipSPARSELt requires a [ROCm-enabled platform](https://rocm.github.io/) and the
-[hipSPARSE ROCm library](https://github.com/ROCmSoftwarePlatform/hipSPARSE) (for the header file).
+hipSPARSELt requires a `ROCm-enabled platform <https://rocm.github.io/>`_ and the
+`hipSPARSE ROCm library <https://github.com/ROCmSoftwarePlatform/hipSPARSE>`_ (for the header file).
 
-## Installing pre-built packages
+Installing pre-built packages
+==================
 
 Install hipSPARSELt from the
-[ROCm repository](https://rocm.github.io/ROCmInstall.html#installing-from-amd-rocm-repositories).
+`ROCm repository <https://rocm.github.io/ROCmInstall.html#installing-from-amd-rocm-repositories>`_.
 
 For detailed instructions on how to set up ROCm on different platforms, refer to the
-[ROCm Linux installation guide](https://rocm.docs.amd.com/en/develop/tutorials/install/linux/index.html).
+`ROCm Linux installation guide <https://rocm.docs.amd.com/en/develop/tutorials/install/linux/index.html>`_.
 
 Using Ubuntu as an example, hipSPARSELt can be installed using
 
-```bash
+.. code-block:: bash
+
     sudo apt-get update
     sudo apt-get install hipsparselt
-```
+
 
 Once installed, hipSPARSELt can be used just like any other library with a C API.
 
 The header file must be included in the user code in order to make calls into hipSPARSELt. The
 hipSPARSELt shared library will become link-time and run-time dependent for the user application.
 
-## Building hipSPARSELt from source
+Building hipSPARSELt from source
+======================
 
 Although you can build from source, it's not necessary--hipSPARSELt can be used after installing the
 pre-built packages described above. If you still want to build from source, use the following
 instructions.
 
-```{note}
-The following compile-time dependencies must be met:
+.. note::
 
-* [hipSPARSE](https://github.com/ROCmSoftwarePlatform/hipSPARSE)
-* [git](https://git-scm.com/)
-* [CMake](https://cmake.org/) 3.5 or later
-* [AMD ROCm](https://github.com/RadeonOpenCompute/ROCm)
-* (Optional, for clients) [googletest](https://github.com/google/googletest)
-```
+    The following compile-time dependencies must be met:
 
-### Download hipSPARSELt
+    * `hipSPARSE <https://github.com/ROCmSoftwarePlatform/hipSPARSE>`_
+    * `git <https://git-scm.com/>`_
+    * `CMake <https://cmake.org/>`_ 3.5 or later
+    * `AMD ROCm <https://github.com/RadeonOpenCompute/ROCm>`_
+    * (Optional, for clients) `googletest <https://github.com/google/googletest>`_
+
+Download hipSPARSELt
+--------------------------
 
 The hipSPARSELt source code is available on our
-[GitHub page](https://github.com/ROCmSoftwarePlatform/hipSPARSELt)
+`GitHub page <https://github.com/ROCmSoftwarePlatform/hipSPARSELt>`_
 
 Download the develop branch using:
 
-```bash
-git clone -b develop https://github.com/ROCmSoftwarePlatform/hipSPARSELt.git
-cd hipSPARSELt
-```
+.. code-block:: bash
 
-### Build library packages, including dependencies and clients
+    git clone -b develop https://github.com/ROCmSoftwarePlatform/hipSPARSELt.git
+    cd hipSPARSELt
+
+Build library packages, including dependencies and clients
+---------------------------------------------------------------
 
 We recommended installing hipSPARSELt using the `install.sh` script.
 
@@ -85,77 +95,79 @@ We recommended installing hipSPARSELt using the `install.sh` script.
 
 3. Using individual commands to build hipSPARSELt:
 
-    ```{note}
+.. note::
+
     CMake 3.16.8 or later is required in order to build hipSPARSELt.
-    ```
 
-    ```bash
-        # Create and change the build directory
-        $ mkdir -p build/release ; cd build/release
+.. code-block:: bash
 
-        # Change default install path (/opt/rocm); use -DCMAKE_INSTALL_PREFIX=<path> to adjust the path
-        $  cmake ../..
+    # Create and change the build directory
+    $ mkdir -p build/release ; cd build/release
 
-        # Compile the hipSPARSELt library
-        $ make -j$(nproc)
+    # Change default install path (/opt/rocm); use -DCMAKE_INSTALL_PREFIX=<path> to adjust the path
+    $  cmake ../..
 
-        # Install hipSPARSELt to `/opt/rocm`
-        $ make install
-      ```
+    # Compile the hipSPARSELt library
+    $ make -j$(nproc)
+
+    # Install hipSPARSELt to `/opt/rocm`
+    $ make install
 
     GoogleTest is required in order to build hipSPARSELt clients.
 
     Build hipSPARSELt with dependencies and clients using the following commands:
 
-    ```bash
-        # Install googletest
-        $ mkdir -p build/release/deps ; cd build/release/deps
-        $ cmake ../../../deps
-        $ make -j$(nproc) install
+.. code-block:: bash
 
-        # Change to build directory
-        $ cd ..
+    # Install googletest
+    $ mkdir -p build/release/deps ; cd build/release/deps
+    $ cmake ../../../deps
+    $ make -j$(nproc) install
 
-        # Default install path is /opt/rocm, use -DCMAKE_INSTALL_PREFIX=<path> to adjust it
-        $ cmake ../.. -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_SAMPLES=ON
+    # Change to build directory
+    $ cd ..
 
-        # Compile hipSPARSELt library
-        $ make -j$(nproc)
+    # Default install path is /opt/rocm, use -DCMAKE_INSTALL_PREFIX=<path> to adjust it
+    $ cmake ../.. -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_SAMPLES=ON
 
-        # Install hipSPARSELt to /opt/rocm
-        $ make install
-     ```
+    # Compile hipSPARSELt library
+    $ make -j$(nproc)
 
-## Testing the installation
+    # Install hipSPARSELt to /opt/rocm
+    $ make install
+
+Testing the installation
+==============
 
 After successfully compiling the library with clients, you can test the installation by running a hipSPARSELt example:
 
-``` bash
+.. code-block:: bash
+
    # Navigate to clients binary directory
    $ cd hipSPARSELt/build/release/clients/staging
 
    # Execute hipSPARSELt example
    $ ./example_spmm_strided_batched -m 32 -n 32 -k 32 --batch_count 1
-```
 
-### Running benchmarks & unit tests
+Running benchmarks & unit tests
+-------------------------------------
 
 To run **benchmarks**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_BENCHMARKS=ON (or using ./install.sh -c).
 
-```bash
-# Go to hipSPARSELt build directory
-cd hipSPARSELt/build/release
+.. code-block:: bash
 
-# Run benchmark, e.g.
-./clients/staging/hipsparselt-bench -f spmm -i 200 -m 256 -n 256 -k 256
-```
+    # Go to hipSPARSELt build directory
+    cd hipSPARSELt/build/release
+
+    # Run benchmark, e.g.
+    ./clients/staging/hipsparselt-bench -f spmm -i 200 -m 256 -n 256 -k 256
 
 To run **unit tests**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_TESTS=ON (or using ./install.sh -c)
 
-```bash
-# Go to hipSPARSELt build directory
-cd hipSPARSELt; cd build/release
+.. code-block:: bash
 
-# Run all tests
-./clients/staging/hipsparselt-test
-```
+    # Go to hipSPARSELt build directory
+    cd hipSPARSELt; cd build/release
+
+    # Run all tests
+    ./clients/staging/hipsparselt-test

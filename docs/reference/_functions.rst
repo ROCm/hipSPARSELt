@@ -1,4 +1,11 @@
-## Matrix descriptor
+.. meta::
+   :description: HIP device and stream management with hipSPARSELt
+   :keywords: hipSPARSELt, ROCm, API library, API reference, stream
+management, device management
+
+*****************
+Matrix descriptor
+*****************
 
 | Function name | int (CUDA) | single | half | bfloat16 | int8 |
 |------------------|-------------|-------|------|-----------|-----|

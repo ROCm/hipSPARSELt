@@ -13,6 +13,7 @@ docs_core.run_doxygen(doxygen_root="doxygen", doxygen_path="doxygen/docBin/xml")
 docs_core.enable_api_reference()
 docs_core.setup()
 
+pygments_style = 'sphinx'
 
 external_toc_path = "./sphinx/_toc.yml"
 
