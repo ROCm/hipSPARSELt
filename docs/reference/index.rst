@@ -28,4 +28,4 @@ The API reference guide is organized into the following sections:
 * :ref:`device-stream-manage`
 * :ref:`storage-format`
 * :ref:`porting`
-* :ref:`api-library`
+* :doc:`API library <../doxygen/docBin/html/index>`

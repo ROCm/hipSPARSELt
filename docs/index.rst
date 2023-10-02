@@ -3,6 +3,7 @@
    :keywords: hipSPARSELt, ROCm, API, documentation
 
 .. _hipsparselt-docs-home:
+
 ****************************
 hipSPARSELt documentation
 ****************************
@@ -11,16 +12,16 @@ Welcome to the hipSPARSELt docs home page! To learn more, see :ref:`what-is-hips
 
 Our documentation is structured as follows:
 
-* :ref:`api-reference`
+.. card:: :ref:`API reference <api-reference>`
 
   * :ref:`supported-functions`
   * :ref:`data-type-support`
   * :ref:`device-stream-manage`
   * :ref:`storage-format`
   * :ref:`porting`
-  * :ref:`api-library`
+  * :doc:`API library <../doxygen/docBin/html/index>`
 
-* :ref:`tutorials-index`
+.. card:: :ref:`tutorials-index`
 
   * :ref:`install-linux-quick`
   * :ref:`install-linux`
