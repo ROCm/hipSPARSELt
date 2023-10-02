@@ -1,12 +1,12 @@
 .. meta::
-   :description: hipSPARSELt documentation and API reference library
-   :keywords: hipSPARSELt, ROCm, API, documentation
+  :description: hipSPARSELt documentation and API reference library
+  :keywords: hipSPARSELt, ROCm, API, documentation
 
 .. _hipsparselt-docs-home:
 
-****************************
+********************************************************************
 hipSPARSELt documentation
-****************************
+********************************************************************
 
 Welcome to the hipSPARSELt docs home page! To learn more, see :ref:`what-is-hipsparselt`
 
@@ -27,7 +27,7 @@ Our documentation is structured as follows:
   * :ref:`install-linux`
 
 Contributing to this documentation
-=======================
+=======================================================
 
 We welcome collaboration! If you'd like to contribute to our documentation, you can find instructions
 in our `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/index.md>`_ section, which discusses:

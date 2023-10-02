@@ -3,9 +3,10 @@
    :keywords: hipSPARSELt, ROCm, install, Linux, quick-start
 
 .. _install-linux-quick:
-********************************
+
+****************************************************************
 Quick-start installation (Ubuntu)
-********************************
+****************************************************************
 
 The root of the
 `hipSPARSELt GitHub repository <https://github.com/ROCmSoftwarePlatform/hipSPARSELt>`_ has a

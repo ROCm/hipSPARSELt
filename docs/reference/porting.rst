@@ -3,9 +3,10 @@
    :keywords: hipSPARSELt, ROCm, porting from CUDA, porting
 
 .. _porting:
-***********************************
+
+**********************************************************************
  Porting from CUDA to hipSPARSELt
-***********************************
+**********************************************************************
 
 The hipSPARSELt interface is compatible with cuSPARSELt APIs. Porting a CUDA application that
 originally calls the cuSPARSELt API to an application that calls the hipSPARSELt API should be relatively

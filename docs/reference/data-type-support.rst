@@ -3,9 +3,10 @@
    :keywords: hipSPARSELt, ROCm, API library, API reference, data type, support
 
 .. _data-type-support:
-*********************
+
+******************************************
 Data type support
-*********************
+******************************************
 
 .. csv-table::
    :header: "Input", "Output", "Compute type", "Backend"

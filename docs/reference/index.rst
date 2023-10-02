@@ -3,9 +3,10 @@
    :keywords: hipSPARSELt, ROCm, API library, API reference
 
 .. _api-reference:
-********************************
+
+********************************************
 hipSPARSELt API reference guide
-********************************
+********************************************
 
 hipSPARSELt is a library that contains basic linear algebra subroutines (BLAS) for SPARSE matrices that
 are written in the `HIP programming language <https://rocm.docs.amd.com/projects/HIP/en/latest/>`_. It

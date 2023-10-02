@@ -1,9 +1,10 @@
 .. meta::
    :description: hipSPARSELt is a SPARSE marshalling library that supports rocSPARSELt and cuSPARSELt
-   v0.3 backends
+      v0.3 backends
    :keywords: hipSPARSELt, ROCm, SPARSE, library, API, HIP
 
 .. _what-is-hipsparselt:
+
 *********************
 What is hipSPARSELt?
 *********************

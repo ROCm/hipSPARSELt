@@ -1,18 +1,19 @@
 .. meta::
    :description: HIP device and stream management with hipSPARSELt
    :keywords: hipSPARSELt, ROCm, API library, API reference, stream
-management, device management
+      management, device management
 
 .. _device-stream-manage:
-************************************
+
+*******************************************
 HIP device and stream management
-************************************
+*******************************************
 
 ``hipSetDevice`` and ``hipGetDevice`` are HIP device management APIs. They are *not* part of the
 hipSPARSELt API.
 
 Device management
-=============
+===============================
 
 hipSPARSELt assumes that you've already set the device before making a hipSPARSELt call.
 
@@ -30,7 +31,7 @@ You can't switch devices between ``hipsparselt_init`` and ``hipsparselt_destroy`
 devices, you must first destroy the current handle and then create a new one.
 
 Stream management
-==============
+================================
 
 HIP kernels are always launched in a queue (also known as a stream).
 
@@ -41,7 +42,7 @@ and ``hipsparselt_matmul``. HIP kernels are invoked in hipSPARSELt routines. Not
 stream, you're also responsible for destroying it.
 
 Multiple streams and devices
-===================
+=====================================
 
 If the system under test has multiple HIP devices, you can run multiple hipSPARSELt handles
 concurrently. Each handle is associated with a specific device; therefore, a new handle must be created

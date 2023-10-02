@@ -3,18 +3,19 @@
    :keywords: hipSPARSELt, ROCm, install, Linux
 
 .. _install-linux:
-*****************************
+
+**************************************************************************
 Installing hipSPARSELt (Linux)
-*****************************
+**************************************************************************
 
 Prerequisites
-=========
+====================================
 
 hipSPARSELt requires a `ROCm-enabled platform <https://rocm.github.io/>`_ and the
 `hipSPARSE ROCm library <https://github.com/ROCmSoftwarePlatform/hipSPARSE>`_ (for the header file).
 
 Installing pre-built packages
-==================
+==================================
 
 Install hipSPARSELt from the
 `ROCm repository <https://rocm.github.io/ROCmInstall.html#installing-from-amd-rocm-repositories>`_.
@@ -36,7 +37,7 @@ The header file must be included in the user code in order to make calls into hi
 hipSPARSELt shared library will become link-time and run-time dependent for the user application.
 
 Building hipSPARSELt from source
-======================
+======================================================
 
 Although you can build from source, it's not necessary--hipSPARSELt can be used after installing the
 pre-built packages described above. If you still want to build from source, use the following
@@ -53,7 +54,7 @@ instructions.
     * (Optional, for clients) `googletest <https://github.com/google/googletest>`_
 
 Download hipSPARSELt
---------------------------
+--------------------------------------------------------------------------------------
 
 The hipSPARSELt source code is available on our
 `GitHub page <https://github.com/ROCmSoftwarePlatform/hipSPARSELt>`_
@@ -66,32 +67,36 @@ Download the develop branch using:
     cd hipSPARSELt
 
 Build library packages, including dependencies and clients
----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
 
-We recommended installing hipSPARSELt using the `install.sh` script.
+We recommended installing hipSPARSELt using the ``install.sh`` script.
 
-1. Using `install.sh` to build hipSPARSELt with dependencies:
+1. Using ``install.sh`` to build hipSPARSELt with dependencies:
 
-    The following table lists common uses of `install.sh` to build dependencies + library.
+    The following table lists common uses of ``install.sh`` to build dependencies + library.
 
-    | Command | Description |
-    |-------------|--------------|
-    | `./install.sh -h` | Print help information |
-    | `./install.sh -d` | Build dependencies and library in your local directory. The `-d` flag only needs to be used once. For subsequent invocations of `install.sh`, it's not necessary to rebuild the dependencies. |
-    | `./install.sh` | Build library in your local directory. It is assumed dependencies are available. |
-    | `./install.sh -i` | Build library, then build and install hipSPARSELt package in `/opt/rocm/hipsparselt`. You will be prompted for sudo access. This will install for all users. |
+    .. csv-table::
+        :widths: 25, 75
+        :header: "Command", "Description"
 
-2. Using `install.sh` to build hipSPARSELt with dependencies and clients:
+        "``./install.sh -h``", "Print help information."
+        "``./install.sh -d``", "Build dependencies and library in your local directory. The `-d` flag only needs to be used once. For subsequent invocations of ``install.sh``, it's not necessary to rebuild the dependencies."
+        "``./install.sh``", "Build library in your local directory. It is assumed dependencies are available."
+        "``./install.sh -i``", "Build library, then build and install hipSPARSELt package in ``/opt/rocm/hipsparselt``. You will be prompted for sudo access. This will install for all users."
 
-    The client contains example code and unit tests. Common uses of `install.sh` to build them are listed in the table below.
+2. Using ``install.sh`` to build hipSPARSELt with dependencies and clients:
 
-    | Command | Description |
-    |-------------|--------------|
-    | `./install.sh -h` | Print help information |
-    | `./install.sh -dc` | Build dependencies, library, and client in your local directory. The `-d` flag only needs to be used once. For subsequent invocations of `install.sh`, it's not necessary to rebuild the dependencies. |
-    | `./install.sh -c` | Build library and client in your local directory. It is assumed dependencies are available. |
-    | `./install.sh -idc` | Build library, dependencies, and client; then build and install hipSPARSELt package in `/opt/rocm/hipsparselt`. You will be prompted for sudo access. This will install for all users. |
-    | `./install.sh -ic` | Build library and client, then build and install hipSPARSELt package in `opt/rocm/hipsparselt`. You will be prompted for sudo access. This will install for all users. |
+    The client contains example code and unit tests. Common uses of ``install.sh`` to build them are listed in the table below.
+
+    .. csv-table::
+        :widths: 25, 75
+        :header: "Command", "Description"
+
+        "``./install.sh -h``", "Print help information."
+        "``./install.sh -dc``", "Build dependencies, library, and client in your local directory. The `-d` flag only needs to be used once. For subsequent invocations of `install.sh`, it's not necessary to rebuild the dependencies."
+        "``./install.sh -c``", "Build library and client in your local directory. It is assumed dependencies are available."
+        "``./install.sh -idc``", "Build library, dependencies, and client; then build and install hipSPARSELt package in `/opt/rocm/hipsparselt`. You will be prompted for sudo access. This will install for all users."
+        "``./install.sh -ic``", "Build library and client, then build and install hipSPARSELt package in `opt/rocm/hipsparselt`. You will be prompted for sudo access. This will install for all users."
 
 3. Using individual commands to build hipSPARSELt:
 
@@ -137,7 +142,7 @@ We recommended installing hipSPARSELt using the `install.sh` script.
     $ make install
 
 Testing the installation
-==============
+==========================================
 
 After successfully compiling the library with clients, you can test the installation by running a hipSPARSELt example:
 
@@ -150,7 +155,7 @@ After successfully compiling the library with clients, you can test the installa
    $ ./example_spmm_strided_batched -m 32 -n 32 -k 32 --batch_count 1
 
 Running benchmarks & unit tests
--------------------------------------
+----------------------------------------------------------------------------
 
 To run **benchmarks**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_BENCHMARKS=ON (or using ./install.sh -c).
 

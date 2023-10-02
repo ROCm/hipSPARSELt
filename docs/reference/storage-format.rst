@@ -1,11 +1,12 @@
 .. meta::
-   :description: hipSPARSELt storage formats
-   :keywords: hipSPARSELt, ROCm, API library, API reference, storage formats
+  :description: hipSPARSELt storage formats
+  :keywords: hipSPARSELt, ROCm, API library, API reference, storage formats
 
 .. _storage-format:
-****************
+
+********************************
  Storage format
-****************
+********************************
 
 hipSPARSELt uses a structured sparsity storage format, which is represented by an
 :math:` \times n` matrix, where:
