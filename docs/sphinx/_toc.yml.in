@@ -26,7 +26,6 @@ subtrees:
         title: Porting from CUDA
       - file: doxygen/docBin/html/index
         title: API library
-      - file: doxygen/docBin/html/group__helper__module        
 
   - file: tutorials/index.rst
     title: Tutorials
