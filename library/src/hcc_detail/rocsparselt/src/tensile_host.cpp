@@ -268,7 +268,6 @@ namespace
         Tensile::TensorDescriptor scaleB{"scaleB"};
         Tensile::TensorDescriptor scaleC{"scaleC"};
         Tensile::TensorDescriptor scaleD{"scaleD"};
-        Tensile::TensorDescriptor scaleDVec{"scaleDVec"};
         Tensile::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
 
         // The ContractionProblemGemm
@@ -282,7 +281,6 @@ namespace
                                                        scaleB,
                                                        scaleC,
                                                        scaleD,
-                                                       scaleDVec,
                                                        scaleAlphaVec,
                                                        freeIndex,
                                                        batchIndex,
