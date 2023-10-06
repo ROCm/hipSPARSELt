@@ -498,7 +498,7 @@ void testing_spmm(const Arguments& arg)
             hipsparseLtMatmulDescSetAttribute(
                 handle, matmul, HIPSPARSELT_MATMUL_BIAS_STRIDE, &bias_stride, sizeof(int64_t)),
             HIPSPARSE_STATUS_SUCCESS);
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
         EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescSetAttribute(handle,
                                                                   matmul,
                                                                   HIPSPARSELT_MATMUL_BIAS_TYPE,

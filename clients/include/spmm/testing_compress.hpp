@@ -285,7 +285,7 @@ void testing_compress_bad_arg(const Arguments& arg)
         hipsparseLtSpMMACompress2(handle, nullptr, true, transA, dA, dA_1, dA_ws, stream),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMACompress2(handle, matA, false, transA, dA, dA_1, dA_ws, stream),
         HIPSPARSE_STATUS_INTERNAL_ERROR);
@@ -592,7 +592,7 @@ void testing_compress(const Arguments& arg)
                                    reinterpret_cast<Ti*>(hA_1.data()),
                                    num_batches);
 // cusparselt' metadata has different layout so skip metadata check.
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
             unit_check_general<int8_t>(M,
                                        K / 8,
                                        M,
@@ -612,7 +612,7 @@ void testing_compress(const Arguments& arg)
                                                       reinterpret_cast<Ti*>(hA_1.data()),
                                                       num_batches);
 // cusparselt' metadata has different layout so skip metadata check.
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
             hipsparselt_error_m
                 = unit_check_diff<int8_t>(M,
                                           K / 8,

@@ -381,7 +381,7 @@ template <typename T>
 void initialize_a(std::vector<T>& ha, int64_t size_a)
 {
     auto CAST = [](auto x) {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
         return static_cast<T>(x);
 #else
         return static_cast<T>(static_cast<float>(x));
@@ -499,7 +499,7 @@ void run(int64_t               m,
         &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
     auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I :
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
                                                  HIPSPARSELT_COMPUTE_32F;
 #else
                                                  HIPSPARSELT_COMPUTE_16F;

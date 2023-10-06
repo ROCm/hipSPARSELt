@@ -62,7 +62,7 @@ add_library(roc::hipsparselt ALIAS hipsparselt)
 # Target compile definitions
 if(NOT BUILD_CUDA)
   target_compile_options(hipsparselt PRIVATE -Wno-unused-command-line-argument -Wall)
-  target_compile_definitions(hipsparselt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
+  target_compile_definitions(hipsparselt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 
   if( BUILD_WITH_TENSILE )
     if( BUILD_SHARED_LIBS )
@@ -110,7 +110,7 @@ if(NOT BUILD_CUDA)
   endif()
 
 else()
-  target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_NVCC__)
+  target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_NVIDIA__)
 endif()
 
 # Target compile features
