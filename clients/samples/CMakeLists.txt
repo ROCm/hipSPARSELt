@@ -60,7 +60,7 @@ foreach( exe ${sample_list_all} )
     target_compile_definitions( ${exe} PRIVATE ROCM_USE_FLOAT16 )
     target_link_libraries( ${exe} PRIVATE hip::host hip::device  )
   else( )
-    target_compile_definitions( ${exe} PRIVATE __HIP_PLATFORM_NVCC__ )
+    target_compile_definitions( ${exe} PRIVATE __HIP_PLATFORM_NVIDIA__ )
     target_include_directories( ${exe}
       PRIVATE
         $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>
@@ -70,4 +70,3 @@ foreach( exe ${sample_list_all} )
   endif( )
   rocm_install(TARGETS ${exe} COMPONENT samples)
 endforeach( )
-

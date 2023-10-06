@@ -94,7 +94,7 @@ void testing_aux_mat_init_dense_bad_arg(const Arguments& arg)
             handle_, &m_descr, row, col, 0, 16, arg.a_type, HIPSPARSE_ORDER_COL),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_NVCC__
+#ifdef __HIP_PLATFORM_NVIDIA__
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtDenseDescriptorInit(
             handle_, &m_descr, row, col, 129, 16, arg.a_type, HIPSPARSE_ORDER_COL),
@@ -105,7 +105,7 @@ void testing_aux_mat_init_dense_bad_arg(const Arguments& arg)
         HIPSPARSE_STATUS_NOT_SUPPORTED);
 #endif
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtDenseDescriptorInit(
             handle_, &m_descr, row, col, ld, 16, arg.a_type, HIPSPARSE_ORDER_ROW),
@@ -216,7 +216,7 @@ void testing_aux_mat_init_structured_bad_arg(const Arguments& arg)
                                                                 HIPSPARSE_ORDER_COL,
                                                                 HIPSPARSELT_SPARSITY_50_PERCENT),
 
-#ifdef __HIP_PLATFORM_NVCC__
+#ifdef __HIP_PLATFORM_NVIDIA__
                             HIPSPARSE_STATUS_NOT_SUPPORTED
 #else
                             HIPSPARSE_STATUS_SUCCESS
@@ -234,7 +234,7 @@ void testing_aux_mat_init_structured_bad_arg(const Arguments& arg)
                                                                 HIPSPARSELT_SPARSITY_50_PERCENT),
                             HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_NVCC__
+#ifdef __HIP_PLATFORM_NVIDIA__
     EXPECT_HIPSPARSE_STATUS(hipsparseLtStructuredDescriptorInit(handle,
                                                                 &m_descr,
                                                                 row,
@@ -247,7 +247,7 @@ void testing_aux_mat_init_structured_bad_arg(const Arguments& arg)
                             HIPSPARSE_STATUS_NOT_SUPPORTED);
 #endif
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     EXPECT_HIPSPARSE_STATUS(hipsparseLtStructuredDescriptorInit(handle,
                                                                 &m_descr,
                                                                 row,
@@ -585,7 +585,7 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
             handle, &m_descr, opA, opB, matA, matB, matC, nullptr, arg.compute_type),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_NVCC__
+#ifdef __HIP_PLATFORM_NVIDIA__
     if(arg.a_type == HIPSPARSELT_R_8I)
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescriptorInit(
@@ -601,7 +601,7 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
         tmpComputeType = HIPSPARSELT_COMPUTE_32I;
         break;
     default:
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
         tmpComputeType = HIPSPARSELT_COMPUTE_32F;
 #else
         tmpComputeType = HIPSPARSELT_COMPUTE_16F;
@@ -629,7 +629,7 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
         HIPSPARSE_STATUS_INVALID_VALUE);
 
     //Singal abort at CUDA backend
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmulDescriptorInit(
             handle, &m_descr, opA, opB, matA, matB, mat_112_112, matD, arg.compute_type),
@@ -670,7 +670,7 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
             handle, &m_descr, opA, opB, matA, matB_, matC, matD, arg.compute_type),
         HIPSPARSE_STATUS_NOT_SUPPORTED);
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmulDescriptorInit(
             handle, &m_descr, opA, opB, matA, matB, matC_, matD, arg.compute_type),
@@ -875,7 +875,7 @@ void testing_aux_matmul_get_attr_bad_arg(const Arguments& arg)
             handle, matmul, HIPSPARSELT_MATMUL_ACTIVATION_RELU_UPPERBOUND, &data64, 1),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_NVCC__
+#ifdef __HIP_PLATFORM_NVIDIA__
     void* dBias;
     hipMalloc((void**)&dBias, (M) * sizeof(float));
     EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescGetAttribute(
@@ -935,7 +935,7 @@ void testing_aux_matmul_set_get_bias_vector(const Arguments& arg)
         hipsparseLtMatmulDescSetAttribute(
             handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &_dBias, sizeof(void *)),
         HIPSPARSE_STATUS_SUCCESS);
-  
+
     void *dBias_r;
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmulDescGetAttribute(
@@ -944,7 +944,7 @@ void testing_aux_matmul_set_get_bias_vector(const Arguments& arg)
 
     CHECK_HIP_ERROR(
         hipMemcpy(hBias, dBias_r, sizeof(float) * M, hipMemcpyDeviceToHost));
-   
+
     unit_check_general<float>(M, 1, M, M, hBias_gold, hBias, 1);
 }
 
@@ -1309,7 +1309,7 @@ void testing_aux_matmul_alg_set_attr_bad_arg(const Arguments& arg)
             handle, alg_sel, HIPSPARSELT_MATMUL_ALG_CONFIG_MAX_ID, &data, sizeof(data)),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     //TODO hip backend not support split k yet. Remove this test once hip backend support splitk
     EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulAlgSetAttribute(
                                 handle, alg_sel, HIPSPARSELT_MATMUL_SPLIT_K, &data, sizeof(data)),
@@ -1564,7 +1564,7 @@ void testing_aux_get_workspace_size_bad_arg(const Arguments& arg)
     EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, nullptr, &workspace_size),
                             HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
 
     EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulGetWorkspace(handle, &plan_, &workspace_size),
                             HIPSPARSE_STATUS_INVALID_VALUE);
