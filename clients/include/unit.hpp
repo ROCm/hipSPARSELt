@@ -76,7 +76,7 @@
 
 //#define ASSERT_HALF_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
 //#define ASSERT_BF16_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
 #define ASSERT_HALF_EQ(a, b)                                                         \
     do                                                                               \
     {                                                                                \
