@@ -61,7 +61,7 @@ target_compile_options(hipsparselt-bench PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${COM
 if( NOT BUILD_CUDA )
   target_link_libraries( hipsparselt-bench PRIVATE hip::host hip::device )
 else()
-  target_compile_definitions( hipsparselt-bench PRIVATE __HIP_PLATFORM_NVCC__ )
+  target_compile_definitions( hipsparselt-bench PRIVATE __HIP_PLATFORM_NVIDIA__ )
   target_include_directories( hipsparselt-bench
     PRIVATE
       $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>

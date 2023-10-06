@@ -85,7 +85,7 @@ inline bool AlmostEqual(T a, T b)
 template <>
 inline bool AlmostEqual(__half a, __half b)
 {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
     union _HALF
     {
         uint16_t x;
@@ -508,7 +508,7 @@ void initialize_a_b_c(std::vector<__half>& ha,
                       int64_t              size_c)
 {
     auto CAST = [](auto x) {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
         return static_cast<__half>(x);
 #else
         return static_cast<__half>(static_cast<float>(x));
@@ -782,7 +782,7 @@ int main(int argc, char* argv[])
         &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(stride_d)));
 
     auto compute_type =
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
         HIPSPARSELT_COMPUTE_32F;
 #else
         HIPSPARSELT_COMPUTE_16F;

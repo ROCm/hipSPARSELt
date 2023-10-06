@@ -584,7 +584,7 @@ template <typename T>
 void initialize_a(std::vector<T>& ha, int64_t size_a)
 {
     auto CAST = [](auto x) {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
         return static_cast<T>(x);
 #else
         return static_cast<T>(static_cast<float>(x));
@@ -730,7 +730,7 @@ void run(int64_t               m,
         &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
     auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I :
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
                                                  HIPSPARSELT_COMPUTE_32F;
 #else
                                                  HIPSPARSELT_COMPUTE_16F;
@@ -868,7 +868,7 @@ void run(int64_t               m,
         &hp_gold[0], &hp_compressed[0], m, n / 2, batch_count, c_stride_1, c_stride_2, c_stride_b);
 
 // cusparselt' metadata has different layout so skip metadata check.
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     validate_metadata(
         reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
         reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),

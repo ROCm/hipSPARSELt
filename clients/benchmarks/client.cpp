@@ -90,7 +90,7 @@ struct perf_sparse<
     Tc,
     TBias,
     std::enable_if_t<
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
         (std::is_same<Ti, To>{} && (std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{})
          && std::is_same<Tc, float>{})
 #else
@@ -527,7 +527,7 @@ try
     bool is_f16      = arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF;
     bool is_f32      = arg.a_type == HIPSPARSELT_R_32F;
     arg.compute_type = compute_type == ""
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
                            ? (is_f16 ? HIPSPARSELT_COMPUTE_32F : HIPSPARSELT_COMPUTE_32I)
 #else
                            ? (is_f16   ? HIPSPARSELT_COMPUTE_16F
