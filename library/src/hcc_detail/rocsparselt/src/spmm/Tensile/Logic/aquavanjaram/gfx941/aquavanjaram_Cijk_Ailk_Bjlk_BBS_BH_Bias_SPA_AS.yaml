@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
-- gfx940
+- gfx941
 - [Device 0049, Device 0050]
 - Activation: true
   ActivationComputeDataType: 0
@@ -112,11 +112,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSCMetadata: 4
@@ -295,7 +295,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -383,11 +383,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSCMetadata: 4
@@ -566,7 +566,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -652,11 +652,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -826,7 +826,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -909,11 +909,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 16
@@ -1083,7 +1083,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -1168,11 +1168,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSCMetadata: 4
@@ -1351,7 +1351,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -1437,11 +1437,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 16
@@ -1611,7 +1611,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 5
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -1694,11 +1694,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSUM_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSUM_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 16
@@ -1868,7 +1868,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 6
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSU2_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSU2_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -1953,11 +1953,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT2_4_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG128_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT2_4_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG128_4_1
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -2136,7 +2136,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 7
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT2_4_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG128_4_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT2_4_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG128_4_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -2222,11 +2222,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 16
@@ -2396,7 +2396,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 8
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -2479,11 +2479,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -2653,7 +2653,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 9
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -2736,11 +2736,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 16
@@ -2910,7 +2910,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 10
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -2995,11 +2995,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSCMetadata: 8
@@ -3178,7 +3178,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 11
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA8_GSU1_LPM2_MIWT1_1_PLR1_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -3266,11 +3266,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSCMetadata: 8
@@ -3449,7 +3449,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 12
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -3535,11 +3535,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -3709,7 +3709,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 13
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -3792,11 +3792,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 16
@@ -3966,7 +3966,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 14
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM1_DTVSM1_GRVWA8_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -4051,11 +4051,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSCMetadata: 8
@@ -4234,7 +4234,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 15
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM0_GRVWA4_GSU1_LPM1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -4320,11 +4320,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -4494,7 +4494,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 16
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_AFEM8_DTVSM1_GRVWA4_GSU1_LPMn1_MIWT1_1_PLR3_SU4_SUS256_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -4577,11 +4577,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSUM_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSUM_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     LSCA: 32
     LSCB: 32
     LSPA: 16
@@ -4751,7 +4751,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 17
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSU2_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT32x32x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_DTVSM1_GRVWA8_GSU2_LPMn1_MIWT1_1_PLR3_SU0_SUS0_SVW4_VWA1_VWB1_WG32_2_1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -4836,11 +4836,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x128x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB1_WG64_4_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x128x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB1_WG64_4_1_WGM18
     LSCA: 256
     LSCB: 128
     LSCMetadata: 4
@@ -5016,8 +5016,8 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 18
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x128x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB1_WG64_4_1_WGM18
-      Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x128x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR2_SU32_SUS128_VWA1_WG64_4_1_WGM6
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x128x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB1_WG64_4_1_WGM18
+      Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x128x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR2_SU32_SUS128_VWA1_WG64_4_1_WGM6
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -5105,11 +5105,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM38
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM38
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -5285,7 +5285,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 19
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM38
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC0_AFEM1_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM38
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -5373,11 +5373,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x96x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT2_3_NLCA1_NLCB3_PLR1_VWA1_WG128_2_1_WGM1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x96x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT2_3_NLCA1_NLCB3_PLR1_VWA1_WG128_2_1_WGM1
     LSCA: 256
     LSCB: 32
     LSCMetadata: 8
@@ -5553,7 +5553,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 20
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x96x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSU5_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT2_3_NLCA1_NLCB3_PLR1_VWA1_WG128_2_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x96x64_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSU5_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT2_3_NLCA1_NLCB3_PLR1_VWA1_WG128_2_1_WGM1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -5641,11 +5641,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x192x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_3_NLCA1_NLCB3_PLR1_SU32_SUS256_VWA1_WG64_4_1_WGM1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x192x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSUM_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_3_NLCA1_NLCB3_PLR1_SU32_SUS256_VWA1_WG64_4_1_WGM1
     LSCA: 256
     LSCB: 64
     LSCMetadata: 4
@@ -5821,7 +5821,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 21
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x192x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_3_NLCA1_NLCB3_PLR1_SU32_SUS256_VWA1_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x192x32_MI32x32x1_SN_LDSB0_AFC0_AFEM8_GRVWA8_GRVWB8_GSU2_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_3_NLCA1_NLCB3_PLR1_SU32_SUS256_VWA1_WG64_4_1_WGM1
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -5909,11 +5909,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -6089,7 +6089,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 22
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -6177,11 +6177,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x128x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_4_1_WGM6
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x128x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_4_1_WGM6
     LSCA: 256
     LSCB: 128
     LSCMetadata: 4
@@ -6357,7 +6357,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 23
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x128x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_4_1_WGM6
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x128x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_4_1_WGM6
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -6445,11 +6445,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_WG64_8_1_WGM6
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_WG64_8_1_WGM6
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -6625,7 +6625,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 24
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_WG64_8_1_WGM6
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS256_SVW8_VWA2_WG64_8_1_WGM6
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -6713,11 +6713,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM38
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM38
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -6893,7 +6893,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 25
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM38
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM38
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -6981,11 +6981,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -7161,7 +7161,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 26
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -7249,11 +7249,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -7429,7 +7429,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 27
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -7517,11 +7517,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -7697,7 +7697,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 28
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -7785,11 +7785,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -7965,7 +7965,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 29
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU0_SUS0_SVW8_VWA2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -8053,11 +8053,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -8233,7 +8233,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 30
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -8321,11 +8321,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -8501,7 +8501,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 31
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -8589,11 +8589,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR2_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR2_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -8769,7 +8769,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 32
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR2_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR2_SU0_SUS0_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -8857,11 +8857,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -9037,7 +9037,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 33
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -9125,11 +9125,11 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -9305,7 +9305,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 34
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM8_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS256_SVW8_VWA2_VWB2_WG64_8_1_WGM1
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -9393,11 +9393,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -9573,7 +9573,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 35
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU4_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 4
     StaggerUMapping: 0
@@ -9661,11 +9661,11 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: false
-    ISA: [9, 4, 0]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    KernelNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     LSCA: 256
     LSCB: 256
     LSCMetadata: 4
@@ -9841,7 +9841,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 36
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BH_Bias_SPA_AS_MT256x256x32_MI32x32x1_SN_AFC1_AFEM1_GRVWA8_GRVWB8_GSU1_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_2_NLCA1_NLCB1_PLR1_SU32_SUS128_SVW8_VWA2_VWB2_WG64_8_1_WGM18
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
