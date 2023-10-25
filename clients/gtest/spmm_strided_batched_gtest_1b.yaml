@@ -29,6 +29,7 @@ Tests:
   batch_count: [ 3 ]
   bias_vector: [false, true]
   bias_stride: [0, -1, 256]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_small_stride_zero
   category: quick
@@ -44,6 +45,7 @@ Tests:
   batch_count: [ 1, 3 ]
   bias_vector: [false, true]
   bias_stride: [0, -1, 256]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_medium
   category: pre_checkin
@@ -53,6 +55,7 @@ Tests:
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
   batch_count: [ 3 ]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_medium_alt
   category: pre_checkin
@@ -64,6 +67,7 @@ Tests:
   beta: 0
   initialization: special
   batch_count: [ 3 ]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_medium_stride_zero
   category: nightly
@@ -77,6 +81,7 @@ Tests:
   transA: N
   transB: N
   batch_count: 3
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_medium_stride_zero_alt
   category: nightly
@@ -89,6 +94,7 @@ Tests:
   transA: N
   transB: N
   batch_count: 3
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_large
   category: pre_checkin
@@ -98,6 +104,7 @@ Tests:
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
   batch_count: [ 3 ]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_large_stride_zero
   category: pre_checkin
@@ -111,6 +118,7 @@ Tests:
   transA: N
   transB: N
   batch_count: [ 3 ]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_deepbench
   category: nightly
@@ -122,6 +130,7 @@ Tests:
   transA: N
   transB: T
   batch_count: [ 2 ]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_deepbench_alt
   category: nightly
@@ -134,6 +143,7 @@ Tests:
   transA: N
   transB: T
   batch_count: [ 2 ]
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_conv_resnet50_fwd
   category: nightly
@@ -145,6 +155,7 @@ Tests:
   transA: N
   transB: N
   batch_count: 4
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_conv_resnet50_bwddata
   category: nightly
@@ -156,6 +167,7 @@ Tests:
   transA: N
   transB: T
   batch_count: 4
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_conv_inception4_bwddata
   category: nightly
@@ -167,6 +179,7 @@ Tests:
   transA: N
   transB: T
   batch_count: 4
+  sparse_b: [true, false]
 
 - name: spmm_strided_batched_conv_ctest_fwd
   category: nightly
@@ -178,5 +191,6 @@ Tests:
   transA: N
   transB: N
   batch_count: 1
+  sparse_b: [true, false]
 
 ...
