@@ -191,20 +191,26 @@ if ( NOT BUILD_CUDA )
     else()
       set( HIPSPARSELT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipsparselt" CACHE PATH "path to tensile library" )
     endif()
-    rocm_install(
-      DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
-      DESTINATION ${HIPSPARSELT_TENSILE_LIBRARY_DIR}
-      COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME}) # Use this cmake variable to be compatible with rocm-cmake 0.6 and 0.7
+    # For ASAN Enabled Build package only library & license
+    if( NOT ENABLE_ASAN_PACKAGING )
+      rocm_install(
+        DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
+        DESTINATION ${HIPSPARSELT_TENSILE_LIBRARY_DIR}
+        COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME}) # Use this cmake variable to be compatible with rocm-cmake 0.6 and 0.7
+    endif()
   else()
     if (WIN32)
       set( HIPSPARSELT_SPMM_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/bin/hipsparselt" CACHE PATH "path to spmm kernels" )
     else()
       set( HIPSPARSELT_SPMM_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipsparselt" CACHE PATH "path to spmm kernels" )
     endif()
-    rocm_install(
-      DIRECTORY ${CMAKE_BINARY_DIR}/SPMM_KERNELS/library
-      DESTINATION ${HIPSPARSELT_SPMM_LIBRARY_DIR}
-      COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT})
+    # For ASAN Enabled Build package only library & license
+    if( NOT ENABLE_ASAN_PACKAGING )
+      rocm_install(
+        DIRECTORY ${CMAKE_BINARY_DIR}/SPMM_KERNELS/library
+        DESTINATION ${HIPSPARSELT_SPMM_LIBRARY_DIR}
+        COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT})
+    endif()
   endif()
 endif()
 
