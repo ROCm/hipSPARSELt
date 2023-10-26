@@ -534,6 +534,8 @@ namespace
                 // Find the location of the libraries
                 if(TestPath(path + "/../Tensile/library"))
                     path += "/../Tensile/library";
+                else if(TestPath(path + "../hipsparselt/library"))
+                    path += "../hipsparselt/library";
                 else
                     path += "/hipsparselt/library";
 
