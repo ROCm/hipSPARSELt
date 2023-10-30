@@ -517,9 +517,9 @@ hipsparseStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*     
  *  @param[in]
  *  opB             hipsparse operation for Matrix B. \p HIPSPARSE_OPERATION_NON_TRANSPOSE or \p HIPSPARSE_OPERATION_TRANSPOSE
  *  @param[in]
- *  matA            the matrix descriptor (HIP backend only structured (sparse) matrix matrix)
+ *  matA            the matrix descriptor (only and must one of matA or matB is a structured sparsity matrix)
  *  @param[in]
- *  matB            the matrix descriptor (HIP backend only support dense matrix)
+ *  matB            the matrix descriptor (only and must one of matA or matB is a structured sparsity matrix)
  *  @param[in]
  *  matC            the matrix descriptor (dense matrix)
  *  @param[in]
