@@ -1,5 +1,9 @@
 # Change Log for hipSPARSELt
 
+## (Unreleased) hipSPARSELt 0.2.0
+### Added
+- Support Matrix B is a Structured Sparsity Matrix.
+
 ## (Unreleased) hipSPARSELt 0.1.0
 ### Added
 - Enable hipSPARSELt APIs
