@@ -216,7 +216,8 @@ void validate_gold(T*             A,
                    int64_t        m_n3,
                    int64_t        m_s1,
                    int64_t        m_s2,
-                   int64_t        m_s3)
+                   int64_t        m_s3,
+                   bool           sparse_b = false)
 {
     bool correct = true;
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
@@ -254,8 +255,17 @@ void validate_gold(T*             A,
                 int m_idx = 0;
                 for(int i = 0; i < 8; i++)
                 {
-                    auto a_pos = (i1 * s1) + ((i2 * 8 + i) * s2) + (i3 * s3);
-                    auto c_pos = (i1 * c_s1) + ((i2 * 4 + m_idx) * c_s2) + (i3 * c_s3);
+                    int64_t a_pos, c_pos;
+                    if(!sparse_b)
+                    {
+                        a_pos = (i1 * s1) + ((i2 * 8 + i) * s2) + (i3 * s3);
+                        c_pos = (i1 * c_s1) + ((i2 * 4 + m_idx) * c_s2) + (i3 * c_s3);
+                    }
+                    else
+                    {
+                        a_pos = ((i1 * 8 + i) * s1) + (i2 * s2) + (i3 * s3);
+                        c_pos = ((i1 * 4+ m_idx)* c_s1) + (i2 * c_s2) + (i3 * c_s3);
+                    }
                     T    a     = A[a_pos];
                     T    b     = static_cast<T>(0.0f);
                     if(i == idx[m_idx])
@@ -433,6 +443,7 @@ static void show_usage(char* argv[])
         << "\t--trans \t\ttrans \tGEMM_STRIDED_BATCHED argument trans_a\n"
         << "\t--stride \t\tstride \tGEMM_STRIDED_BATCHED argument stride_a\n"
         << "\t--batch_count \t\tbatch_count \tGEMM_STRIDED_BATCHED argument batch count\n"
+        << "\t--sparse_b \t\tsparse_b \t\tStructurted Sparsity Matrix B (A is Dense Matrix)\n"
         << "\t-r \t\tprecision \tGEMM_STRIDED_BATCHED argument precsion, etc., h=half, b=bfloat16\n"
         << "\t--header \t\theader \t\tprint header for output\n"
         << std::endl;
@@ -448,6 +459,7 @@ static int parse_arguments(int                    argc,
                            hipsparseOperation_t&  trans,
                            hipsparseLtDatatype_t& type,
                            bool&                  header,
+                           bool&                  sparse_b,
                            bool&                  verbose)
 {
     if(argc >= 2)
@@ -530,6 +542,10 @@ static int parse_arguments(int                    argc,
                         return EXIT_FAILURE;
                     }
                 }
+                else if(arg == "--sparse_b")
+                {
+                    sparse_b = true;
+                }
                 else
                 {
                     std::cerr << "error with " << arg << std::endl;
@@ -584,7 +600,7 @@ template <typename T>
 void initialize_a(std::vector<T>& ha, int64_t size_a)
 {
     auto CAST = [](auto x) {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
         return static_cast<T>(x);
 #else
         return static_cast<T>(static_cast<float>(x));
@@ -606,6 +622,7 @@ void run(int64_t               m,
          int                   batch_count,
          hipsparseOperation_t  trans,
          hipsparseLtDatatype_t type,
+         bool                  sparse_b,
          bool                  verbose)
 {
 
@@ -614,37 +631,45 @@ void run(int64_t               m,
     int64_t m_stride_1, m_stride_2, m_stride_b, m_stride_b_r;
     int64_t row, col;
     int     size_1;
+
     if(trans == HIPSPARSE_OPERATION_NON_TRANSPOSE)
     {
-        std::cout << "N";
-        row          = m;
-        col          = n;
-        stride_1     = 1;
-        stride_2     = ld;
-        size_1       = ld * n;
-        c_stride_1   = 1;
-        c_stride_2   = m;
-        c_stride_b_r = n / 2 * c_stride_2;
+        std::cout << ", N";
+        row      = m;
+        col      = n;
+        stride_1 = 1;
+        stride_2 = ld;
+        size_1   = ld * n;
+    }
+    else
+    {
+        std::cout << ", T";
+        row      = n;
+        col      = m;
+        stride_1 = ld;
+        stride_2 = 1;
+        size_1   = ld * m;
+    }
 
-        m_stride_1   = n / 8;
-        m_stride_2   = 1;
+    if(!sparse_b)
+    {
+        c_stride_1 = (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? 1 : n / 2;
+        c_stride_2 = (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? m : 1;
+        c_stride_b_r =  (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n / 2 * c_stride_2 : m * c_stride_1;
+
+        m_stride_1 = n / 8;
+        m_stride_2 = 1;
         m_stride_b_r = m * m_stride_1;
     }
     else
     {
-        std::cout << "T";
-        row          = n;
-        col          = m;
-        stride_1     = ld;
-        stride_2     = 1;
-        size_1       = ld * m;
-        c_stride_1   = n / 2;
-        c_stride_2   = 1;
-        c_stride_b_r = m * c_stride_1;
+        c_stride_1 = (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? 1 : n;
+        c_stride_2 = (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? m / 2 : 1;
+        c_stride_b_r =  (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n * c_stride_2 : m / 2 * c_stride_1;
 
-        m_stride_1   = n / 8;
-        m_stride_2   = 1;
-        m_stride_b_r = m * m_stride_1;
+        m_stride_1 = 1;
+        m_stride_2 = m / 8;
+        m_stride_b_r = n * m_stride_2;
     }
     c_stride_b         = stride == 0 ? 0 : c_stride_b_r;
     m_stride_b         = stride == 0 ? 0 : m_stride_b_r;
@@ -696,41 +721,58 @@ void run(int64_t               m,
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtInit(&handle));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtStructuredDescriptorInit(&handle,
-                                                                &matA,
-                                                                row,
-                                                                col,
-                                                                ld,
-                                                                16,
-                                                                type,
-                                                                HIPSPARSE_ORDER_COL,
-                                                                HIPSPARSELT_SPARSITY_50_PERCENT));
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matB, n, m, n, 16, type, HIPSPARSE_ORDER_COL));
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matC, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtDenseDescriptorInit(&handle, &matD, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
+    if(!sparse_b)
+    {
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtStructuredDescriptorInit(&handle,
+                                                                    &matA,
+                                                                    row,
+                                                                    col,
+                                                                    ld,
+                                                                    16,
+                                                                    type,
+                                                                    HIPSPARSE_ORDER_COL,
+                                                                    HIPSPARSELT_SPARSITY_50_PERCENT));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matB, n, m, n, 16, type, HIPSPARSE_ORDER_COL));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matC, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matD, m, m, m, 16, type, HIPSPARSE_ORDER_COL));
+    }
+    else
+    {
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matA, n, m, n, 16, type, HIPSPARSE_ORDER_COL));
+
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtStructuredDescriptorInit(&handle,
+                                                &matB,
+                                                row,
+                                                col,
+                                                ld,
+                                                16,
+                                                type,
+                                                HIPSPARSE_ORDER_COL,
+                                                HIPSPARSELT_SPARSITY_50_PERCENT));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matC, n, n, n, 16, type, HIPSPARSE_ORDER_COL));
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtDenseDescriptorInit(&handle, &matD, n, n, n, 16, type, HIPSPARSE_ORDER_COL));
+    }
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matB, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matC, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, &matD, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
+        &handle, sparse_b? &matB : &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
     auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I :
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
                                                  HIPSPARSELT_COMPUTE_32F;
 #else
                                                  HIPSPARSELT_COMPUTE_16F;
@@ -738,8 +780,8 @@ void run(int64_t               m,
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(&handle,
                                                             &matmul,
-                                                            trans,
-                                                            HIPSPARSE_OPERATION_NON_TRANSPOSE,
+                                                            sparse_b? HIPSPARSE_OPERATION_NON_TRANSPOSE : trans,
+                                                            sparse_b? trans : HIPSPARSE_OPERATION_NON_TRANSPOSE,
                                                             &matA,
                                                             &matB,
                                                             &matC,
@@ -786,89 +828,177 @@ void run(int64_t               m,
     CHECK_HIP_ERROR(
         hipMemcpy(hp_compressed.data(), d_compressed, compressed_size, hipMemcpyDeviceToHost));
 
-    compress<T, float>(&hp_test[0],
+    if(!sparse_b)
+        compress<T, float>(&hp_test[0],
+                        &hp_gold[0],
+                        reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
+                        m,
+                        n,
+                        stride_1,
+                        stride_2,
+                        stride,
+                        c_stride_1,
+                        c_stride_2,
+                        c_stride_b,
+                        m_stride_1,
+                        m_stride_2,
+                        m_stride_b,
+                        batch_count);
+    else
+        compress<T, float>(&hp_test[0],
                        &hp_gold[0],
                        reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
-                       m,
                        n,
-                       stride_1,
+                       m,
                        stride_2,
+                       stride_1,
                        stride,
-                       c_stride_1,
                        c_stride_2,
+                       c_stride_1,
                        c_stride_b,
-                       m_stride_1,
                        m_stride_2,
+                       m_stride_1,
                        m_stride_b,
                        batch_count);
 
     if(verbose)
     {
         printf("\n");
-        print_strided_batched("host gold compress calculated",
-                              &hp_gold[0],
-                              m,
-                              n / 2,
-                              batch_count,
-                              c_stride_1,
-                              c_stride_2,
-                              c_stride_b_r);
+        if(!sparse_b)
+        {
+            print_strided_batched("host gold compress calculated",
+                                &hp_gold[0],
+                                m,
+                                n / 2,
+                                batch_count,
+                                c_stride_1,
+                                c_stride_2,
+                                c_stride_b_r);
 
-        print_strided_batched_meta(
-            "host gold metadata calculated",
-            reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
-            m,
-            n / 8,
-            batch_count,
-            m_stride_1,
-            m_stride_2,
-            m_stride_b_r);
+            print_strided_batched_meta(
+                "host gold metadata calculated",
+                reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
+                m,
+                n / 8,
+                batch_count,
+                m_stride_1,
+                m_stride_2,
+                m_stride_b_r);
 
-        print_strided_batched("device compress calculated",
-                              &hp_compressed[0],
-                              m,
-                              n / 2,
-                              batch_count,
-                              c_stride_1,
-                              c_stride_2,
-                              c_stride_b_r);
-        print_strided_batched_meta(
-            "device metadata calculated",
-            reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),
-            m,
-            n / 8,
-            batch_count,
-            m_stride_1,
-            m_stride_2,
-            m_stride_b_r);
+            print_strided_batched("device compress calculated",
+                                &hp_compressed[0],
+                                m,
+                                n / 2,
+                                batch_count,
+                                c_stride_1,
+                                c_stride_2,
+                                c_stride_b_r);
+            print_strided_batched_meta(
+                "device metadata calculated",
+                reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),
+                m,
+                n / 8,
+                batch_count,
+                m_stride_1,
+                m_stride_2,
+                m_stride_b_r);
+        }
+        else
+        {
+            print_strided_batched("host gold compress calculated",
+                                &hp_gold[0],
+                                m / 2,
+                                n,
+                                batch_count,
+                                c_stride_1,
+                                c_stride_2,
+                                c_stride_b_r);
+
+            print_strided_batched_meta(
+                "host gold metadata calculated",
+                reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
+                m / 8,
+                n,
+                batch_count,
+                m_stride_1,
+                m_stride_2,
+                m_stride_b_r);
+
+            print_strided_batched("device compress calculated",
+                                &hp_compressed[0],
+                                m / 2,
+                                n,
+                                batch_count,
+                                c_stride_1,
+                                c_stride_2,
+                                c_stride_b_r);
+            print_strided_batched_meta(
+                "device metadata calculated",
+                reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),
+                m / 8,
+                n,
+                batch_count,
+                m_stride_1,
+                m_stride_2,
+                m_stride_b_r);
+        }
     }
 
-    validate_gold(&hp_test[0],
-                  &hp_gold[0],
-                  reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
-                  m,
-                  n,
-                  batch_count,
-                  stride_1,
-                  stride_2,
-                  stride,
-                  m,
-                  n / 2,
-                  batch_count,
-                  c_stride_1,
-                  c_stride_2,
-                  c_stride_b,
-                  m,
-                  n / 8,
-                  batch_count,
-                  m_stride_1,
-                  m_stride_2,
-                  m_stride_b);
-    validate_compressed(
-        &hp_gold[0], &hp_compressed[0], m, n / 2, batch_count, c_stride_1, c_stride_2, c_stride_b);
-
+    if(!sparse_b)
+    {
+        validate_gold(&hp_test[0],
+                    &hp_gold[0],
+                    reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
+                    m,
+                    n,
+                    batch_count,
+                    stride_1,
+                    stride_2,
+                    stride,
+                    m,
+                    n / 2,
+                    batch_count,
+                    c_stride_1,
+                    c_stride_2,
+                    c_stride_b,
+                    m,
+                    n / 8,
+                    batch_count,
+                    m_stride_1,
+                    m_stride_2,
+                    m_stride_b);
+        validate_compressed(
+            &hp_gold[0], &hp_compressed[0], m, n / 2, batch_count, c_stride_1, c_stride_2, c_stride_b);
+    }
+    else
+    {
+        validate_gold(&hp_test[0],
+                    &hp_gold[0],
+                    reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
+                    m,
+                    n,
+                    batch_count,
+                    stride_1,
+                    stride_2,
+                    stride,
+                    m / 2,
+                    n,
+                    batch_count,
+                    c_stride_1,
+                    c_stride_2,
+                    c_stride_b,
+                    m / 8,
+                    n,
+                    batch_count,
+                    m_stride_1,
+                    m_stride_2,
+                    m_stride_b,
+                    true);
+        validate_compressed(
+            &hp_gold[0], &hp_compressed[0], m / 2, n, batch_count, c_stride_1, c_stride_2, c_stride_b);
+    }
 // cusparselt' metadata has different layout so skip metadata check.
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     validate_metadata(
         reinterpret_cast<unsigned char*>(&hp_gold[c_stride_b_r * batch_count_f]),
         reinterpret_cast<unsigned char*>(&hp_compressed[c_stride_b_r * batch_count_f]),
@@ -915,8 +1045,9 @@ int main(int argc, char* argv[])
 
     bool verbose = false;
     bool header  = false;
+    bool sparse_b = false;
 
-    if(parse_arguments(argc, argv, m, n, ld, stride, batch_count, trans, type, header, verbose))
+    if(parse_arguments(argc, argv, m, n, ld, stride, batch_count, trans, type, header, sparse_b, verbose))
     {
         show_usage(argv);
         return EXIT_FAILURE;
@@ -951,15 +1082,15 @@ int main(int argc, char* argv[])
     {
     case HIPSPARSELT_R_16F:
         std::cout << "H_";
-        run<__half>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<__half>(m, n, ld, stride, batch_count, trans, type, sparse_b, verbose);
         break;
     case HIPSPARSELT_R_16BF:
         std::cout << "BF16_";
-        run<hip_bfloat16>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<hip_bfloat16>(m, n, ld, stride, batch_count, trans, type, sparse_b, verbose);
         break;
     case HIPSPARSELT_R_8I:
         std::cout << "I8_";
-        run<int8_t>(m, n, ld, stride, batch_count, trans, type, verbose);
+        run<int8_t>(m, n, ld, stride, batch_count, trans, type, sparse_b, verbose);
         break;
     default:
         break;

@@ -76,7 +76,7 @@
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime_api.h>
 
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_fp16.h>
 #include <hip/library_types.h>
@@ -88,7 +88,7 @@
 /* Opaque structures holding information */
 // clang-format off
 
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
 /*! \ingroup types_module
  *  \brief Handle to the hipSPARSELt library context queue.
  *
@@ -139,7 +139,7 @@ typedef struct hipsparseLtMatmulAlgSelection_t {uint8_t data[11024];} hipsparseL
  *  and \ref hipsparseLtMatmulPlanDestroy functions respectively.
  */
 typedef struct hipsparseLtMatmulPlan_t {uint8_t data[11024];} hipsparseLtMatmulPlan_t;
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_PLATFORM_NVIDIA__)
 typedef __nv_bfloat16 hip_bfloat16;
 typedef struct {uint8_t data[11024];} hipsparseLtHandle_t;
 typedef struct {uint8_t data[11024];} hipsparseLtMatDescriptor_t;
@@ -543,9 +543,9 @@ hipsparseStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*     
  *  @param[in]
  *  opB             hipsparse operation for Matrix B. \p HIPSPARSE_OPERATION_NON_TRANSPOSE or \p HIPSPARSE_OPERATION_TRANSPOSE
  *  @param[in]
- *  matA            the matrix descriptor (HIP backend only structured (sparse) matrix matrix)
+ *  matA            the matrix descriptor (only and must one of matA or matB is a structured sparsity matrix)
  *  @param[in]
- *  matB            the matrix descriptor (HIP backend only support dense matrix)
+ *  matB            the matrix descriptor (only and must one of matA or matB is a structured sparsity matrix)
  *  @param[in]
  *  matC            the matrix descriptor (dense matrix)
  *  @param[in]

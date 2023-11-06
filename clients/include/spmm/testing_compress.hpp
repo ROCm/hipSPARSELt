@@ -66,7 +66,8 @@ void self_validate(T*             A,
                    int64_t        m_n3,
                    int64_t        m_s1,
                    int64_t        m_s2,
-                   int64_t        m_s3)
+                   int64_t        m_s3,
+                   bool           sparse_b)
 {
     // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
     // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
@@ -85,10 +86,20 @@ void self_validate(T*             A,
                 int m_idx = 0;
                 for(int i = 0; i < 8; i++)
                 {
-                    auto a_pos = (i1 * s1) + ((i2 * 8 + i) * s2) + (i3 * s3);
-                    auto c_pos = (i1 * c_s1) + ((i2 * 4 + m_idx) * c_s2) + (i3 * c_s3);
-                    T    a     = A[a_pos];
-                    T    b     = static_cast<T>(0.0f);
+                    int64_t a_pos, c_pos;
+                    if(!sparse_b)
+                    {
+                        a_pos = (i1 * s1) + ((i2 * 8 + i) * s2) + (i3 * s3);
+                        c_pos = (i1 * c_s1) + ((i2 * 4 + m_idx) * c_s2) + (i3 * c_s3);
+                    }
+                    else
+                    {
+                        a_pos = ((i1 * 8 + i) * s1) + (i2 * s2) + (i3 * s3);
+                        c_pos = ((i1 * 4 + m_idx) * c_s1) + (i2 * c_s2) + (i3 * c_s3);
+                    }
+
+                    T a = A[a_pos];
+                    T b = static_cast<T>(0.0f);
                     if(i == idx[m_idx])
                     {
 
@@ -285,12 +296,6 @@ void testing_compress_bad_arg(const Arguments& arg)
         hipsparseLtSpMMACompress2(handle, nullptr, true, transA, dA, dA_1, dA_ws, stream),
         HIPSPARSE_STATUS_INVALID_VALUE);
 
-#ifdef __HIP_PLATFORM_HCC__
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtSpMMACompress2(handle, matA, false, transA, dA, dA_1, dA_ws, stream),
-        HIPSPARSE_STATUS_INTERNAL_ERROR);
-#endif
-
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtSpMMACompress2(handle, matA, true, transA, nullptr, dA_1, dA_ws, stream),
         HIPSPARSE_STATUS_INVALID_VALUE);
@@ -339,35 +344,46 @@ void testing_compress(const Arguments& arg)
     int64_t stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : lda;
     int64_t stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda : 1;
 
+    int64_t stride_1_b = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : ldb;
+    int64_t stride_2_b = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? ldb : 1;
+
     constexpr bool do_batched         = (btype == hipsparselt_batch_type::batched);
     constexpr bool do_strided_batched = (btype == hipsparselt_batch_type::strided_batched);
     int            num_batches        = (do_batched || do_strided_batched ? arg.batch_count : 1);
     int64_t        stride_a           = do_strided_batched ? arg.stride_a : lda * A_col;
     int64_t        stride_b           = do_strided_batched ? arg.stride_b : ldb * B_col;
     int64_t        stride_c           = do_strided_batched ? arg.stride_c : ldc * M;
-    int64_t        stride_d           = do_strided_batched ? arg.stride_c : ldd * M;
+    int64_t        stride_d           = do_strided_batched ? arg.stride_d : ldd * M;
 
-    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
+    hipsparselt_local_mat_descr matA(arg.sparse_b ? hipsparselt_matrix_type_dense
+                                                  : hipsparselt_matrix_type_structured,
                                      handle,
                                      A_row,
                                      A_col,
                                      lda,
                                      arg.a_type,
                                      HIPSPARSE_ORDER_COL);
-    hipsparselt_local_mat_descr matB(
-        hipsparselt_matrix_type_dense, handle, B_row, B_col, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
+    hipsparselt_local_mat_descr matB(arg.sparse_b ? hipsparselt_matrix_type_structured
+                                                  : hipsparselt_matrix_type_dense,
+                                     handle,
+                                     B_row,
+                                     B_col,
+                                     ldb,
+                                     arg.b_type,
+                                     HIPSPARSE_ORDER_COL);
+
     hipsparselt_local_mat_descr matC(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
+        hipsparselt_matrix_type_dense, handle, M, N, ldd, arg.d_type, HIPSPARSE_ORDER_COL);
 
     hipsparseStatus_t eStatus
-        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
+        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda, !arg.sparse_b);
     EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;
 
-    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb);
+    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb, arg.sparse_b);
     EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;
@@ -410,6 +426,27 @@ void testing_compress(const Arguments& arg)
             eStatus);
         if(eStatus != HIPSPARSE_STATUS_SUCCESS)
             return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_b, B_row, B_col, ldb);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(int64_t)),
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_c, M, N, ldc);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(int64_t)),
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_d, M, N, ldd);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(int64_t)),
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
     }
 
     hipsparselt_local_matmul_descr matmul(
@@ -431,106 +468,156 @@ void testing_compress(const Arguments& arg)
     else if(run_version == 2)
     {
         EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtSpMMACompressedSize2(handle, matA, &compressed_size, &compress_buffer_size),
+            hipsparseLtSpMMACompressedSize2(
+                handle, arg.sparse_b ? matB : matA, &compressed_size, &compress_buffer_size),
             HIPSPARSE_STATUS_SUCCESS);
     }
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
     const size_t size_A_pruned_copy     = arg.unit_check || arg.norm_check ? size_A : 0;
     const size_t size_A_compressed_copy = arg.unit_check || arg.norm_check ? compressed_size : 0;
 
+    const size_t size_B = stride_b == 0 ? ldb * B_col * num_batches : stride_b * num_batches;
+    const size_t size_B_pruned_copy     = arg.unit_check || arg.norm_check ? size_B : 0;
+    const size_t size_B_compressed_copy = arg.unit_check || arg.norm_check ? compressed_size : 0;
+
     // allocate memory on device
-    device_vector<Ti>            dA(size_A, 1, HMM);
-    device_vector<unsigned char> dA_compressd(compressed_size, 1, HMM);
-    device_vector<unsigned char> dA_compressBuffer(compress_buffer_size, 1, HMM);
-    CHECK_DEVICE_ALLOCATION(dA.memcheck());
-    CHECK_DEVICE_ALLOCATION(dA_compressd.memcheck());
-    CHECK_DEVICE_ALLOCATION(dA_compressBuffer.memcheck());
+    device_vector<Ti>            dT(arg.sparse_b ? size_B : size_A, 1, HMM);
+    device_vector<unsigned char> dT_compressd(compressed_size, 1, HMM);
+    device_vector<unsigned char> dT_compressBuffer(compress_buffer_size, 1, HMM);
+    CHECK_DEVICE_ALLOCATION(dT.memcheck());
+    CHECK_DEVICE_ALLOCATION(dT_compressd.memcheck());
+    CHECK_DEVICE_ALLOCATION(dT_compressBuffer.memcheck());
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
-    host_vector<Ti>            hA(size_A);
-    host_vector<Ti>            hA_pruned(size_A_pruned_copy);
-    host_vector<unsigned char> hA_gold(size_A_compressed_copy);
-    host_vector<unsigned char> hA_1(size_A_compressed_copy);
+    host_vector<Ti>            hT(arg.sparse_b ? size_B : size_A);
+    host_vector<Ti>            hT_pruned(arg.sparse_b ? size_B_pruned_copy : size_A_pruned_copy);
+    host_vector<unsigned char> hT_gold(arg.sparse_b ? size_B_compressed_copy
+                                                    : size_A_compressed_copy);
+    host_vector<unsigned char> hT_1(arg.sparse_b ? size_B_compressed_copy : size_A_compressed_copy);
 
     hipsparselt_seedrand();
+
+    size_t T_row, T_col, ldt, stride_t;
+    if(!arg.sparse_b)
+    {
+        T_row    = A_row;
+        T_col    = A_col;
+        ldt      = lda;
+        stride_t = stride_a;
+    }
+    else
+    {
+        T_row    = B_row;
+        T_col    = B_col;
+        ldt      = ldb;
+        stride_t = stride_b;
+    }
 
     // Initial Data on CPU
     if(arg.initialization == hipsparselt_initialization::rand_int)
     {
-        hipsparselt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init<Ti>(hT, T_row, T_col, ldt, stride_t, num_batches);
     }
     else if(arg.initialization == hipsparselt_initialization::trig_float)
     {
-        hipsparselt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_sin<Ti>(hT, T_row, T_col, ldt, stride_t, num_batches);
     }
     else if(arg.initialization == hipsparselt_initialization::hpl)
     {
-        hipsparselt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_hpl<Ti>(hT, T_row, T_col, ldt, stride_t, num_batches);
     }
     else if(arg.initialization == hipsparselt_initialization::special)
     {
-        hipsparselt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
+        hipsparselt_init_alt_impl_big<Ti>(hT, T_row, T_col, ldt, stride_t, num_batches);
     }
 
     // copy data from CPU to device
-    CHECK_HIP_ERROR(dA.transfer_from(hA));
+    CHECK_HIP_ERROR(dT.transfer_from(hT));
 
     if(run_version == 1)
     {
         EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size, &compress_buffer_size),
-            HIPSPARSE_STATUS_SUCCESS);
-        EXPECT_HIPSPARSE_STATUS(
             hipsparseLtSpMMAPrune(
-                handle, matmul, dA, dA, hipsparseLtPruneAlg_t(arg.prune_algo), stream),
+                handle, matmul, dT, dT, hipsparseLtPruneAlg_t(arg.prune_algo), stream),
             HIPSPARSE_STATUS_SUCCESS);
     }
     else if(run_version == 2)
     {
-        EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtSpMMACompressedSize2(handle, matA, &compressed_size, &compress_buffer_size),
-            HIPSPARSE_STATUS_SUCCESS);
-        EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtSpMMAPrune2(
-                handle, matA, true, transA, dA, dA, hipsparseLtPruneAlg_t(arg.prune_algo), stream),
-            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMAPrune2(handle,
+                                                       arg.sparse_b ? matB : matA,
+                                                       !arg.sparse_b,
+                                                       arg.sparse_b ? transB : transA,
+                                                       dT,
+                                                       dT,
+                                                       hipsparseLtPruneAlg_t(arg.prune_algo),
+                                                       stream),
+                                HIPSPARSE_STATUS_SUCCESS);
     }
 
     if(arg.unit_check || arg.norm_check)
     {
-        //compressd matrix
-        int64_t c_row        = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K / 2;
-        int64_t c_col        = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K / 2 : M;
-        int64_t c_ld         = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K / 2;
-        int64_t c_stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : c_ld;
-        int64_t c_stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? c_ld : 1;
-        int64_t c_stride_a_r = K / 2 * M;
-        int64_t c_stride_a   = stride_a == 0 ? 0 : c_stride_a_r;
+        int64_t c_row, c_col, c_ld, c_stride_1, c_stride_2, c_stride_r, c_stride;
+        int64_t m_ld, m_stride_1, m_stride_2, m_stride_r, m_stride;
+        if(!arg.sparse_b)
+        {
+            //compressd matrix
+            c_row      = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K / 2;
+            c_col      = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K / 2 : M;
+            c_ld       = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K / 2;
+            c_stride_1 = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : c_ld;
+            c_stride_2 = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? c_ld : 1;
+            c_stride_r = K / 2 * M;
+            c_stride   = stride_a == 0 ? 0 : c_stride_r;
 
-        //metadata
-        int64_t m_ld         = M;
-        int64_t m_stride_1_a = K / 8;
-        int64_t m_stride_2_a = 1;
-        int64_t m_stride_a_r = M * m_stride_1_a;
-        int64_t m_stride_a   = stride_a == 0 ? 0 : m_stride_a_r;
+            //metadata
+            m_ld       = M;
+            m_stride_1 = K / 8;
+            m_stride_2 = 1;
+            m_stride_r = M * m_stride_1;
+            m_stride   = stride_a == 0 ? 0 : m_stride_r;
+        }
+        else
+        {
+            //compressd matrix
+            c_row      = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K / 2 : N;
+            c_col      = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? N : K / 2;
+            c_ld       = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K / 2 : N;
+            c_stride_1 = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : c_ld;
+            c_stride_2 = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? c_ld : 1;
+            c_stride_r = K / 2 * N;
+            c_stride   = stride_b == 0 ? 0 : c_stride_r;
 
-        auto metadata_offset = c_stride_a_r * sizeof(Ti) * (stride_a == 0 ? 1 : num_batches);
+            //metadata
+            m_ld       = K / 8;
+            m_stride_1 = 1;
+            m_stride_2 = K / 8;
+            m_stride_r = N * m_stride_2;
+            m_stride   = stride_b == 0 ? 0 : m_stride_r;
+        }
+
+        auto metadata_offset = c_stride_r * sizeof(Ti)
+                               * ((arg.sparse_b ? stride_b : stride_a) == 0 ? 1 : num_batches);
 
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
+        CHECK_HIP_ERROR(hT_pruned.transfer_from(dT));
 
         if(run_version == 1)
             EXPECT_HIPSPARSE_STATUS(
-                hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, dA_compressBuffer, stream),
+                hipsparseLtSpMMACompress(handle, plan, dT, dT_compressd, dT_compressBuffer, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         else if(run_version == 2)
-            EXPECT_HIPSPARSE_STATUS(
-                hipsparseLtSpMMACompress2(
-                    handle, matA, true, transA, dA, dA_compressd, dA_compressBuffer, stream),
-                HIPSPARSE_STATUS_SUCCESS);
+            EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress2(handle,
+                                                              arg.sparse_b ? matB : matA,
+                                                              !arg.sparse_b,
+                                                              arg.sparse_b ? transB : transA,
+                                                              dT,
+                                                              dT_compressd,
+                                                              dT_compressBuffer,
+                                                              stream),
+                                    HIPSPARSE_STATUS_SUCCESS);
 
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        CHECK_HIP_ERROR(hA_1.transfer_from(dA_compressd));
+        CHECK_HIP_ERROR(hT_1.transfer_from(dT_compressd));
 
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
@@ -538,21 +625,38 @@ void testing_compress(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
-        compress<Ti, Tc>(hA_pruned,
-                         reinterpret_cast<Ti*>(hA_gold.data()),
-                         hA_gold.data() + metadata_offset,
-                         M,
-                         K,
-                         stride_1_a,
-                         stride_2_a,
-                         stride_a,
-                         c_stride_1_a,
-                         c_stride_2_a,
-                         c_stride_a,
-                         m_stride_1_a,
-                         m_stride_2_a,
-                         m_stride_a,
-                         num_batches);
+        if(!arg.sparse_b)
+            compress<Ti, Tc>(hT_pruned,
+                             reinterpret_cast<Ti*>(hT_gold.data()),
+                             hT_gold.data() + metadata_offset,
+                             M,
+                             K,
+                             stride_1_a,
+                             stride_2_a,
+                             stride_a,
+                             c_stride_1,
+                             c_stride_2,
+                             c_stride,
+                             m_stride_1,
+                             m_stride_2,
+                             m_stride,
+                             num_batches);
+        else
+            compress<Ti, Tc>(hT_pruned,
+                             reinterpret_cast<Ti*>(hT_gold.data()),
+                             hT_gold.data() + metadata_offset,
+                             N,
+                             K,
+                             stride_2_b,
+                             stride_1_b,
+                             stride_b,
+                             c_stride_2,
+                             c_stride_1,
+                             c_stride,
+                             m_stride_2,
+                             m_stride_1,
+                             m_stride,
+                             num_batches);
 
         if(arg.timing)
         {
@@ -562,43 +666,44 @@ void testing_compress(const Arguments& arg)
         // check host error and norm
         if(arg.unit_check)
         {
-            self_validate<Ti>(hA_pruned,
-                              reinterpret_cast<Ti*>(hA_gold.data()),
-                              hA_1 + metadata_offset,
-                              M,
-                              K,
+            self_validate<Ti>(hT_pruned,
+                              reinterpret_cast<Ti*>(hT_gold.data()),
+                              hT_1 + metadata_offset,
+                              arg.sparse_b ? K : M,
+                              arg.sparse_b ? N : K,
                               num_batches,
-                              stride_1_a,
-                              stride_2_a,
-                              stride_a,
-                              M,
-                              K / 2,
+                              arg.sparse_b ? stride_1_b : stride_1_a,
+                              arg.sparse_b ? stride_2_b : stride_2_a,
+                              arg.sparse_b ? stride_b : stride_a,
+                              arg.sparse_b ? K / 2 : M,
+                              arg.sparse_b ? N : K / 2,
                               num_batches,
-                              c_stride_1_a,
-                              c_stride_2_a,
-                              c_stride_a,
-                              M,
-                              K / 8,
+                              c_stride_1,
+                              c_stride_2,
+                              c_stride,
+                              arg.sparse_b ? K / 8 : M,
+                              arg.sparse_b ? N : K / 8,
                               num_batches,
-                              m_stride_1_a,
-                              m_stride_2_a,
-                              m_stride_a);
+                              m_stride_1,
+                              m_stride_2,
+                              m_stride,
+                              arg.sparse_b);
 
             unit_check_general<Ti>(c_row,
                                    c_col,
                                    c_ld,
-                                   c_stride_a,
-                                   reinterpret_cast<Ti*>(hA_gold.data()),
-                                   reinterpret_cast<Ti*>(hA_1.data()),
+                                   c_stride,
+                                   reinterpret_cast<Ti*>(hT_gold.data()),
+                                   reinterpret_cast<Ti*>(hT_1.data()),
                                    num_batches);
 // cusparselt' metadata has different layout so skip metadata check.
 #ifdef __HIP_PLATFORM_HCC__
-            unit_check_general<int8_t>(M,
-                                       K / 8,
-                                       M,
-                                       m_stride_a,
-                                       reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
-                                       reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
+            unit_check_general<int8_t>(arg.sparse_b ? K / 8 : M,
+                                       arg.sparse_b ? N : K / 8,
+                                       arg.sparse_b ? K / 8 : M,
+                                       m_stride,
+                                       reinterpret_cast<int8_t*>(hT_gold + metadata_offset),
+                                       reinterpret_cast<int8_t*>(hT_1 + metadata_offset),
                                        num_batches);
 #endif
         }
@@ -607,19 +712,19 @@ void testing_compress(const Arguments& arg)
             hipsparselt_error_c = unit_check_diff<Ti>(c_row,
                                                       c_col,
                                                       c_ld,
-                                                      c_stride_a,
-                                                      reinterpret_cast<Ti*>(hA_gold.data()),
-                                                      reinterpret_cast<Ti*>(hA_1.data()),
+                                                      c_stride,
+                                                      reinterpret_cast<Ti*>(hT_gold.data()),
+                                                      reinterpret_cast<Ti*>(hT_1.data()),
                                                       num_batches);
 // cusparselt' metadata has different layout so skip metadata check.
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
             hipsparselt_error_m
-                = unit_check_diff<int8_t>(M,
-                                          K / 8,
-                                          M,
-                                          m_stride_a,
-                                          reinterpret_cast<int8_t*>(hA_gold + metadata_offset),
-                                          reinterpret_cast<int8_t*>(hA_1 + metadata_offset),
+                = unit_check_diff<int8_t>(arg.sparse_b ? K / 8 : M,
+                                          arg.sparse_b ? N : K / 8,
+                                          arg.sparse_b ? K / 8 : M,
+                                          m_stride,
+                                          reinterpret_cast<int8_t*>(hT_gold + metadata_offset),
+                                          reinterpret_cast<int8_t*>(hT_1 + metadata_offset),
                                           num_batches);
 #endif
         }
@@ -633,7 +738,7 @@ void testing_compress(const Arguments& arg)
         for(int i = 0; i < number_cold_calls; i++)
         {
             EXPECT_HIPSPARSE_STATUS(
-                hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, dA_compressBuffer, stream),
+                hipsparseLtSpMMACompress(handle, plan, dT, dT_compressd, dT_compressBuffer, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         }
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -642,7 +747,7 @@ void testing_compress(const Arguments& arg)
         for(int i = 0; i < number_hot_calls; i++)
         {
             EXPECT_HIPSPARSE_STATUS(
-                hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, dA_compressBuffer, stream),
+                hipsparseLtSpMMACompress(handle, plan, dT, dT_compressd, dT_compressBuffer, stream),
                 HIPSPARSE_STATUS_SUCCESS);
         }
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));

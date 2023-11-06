@@ -268,7 +268,6 @@ namespace
         Tensile::TensorDescriptor scaleB{"scaleB"};
         Tensile::TensorDescriptor scaleC{"scaleC"};
         Tensile::TensorDescriptor scaleD{"scaleD"};
-        Tensile::TensorDescriptor scaleDVec{"scaleDVec"};
         Tensile::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
 
         // The ContractionProblemGemm
@@ -282,7 +281,6 @@ namespace
                                                        scaleB,
                                                        scaleC,
                                                        scaleD,
-                                                       scaleDVec,
                                                        scaleAlphaVec,
                                                        freeIndex,
                                                        batchIndex,
@@ -312,8 +310,8 @@ namespace
 
         // Add problem predicates for CEqualsD
         tensileProblem.setCEqualsD(prob.C == prob.D);
-
-        tensileProblem.setSparseA(prob.sparseA);
+  
+        tensileProblem.setSparse(prob.sparseA ? 1 : 2);
 
         // set Actvation
         tensileProblem.setActivationType(Tensile::ActivationType::All);
@@ -412,8 +410,7 @@ namespace
             inputs.alpha = static_cast<Tensile_Talpha_beta>(0);
         inputs.beta = static_cast<Tensile_Talpha_beta>((*prob.beta));
 
-        if(prob.sparseA)
-            inputs.metadata = reinterpret_cast<const unsigned char*>(prob.metadata);
+        inputs.metadata = reinterpret_cast<const unsigned char*>(prob.metadata);
 
         // push 2 activation arguments
         inputs.activationArgs.push_back(static_cast<Tensile_Talpha_beta>(prob.act_arg0));
@@ -537,6 +534,8 @@ namespace
                 // Find the location of the libraries
                 if(TestPath(path + "/../Tensile/library"))
                     path += "/../Tensile/library";
+                else if(TestPath(path + "../hipsparselt/library"))
+                    path += "../hipsparselt/library";
                 else
                     path += "/hipsparselt/library";
 

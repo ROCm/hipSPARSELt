@@ -282,27 +282,34 @@ void testing_spmm(const Arguments& arg)
         = arg.bias_type == 0 ? (arg.a_type == HIPSPARSELT_R_8I ? HIPSPARSELT_R_32F : arg.a_type)
                              : arg.bias_type;
 
-    hipsparselt_local_mat_descr matA(hipsparselt_matrix_type_structured,
+    hipsparselt_local_mat_descr matA(arg.sparse_b ? hipsparselt_matrix_type_dense
+                                                  : hipsparselt_matrix_type_structured,
                                      handle,
                                      A_row,
                                      A_col,
                                      lda,
                                      arg.a_type,
                                      HIPSPARSE_ORDER_COL);
-    hipsparselt_local_mat_descr matB(
-        hipsparselt_matrix_type_dense, handle, B_row, B_col, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
+    hipsparselt_local_mat_descr matB(arg.sparse_b ? hipsparselt_matrix_type_structured
+                                                  : hipsparselt_matrix_type_dense,
+                                     handle,
+                                     B_row,
+                                     B_col,
+                                     ldb,
+                                     arg.b_type,
+                                     HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matC(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
     hipsparselt_local_mat_descr matD(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
 
     hipsparseStatus_t eStatus
-        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
+        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda, !arg.sparse_b);
     EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;
 
-    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb);
+    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb, arg.sparse_b);
     EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;
@@ -498,7 +505,7 @@ void testing_spmm(const Arguments& arg)
             hipsparseLtMatmulDescSetAttribute(
                 handle, matmul, HIPSPARSELT_MATMUL_BIAS_STRIDE, &bias_stride, sizeof(int64_t)),
             HIPSPARSE_STATUS_SUCCESS);
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
         EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescSetAttribute(handle,
                                                                   matmul,
                                                                   HIPSPARSELT_MATMUL_BIAS_TYPE,
@@ -551,9 +558,8 @@ void testing_spmm(const Arguments& arg)
         HIPSPARSE_STATUS_SUCCESS);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
-    const size_t size_A_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? size_A : 0;
-
-    const size_t size_B      = stride_b == 0 ? ldb * B_col * num_batches : stride_b * num_batches;
+    const size_t size_B = stride_b == 0 ? ldb * B_col * num_batches : stride_b * num_batches;
+    const size_t size_pruned_copy = arg.unit_check || arg.norm_check || arg.timing ? (arg.sparse_b ? size_B : size_A) : 0;
     const size_t size_C      = stride_c == 0 ? ldc * N * num_batches : stride_c * num_batches;
     const size_t size_D      = stride_d == 0 ? ldd * N * num_batches : stride_d * num_batches;
     const size_t size_D_copy = arg.unit_check || arg.norm_check ? size_D : 0;
@@ -564,19 +570,19 @@ void testing_spmm(const Arguments& arg)
     device_vector<Ti>            dB(size_B, 1, HMM);
     device_vector<To>            dC(size_C, 1, HMM);
     device_vector<To>            dD(size_D, 1, HMM);
-    device_vector<unsigned char> dA_compressd(compressed_size, 1, HMM);
-    device_vector<unsigned char> dA_compressBuffer(compress_buffer_size, 1, HMM);
+    device_vector<unsigned char> d_compressed(compressed_size, 1, HMM);
+    device_vector<unsigned char> d_compressBuffer(compress_buffer_size, 1, HMM);
     device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
     CHECK_DEVICE_ALLOCATION(dD.memcheck());
-    CHECK_DEVICE_ALLOCATION(dA_compressd.memcheck());
+    CHECK_DEVICE_ALLOCATION(d_compressed.memcheck());
     CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
     host_vector<Ti>     hA(size_A);
-    host_vector<Ti>     hA_pruned(size_A_pruned_copy);
+    host_vector<Ti>     h_pruned(size_pruned_copy);
     host_vector<Ti>     hB(size_B);
     host_vector<To>     hC(size_C);
     host_vector<To>     hD_gold(size_D_copy);
@@ -647,26 +653,46 @@ void testing_spmm(const Arguments& arg)
             std::copy(hC.begin(), hC.end(), hD_gold.begin());
         }
     }
+
+    void *dP, *dA_, *dB_;
+    Ti *hA_, *hB_;
+    if(!arg.sparse_b)
+    {
+        dP = dA;
+        dA_ = d_compressed;
+        dB_ = dB;
+        hA_ = h_pruned;
+        hB_ = hB;
+    }
+    else
+    {
+        dP = dB;
+        dA_ = dA;
+        dB_ = d_compressed;
+        hA_ = hA;
+        hB_ = h_pruned;
+    }
+
     EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtSpMMAPrune(handle, matmul, dA, dA, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
+        hipsparseLtSpMMAPrune(handle, matmul, dP, dP, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream),
         HIPSPARSE_STATUS_SUCCESS);
 
     EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, dA_compressBuffer, stream),
+        hipsparseLtSpMMACompress(handle, plan, dP, d_compressed, d_compressBuffer, stream),
         HIPSPARSE_STATUS_SUCCESS);
 
     if(arg.search)
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulSearch(
-                handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
+                handle, plan, &h_alpha, dA_, dB_, &h_beta, dC, dD, dWorkspace, &stream, 1),
             HIPSPARSE_STATUS_SUCCESS);
     if(arg.unit_check || arg.norm_check)
     {
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        CHECK_HIP_ERROR(hA_pruned.transfer_from(dA));
+        CHECK_HIP_ERROR(h_pruned.transfer_from(arg.sparse_b? dB : dA));
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmul(
-                handle, plan, &h_alpha, dA_compressd, dB, &h_beta, dC, dD, dWorkspace, &stream, 1),
+                handle, plan, &h_alpha, dA_, dB_, &h_beta, dC, dD, dWorkspace, &stream, 1),
             HIPSPARSE_STATUS_SUCCESS);
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
@@ -687,9 +713,9 @@ void testing_spmm(const Arguments& arg)
                                                N,
                                                K,
                                                h_alpha,
-                                               hA_pruned + stride_a * i,
+                                               hA_ + stride_a * i,
                                                lda,
-                                               hB + stride_b * i,
+                                               hB_ + stride_b * i,
                                                ldb,
                                                h_beta,
                                                hD_gold_act + stride_d * i,
@@ -748,9 +774,9 @@ void testing_spmm(const Arguments& arg)
                                            N,
                                            K,
                                            h_alpha,
-                                           hA_pruned + stride_a * i,
+                                           hA_ + stride_a * i,
                                            lda,
-                                           hB + stride_b * i,
+                                           hB_ + stride_b * i,
                                            ldb,
                                            h_beta,
                                            hD_gold + stride_d * i,
@@ -798,8 +824,8 @@ void testing_spmm(const Arguments& arg)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmul(handle,
                                                       plan,
                                                       &h_alpha,
-                                                      dA_compressd,
-                                                      dB,
+                                                      dA_,
+                                                      dB_,
                                                       &h_beta,
                                                       dC,
                                                       dD,
@@ -816,8 +842,8 @@ void testing_spmm(const Arguments& arg)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmul(handle,
                                                       plan,
                                                       &h_alpha,
-                                                      dA_compressd,
-                                                      dB,
+                                                      dA_,
+                                                      dB_,
                                                       &h_beta,
                                                       dC,
                                                       dD,
@@ -940,12 +966,12 @@ void testing_aux_plan_assign(const Arguments& arg)
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
 
     hipsparseStatus_t eStatus
-        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda);
+        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda, !arg.sparse_b);
     EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;
 
-    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb);
+    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb, arg.sparse_b);
     EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
     if(eStatus != HIPSPARSE_STATUS_SUCCESS)
         return;
@@ -1066,14 +1092,14 @@ void testing_aux_plan_assign(const Arguments& arg)
     device_vector<Ti>            dB(size_B, 1, HMM);
     device_vector<To>            dC(size_C, 1, HMM);
     device_vector<To>            dD(size_D, 1, HMM);
-    device_vector<unsigned char> dA_compressd(compressed_size, 1, HMM);
+    device_vector<unsigned char> dA_compressed(compressed_size, 1, HMM);
     device_vector<unsigned char> dA_compressBuffer(compress_buffer_size, 1, HMM);
     device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
     CHECK_DEVICE_ALLOCATION(dD.memcheck());
-    CHECK_DEVICE_ALLOCATION(dA_compressd.memcheck());
+    CHECK_DEVICE_ALLOCATION(dA_compressed.memcheck());
     CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
@@ -1156,7 +1182,7 @@ void testing_aux_plan_assign(const Arguments& arg)
         HIPSPARSE_STATUS_SUCCESS);
 
     EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtSpMMACompress(handle, plan, dA, dA_compressd, dA_compressBuffer, stream),
+        hipsparseLtSpMMACompress(handle, plan, dA, dA_compressed, dA_compressBuffer, stream),
         HIPSPARSE_STATUS_SUCCESS);
 
     {
@@ -1167,7 +1193,7 @@ void testing_aux_plan_assign(const Arguments& arg)
                   EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmul(handle,
                                                             plan,
                                                             &h_alpha,
-                                                            dA_compressd,
+                                                            dA_compressed,
                                                             dB,
                                                             &h_beta,
                                                             dC,
@@ -1276,7 +1302,7 @@ void testing_aux_plan_assign(const Arguments& arg)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulSearch(handle,
                                                             plan,
                                                             &h_alpha,
-                                                            dA_compressd,
+                                                            dA_compressed,
                                                             dB,
                                                             &h_beta,
                                                             dC,
@@ -1293,7 +1319,7 @@ void testing_aux_plan_assign(const Arguments& arg)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulSearch(handle,
                                                             &plan2,
                                                             &h_alpha,
-                                                            dA_compressd,
+                                                            dA_compressed,
                                                             dB,
                                                             &h_beta,
                                                             dC,

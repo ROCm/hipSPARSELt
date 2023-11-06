@@ -90,7 +90,7 @@ struct perf_sparse<
     Tc,
     TBias,
     std::enable_if_t<
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
         (std::is_same<Ti, To>{} && (std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{})
          && std::is_same<Tc, float>{})
 #else
@@ -198,7 +198,7 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
             << min_stride_a << std::endl;
         arg.stride_a = min_stride_a;
     }
-    if(arg.stride_b == -1 || (!any_stride && arg.stride_b < min_stride_b))
+    if(arg.stride_b == -1 || (!any_stride && arg.stride_b < min_stride_b && arg.stride_b != 0))
     {
         hipsparselt_cout << "hipsparselt-bench INFO: stride_b < min_stride_b, set stride_b = "
                          << min_stride_b << std::endl;
@@ -452,6 +452,10 @@ try
          value<int32_t>(&arg.search_iters)->default_value(10),
          "Iterations to run inside timing loop of each algorithms when search is on. (default: 10)")
 
+        ("sparse_b",
+         bool_switch(&arg.sparse_b)->default_value(false),
+         "Structurted Sparsity Matrix B (A is Dense Matrix)")
+
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
          "Function name precedes other itmes.")
@@ -527,7 +531,7 @@ try
     bool is_f16      = arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF;
     bool is_f32      = arg.a_type == HIPSPARSELT_R_32F;
     arg.compute_type = compute_type == ""
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
                            ? (is_f16 ? HIPSPARSELT_COMPUTE_32F : HIPSPARSELT_COMPUTE_32I)
 #else
                            ? (is_f16   ? HIPSPARSELT_COMPUTE_16F

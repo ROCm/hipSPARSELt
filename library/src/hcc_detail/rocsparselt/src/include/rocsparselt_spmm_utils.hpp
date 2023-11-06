@@ -47,23 +47,12 @@ inline rocsparselt_status getOriginalSizes(rocsparselt_operation opA,
                                            int64_t&              k)
 {
     // values of num_* are values after been transposed, redirect to before which been transposed.
-    // initialized m,n,k by NN.
-    m = num_rows_a, n = num_cols_b, k = num_cols_a;
-    if(opA == rocsparselt_operation_transpose)
-    {
-        m = num_cols_a;
-        k = num_rows_a;
-    }
-    if(opB == rocsparselt_operation_transpose)
-    {
-        n = num_rows_b;
-        if(k != num_cols_b)
-        {
-            hipsparselt_cerr << "A, B matrix size are not matched" << std::endl;
-            return rocsparselt_status_invalid_size;
-        }
-    }
-    else if(k != num_rows_b)
+    m          = opA == rocsparselt_operation_none ? num_rows_a : num_cols_a;
+    k          = opA == rocsparselt_operation_none ? num_cols_a : num_rows_a;
+    n          = opB == rocsparselt_operation_none ? num_cols_b : num_rows_b;
+    int64_t k_ = (opB == rocsparselt_operation_none) ? num_rows_b : num_cols_b;
+
+    if(k != k_)
     {
         hipsparselt_cerr << "A, B matrix size are not matched" << std::endl;
         return rocsparselt_status_invalid_size;
@@ -311,6 +300,7 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
     int64_t m, n, k;
     auto    status
         = getOriginalSizes(opA, opB, num_rows_a, num_cols_a, num_rows_b, num_cols_b, m, n, k);
+
     if(status != rocsparselt_status_success)
     {
         log_error(handle, __func__, "size of matrices are not matched");
@@ -352,18 +342,13 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
         return rocsparselt_status_not_implemented;
     }
 
-    // Only matrix A can be structured matrix.
-    if(matrix_type_a != rocsparselt_matrix_type_structured)
+    if((matrix_type_a != rocsparselt_matrix_type_structured
+        && matrix_type_b != rocsparselt_matrix_type_structured)
+       || (matrix_type_a == rocsparselt_matrix_type_structured
+           && matrix_type_b == rocsparselt_matrix_type_structured))
     {
-        hipsparselt_cerr << "Matrix A must be structrured matrix." << std::endl;
-        log_error(handle, __func__, "Matrix A must be structrured matrix");
-        return rocsparselt_status_not_implemented;
-    }
-
-    if(matrix_type_b != rocsparselt_matrix_type_dense)
-    {
-        hipsparselt_cerr << "Matrix B cannot be structrured matrix." << std::endl;
-        log_error(handle, __func__, "Matrix B cannot be structrured matrix");
+        hipsparselt_cerr << "One of Matrix A/B must be structrured matrix." << std::endl;
+        log_error(handle, __func__, "One of Matrix A/B must be structrured matrix.");
         return rocsparselt_status_not_implemented;
     }
 
