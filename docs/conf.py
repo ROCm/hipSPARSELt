@@ -17,6 +17,8 @@ extensions = ['sphinx_design', 'sphinx.ext.intersphinx']
 
 exclude_patterns = ['reference/api-library.md', 'reference/_functions.rst']
 
+exclude_patterns = ['reference/api-library.md', 'reference/_functions.rst']
+
 external_toc_path = "./sphinx/_toc.yml"
 
 suppress_warnings = ["etoc.toctree"]
