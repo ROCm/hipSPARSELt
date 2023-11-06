@@ -43,6 +43,7 @@ _images/
 _static/
 _templates/
 _toc.yml
+_doxygen
 docBin/
 
 # matrices
