@@ -23,5 +23,7 @@ external_toc_path = "./sphinx/_toc.yml"
 
 suppress_warnings = ["etoc.toctree"]
 
+suppress_warnings = ["etoc.toctree"]
+
 for sphinx_var in ROCmDocs.SPHINX_VARS:
     globals()[sphinx_var] = getattr(docs_core, sphinx_var)
