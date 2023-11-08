@@ -121,7 +121,7 @@ if (BUILD_CUDA)
 else()
     #Set the AMDGPU_TARGETS with backward compatiblity
     rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx940:xnack-;gfx940:xnack+;gfx941:xnack-;gfx941:xnack+;gfx942:xnack-;gfx942:xnack+;"
+        TARGETS "gfx940;gfx941;gfx942;"
     )
 
     if (AMDGPU_TARGETS)
