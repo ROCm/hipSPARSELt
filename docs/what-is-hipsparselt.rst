@@ -1,6 +1,6 @@
 .. meta::
    :description: hipSPARSELt is a SPARSE marshalling library that supports rocSPARSELt and cuSPARSELt
-      v0.3 backends
+      v0.4 backends
    :keywords: hipSPARSELt, ROCm, SPARSE, library, API, HIP
 
 .. _what-is-hipsparselt:
@@ -20,4 +20,4 @@ hipSPARSELt sits between the application and a 'worker' SPARSE library, marshall
 backend library and marshalling results back to the application. It exports an interface that doesn't
 require the client to change, regardless of the chosen backend. Current supported backends are:
 `rocSPARSELt <https://github.com/ROCmSoftwarePlatform/hipSPARSELt/blob/develop/library/src/hcc_detail/rocsparselt>`_
-and `cuSPARSELt v0.3 <https://docs.nvidia.com/cuda/cusparselt>`_.
+and `cuSPARSELt v0.4 <https://docs.nvidia.com/cuda/cusparselt>`_.

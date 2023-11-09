@@ -1,6 +1,6 @@
 # hipSPARSELt
 
-hipSPARSELt is a SPARSE marshalling library, with multiple supported backends. It sits between the application and a 'worker' SPARSE library, marshalling inputs into the backend library and marshalling results back to the application. hipSPARSELt exports an interface that does not require the client to change, regardless of the chosen backend. Currently, hipSPARSELt supports [rocSPARSELt](library/src/hcc_detial/rocsparselt) and [cuSPARSELt v0.3](https://docs.nvidia.com/cuda/cusparselt) as backends.
+hipSPARSELt is a SPARSE marshalling library, with multiple supported backends. It sits between the application and a 'worker' SPARSE library, marshalling inputs into the backend library and marshalling results back to the application. hipSPARSELt exports an interface that does not require the client to change, regardless of the chosen backend. Currently, hipSPARSELt supports [rocSPARSELt](library/src/hcc_detial/rocsparselt) and [cuSPARSELt v0.4](https://docs.nvidia.com/cuda/cusparselt) as backends.
 
 ## Installing pre-built packages
 
@@ -66,7 +66,7 @@ The root of this repository has a helper bash script `install.sh` to build and i
         * BF8 input/output, FP32 Matrix Core accumulate
       * Add kernel selection and genroator, used to provide the appropriate solution for the specific problem.
 * CUDA
-  * Support cusparseLt v0.3
+  * Support cusparseLt v0.4
 
 ## Documentation
 
