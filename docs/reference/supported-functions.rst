@@ -17,6 +17,7 @@ ROCm & CUDA supported functions
     * FP16 input/output, FP32 Matrix Core accumulate
     * BFLOAT16 input/output, FP32 Matrix Core accumulate
     * INT8 input/output, INT32 Matrix Core accumulate
+    * INT8 input, FP16 output, INT32 Matrix Core accumulate
 
   * Matrix pruning and compression functionalities
   * Auto-tuning functionality (see ``hipsparseLtMatmulSearch()``)
