@@ -39,6 +39,32 @@
 //! cuSPARSELt "version 0.3".
 //
 
+
+/*! \defgroup types_module Data types
+ *
+ *
+ *  \defgroup library_module Library management functions
+ *  Provides the library handle
+ *
+ *  \defgroup matrix_desc_module Matrix descriptor functions
+ *  Defines sparse and dense matrices
+ *
+ *  \defgroup matmul_module Matrix multiply (matmul) functions
+ *  Multiplies sparse matrices
+ *
+ *  \defgroup matmul_desc_module Matmul descriptor functions
+ *  Defines how to matrix multiply
+ *
+ *  \defgroup matmul_algo_module Matmul algorithm functions
+ *  Provides algorithms for matrix multiply
+ *
+ *  \defgroup helper_module Helper functions
+ *  Required for subsequent library calls
+ * 
+ *  \defgroup aux_module Auxilary functions
+ *  Initializes hipSPARSELt for the current HIP device
+ */
+
 #pragma once
 #ifndef _HIPSPARSELT_H_
 #define _HIPSPARSELT_H_
