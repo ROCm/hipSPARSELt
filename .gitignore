@@ -33,6 +33,7 @@ tags
 .*.swp
 
 # Editors
+.venv
 .vscode
 
 # build-in-source directory and documentation artifacts
@@ -42,6 +43,7 @@ _images/
 _static/
 _templates/
 _toc.yml
+_doxygen
 docBin/
 
 # matrices
