@@ -45,6 +45,7 @@ function display_help()
   echo "    [--static] build static library"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
+  echo "    [--build_dir] Specify the name of the build folder"
 
 }
 
@@ -172,7 +173,7 @@ install_packages( )
     else
       library_dependencies_centos+=( "numactl-libs" )
     fi
-    if [[ "${VERSION_ID}" == "8" ]]; then
+    if (( "${VERSION_ID%%.*}" >= "8" )); then
       client_dependencies_centos8+=( "python3-pyyaml" )
     else
       client_dependencies_centos8+=( "PyYAML" )
@@ -209,7 +210,7 @@ install_packages( )
 #     yum -y update brings *all* installed packages up to date
 #     without seeking user approval
 #     elevate_if_not_root yum -y update
-      if [[ "${VERSION_ID}" == "8" ]]; then
+      if (( "${VERSION_ID%%.*}" >= "8" )); then
         install_yum_packages "${library_dependencies_centos8[@]}"
         if [[ "${build_clients}" == true ]]; then
           install_yum_packages "${client_dependencies_centos8[@]}"
@@ -319,6 +320,7 @@ tensile_test_local_path=
 tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
+build_dir_user=build
 
 if ! [ -z ${ROCM_PATH+x} ]; then
     rocm_path=${ROCM_PATH}
@@ -331,7 +333,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:, --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:,build_dir:, --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -425,6 +427,9 @@ while true; do
         --no-msgpack)
             tensile_msgpack_backend=false
             shift ;;
+        --build_dir)
+            build_dir_user=${2}
+            shift 2;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
             exit 1
@@ -449,7 +454,7 @@ else
       exit 2
 fi
 
-build_dir=$(readlink -m build)
+build_dir=$(readlink -m ${build_dir_user})
 
 printf "\033[32mCreating project build directory in: \033[33m${build_dir}\033[0m\n"
 install_blis()
