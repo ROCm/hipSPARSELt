@@ -44,7 +44,7 @@ target_include_directories( hipsparselt-bench
     $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # may be blank if not used
 )
 
-target_link_libraries( hipsparselt-bench PRIVATE ${BLAS_LIBRARY} roc::hipsparse roc::hipsparselt)
+target_link_libraries( hipsparselt-bench PRIVATE ${BLAS_LIBRARY} roc::hipsparselt)
 
 if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # GCC or hip-clang needs specific flags to turn on f16c intrinsics
