@@ -9,7 +9,7 @@ Definitions:
 
   - &transA_transB_range
     - { transA: N, transB: N }
-    - { transA: T, transB: N }
+    - { transA: T, transB: T }
 
 Tests:
 - name: prune_bad_arg
