@@ -6,7 +6,7 @@ include: spmm_strided_batched_common.yaml
 Definitions:
   - &transA_transB_range
     - { transA: N, transB: N }
-    - { transA: T, transB: N }
+    - { transA: T, transB: T }
 
   - &alpha_beta_range
     - { alpha:  1.0, beta:  0.0 }
