@@ -17,6 +17,7 @@ ROCm & CUDA supported functions
     * FP16 input/output, FP32 Matrix Core accumulate
     * BFLOAT16 input/output, FP32 Matrix Core accumulate
     * INT8 input/output, INT32 Matrix Core accumulate
+    * INT8 input, FP16 output, INT32 Matrix Core accumulate
 
   * Matrix pruning and compression functionalities
   * Auto-tuning functionality (see ``hipsparseLtMatmulSearch()``)
@@ -25,7 +26,7 @@ ROCm & CUDA supported functions
     * Single sparse matrix/Multiple dense matrices (Broadcast)
     * Multiple sparse and dense matrices
 
-  * Activation function fuse in spmm kernel support:
+  * Activation function fuse in SpMM kernel support:
 
     * ReLU
     * ClippedReLU (ReLU with upper bound and threshold setting)
@@ -45,4 +46,4 @@ ROCm & CUDA supported functions
 
 * CUDA
 
-  * Support cusparseLt v0.3
+  * Support cuSPARSELt v0.4
