@@ -15,7 +15,7 @@ docs_core.setup()
 
 extensions = ['sphinx_design', 'sphinx.ext.intersphinx']
 
-exclude_patterns = ['reference/api-library.md', 'reference/_functions.rst']
+exclude_patterns = ['reference/api-library.md']
 
 external_toc_path = "./sphinx/_toc.yml"
 

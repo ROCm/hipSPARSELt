@@ -12,7 +12,7 @@ The root of the
 `hipSPARSELt GitHub repository <https://github.com/ROCmSoftwarePlatform/hipSPARSELt>`_ has a
 helper bash script `install.sh` to build and install hipSPARSELt on Ubuntu with a single command. It
 doesn't take a lot of options and hard-codes configuration that can be specified through invoking
-cmake directly, but it's a great way to get started quickly and can serve as an example of how to build
+CMake directly, but it's a great way to get started quickly and can serve as an example of how to build
 and install. A few commands in the script need sudo access, so it may prompt you for a password.
 
 .. code-block:: bash

@@ -26,7 +26,7 @@ ROCm & CUDA supported functions
     * Single sparse matrix/Multiple dense matrices (Broadcast)
     * Multiple sparse and dense matrices
 
-  * Activation function fuse in spmm kernel support:
+  * Activation function fuse in SpMM kernel support:
 
     * ReLU
     * ClippedReLU (ReLU with upper bound and threshold setting)
@@ -46,4 +46,4 @@ ROCm & CUDA supported functions
 
 * CUDA
 
-  * Support cusparseLt v0.4
+  * Support cuSPARSELt v0.4

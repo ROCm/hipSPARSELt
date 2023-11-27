@@ -30,7 +30,6 @@ Using Ubuntu as an example, hipSPARSELt can be installed using
     sudo apt-get update
     sudo apt-get install hipsparselt
 
-
 Once installed, hipSPARSELt can be used just like any other library with a C API.
 
 The header file must be included in the user code in order to make calls into hipSPARSELt. The
@@ -157,7 +156,7 @@ After successfully compiling the library with clients, you can test the installa
 Running benchmarks & unit tests
 ----------------------------------------------------------------------------
 
-To run **benchmarks**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_BENCHMARKS=ON (or using ./install.sh -c).
+To run **benchmarks**, hipSPARSELt has to be built with option ``-DBUILD_CLIENTS_BENCHMARKS=ON`` (or using ``./install.sh -c``).
 
 .. code-block:: bash
 
@@ -167,7 +166,7 @@ To run **benchmarks**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_B
     # Run benchmark, e.g.
     ./clients/staging/hipsparselt-bench -f spmm -i 200 -m 256 -n 256 -k 256
 
-To run **unit tests**, hipSPARSELt has to be built with option -DBUILD_CLIENTS_TESTS=ON (or using ./install.sh -c)
+To run **unit tests**, hipSPARSELt has to be built with option ``-DBUILD_CLIENTS_TESTS=ON`` (or using ``./install.sh -c``)
 
 .. code-block:: bash
 
