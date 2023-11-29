@@ -25,12 +25,14 @@ ROCm & CUDA supported functions
 
     * Single sparse matrix/Multiple dense matrices (Broadcast)
     * Multiple sparse and dense matrices
+    * Batched bias vector
 
   * Activation function fuse in SpMM kernel support:
 
     * ReLU
     * ClippedReLU (ReLU with upper bound and threshold setting)
     * GeLU
+    * GeLU Scaling (Implied enable GeLU)
     * Abs
     * LeakyReLU
     * Sigmoid
