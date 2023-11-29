@@ -59,16 +59,19 @@ so it may prompt you for a password.
     * Mixed-precision computation support:
       * FP16 input/output, FP32 Matrix Core accumulate
       * BFLOAT16 input/output, FP32 Matrix Core accumulate
-      * INT8 inpput/output, INT32 Matrix Core accumulate
+      * INT8 input/output, INT32 Matrix Core accumulate
+      * INT8 input, FP16 output, INT32 Matrix Core accumulate
     * Matrix pruning and compression functionalities
     * Auto-tuning functionality (see hipsparseLtMatmulSearch())
     * Batched Sparse Gemm support:
       * Single sparse matrix / Multiple dense matrices (Broadcast)
       * Multiple sparse and dense matrices
+      * Batched bias vector
     * Activation function fuse in spmm kernel support:
       * ReLU
       * ClippedReLU (ReLU with uppoer bound and threshold setting)
       * GeLU
+      * GeLU Scaling (Implied enable GeLU)
       * Abs
       * LeakyReLU
       * Sigmoid
