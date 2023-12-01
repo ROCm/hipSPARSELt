@@ -12,9 +12,9 @@ The hipSPARSELt interface is compatible with cuSPARSELt APIs. Porting a CUDA app
 originally calls the cuSPARSELt API to an application that calls the hipSPARSELt API should be relatively
 straightforward.
 
-For example, the hipSPARSELt matmul interface is:
+For example, the hipSPARSELt matrix multiplication interface is:
 
-Matmul API
+Matrix multiplication API
 
 .. code-block:: c
 

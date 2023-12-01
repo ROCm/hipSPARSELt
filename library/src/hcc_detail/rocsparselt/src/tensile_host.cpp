@@ -347,7 +347,7 @@ namespace
         default:
             break;
         }
-        tensileProblem.setActivationEnumArg(tensileAct);
+        tensileProblem.setParams().setActivationEnum(tensileAct);
 
         // set bias mode
         if(prob.bias_vector != nullptr || useBias)
