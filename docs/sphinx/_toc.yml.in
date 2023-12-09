@@ -33,5 +33,5 @@ subtrees:
     - entries:
       - file: tutorials/install/linux.rst
         title: Installing and building hipSPARSELt for Linux
-  - file: LICENSE.md
+  - file: license.md
     title: License

@@ -26,8 +26,7 @@ Our documentation is structured as follows:
   * :ref:`install-linux-quick`
   * :ref:`install-linux`
 
-Related information
-=======================================================
 
-* You can find instructions to contribute to the documentation at `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/index.md>`_ section.
-* Licensing information for all ROCm components can be found at `Licensing <https://rocm.docs.amd.com/en/latest/about/license.md>`_ page.
+To contribute to the documentation refer to `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/index.md>`_.
+
+Licensing information can be found at `Licensing <https://rocm.docs.amd.com/en/latest/about/license.md>`_.
