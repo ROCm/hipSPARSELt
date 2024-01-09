@@ -19,7 +19,7 @@ Our documentation is structured as follows:
   * :ref:`device-stream-manage`
   * :ref:`storage-format`
   * :ref:`porting`
-  * :doc:`API library <../doxygen/docBin/html/index>`
+  * :doc:`API library <../doxygen/html/index>`
 
 .. card:: :ref:`tutorials-index`
 
