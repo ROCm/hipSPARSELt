@@ -24,7 +24,7 @@ subtrees:
         title: Storage formats
       - file: reference/porting.rst
         title: Porting from CUDA
-      - file: doxygen/docBin/html/index
+      - file: doxygen/html/index
         title: API library
 
   - file: tutorials/index.rst
@@ -33,3 +33,7 @@ subtrees:
     - entries:
       - file: tutorials/install/linux.rst
         title: Installing and building hipSPARSELt for Linux
+
+- caption: About
+  entries:
+  - file: license

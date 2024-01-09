@@ -27,7 +27,7 @@ cmake_minimum_required( VERSION 3.16.8 )
 option(BUILD_SHARED_LIBS "Build hipSparseLt as a shared library" ON )
 option(BUILD_CLIENTS_TESTS "Build tests (requires googletest)" OFF)
 option(BUILD_CLIENTS_BENCHMARKS "Build benchmarks" OFF)
-option(BUILD_CLIENTS_SAMPLES "Build examples" ON)
+option(BUILD_CLIENTS_SAMPLES "Build examples" OFF)
 option(BUILD_VERBOSE "Output additional build information" OFF)
 option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
@@ -269,6 +269,9 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
         DEB "${OPENMP_DEB}"
         RPM "${OPENMP_RPM}"
     )
+  endif()
+  if(BUILD_CLIENTS_SAMPLES)
+    rocm_package_setup_client_component(samples)
   endif()
 endif()
 
