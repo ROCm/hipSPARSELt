@@ -105,7 +105,7 @@ if(NOT BUILD_CUDA)
             set (CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
         endif()
     else()
-        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
+        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm software.")
     endif()
 endif()
 # Dependencies
