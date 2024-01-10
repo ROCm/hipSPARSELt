@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -158,8 +158,8 @@ void compress(const Ti*      in,
 
                 for(int k = 0; k < tiles_y; k++)
                 {
-                    auto offset = b * stride_b + i * stride1 + (j + k) * stride2;
-                    Ti   value  = in[offset];
+                    int64_t offset = b * stride_b + i * stride1 + (j + k) * stride2;
+                    Ti      value  = in[offset];
 
                     if(m_idx > 4)
                     {
@@ -184,13 +184,13 @@ void compress(const Ti*      in,
                 }
                 for(int k = 0; k < 4; k++)
                 {
-                    auto c_offset = b * c_stride_b + i * c_stride1 + (j / 2 + k) * c_stride2;
-                    out[c_offset] = values[k];
+                    int64_t c_offset = b * c_stride_b + i * c_stride1 + (j / 2 + k) * c_stride2;
+                    out[c_offset]    = values[k];
                 }
 
                 unsigned char md = generate_metadata(idx[0], idx[1], idx[2], idx[3]);
 
-                auto metadata_offset      = b * m_stride_b + i * m_stride1 + (j / 8) * m_stride2;
+                int64_t metadata_offset   = b * m_stride_b + i * m_stride1 + (j / 8) * m_stride2;
                 metadata[metadata_offset] = md;
             }
         }

@@ -24,7 +24,7 @@ subtrees:
         title: Storage formats
       - file: reference/porting.rst
         title: Porting from CUDA
-      - file: doxygen/docBin/html/index
+      - file: doxygen/html/index
         title: API library
 
   - file: tutorials/index.rst
