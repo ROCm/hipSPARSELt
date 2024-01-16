@@ -29,4 +29,4 @@ Our documentation is structured as follows:
 
 To contribute to the documentation refer to `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/index.html>`_.
 
-Licensing information can be found at `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_.
+Licensing information can be found on the `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_ page.
