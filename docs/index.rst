@@ -27,6 +27,6 @@ Our documentation is structured as follows:
   * :ref:`install-linux`
 
 
-To contribute to the documentation refer to `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/index.md>`_.
+To contribute to the documentation refer to `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/index.html>`_.
 
-Licensing information can be found at `Licensing <https://rocm.docs.amd.com/en/latest/about/license.md>`_.
+Licensing information can be found on the `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_ page.
