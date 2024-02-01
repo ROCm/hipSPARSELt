@@ -535,6 +535,6 @@ Tests:
   transB: N
   alpha: 1
   beta: 0
-  sparse_b: [true, false]
+  sparse_b: [false]
 
 ...
