@@ -9,8 +9,10 @@ Gemm
 GoogleTest
 hipSPARSELt
 LeakyReLU
+NONINFRINGEMENT
 ReLU
 rocSPARSELt
+sublicense
 sudo
 SpMM
 Tanh

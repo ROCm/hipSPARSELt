@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -94,7 +94,7 @@ __global__ void compress_kernel(const Ti*      in,
     {
         for(int j = 0; j < TT1J; j += metadata_tiles_y)
         {
-            auto offset = globalReadOffset + i * stride1 + j * stride2;
+            int64_t offset = globalReadOffset + i * stride1 + j * stride2;
 
             Ti            values[] = {static_cast<Ti>(0.0f),
                                       static_cast<Ti>(0.0f),
@@ -128,14 +128,14 @@ __global__ void compress_kernel(const Ti*      in,
                 }
             }
 
-            auto c_offset = globalWriteOffset + i * c_stride1 + (j >> 1) * c_stride2;
+            int64_t c_offset = globalWriteOffset + i * c_stride1 + (j >> 1) * c_stride2;
 #pragma unroll
             for(int k = 0; k < tiles_y; k++)
             {
-                auto c_pos = c_offset + k * c_stride2;
-                out[c_pos] = values[k];
+                int64_t c_pos = c_offset + k * c_stride2;
+                out[c_pos]    = values[k];
             }
-            auto m_offset      = globalWriteMetadataOffset + i * m_stride1 + (j >> 3) * m_stride2;
+            int64_t m_offset   = globalWriteMetadataOffset + i * m_stride1 + (j >> 3) * m_stride2;
             metadata[m_offset] = md;
         }
     }
@@ -147,10 +147,10 @@ rocsparselt_status rocsparselt_smfmac_compress_template(const _rocsparselt_handl
                                                         int64_t                    n,
                                                         int64_t                    stride0,
                                                         int64_t                    stride1,
-                                                        int                        batch_stride,
+                                                        int64_t                    batch_stride,
                                                         int64_t                    c_stride0,
                                                         int64_t                    c_stride1,
-                                                        int                        c_batch_stride,
+                                                        int64_t                    c_batch_stride,
                                                         int64_t                    m_stride0,
                                                         int64_t                    m_stride1,
                                                         int64_t                    m_batch_stride,
