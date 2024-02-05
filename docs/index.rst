@@ -12,7 +12,7 @@ Welcome to the hipSPARSELt docs home page! To learn more, see :ref:`what-is-hips
 
 Our documentation is structured as follows:
 
-.. grid:: 1 2 3 4
+.. grid:: 1 2 2 3
   :gutter: 3
 
   .. grid-item-card::  :ref:`API reference <api-reference>`
