@@ -10,7 +10,8 @@ as backends.
 
 ## Installing pre-built packages
 
-Download pre-built packages either from the [ROCm package servers](https://rocm.github.io/install.html#installing-from-amd-rocm-repositories)
+Download pre-built packages either from the
+[ROCm package servers](https://rocm.docs.amd.com/projects/hipSPARSELt/en/latest/tutorials/install/linux.html#building-hipsparselt-from-source)
 or by clicking the GitHub releases tab and manually downloading, which could be
 newer. Release notes are available for each release on the releases tab.
 
