@@ -192,7 +192,7 @@ Defaults:
   activation_arg2: 0
   bias_vector: false
   bias_stride: -1
-  bias_type: none
+  bias_type: f32_r
   search: false
   search_iters: 10
   sparse_b: false

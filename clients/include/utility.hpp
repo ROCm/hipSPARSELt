@@ -546,7 +546,7 @@ inline hipsparseStatus_t
         if(isSparse)
             row_ = col_ = ld_ = 32;
         else
-            row_ = ld_ = 16;
+            row_ = col_ = ld_ = 16;
         break;
     case HIPSPARSELT_R_16BF:
     case HIPSPARSELT_R_16F:
