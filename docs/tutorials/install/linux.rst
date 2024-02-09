@@ -11,17 +11,14 @@ Installing hipSPARSELt (Linux)
 Prerequisites
 ====================================
 
-hipSPARSELt requires a `ROCm-enabled platform <https://rocm.github.io/>`_ and the
-`hipSPARSE ROCm library <https://github.com/ROCmSoftwarePlatform/hipSPARSE>`_ (for the header file).
+hipSPARSELt requires a :doc:`ROCm-enabled platform <rocm:index>` and the
+:doc:`hipSPARSE ROCm library <hipsparselt:index>` (for the header file).
 
 Installing pre-built packages
 ==================================
 
-Install hipSPARSELt from the
-`ROCm repository <https://rocm.github.io/ROCmInstall.html#installing-from-amd-rocm-repositories>`_.
-
 For detailed instructions on how to set up ROCm on different platforms, refer to the
-`ROCm Linux installation guide <https://rocm.docs.amd.com/en/develop/tutorials/install/linux/index.html>`_.
+:doc:`ROCm Linux installation guide <rocm-install-on-linux:tutorial/install-overview.html>`.
 
 Using Ubuntu as an example, hipSPARSELt can be installed using
 
@@ -46,23 +43,23 @@ instructions.
 
     The following compile-time dependencies must be met:
 
-    * `hipSPARSE <https://github.com/ROCmSoftwarePlatform/hipSPARSE>`_
+    * `hipSPARSE <https://github.com/ROCm/hipSPARSE>`_
     * `git <https://git-scm.com/>`_
     * `CMake <https://cmake.org/>`_ 3.5 or later
     * `AMD ROCm <https://github.com/RadeonOpenCompute/ROCm>`_
-    * (Optional, for clients) `googletest <https://github.com/google/googletest>`_
+    * (Optional, for clients) `GoogleTest <https://github.com/google/googletest>`_
 
 Download hipSPARSELt
 --------------------------------------------------------------------------------------
 
 The hipSPARSELt source code is available on our
-`GitHub page <https://github.com/ROCmSoftwarePlatform/hipSPARSELt>`_
+`GitHub page <https://github.com/ROCm/hipSPARSELt>`_
 
 Download the develop branch using:
 
 .. code-block:: bash
 
-    git clone -b develop https://github.com/ROCmSoftwarePlatform/hipSPARSELt.git
+    git clone -b develop https://github.com/ROCm/hipSPARSELt.git
     cd hipSPARSELt
 
 Build library packages, including dependencies and clients
