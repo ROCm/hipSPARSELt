@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -172,7 +172,7 @@ namespace
      ****************************************************************/
     template <typename Ti, typename To, typename Tc>
     auto ConstructTensileProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                                 bool                                             useBias = false)
+                                 int                                              useBias = 0)
     {
         // Tensile DataTypes corresponding to rocsparselt data types
         static constexpr Tensile::DataType Tensile_Ti = tensile_datatype<Ti>;
@@ -310,7 +310,7 @@ namespace
 
         // Add problem predicates for CEqualsD
         tensileProblem.setCEqualsD(prob.C == prob.D);
-  
+
         tensileProblem.setSparse(prob.sparseA ? 1 : 2);
 
         // set Actvation
@@ -350,9 +350,9 @@ namespace
         tensileProblem.setParams().setActivationEnum(tensileAct);
 
         // set bias mode
-        if(prob.bias_vector != nullptr || useBias)
+        if(prob.bias_vector != nullptr || useBias > 0)
         {
-            tensileProblem.setUseBias(true);
+            tensileProblem.setUseBias(max(1, useBias));
             tensileProblem.setBias(rocsparselt_datatype_to_tensile_type(prob.bias_type),
                                    d.sizes()[0],
                                    prob.bias_stride);
@@ -895,16 +895,17 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
     *foundConfigs = std::min((int)solutions.size(), requestConfigs);
 
     // Finding alternative solutions.
-    bool useBias = tensile_prob.useBias();
+    int useBias = tensile_prob.useBias();
     if(*foundConfigs == 0)
     {
         log_info(prob.handle, __func__, "No solution founds, try to find alternative solutions");
 
         bool hasUpdated = false;
-        if(!useBias && prob.bias_vector == nullptr)
+        if(useBias == 0 && prob.bias_vector == nullptr)
         {
             log_info(prob.handle, __func__, "Try bias.");
-            hasUpdated = useBias = true;
+            hasUpdated = true;
+            useBias    = 1;
         }
 
         if(hasUpdated)
