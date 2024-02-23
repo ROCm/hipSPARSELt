@@ -1,6 +1,6 @@
 /*! \file */
 /* ************************************************************************
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -291,10 +291,9 @@ struct __attribute__((packed, aligned(8))) _rocsparselt_matmul_config
         this->max_workspace_bytes = rhs.max_workspace_bytes;
     }
 
-    int     index;
-    bool    use_bias = false;
-    uint8_t reserved[3];
-    size_t  max_workspace_bytes = 0;
+    int    index;
+    int    use_bias            = 0;
+    size_t max_workspace_bytes = 0;
 };
 
 /********************************************************************************
