@@ -18,7 +18,7 @@ Installing pre-built packages
 ==================================
 
 For detailed instructions on how to set up ROCm on different platforms, refer to the
-:doc:`ROCm Linux installation guide <rocm-install-on-linux:tutorial/install-overview.html>`.
+:doc:`ROCm Linux installation guide <rocm-install-on-linux:tutorial/install-overview>`.
 
 Using Ubuntu as an example, hipSPARSELt can be installed using
 
