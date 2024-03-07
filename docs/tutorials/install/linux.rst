@@ -21,7 +21,7 @@ Install hipSPARSELt from the
 `ROCm repository <https://rocm.github.io/ROCmInstall.html#installing-from-amd-rocm-repositories>`_.
 
 For detailed instructions on how to set up ROCm on different platforms, refer to the
-`ROCm Linux installation guide <https://rocm.docs.amd.com/en/develop/tutorials/install/linux/index.html>`_.
+:doc:`ROCm Linux installation guide <rocm-install-on-linux:tutorial/install-overview>`.
 
 Using Ubuntu as an example, hipSPARSELt can be installed using
 

@@ -1,4 +1,3 @@
-# LICENSE
 
 Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
 

@@ -12,21 +12,24 @@ Welcome to the hipSPARSELt docs home page! To learn more, see :ref:`what-is-hips
 
 Our documentation is structured as follows:
 
-.. card:: :ref:`API reference <api-reference>`
+.. grid:: 1 2 2 2
+  :gutter: 3
 
-  * :ref:`supported-functions`
-  * :ref:`data-type-support`
-  * :ref:`device-stream-manage`
-  * :ref:`storage-format`
-  * :ref:`porting`
-  * :doc:`API library <../doxygen/html/index>`
+  .. grid-item-card:: Reference
 
-.. card:: :ref:`tutorials-index`
+    * :ref:`Supported functions <supported-functions>`
+    * :ref:`Data type support <data-type-support>`
+    * :ref:`Device & stream management <device-stream-manage>`
+    * :ref:`Storage formats <storage-format>`
+    * :ref:`Porting from CUDA <porting>`
+    * :doc:`API library <../doxygen/html/index>`
 
-  * :ref:`install-linux-quick`
-  * :ref:`install-linux`
+  ..  grid-item-card:: Tutorials
 
+    * :ref:`install-linux-quick`
+    * :ref:`install-linux`
 
-To contribute to the documentation refer to `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/index.html>`_.
+To contribute to the documentation refer to
+`Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_.
 
 Licensing information can be found on the `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_ page.
