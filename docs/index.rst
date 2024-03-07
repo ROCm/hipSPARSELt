@@ -26,8 +26,8 @@ Our documentation is structured as follows:
 
   ..  grid-item-card:: Tutorials
 
-  * :ref:`install-linux-quick`
-  * :ref:`install-linux`
+    * :ref:`install-linux-quick`
+    * :ref:`install-linux`
 
 To contribute to the documentation refer to
 `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_.
