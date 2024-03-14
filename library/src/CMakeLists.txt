@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,10 @@ if(NOT BUILD_CUDA)
     endif()
     if(PACKAGE_TENSILE_LIBRARY)
       set(Tensile_Options ${Tensile_Options} GENERATE_PACKAGE)
+    endif()
+
+    if(Tensile_BUILD_ID)
+      set(Options ${Options} "--build-id=${Tensile_BUILD_ID}")
     endif()
 
     # Add a build target for Tensile kernel library
