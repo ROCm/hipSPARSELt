@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ########################################################################
-# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -163,7 +163,7 @@ install_packages( )
 
   local client_dependencies_ubuntu=( "python3" "python3-yaml" )
   local client_dependencies_centos=( "python36" "python3-pip" )
-  local client_dependencies_centos8=( "python36" "python3-pip" )
+  local client_dependencies_centos8=( "python39" "python3-pip" )
   local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" )
   local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" )
 
