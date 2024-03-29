@@ -29,11 +29,6 @@ subtrees:
     - file: doxygen/html/index
       title: API library
 
-- caption: Tutorials
-  entries:
-    - file: tutorials/install/linux.rst
-      title: Install and build hipSPARSELt for Linux
-
 - caption: About
   entries:
     - file: license.md
