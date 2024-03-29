@@ -32,7 +32,7 @@ subtrees:
 - caption: Tutorials
   entries:
     - file: tutorials/install/linux.rst
-      title: Installing and building hipSPARSELt for Linux
+      title: Install and build hipSPARSELt for Linux
 
 - caption: About
   entries:
