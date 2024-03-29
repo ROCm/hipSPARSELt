@@ -22,12 +22,12 @@ Our documentation is structured as follows:
 
   .. grid-item-card:: API reference
 
-    * :doc:`Supported functions <supported-functions>` 
+    * :doc:`Supported functions <./supported-functions>` 
     * :doc:`API library <../doxygen/html/index>`
 
   .. grid-item-card:: How to
 
-    * :doc:`Use hipSPARSELt <how-to/porting>`
+    * :doc:`Use hipSPARSELt <./how-to/porting>`
 
   .. grid-item-card:: Conceptual
 
