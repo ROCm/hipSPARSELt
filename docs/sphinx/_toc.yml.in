@@ -23,8 +23,8 @@ subtrees:
 
 - caption: How to
   entries:    
-    - file: how to/porting.rst
-      title: Porting from CUDA
+    - file: how to/porting
+      title: Port from CUDA to hipSPARSELt
 
 - caption: API Reference
   entries:
