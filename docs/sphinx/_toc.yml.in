@@ -10,19 +10,25 @@ subtrees:
     title: What is hipSPARSELt?
   - file: tutorials/quick-start/linux.rst
     title: Quick-start
-
-- caption: Reference
+    
+- caption: Conceptual
   entries:
-    - file: reference/supported-functions.rst
-      title: Supported functions
-    - file: reference/data-type-support.rst
+ - file: reference/data-type-support.rst
       title: Data type support
     - file: reference/device-stream-manage.rst
       title: Device & stream management
     - file: reference/storage-format.rst
       title: Storage formats
+
+- caption: How to
+  entries:    
     - file: reference/porting.rst
       title: Porting from CUDA
+
+- caption: API Reference
+  entries:
+    - file: reference/supported-functions.rst
+      title: Supported functions   
     - file: doxygen/html/index
       title: API library
 
