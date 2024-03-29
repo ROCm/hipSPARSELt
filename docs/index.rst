@@ -23,6 +23,7 @@ Our documentation is structured as follows:
   .. grid-item-card:: API reference
 
     * :doc:`Supported functions <./reference/supported-functions>` 
+    * :doc:`Data type support <./conceptual/data-type-support>`
     * :doc:`API library <../doxygen/html/index>`
 
   .. grid-item-card:: How to
@@ -31,7 +32,6 @@ Our documentation is structured as follows:
 
   .. grid-item-card:: Conceptual
 
-     * :doc:`Data type support <./conceptual/data-type-support>`
      * :doc:`Device stream manage <./conceptual/device-stream-manage>`
      * :doc:`Storage format <./conceptual/storage-format>`
 
