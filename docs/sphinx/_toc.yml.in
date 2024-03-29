@@ -15,9 +15,7 @@ subtrees:
     title: Installation guide
     
 - caption: Conceptual
-  entries:
-    - file: conceptual/data-type-support.rst
-      title: Data type support
+  entries:   
     - file: conceptual/device-stream-manage.rst
       title: Device & stream management
     - file: conceptual/storage-format.rst
@@ -30,6 +28,8 @@ subtrees:
 
 - caption: API Reference
   entries:
+    - file: conceptual/data-type-support.rst
+      title: Data type support
     - file: reference/supported-functions.rst
       title: Supported functions   
     - file: doxygen/html/index
