@@ -23,7 +23,7 @@ subtrees:
 
 - caption: How to
   entries:    
-    - file: reference/porting.rst
+    - file: how to/porting.rst
       title: Porting from CUDA
 
 - caption: API Reference
