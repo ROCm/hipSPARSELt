@@ -28,7 +28,7 @@ Our documentation is structured as follows:
 
   .. grid-item-card:: How to
 
-    * :doc:`Use hipSPARSELt <./how to/porting>`
+    * :doc:`Port from CUDA to hipSPARSELt <./how to/porting>`
 
   .. grid-item-card:: Conceptual
 
