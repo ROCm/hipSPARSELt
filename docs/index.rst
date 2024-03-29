@@ -22,12 +22,12 @@ Our documentation is structured as follows:
 
   .. grid-item-card:: API reference
 
-    * :doc:`Supported functions <./supported-functions>` 
+    * :doc:`Supported functions <./reference/supported-functions>` 
     * :doc:`API library <../doxygen/html/index>`
 
   .. grid-item-card:: How to
 
-    * :doc:`Use hipSPARSELt <./how-to/porting>`
+    * :doc:`Use hipSPARSELt <./how to/porting>`
 
   .. grid-item-card:: Conceptual
 
@@ -35,11 +35,6 @@ Our documentation is structured as follows:
      * :doc:`Device stream manage <./conceptual/device-stream-manage>`
      * :doc:`Storage format <./conceptual/storage-format>`
 
-
-  .. grid-item-card:: Tutorials
-
-    * :doc:`install-linux-quick`
-    * :doc:`install-linux`
 
 To contribute to the documentation, refer to
 `Contributing to ROCm <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_.
