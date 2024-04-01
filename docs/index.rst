@@ -18,7 +18,7 @@ Our documentation is structured as follows:
   .. grid-item-card:: Install
 
     * :doc:`Quick-start <./install/quick-start>`
-    * :doc:`hipSPARSELt installation <./install/linux>`
+    * :doc:`Installation guide <./install/linux>`
 
   .. grid-item-card:: API reference
 
@@ -32,8 +32,8 @@ Our documentation is structured as follows:
 
   .. grid-item-card:: Conceptual
 
-     * :doc:`Device stream manage <./conceptual/device-stream-manage>`
-     * :doc:`Storage format <./conceptual/storage-format>`
+     * :doc:`HIP device and stream management <./conceptual/device-stream-manage>`
+     * :doc:`Storage formats <./conceptual/storage-format>`
 
 
 To contribute to the documentation, refer to
