@@ -17,7 +17,7 @@ subtrees:
 - caption: Conceptual
   entries:   
     - file: conceptual/device-stream-manage.rst
-      title: Device & stream management
+      title: HIP device & stream management
     - file: conceptual/storage-format.rst
       title: Storage formats
 
