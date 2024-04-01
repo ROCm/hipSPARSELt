@@ -33,7 +33,7 @@ Our documentation is structured as follows:
   .. grid-item-card:: Conceptual
 
      * :doc:`HIP device and stream management <./conceptual/device-stream-manage>`
-     * :doc:`Storage formats <./conceptual/storage-format>`
+     * :doc:`Storage format <./conceptual/storage-format>`
 
 
 To contribute to the documentation, refer to
