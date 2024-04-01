@@ -5,6 +5,7 @@
 </head>
 
 # API reference
+
 This section provides technical descriptions and important information about the different APIs and library components.
 
 * {doc}`Supported functions <supported-functions>`
