@@ -5,9 +5,7 @@
 </head>
 
 # API reference
+This section provides technical descriptions and important information about the different APIs and library components.
 
-This section provides technical descriptions and important information about the different hipSPARSELt
-APIs and library components.
-
- * {doc}`Supported functions <supported-functions>` 
- * {doc}`API library <../doxygen/html/index>`
+* {doc}`Supported functions <supported-functions>` 
+* {doc}`API library <../doxygen/html/index>`
