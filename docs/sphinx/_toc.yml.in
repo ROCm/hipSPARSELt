@@ -27,11 +27,11 @@ subtrees:
       title: Port from CUDA to hipSPARSELt
 
 - caption: API Reference
-  entries:
-    - file: conceptual/data-type-support.rst
-      title: Data type support
+  entries:   
     - file: reference/supported-functions.rst
       title: Supported functions   
+    - file: conceptual/data-type-support.rst
+      title: Data type support
     - file: doxygen/html/index
       title: API library
 
