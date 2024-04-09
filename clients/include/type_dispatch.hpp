@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -105,16 +105,6 @@ auto hipsparselt_spmm_dispatch(const Arguments& arg)
             default:
                 break;
             }
-        }
-        if(Ti == To && To == HIPSPARSELT_R_16F && Tc == HIPSPARSELT_COMPUTE_16F
-           && TBias == HIPSPARSELT_R_16F)
-        {
-            return TEST<__half, __half, __half, __half>{}(arg);
-        }
-        else if(Ti == To && To == HIPSPARSELT_R_16BF && Tc == HIPSPARSELT_COMPUTE_16F
-                && TBias == HIPSPARSELT_R_16BF)
-        {
-            return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16, hip_bfloat16>{}(arg);
         }
         else if(Ti == To && To == HIPSPARSELT_R_8I && Tc == HIPSPARSELT_COMPUTE_32I
                 && TBias == HIPSPARSELT_R_32F)

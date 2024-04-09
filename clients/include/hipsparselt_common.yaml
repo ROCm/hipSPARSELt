@@ -12,9 +12,8 @@ Datatypes:
   - hipsparseLtComputetype_t:
       bases: [ c_int ]
       attr:
-        c_f16_r: 0
-        c_i32_r: 1
-        c_f32_r: 2
+        c_i32_r: 0
+        c_f32_r: 1
   - { half: f16_r }
   - hipsparselt_initialization:
       bases: [ c_int ]

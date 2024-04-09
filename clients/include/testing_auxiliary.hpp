@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -601,11 +601,7 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
         tmpComputeType = HIPSPARSELT_COMPUTE_32I;
         break;
     default:
-#ifdef __HIP_PLATFORM_AMD__
         tmpComputeType = HIPSPARSELT_COMPUTE_32F;
-#else
-        tmpComputeType = HIPSPARSELT_COMPUTE_16F;
-#endif
         break;
     }
     EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescriptorInit(

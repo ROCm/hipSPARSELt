@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -529,12 +529,7 @@ void run(int64_t               m,
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
         &handle, sparse_b? &matB : &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride, sizeof(stride)));
 
-    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I :
-#ifdef __HIP_PLATFORM_AMD__
-                                                 HIPSPARSELT_COMPUTE_32F;
-#else
-                                                 HIPSPARSELT_COMPUTE_16F;
-#endif
+    auto compute_type = type == HIPSPARSELT_R_8I ? HIPSPARSELT_COMPUTE_32I : HIPSPARSELT_COMPUTE_32F;
 
     CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(&handle,
                                                             &matmul,

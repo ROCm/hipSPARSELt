@@ -45,7 +45,7 @@ Data type support
       - ✅
       - ✅
     *
-      - bfloat16      
+      - bfloat16
       - HIPSPARSELT_R_16BF
       - ✅
       - ✅
@@ -105,7 +105,7 @@ Data type support
       - float16
       - HIPSPARSELT_COMPUTE_16F
       - ❌
-      - ✅
+      - ❌
     *
       - bfloat16
       - Not Supported
@@ -120,28 +120,24 @@ Data type support
       - tensorfloat32
       - Not Supported
       - ❌
-      - ✅
+      - ❌
     *
       - float32
       - HIPSPARSELT_COMPUTE_32F
       - ✅
-      - ❌
+      - ✅
     *
       - float64
       - Not Supported
       - ❌
-      - ❌      
+      - ❌
 
 * List of supported compute types at specific input and output types:
 
   .. csv-table::
      :header: "Input", "Output", "Compute type", "Backend"
 
-     "HIPSPARSELT_R_16F", "HIPSPARSELT_R_16F", "HIPSPARSELT_COMPUTE_32F", "HIP"
-     "HIPSPARSELT_R_16BF", "HIPSPARSELT_R_16BF", "HIPSPARSELT_COMPUTE_32F", "HIP"
+     "HIPSPARSELT_R_16F", "HIPSPARSELT_R_16F", "HIPSPARSELT_COMPUTE_32F", "HIP / CUDA"
+     "HIPSPARSELT_R_16BF", "HIPSPARSELT_R_16BF", "HIPSPARSELT_COMPUTE_32F", "HIP / CUDA"
      "HIPSPARSELT_R_8I", "HIPSPARSELT_R_8I", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
      "HIPSPARSELT_R_8I", "HIPSPARSELT_R_16F", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
-     "HIPSPARSELT_R_16F", "HIPSPARSELT_R_16F", "HIPSPARSELT_COMPUTE_16F", "CUDA"
-     "HIPSPARSELT_R_16BF", "HIPSPARSELT_R_16BF", "HIPSPARSELT_COMPUTE_16F", "CUDA"
-     "HIPSPARSELT_R_32F", "HIPSPARSELT_R_32F", "HIPSPARSELT_COMPUTE_TF32", "CUDA"
-     "HIPSPARSELT_R_32F", "HIPSPARSELT_R_32F", "HIPSPARSELT_COMPUTE_TF32_FAST", "CUDA"

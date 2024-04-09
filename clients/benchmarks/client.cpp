@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -90,14 +90,8 @@ struct perf_sparse<
     Tc,
     TBias,
     std::enable_if_t<
-#ifdef __HIP_PLATFORM_AMD__
         (std::is_same<Ti, To>{} && (std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{})
          && std::is_same<Tc, float>{})
-#else
-        (std::is_same<Ti, To>{}
-         && ((std::is_same<Ti, __half>{} && std::is_same<Tc, __half>{})
-             || (std::is_same<Ti, hip_bfloat16>{} && std::is_same<Tc, hip_bfloat16>{})))
-#endif
         || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})
         || (std::is_same<Ti, int8_t>{} && (std::is_same<To, __half>{})
             && std::is_same<Tc, int32_t>{})>> : hipsparselt_test_valid
@@ -534,8 +528,7 @@ try
 #ifdef __HIP_PLATFORM_AMD__
                            ? (is_f16 ? HIPSPARSELT_COMPUTE_32F : HIPSPARSELT_COMPUTE_32I)
 #else
-                           ? (is_f16   ? HIPSPARSELT_COMPUTE_16F
-                              : is_f32 ? HIPSPARSELT_COMPUTE_TF32
+                           ? (is_f16  || is_f32 ? HIPSPARSELT_COMPUTE_32F
                                        : HIPSPARSELT_COMPUTE_32I)
 #endif
                            : string_to_hipsparselt_computetype(compute_type);

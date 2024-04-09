@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
  *******************************************************************************/
 
 #include "exceptions.hpp"
+#include <string>
 #include <hipsparselt/hipsparselt.h>
 
 #include <cusparseLt.h>
@@ -159,14 +160,10 @@ cusparseComputeType HIPComputetypeToCuSparseComputetype(hipsparseLtComputetype_t
 {
     switch(type)
     {
-    case HIPSPARSELT_COMPUTE_16F:
-        return CUSPARSE_COMPUTE_16F;
+    case HIPSPARSELT_COMPUTE_32F:
+        return CUSPARSE_COMPUTE_32F;
     case HIPSPARSELT_COMPUTE_32I:
         return CUSPARSE_COMPUTE_32I;
-    case HIPSPARSELT_COMPUTE_TF32:
-        return CUSPARSE_COMPUTE_TF32;
-    case HIPSPARSELT_COMPUTE_TF32_FAST:
-        return CUSPARSE_COMPUTE_TF32_FAST;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -176,14 +173,10 @@ hipsparseLtComputetype_t CuSparseLtComputetypeToHIPComputetype(cusparseComputeTy
 {
     switch(type)
     {
-    case CUSPARSE_COMPUTE_16F:
-        return HIPSPARSELT_COMPUTE_16F;
+    case CUSPARSE_COMPUTE_32F:
+        return HIPSPARSELT_COMPUTE_32F;
     case CUSPARSE_COMPUTE_32I:
         return HIPSPARSELT_COMPUTE_32I;
-    case CUSPARSE_COMPUTE_TF32:
-        return HIPSPARSELT_COMPUTE_TF32;
-    case CUSPARSE_COMPUTE_TF32_FAST:
-        return HIPSPARSELT_COMPUTE_TF32_FAST;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }

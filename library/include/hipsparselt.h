@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,7 @@
  *
  *  \defgroup helper_module Helper functions
  *  Required for subsequent library calls
- * 
+ *
  *  \defgroup aux_module Auxilary functions
  *  Initializes hipSPARSELt for the current HIP device
  */
@@ -198,13 +198,8 @@ typedef enum {
  *  \details
  */
 typedef enum {
-   HIPSPARSELT_COMPUTE_16F = 0,     /**< 16-bit floating-point precision. CUDA backend only. */
-   HIPSPARSELT_COMPUTE_32I,         /**< 32-bit integer precision */
+   HIPSPARSELT_COMPUTE_32I = 0,     /**< 32-bit integer precision */
    HIPSPARSELT_COMPUTE_32F,         /**< 32-bit floating-point precision. HIP backend only. */
-   HIPSPARSELT_COMPUTE_TF32,        /**< 32-bit floating point value are rounded to TF32 before the computation.
-                                       CUDA backend only. */
-   HIPSPARSELT_COMPUTE_TF32_FAST    /**< 32-bit floating point value are truncated to TF32 before the computation.
-                                       CUDA backend only. */
 } hipsparseLtComputetype_t;
 
 /*! \ingroup types_module

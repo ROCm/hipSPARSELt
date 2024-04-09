@@ -1,12 +1,20 @@
 # Change Log for hipSPARSELt
 
+## (Unreleased) hipSPARSELt 0.3.0
+
+### Additions
+
+* For aligning cuda-backend with cuSPARSELt v0.5.2, HIPSPARSELT_COMPUTE_16F, HIPSPARSELT_COMPUTE_TF32 and HIPSPARSELT_COMPUTE_TF32_FAST enumerators
+  have been removed for the hipsparseLtComputetype_t enumerator and replaced with HIPSPARSELT_COMPUTE_32F.
+  Note: For hip-backend, which didn't support above 3 compute types. Hence, this change doesn't impact the behavior for the hip-backend.
+
 ## (Unreleased) hipSPARSELt 0.2.0
 
 ### Additions
 
 * Support Matrix B is a Structured Sparsity Matrix.
 
-## (Unreleased) hipSPARSELt 0.1.0
+## hipSPARSELt 0.1.0
 
 ### Additions
 
