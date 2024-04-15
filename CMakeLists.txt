@@ -221,9 +221,9 @@ get_os_id(OS_ID)
 message (STATUS "OS detected is ${OS_ID}")
 
 # Setup version
-set (VERSION_STRING "0.1.0" )
+set (VERSION_STRING "0.2.0" )
 rocm_setup_version( VERSION ${VERSION_STRING} )
-set(hipsparselt_SOVERSION 0.1)
+set(hipsparselt_SOVERSION 0.2)
 
 # setup rocsparselt defines used for both the library and clients
 if( BUILD_WITH_TENSILE )
