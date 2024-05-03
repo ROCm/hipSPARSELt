@@ -6,7 +6,7 @@
 
 - Support Matrix B is a Structured Sparsity Matrix.
 
-## (Unreleased) hipSPARSELt 0.1.0
+## hipSPARSELt 0.1.0
 
 ### Added
 
