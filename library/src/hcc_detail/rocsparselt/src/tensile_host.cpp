@@ -352,10 +352,15 @@ namespace
         // set bias mode
         if(prob.bias_vector != nullptr || useBias > 0)
         {
-            tensileProblem.setUseBias(max(1, useBias));
+            int guessedUseBias = (prob.order == rocsparselt_order_row) ? 2 : 1;
+            tensileProblem.setUseBias(useBias > 0 ? useBias : guessedUseBias);
             tensileProblem.setBias(rocsparselt_datatype_to_tensile_type(prob.bias_type),
-                                   d.sizes()[0],
-                                   prob.bias_stride);
+                                   prob.order == rocsparselt_order_row ? d.sizes()[1]
+                                                                       : d.sizes()[0],
+                                   prob.bias_stride,
+                                   false,
+                                   Tensile::ContractionProblemGemm::TENSOR::D,
+                                   prob.order == rocsparselt_order_row);
         }
 
         return tensileProblem;
@@ -895,24 +900,32 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
     *foundConfigs = std::min((int)solutions.size(), requestConfigs);
 
     // Finding alternative solutions.
-    int useBias = tensile_prob.useBias();
+    auto findAlternativeSolution = [&](int useBias) {
+        tensile_prob  = ConstructTensileProblem(prob, useBias);
+        solutions     = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
+        *foundConfigs = std::min((int)solutions.size(), requestConfigs);
+    };
+
     if(*foundConfigs == 0)
     {
         log_info(prob.handle, __func__, "No solution founds, try to find alternative solutions");
 
-        bool hasUpdated = false;
-        if(useBias == 0 && prob.bias_vector == nullptr)
+        if(tensile_prob.useBias() == 0)
         {
-            log_info(prob.handle, __func__, "Try bias.");
-            hasUpdated = true;
-            useBias    = 1;
+            for(int useBias = 1; useBias < 4; useBias++)
+            {
+                findAlternativeSolution(useBias);
+                if(*foundConfigs != 0)
+                    break;
+            }
+        }
+        else if(tensile_prob.useBias() == 1 || tensile_prob.useBias() == 2)
+        {
+            findAlternativeSolution(3);
         }
 
-        if(hasUpdated)
+        if(*foundConfigs != 0)
         {
-            tensile_prob  = ConstructTensileProblem(prob, useBias);
-            solutions     = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
-            *foundConfigs = std::min((int)solutions.size(), requestConfigs);
             log_info(prob.handle, __func__, *foundConfigs, " alternative solutions found");
         }
     }
@@ -922,7 +935,7 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
         auto solution                  = solutions[i];
         configs[i].index               = solution->index;
         configs[i].max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
-        configs[i].use_bias            = useBias;
+        configs[i].use_bias            = tensile_prob.useBias();
     }
     return rocsparselt_status_success;
 }

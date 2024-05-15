@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,6 @@
 //! cuSPARSELt "version 0.3".
 //
 
-
 /*! \defgroup types_module Data types
  *
  *
@@ -60,7 +59,7 @@
  *
  *  \defgroup helper_module Helper functions
  *  Required for subsequent library calls
- * 
+ *
  *  \defgroup aux_module Auxilary functions
  *  Initializes hipSPARSELt for the current HIP device
  */
@@ -398,7 +397,7 @@ hipsparseStatus_t hipsparseLtDestroy(const hipsparseLtHandle_t* handle);
  *  @param[in]
  *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
  *  @param[in]
- *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW. (HIP backend only support HIPSPARSE_ORDER_COL.)
+ *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW.
  *
  *  \retval HIPSPARSE_STATUS_SUCCESS the operation completed successfully.
  *  \retval HIPSPARSE_STATUS_INVALID_VALUE \p handle, \p descr , \p rows , \p cols , \p ld  is invalid.
@@ -435,7 +434,7 @@ hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  han
  *  @param[in]
  *  valueType  data type of the matrix. see \ref hipsparseLtDatatype_t
  *  @param[in]
- *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW. (HIP backend only support HIPSPARSE_ORDER_COL.)
+ *  order      memory layout. \p HIPSPARSE_ORDER_COL or \p HIPSPARSE_ORDER_ROW.
 
  *  @param[in]
  *  sparsity   matrix sparsity ratio. see \ref hipsparseLtSparsity_t

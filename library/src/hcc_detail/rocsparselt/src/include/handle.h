@@ -214,6 +214,15 @@ struct _rocsparselt_matmul_descr
         , n(rhs.n)
         , k(rhs.k)
         , is_sparse_a(rhs.is_sparse_a)
+        , _op_A(rhs._op_A)
+        , _op_B(rhs._op_B)
+        , _m(rhs._m)
+        , _n(rhs._n)
+        , _k(rhs._k)
+        , _lda(rhs._lda)
+        , _ldb(rhs._ldb)
+        , _is_sparse_a(rhs._is_sparse_a)
+        , _swap_ab(rhs._swap_ab)
     {
         matrix_A     = rhs.matrix_A->clone();
         matrix_B     = rhs.matrix_B->clone();
@@ -274,6 +283,16 @@ struct _rocsparselt_matmul_descr
     int64_t              n           = 0;
     int64_t              k           = 0;
     bool                 is_sparse_a = true;
+
+    rocsparselt_operation _op_A;
+    rocsparselt_operation _op_B;
+    int64_t               _m           = 0;
+    int64_t               _n           = 0;
+    int64_t               _k           = 0;
+    int64_t               _lda         = 0;
+    int64_t               _ldb         = 0;
+    bool                  _is_sparse_a = true;
+    bool                  _swap_ab     = false;
 
 private:
     bool      is_reference = true;

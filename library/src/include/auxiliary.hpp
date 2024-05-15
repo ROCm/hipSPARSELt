@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -88,6 +88,22 @@ constexpr hipsparseOperation_t char_to_hipsparselt_operation(char value)
         return HIPSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
     default:
         return static_cast<hipsparseOperation_t>(-1);
+    }
+}
+
+HIPSPARSELT_EXPORT
+constexpr hipsparseOrder_t char_to_hipsparselt_order(char value)
+{
+    switch(value)
+    {
+    case 'C':
+    case 'c':
+        return HIPSPARSE_ORDER_COL;
+    case 'R':
+    case 'r':
+        return HIPSPARSE_ORDER_ROW;
+    default:
+        return static_cast<hipsparseOrder_t>(-1);
     }
 }
 
