@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -171,7 +171,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
             _matDescr->type         = valueType;
             _matDescr->order        = order;
             _matDescr->num_batches  = 1;
-            _matDescr->batch_stride = cols * ld;
+            _matDescr->batch_stride = order == rocsparselt_order_column ? cols * ld : rows * ld;
             log_api(_handle,
                     __func__,
                     "_matDescr[out]",
@@ -262,7 +262,7 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
             _matDescr->order        = order;
             _matDescr->sparsity     = sparsity;
             _matDescr->num_batches  = 1;
-            _matDescr->batch_stride = cols * ld;
+            _matDescr->batch_stride = order == rocsparselt_order_column ? cols * ld : rows * ld;
             log_api(_handle,
                     __func__,
                     "_matDescr[out]",
@@ -406,14 +406,22 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
                 auto batch_stride = reinterpret_cast<const int64_t*>(data);
                 if(*batch_stride != 0)
                 {
-                    int64_t expected_batch_stride = _matDescr->n * _matDescr->ld;
+                    int64_t expected_batch_stride
+                        = (_matDescr->order == rocsparselt_order_column ? _matDescr->n
+                                                                        : _matDescr->m)
+                          * _matDescr->ld;
                     if(*batch_stride < expected_batch_stride)
                     {
-                        hipsparselt_cerr << "The batch stride must be 0 or at least cols * ld ("
-                                         << expected_batch_stride << "), current: " << *batch_stride
-                                         << std::endl;
-                        log_error(
-                            _handle, __func__, "The batch stride must be 0 or at least cols * ld");
+                        std::ostringstream stringStream;
+                        stringStream << "The batch stride must be 0 or at least ";
+                        stringStream
+                            << (_matDescr->order == rocsparselt_order_column ? "col" : "row");
+                        stringStream << " * ld (" << expected_batch_stride
+                                     << "), current: " << *batch_stride;
+
+                        auto msg = stringStream.str();
+                        hipsparselt_cerr << msg << std::endl;
+                        log_error(_handle, __func__, msg);
                         return rocsparselt_status_invalid_value;
                     }
                 }
@@ -645,7 +653,9 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
                                                   _matA->m_type,
                                                   _matB->m_type,
                                                   _matC->m_type,
-                                                  _matD->m_type);
+                                                  _matD->m_type,
+                                                  _matC->order,
+                                                  _matD->order);
             if(status != rocsparselt_status_success)
                 return status;
 
@@ -678,21 +688,27 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             getOriginalSizes(opA, opB, _matA->m, _matA->n, _matB->m, _matB->n, m, n, k);
             if(isSparseA)
             {
-                _matA->c_k             = k / 2;
-                _matA->c_ld            = (opA == rocsparselt_operation_transpose ? _matA->c_k : m);
-                _matA->c_n             = (opA == rocsparselt_operation_transpose ? m : _matA->c_k);
+                _matA->c_k  = k / 2;
+                _matA->c_ld = m;
+                _matA->c_n  = _matA->c_k;
+                if((opA == rocsparselt_operation_transpose)
+                   != (_matA->order == rocsparselt_order_row))
+                    std::swap(_matA->c_ld, _matA->c_n);
             }
             else
             {
-                _matB->c_k             = k / 2;
-                _matB->c_ld            = (opB == rocsparselt_operation_transpose ? n : _matB->c_k);
-                _matB->c_n             = (opB == rocsparselt_operation_transpose ? _matB->c_k : n);
+                _matB->c_k  = k / 2;
+                _matB->c_ld = _matB->c_k;
+                _matB->c_n  = n;
+                if((opB == rocsparselt_operation_transpose)
+                   != (_matB->order == rocsparselt_order_row))
+                    std::swap(_matB->c_ld, _matB->c_n);
             }
 
-            _matmulDescr->op_A     = opA;
-            _matmulDescr->op_B     = opB;
-            _matmulDescr->matrix_A = _matA;
-            _matmulDescr->matrix_B = _matB;
+            _matmulDescr->op_A         = opA;
+            _matmulDescr->op_B         = opB;
+            _matmulDescr->matrix_A     = _matA;
+            _matmulDescr->matrix_B     = _matB;
             _matmulDescr->matrix_C     = _matC;
             _matmulDescr->matrix_D     = _matD;
             _matmulDescr->compute_type = computeType;
@@ -708,6 +724,47 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             default:
                 _matmulDescr->bias_type = rocsparselt_datatype_f32_r;
                 break;
+            }
+
+            _matmulDescr->_op_A = _matmulDescr->op_A;
+            if(_matA->order != _matC->order)
+                _matmulDescr->_op_A = _matmulDescr->op_A == rocsparselt_operation_none
+                                          ? rocsparselt_operation_transpose
+                                          : rocsparselt_operation_none;
+
+            _matmulDescr->_op_B = _matmulDescr->op_B;
+            if(_matB->order != _matC->order)
+                _matmulDescr->_op_B = _matmulDescr->op_B == rocsparselt_operation_none
+                                          ? rocsparselt_operation_transpose
+                                          : rocsparselt_operation_none;
+
+            int64_t lda = _matmulDescr->matrix_A->ld;
+            int64_t ldb = _matmulDescr->matrix_B->ld;
+
+            if(_matmulDescr->is_sparse_a)
+                lda = _matA->c_ld;
+            else
+                ldb = _matB->c_ld;
+
+            if(_matC->order == rocsparselt_order_column)
+            {
+                _matmulDescr->_m           = _matmulDescr->m;
+                _matmulDescr->_n           = _matmulDescr->n;
+                _matmulDescr->_k           = _matmulDescr->k;
+                _matmulDescr->_lda         = lda;
+                _matmulDescr->_ldb         = ldb;
+                _matmulDescr->_is_sparse_a = _matmulDescr->is_sparse_a;
+            }
+            else
+            {
+                _matmulDescr->_swap_ab = true;
+                std::swap(_matmulDescr->_op_A, _matmulDescr->_op_B);
+                _matmulDescr->_m           = _matmulDescr->n;
+                _matmulDescr->_n           = _matmulDescr->m;
+                _matmulDescr->_k           = _matmulDescr->k;
+                _matmulDescr->_lda         = ldb;
+                _matmulDescr->_ldb         = lda;
+                _matmulDescr->_is_sparse_a = !_matmulDescr->is_sparse_a;
             }
         }
         catch(const rocsparselt_status& status)

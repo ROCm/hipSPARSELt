@@ -209,19 +209,13 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     }
 
     // leading dimensions must be valid
-    if(num_rows > ld)
+    int64_t min_ld = order == rocsparselt_order_column ? num_rows : num_cols;
+    if(min_ld > ld)
     {
-        hipsparselt_cerr << "number of rows(" << num_rows << ") is larger than leading dimension("
-                         << ld << ")" << std::endl;
-        log_error(handle, __func__, "row and col must >= ld");
+        hipsparselt_cerr << "leading dimension(" << ld << ") is smaller than " << min_ld
+                         << std::endl;
+        log_error(handle, __func__, "ld is invalid");
         return rocsparselt_status_invalid_size;
-    }
-
-    if(order == rocsparselt_order_row)
-    {
-        hipsparselt_cerr << "rocsparselt_order_row is not supported" << std::endl;
-        log_error(handle, __func__, "rocsparselt_order_row is not supported");
-        return rocsparselt_status_not_implemented;
     }
 
     //TODO should support other datatype in the future.
@@ -266,7 +260,9 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
                                                   rocsparselt_matrix_type    matrix_type_a,
                                                   rocsparselt_matrix_type    matrix_type_b,
                                                   rocsparselt_matrix_type    matrix_type_c,
-                                                  rocsparselt_matrix_type    matrix_type_d)
+                                                  rocsparselt_matrix_type    matrix_type_d,
+                                                  rocsparselt_order          order_c,
+                                                  rocsparselt_order          order_d)
 {
     // handle must be valid
     if(handle == nullptr || !handle->isInit())
@@ -368,6 +364,12 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
        || matrix_type_d != rocsparselt_matrix_type_dense)
     {
         log_error(handle, __func__, "Matrix C and D must be dense matrix");
+        return rocsparselt_status_invalid_value;
+    }
+
+    if(order_c != order_d)
+    {
+        log_error(handle, __func__, "Matrix C and D must in the same memory order");
         return rocsparselt_status_invalid_value;
     }
 
