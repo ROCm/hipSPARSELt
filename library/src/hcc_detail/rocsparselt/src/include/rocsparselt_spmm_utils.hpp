@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -318,6 +318,11 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
     {
     case rocsparselt_datatype_bf16_r:
     case rocsparselt_datatype_f16_r:
+        if(!(type_a == type_b && type_a == type_c && type_a == type_d))
+        {
+            log_error(handle, __func__, "datatype of matrices are inconsistent");
+            return rocsparselt_status_not_implemented;
+        }
     case rocsparselt_datatype_f8_r:
     case rocsparselt_datatype_bf8_r:
         if(compute_type != rocsparselt_compute_f32)
@@ -327,6 +332,13 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
         }
         break;
     case rocsparselt_datatype_i8_r:
+        // I8/I8/I and I8/H/I
+        if(type_a != type_b || type_c != type_d
+           || (type_a != type_d && type_d != rocsparselt_datatype_f16_r))
+        {
+            log_error(handle, __func__, "datatype of matrices are inconsistent");
+            return rocsparselt_status_not_implemented;
+        }
         if(compute_type != rocsparselt_compute_i32)
         {
             log_error(handle, __func__, "computType must be i32");
