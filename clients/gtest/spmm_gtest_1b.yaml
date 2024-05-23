@@ -1,7 +1,7 @@
 ---
 include: hipsparselt_common.yaml
 include: known_bugs.yaml
-include: spmm_common.yaml
+include: spmm_common_16.yaml
 
 Definitions:
   - &alpha_beta_range
@@ -58,7 +58,16 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
-  bias_vector: [false, true]
+  sparse_b: [true, false]
+
+- name: spmm_small
+  category: quick
+  function:
+    spmm: *real_precisions_1b
+  matrix_size: *small_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha_beta: *alpha_beta_range
+  bias_vector: [true]
   bias_stride: [0, -1, 256]
   sparse_b: [true, false]
 
@@ -69,17 +78,6 @@ Tests:
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
-  sparse_b: [true, false]
-
-- name: spmm_medium_alt
-  category: pre_checkin
-  function:
-    spmm: *hpa_half_precision
-  matrix_size: *medium_matrix_size_range
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: 0
-  initialization: special
   sparse_b: [true, false]
 
 - name: spmm_medium_HMM
@@ -115,18 +113,6 @@ Tests:
   transA_transB: *deepbench_transA_transB_range
   sparse_b: [true, false]
 
-- name: spmm_deepbench_alt
-  category: nightly
-  function:
-    spmm: *hpa_half_precision
-  matrix_size: *deepbench_sizes
-  alpha: 1
-  beta: 0
-  flags: 4
-  initialization: special
-  transA_transB: *deepbench_transA_transB_range
-  sparse_b: [true, false]
-
 - name: resnet50_fwd
   category: nightly
   function:
@@ -136,18 +122,6 @@ Tests:
   matrix_size: *resnet50_fwd_sizes
   alpha: 1
   beta: 0
-  sparse_b: [true, false]
-
-- name: resnet50_fwd_alt
-  category: nightly
-  function:
-    spmm: *hpa_half_precision
-  transA: N
-  transB: N
-  matrix_size: *resnet50_fwd_sizes
-  alpha: 1
-  beta: 0
-  initialization: special
   sparse_b: [true, false]
 
 - name: resnet50_bwdwrw
