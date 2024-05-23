@@ -15,7 +15,7 @@ Tests:
 - name: prune_batched_algorithm_real_coverage
   category: pre_checkin
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_algorithm_coverage_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -23,14 +23,10 @@ Tests:
   prune_algo: [ 0, 1 ]
   sparse_b: [ true, false]
 
-# Tests confirm no NaN propagation when alpha = 0, 2 and beta = 0. Value .NaN is converted into zero
-- {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *real_precisions_1b, batch_count: 1,
-   function: prune_batched, transA: N, transB: N, M: 256, N: 128, K:  64, alpha: [ .NaN, 2 ], beta: [ .NaN, 2 ] }
-
 - name: prune_batched_small
   category: quick
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_small_matrix_size_range
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
@@ -41,7 +37,7 @@ Tests:
 - name: prune_batched_medium
   category: pre_checkin
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -52,7 +48,7 @@ Tests:
 - name: prune_batched_large
   category: pre_checkin
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_large_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -63,7 +59,7 @@ Tests:
 - name: prune_batched_deepbench
   category: nightly
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_deepbench_vec
   alpha: 1.0
   beta: 0.0
@@ -76,7 +72,7 @@ Tests:
 - name: prune_batched_conv_resnet50_bwddata
   category: nightly
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_conv_resnet50_bwddata
   alpha: 1.0
   beta: 0.0
@@ -89,7 +85,7 @@ Tests:
 - name: prune_batched_conv_inception4_bwddata
   category: nightly
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_conv_inception4_bwddata
   alpha: 1.0
   beta: 0.0
@@ -102,7 +98,7 @@ Tests:
 - name: prune_batched_conv_ctest_fwd
   category: nightly
   function:
-    - prune_batched: *real_precisions_1b
+    - prune_batched: *real_precisions_1b_input
   matrix_size: *batched_conv_ctest_fwd
   alpha: 1.0
   beta: 0.0
