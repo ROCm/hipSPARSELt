@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -322,8 +322,7 @@ public:
                                   const hipsparseLtMatmulAlgSelection_t* alg_sel)
     {
 
-        this->m_status
-            = hipsparseLtMatmulPlanInit(handle, &this->m_plan, matmul, alg_sel);
+        this->m_status = hipsparseLtMatmulPlanInit(handle, &this->m_plan, matmul, alg_sel);
     }
 
     ~hipsparselt_local_matmul_plan()
@@ -531,13 +530,13 @@ void print_strided_batched(
     hipsparselt_cout << std::flush;
 }
 
-inline hipsparseStatus_t
-    expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type, int64_t m, int64_t n, int64_t ld, bool isSparse = false)
+inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(
+    hipsparseLtDatatype_t type, int64_t m, int64_t n, int64_t ld, bool isSparse = false)
 {
     int row_ = 8;
     int col_ = 8;
-    int ld_ = -1;
-#ifdef __HIP_PLATFORM_NVCC__
+    int ld_  = -1;
+#ifdef __HIP_PLATFORM_NVIDIA__
     switch(type)
     {
     case HIPSPARSELT_R_8I:
@@ -580,11 +579,10 @@ inline hipsparseStatus_t
     if(m % row_ != 0 || n % col_ != 0)
         return HIPSPARSE_STATUS_NOT_SUPPORTED;
 
-
     if(m > ld)
         return HIPSPARSE_STATUS_INVALID_VALUE;
 
-    if(ld_ != -1 && ld % ld_ !=0)
+    if(ld_ != -1 && ld % ld_ != 0)
         return HIPSPARSE_STATUS_INVALID_VALUE;
 
     return HIPSPARSE_STATUS_SUCCESS;
@@ -592,9 +590,9 @@ inline hipsparseStatus_t
 
 inline hipsparseStatus_t
     expected_hipsparse_status_of_matrix_stride(int64_t stride, int64_t m, int64_t n, int64_t ld)
-    {
-        if (stride == 0 || stride >= (ld * n))
-           return HIPSPARSE_STATUS_SUCCESS;
-        else
-           return HIPSPARSE_STATUS_INVALID_VALUE;
-    }
+{
+    if(stride == 0 || stride >= (ld * n))
+        return HIPSPARSE_STATUS_SUCCESS;
+    else
+        return HIPSPARSE_STATUS_INVALID_VALUE;
+}

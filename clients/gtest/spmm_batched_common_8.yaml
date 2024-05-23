@@ -1,6 +1,6 @@
 Spmm Matrix Batched Sizes:
 - &batched_algorithm_coverage_matrix_size_range
-- { M: 128, N: 64, K: 8, lda: 64, ldb: 64, ldc: 64, ldd: 64 }
+- { M: 128, N: 64, K: 8, lda: 64, ldb: 64, ldc: 129, ldd: 129 }
 - { M: 64, N: 32, K: 8, lda: 64, ldb: 65, ldc: 66, ldd: 66 }
 - { M: 32, N: 64, K: 16, lda: 65, ldb: 66, ldc: 67, ldd: 67 }
 

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -97,18 +97,14 @@ namespace
         {
             RocSparseLt_TestName<spmm_test> name(arg.name);
 
-            if(strstr(arg.function, "_bad_arg") != nullptr)
-            {
-                name << "bad_arg";
-            }
-            else
-            {
-                name << hipsparselt_datatype_to_string(arg.a_type)
-                     << hipsparselt_datatype_to_string(arg.b_type)
-                     << hipsparselt_datatype_to_string(arg.c_type)
-                     << hipsparselt_datatype_to_string(arg.d_type)
-                     << hipsparselt_computetype_to_string(arg.compute_type);
+            name << hipsparselt_datatype_to_string(arg.a_type)
+                 << hipsparselt_datatype_to_string(arg.b_type)
+                 << hipsparselt_datatype_to_string(arg.c_type)
+                 << hipsparselt_datatype_to_string(arg.d_type)
+                 << hipsparselt_computetype_to_string(arg.compute_type);
 
+            if(strstr(arg.function, "_bad_arg") == nullptr)
+            {
                 name << '_' << (arg.sparse_b ? "SB" : "SA");
 
                 if(arg.activation_type != hipsparselt_activation_type::none)

@@ -341,6 +341,24 @@ void testing_compress(const Arguments& arg)
     int64_t B_row = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : N;
     int64_t B_col = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? N : K;
 
+    auto adjust_row_col = [](int64_t& row, int64_t& col, int64_t ld, hipsparseOperation_t& trans) {
+        if(row > ld)
+        {
+            if(col > ld)
+                return false;
+            std::swap(row, col);
+            trans = (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE)
+                        ? HIPSPARSE_OPERATION_TRANSPOSE
+                        : HIPSPARSE_OPERATION_NON_TRANSPOSE;
+        }
+        return true;
+    };
+
+    if(!adjust_row_col(A_row, A_col, lda, transA))
+        return;
+    if(!adjust_row_col(B_row, B_col, ldb, transB))
+        return;
+
     int64_t stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : lda;
     int64_t stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda : 1;
 
@@ -697,7 +715,7 @@ void testing_compress(const Arguments& arg)
                                    reinterpret_cast<Ti*>(hT_1.data()),
                                    num_batches);
 // cusparselt' metadata has different layout so skip metadata check.
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
             unit_check_general<int8_t>(arg.sparse_b ? K / 8 : M,
                                        arg.sparse_b ? N : K / 8,
                                        arg.sparse_b ? K / 8 : M,

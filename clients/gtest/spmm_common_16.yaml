@@ -7,10 +7,10 @@ Spmm Matrix Sizes:
 
 - &medium_matrix_size_range
   - { M: 16, N: 16, K: 16, lda: 16, ldb: 16, ldc: 16, ldd: 16 }
-  - { M: 128, N: 128, K: 64, lda: 128, ldb: 127, ldc: 127, ldd: 127 }
+  - { M: 128, N: 128, K: 64, lda: 128, ldb: 128, ldc: 128, ldd: 128 }
 
 - &chunk_matrix_size_range
-  - { M: 24000, N: 256, K: 256, lda: 24010, ldb: 256, ldc: 24000, ldd: 24000 }
+  - { M: 24000, N: 256, K: 256, lda: 24010, ldb: 264, ldc: 24000, ldd: 24000 }
   - { M: 24000, N: 256, K: 256, lda: 24000, ldb: 256, ldc: 24020, ldd: 24020 }
 
 - &deepbench_sizes
@@ -252,11 +252,10 @@ Spmm Matrix Sizes:
   - { M: 576, N: 16, K: 576, lda: 576, ldb: 576, ldc: 576, ldd: 576 }
   - { M: 576, N: 16, K: 64, lda: 64, ldb: 64, ldc: 576, ldd: 576 }
   - { M: 576, N: 16, K: 784, lda: 784, ldb: 784, ldc: 576, ldd: 576 }
-  - { M: 600, N: 16, K: 144, lda: 144, ldb: 144, ldc: 600, ldd: 600 }
-  - { M: 600, N: 16, K: 64, lda: 64, ldb: 64, ldc: 600, ldd: 600 }
+  - { M: 608, N: 16, K: 144, lda: 144, ldb: 144, ldc: 608, ldd: 608 }
+  - { M: 608, N: 16, K: 64, lda: 64, ldb: 64, ldc: 608, ldd: 608 }
   - { M: 608, N: 16, K: 16, lda: 16, ldb: 16, ldc: 608, ldd: 608 }
   - { M: 608, N: 16, K: 256, lda: 256, ldb: 256, ldc: 608, ldd: 608 }
-  - { M: 608, N: 16, K: 64, lda: 64, ldb: 64, ldc: 608, ldd: 608 }
   - { M: 64, N: 16, K: 1024, lda: 1024, ldb: 1024, ldc: 64, ldd: 64 }
   - { M: 64, N: 16, K: 12544, lda: 12544, ldb: 12544, ldc: 64, ldd: 64 }
   - { M: 64, N: 16, K: 13456, lda: 13456, ldb: 13456, ldc: 64, ldd: 64 }
@@ -311,7 +310,7 @@ Spmm Matrix Sizes:
   - { M: 144, N: 16, K: 4608, lda: 144, ldb: 4608, ldc: 144, ldd: 144 }
   - { M: 144, N: 16, K: 512, lda: 144, ldb: 512, ldc: 144, ldd: 144 }
   - { M: 144, N: 16, K: 576, lda: 144, ldb: 576, ldc: 144, ldd: 144 }
-  - { M: 144, N: 16, K: 600, lda: 144, ldb: 600, ldc: 144, ldd: 144 }
+  - { M: 144, N: 16, K: 608, lda: 144, ldb: 608, ldc: 144, ldd: 144 }
   - { M: 144, N: 16, K: 800, lda: 144, ldb: 800, ldc: 144, ldd: 144 }
   - { M: 144, N: 16, K: 864, lda: 144, ldb: 864, ldc: 144, ldd: 144 }
   - { M: 144, N: 16, K: 9216, lda: 144, ldb: 9216, ldc: 144, ldd: 144 }
@@ -395,7 +394,6 @@ Spmm Matrix Sizes:
   - { M: 64, N: 16, K: 512, lda: 64, ldb: 512, ldc: 64, ldd: 64 }
   - { M: 64, N: 16, K: 528, lda: 64, ldb: 528, ldc: 64, ldd: 64 }
   - { M: 64, N: 16, K: 576, lda: 64, ldb: 576, ldc: 64, ldd: 64 }
-  - { M: 64, N: 16, K: 600, lda: 64, ldb: 600, ldc: 64, ldd: 64 }
   - { M: 64, N: 16, K: 608, lda: 64, ldb: 608, ldc: 64, ldd: 64 }
   - { M: 64, N: 16, K: 64, lda: 64, ldb: 64, ldc: 64, ldd: 64 }
   - { M: 64, N: 16, K: 800, lda: 64, ldb: 800, ldc: 64, ldd: 64 }

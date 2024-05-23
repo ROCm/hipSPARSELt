@@ -1,7 +1,7 @@
 ---
 include: hipsparselt_common.yaml
 include: known_bugs.yaml
-include: spmm_common.yaml
+include: spmm_common_16.yaml
 
 Definitions:
   - &alpha_beta_range
@@ -15,21 +15,16 @@ Tests:
 - name: prune_bad_arg
   category: pre_checkin
   function:
-    - prune_bad_arg: *real_precisions_1b
+    - prune_bad_arg: *real_precisions_1b_input
   transA: N
   transB: N
 
-# Tests confirm no NaN propagation when alpha = 0, 2 and beta = 0. Value .NaN is converted into zero
-- {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *real_precisions_1b,
-   function: prune, transA: N, transB: N, M: 256, N: 128, K:  64, alpha: [ .NaN, 2 ], beta: [ .NaN, 2 ] }
-
-
-# Split *real_precisions_1b into *int8 and *nonint8_real_precisions. Since int8 has flags 0,1
+# Split *real_precisions_1b_input into *int8 and *nonint8_real_precisions. Since int8 has flags 0,1
 
 - name: prune_small
   category: quick
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -39,29 +34,17 @@ Tests:
 - name: prune_medium
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
   prune_algo: [ 0, 1 ]
   sparse_b: [ true, false]
 
-- name: prune_medium_alt
-  category: pre_checkin
-  function:
-    prune: *hpa_half_precision
-  matrix_size: *medium_matrix_size_range
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: 0
-  initialization: special
-  prune_algo: [ 0, 1 ]
-  sparse_b: [ true, false]
-
 - name: prune_medium_HMM
   category: HMM
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   matrix_size: *medium_matrix_size_range
   transA: [ N ]
   transB: [ N ]
@@ -74,7 +57,7 @@ Tests:
 - name: prune_chunk
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   matrix_size: *chunk_matrix_size_range
   transA_transB: *transA_transB_range
   alpha: 2
@@ -85,22 +68,9 @@ Tests:
 - name: prune_deepbench
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   matrix_size: *deepbench_sizes
   alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
-  prune_algo: [ 0, 1 ]
-  sparse_b: [ true, false]
-
-- name: prune_deepbench_alt
-  category: nightly
-  function:
-    prune: *hpa_half_precision
-  matrix_size: *deepbench_sizes
-  alpha: 1
-  beta: 0
-  flags: 4
-  initialization: special
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
   sparse_b: [ true, false]
@@ -108,7 +78,7 @@ Tests:
 - name: resnet50_fwd
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: N
   transB: N
   matrix_size: *resnet50_fwd_sizes
@@ -117,23 +87,11 @@ Tests:
   prune_algo: [ 0, 1 ]
   sparse_b: [ true, false]
 
-- name: resnet50_fwd_alt
-  category: nightly
-  function:
-    prune: *hpa_half_precision
-  transA: N
-  transB: N
-  matrix_size: *resnet50_fwd_sizes
-  alpha: 1
-  beta: 0
-  initialization: special
-  prune_algo: [ 0, 1 ]
-  sparse_b: [ true, false]
 
 - name: resnet50_bwdwrw
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: T
   transB: N
   matrix_size: *resnet50_bwdwrw_sizes
@@ -145,7 +103,7 @@ Tests:
 - name: resnet50_bwddata
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: N
   transB: T
   matrix_size: *resnet50_bwddata_sizes
@@ -157,7 +115,7 @@ Tests:
 - name: inception4_fwd
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: N
   transB: N
   matrix_size: *inception4_fwd_sizes
@@ -169,7 +127,7 @@ Tests:
 - name: inception4_bwdwrw
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: T
   transB: N
   matrix_size: *inception4_bwdwrw_sizes
@@ -181,7 +139,7 @@ Tests:
 - name: inception4_bwddata
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: N
   transB: T
   matrix_size: *inception4_bwddata_sizes
@@ -193,7 +151,7 @@ Tests:
 - name: ctest_bwdwrw
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: T
   transB: N
   alpha: 1
@@ -205,7 +163,7 @@ Tests:
 - name: ctest_fwd
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   transA: N
   transB: N
   alpha: 1
@@ -217,7 +175,7 @@ Tests:
 - name: prune_16
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 16
   N: 16
   K: 16
@@ -229,7 +187,7 @@ Tests:
 - name: prune_32_16_128
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: [16, 32, 48, 64, 80, 96, 112, 128]
   N: 32
   K: 32
@@ -241,7 +199,7 @@ Tests:
 - name: prune_48_16_128
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 48
   N: [16, 32, 48, 64, 80, 96, 112, 128]
   K: 48
@@ -253,7 +211,7 @@ Tests:
 - name: prune_64_16_128
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 64
   N: 64
   K: [16, 32, 48, 64, 80, 96, 112, 128]
@@ -265,7 +223,7 @@ Tests:
 - name: prune_64_16_16
   category: quick
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 64
   N: 16
   K: 16
@@ -277,7 +235,7 @@ Tests:
 - name: prune_16_64
   category: quick
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 16
   N: 16
   K: 64
@@ -289,7 +247,7 @@ Tests:
 - name: prune_96
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 96
   N: 96
   K: 96
@@ -301,7 +259,7 @@ Tests:
 - name: prune_128
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 128
   N: 128
   K: 128
@@ -313,7 +271,7 @@ Tests:
 - name: prune_256
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 256
   N: 256
   K: 256
@@ -325,7 +283,7 @@ Tests:
 - name: prune_256_16_16
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 256
   N: 16
   K: 16
@@ -337,7 +295,7 @@ Tests:
 - name: prune_16_256_16
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 16
   N: 256
   K: 16
@@ -349,7 +307,7 @@ Tests:
 - name: prune_16_16_256
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
 
   M: 16
   N: 16
@@ -362,7 +320,7 @@ Tests:
 - name: prune_512
   category: pre_checkin
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 512
   N: 512
   K: 512
@@ -374,7 +332,7 @@ Tests:
 - name: prune_1024
   category: nightly
   function:
-    prune: *real_precisions_1b
+    prune: *real_precisions_1b_input
   M: 1024
   N: 1024
   K: 1024

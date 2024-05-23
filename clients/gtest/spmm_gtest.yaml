@@ -42,7 +42,6 @@ Tests:
     - spmm_bad_arg: *real_precisions_2b
   transA: N
   transB: N
-  fortran: [ false, true ]
 
 # Tests confirm no NaN propagation when alpha = 0, 2 and beta = 0. Value .NaN is converted into zero
 - {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *real_precisions_2b,
@@ -58,7 +57,16 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
-  bias_vector: [false, true]
+  sparse_b: [true, false]
+
+- name: spmm_small
+  category: quick
+  function:
+    spmm: *real_precisions_2b
+  matrix_size: *small_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha_beta: *alpha_beta_range
+  bias_vector: [true]
   bias_stride: [0, -1, 256]
   bias_type: [f32_r, f16_r]
   sparse_b: [true, false]

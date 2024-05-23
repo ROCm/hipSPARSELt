@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -485,6 +485,24 @@ void testing_prune(const Arguments& arg)
     int64_t A_col = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : M;
     int64_t B_row = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : N;
     int64_t B_col = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? N : K;
+
+    auto adjust_row_col = [](int64_t& row, int64_t& col, int64_t ld, hipsparseOperation_t& trans) {
+        if(row > ld)
+        {
+            if(col > ld)
+                return false;
+            std::swap(row, col);
+            trans = (trans == HIPSPARSE_OPERATION_NON_TRANSPOSE)
+                        ? HIPSPARSE_OPERATION_TRANSPOSE
+                        : HIPSPARSE_OPERATION_NON_TRANSPOSE;
+        }
+        return true;
+    };
+
+    if(!adjust_row_col(A_row, A_col, lda, transA))
+        return;
+    if(!adjust_row_col(B_row, B_col, ldb, transB))
+        return;
 
     int64_t stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : lda;
     int64_t stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda : 1;

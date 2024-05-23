@@ -1,6 +1,6 @@
 Spmm Matrix Batched Sizes:
   - &batched_algorithm_coverage_matrix_size_range
-    - { M:   128, N:    64, K:     8, lda:    64, ldb:    64, ldc:    64, ldd:    64 }
+    - { M:   128, N:    64, K:     8, lda:    64, ldb:    64, ldc:   129, ldd:   129 }
     - { M:    64, N:    32, K:     8, lda:    64, ldb:    65, ldc:    66, ldd:    66 }
     - { M:    32, N:    64, K:    16, lda:    65, ldb:    66, ldc:    67, ldd:    67 }
 
@@ -23,49 +23,49 @@ Spmm Matrix Batched Sizes:
     - { M:   784, N:   128, K:   512, lda:   784, ldb:   512, ldc:   784, ldd:   784 }
     - { M:   784, N:   512, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784 }
     - { M:   784, N:    64, K:   192, lda:   784, ldb:   192, ldc:   784, ldd:   784 }
-    - { M:   196, N:  1024, K:   256, lda:   196, ldb:  1024, ldc:   196, ldd:   196 }
-    - { M:   196, N:   256, K:  1024, lda:   196, ldb:   256, ldc:   196, ldd:   196 }
-    - { M:   196, N:   256, K:   256, lda:   196, ldb:   256, ldc:   196, ldd:   196 }
-    - { M:   196, N:   512, K:   192, lda:   196, ldb:   512, ldc:   196, ldd:   196 }
+    - { M:   192, N:  1024, K:   256, lda:   192, ldb:  1024, ldc:   192, ldd:   192 }
+    - { M:   192, N:   256, K:  1024, lda:   192, ldb:   256, ldc:   192, ldd:   192 }
+    - { M:   192, N:   256, K:   256, lda:   192, ldb:   256, ldc:   192, ldd:   192 }
+    - { M:   192, N:   512, K:   192, lda:   192, ldb:   512, ldc:   192, ldd:   192 }
     - { M:  3136, N:   256, K:    64, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136 }
     - { M:  3136, N:    64, K:   256, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136 }
-    - { M:    49, N:  2048, K:   512, lda:    49, ldb:  2048, ldc:    49, ldd:    49 }
-    - { M:    49, N:   512, K:  2048, lda:    49, ldb:   512, ldc:    49, ldd:    49 }
-    - { M:    49, N:   512, K:   512, lda:    49, ldb:   512, ldc:    49, ldd:    49 }
-    - { M:    49, N:   832, K:   256, lda:    49, ldb:   832, ldc:    49, ldd:    49 }
+    - { M:    48, N:  2048, K:   512, lda:    48, ldb:  2048, ldc:    48, ldd:    48 }
+    - { M:    48, N:   512, K:  2048, lda:    48, ldb:   512, ldc:    48, ldd:    48 }
+    - { M:    48, N:   512, K:   512, lda:    48, ldb:   512, ldc:    48, ldd:    48 }
+    - { M:    48, N:   832, K:   256, lda:    48, ldb:   832, ldc:    48, ldd:    48 }
     - { M:   784, N:   128, K:   512, lda:   784, ldb:   128, ldc:   784, ldd:   784 }
     - { M:   784, N:   192, K:    64, lda:   784, ldb:   192, ldc:   784, ldd:   784 }
     - { M:   784, N:   512, K:   128, lda:   784, ldb:   512, ldc:   784, ldd:   784 }
 
   - &batched_conv_resnet50_fwd
-    - { M:  3025, N:    64, K:   256, lda:  3025, ldb:   256, ldc:  3025, ldd:  3025 }
-    - { M:  3025, N:   256, K:    64, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025 }
+    - { M:  3024, N:    64, K:   256, lda:  3024, ldb:   256, ldc:  3024, ldd:  3024 }
+    - { M:  3024, N:   256, K:    64, lda:  3024, ldb:    64, ldc:  3024, ldd:  3024 }
 
   - &batched_conv_resnet50_bwddata
-    - { M:  3025, N:   256, K:    64, lda:  3025, ldb:   256, ldc:  3025, ldd:  3025 }
-    - { M:  3025, N:    64, K:   256, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025 }
-    - { M:  3025, N:    64, K:    64, lda:  3025, ldb:    64, ldc:  3025, ldd:  3025 }
+    - { M:  3024, N:   256, K:    64, lda:  3024, ldb:   256, ldc:  3024, ldd:  3024 }
+    - { M:  3024, N:    64, K:   256, lda:  3024, ldb:    64, ldc:  3024, ldd:  3024 }
+    - { M:  3024, N:    64, K:    64, lda:  3024, ldb:    64, ldc:  3024, ldd:  3024 }
     - { M:  3136, N:    64, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136 }
 
   - &batched_conv_inception4_fwd
-    - { M:  1225, N:   192, K:   384, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225 }
-    - { M:  1225, N:    64, K:   384, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225 }
-    - { M:  1225, N:    96, K:   384, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225 }
-    - { M:   289, N:   128, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:   289, N:   192, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:   289, N:   256, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:   289, N:   384, K:  1024, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:  5329, N:    64, K:   160, lda:  5329, ldb:   160, ldc:  5329, ldd:  5329 }
+    - { M:  1224, N:   192, K:   384, lda:  1224, ldb:   384, ldc:  1224, ldd:  1224 }
+    - { M:  1224, N:    64, K:   384, lda:  1224, ldb:   384, ldc:  1224, ldd:  1224 }
+    - { M:  1224, N:    96, K:   384, lda:  1224, ldb:   384, ldc:  1224, ldd:  1224 }
+    - { M:   288, N:   128, K:  1024, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:   288, N:   192, K:  1024, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:   288, N:   256, K:  1024, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:   288, N:   384, K:  1024, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:  5328, N:    64, K:   160, lda:  5328, ldb:   160, ldc:  5328, ldd:  5328 }
 
   - &batched_conv_inception4_bwddata
-    - { M:  1225, N:   384, K:   192, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225 }
-    - { M:  1225, N:   384, K:    64, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225 }
-    - { M:  1225, N:   384, K:    96, lda:  1225, ldb:   384, ldc:  1225, ldd:  1225 }
-    - { M:   289, N:  1024, K:   128, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:   289, N:  1024, K:   192, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:   289, N:  1024, K:   256, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:   289, N:  1024, K:   384, lda:   289, ldb:  1024, ldc:   289, ldd:   289 }
-    - { M:  5329, N:   160, K:    64, lda:  5329, ldb:   160, ldc:  5329, ldd:  5329 }
+    - { M:  1224, N:   384, K:   192, lda:  1224, ldb:   384, ldc:  1224, ldd:  1224 }
+    - { M:  1224, N:   384, K:    64, lda:  1224, ldb:   384, ldc:  1224, ldd:  1224 }
+    - { M:  1224, N:   384, K:    96, lda:  1224, ldb:   384, ldc:  1224, ldd:  1224 }
+    - { M:   288, N:  1024, K:   128, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:   288, N:  1024, K:   192, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:   288, N:  1024, K:   256, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:   288, N:  1024, K:   384, lda:   288, ldb:  1024, ldc:   288, ldd:   288 }
+    - { M:  5328, N:   160, K:    64, lda:  5328, ldb:   160, ldc:  5328, ldd:  5328 }
     - { M:    64, N:  1536, K:   256, lda:    64, ldb:  1536, ldc:    64, ldd:    64 }
     - { M:    64, N:  1536, K:   384, lda:    64, ldb:  1536, ldc:    64, ldd:    64 }
 
@@ -75,7 +75,7 @@ Spmm Matrix Batched Sizes:
     - { M:  3136, N:     8, K:   256, lda:  3136, ldb:   256, ldc:  3136, ldd:  3136 }
     - { M:  3136, N:     8, K:    64, lda:  3136, ldb:    64, ldc:  3136, ldd:  3136 }
     - { M: 32768, N:     8, K:   480, lda: 32768, ldb:   480, ldc: 32768, ldd: 32768 }
-    - { M:   729, N:     8, K:    64, lda:   729, ldb:    64, ldc:   729, ldd:   729 }
+    - { M:   728, N:     8, K:    64, lda:   728, ldb:    64, ldc:   728, ldd:   728 }
     - { M:   784, N:     8, K:   128, lda:   784, ldb:   128, ldc:   784, ldd:   784 }
     - { M:   784, N:     8, K:   192, lda:   784, ldb:   192, ldc:   784, ldd:   784 }
     - { M:   784, N:     8, K:   256, lda:   784, ldb:   256, ldc:   784, ldd:   784 }

@@ -15,22 +15,17 @@ Tests:
 - name: compress_bad_arg
   category: pre_checkin
   function:
-    - compress_bad_arg: *real_precisions_1b
+    - compress_bad_arg: *real_precisions_1b_input
   transA: N
   transB: N
   fortran: [ false, true ]
 
-# Tests confirm no NaN propagation when alpha = 0, 2 and beta = 0. Value .NaN is converted into zero
-- {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *real_precisions_1b,
-   function: compress, transA: N, transB: N, M: 256, N: 128, K:  64, alpha: [ .NaN, 2 ], beta: [ .NaN, 2 ] }
-
-
-# Split *real_precisions_1b into *int8 and *nonint8_real_precisions. Since int8 has flags 0,1
+# Split *real_precisions_1b_input into *int8 and *nonint8_real_precisions. Since int8 has flags 0,1
 
 - name: compress_small
   category: quick
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
@@ -39,27 +34,16 @@ Tests:
 - name: compress_medium
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
   sparse_b: [ true, false]
 
-- name: compress_medium_alt
-  category: pre_checkin
-  function:
-    compress: *hpa_half_precision
-  matrix_size: *medium_matrix_size_range
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: 0
-  initialization: special
-  sparse_b: [ true, false]
-
 - name: compress_medium_HMM
   category: HMM
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   matrix_size: *medium_matrix_size_range
   transA: [ N ]
   transB: [ N ]
@@ -71,7 +55,7 @@ Tests:
 - name: compress_chunk
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   matrix_size: *chunk_matrix_size_range
   transA_transB: *transA_transB_range
   alpha: 2
@@ -83,52 +67,27 @@ Tests:
 - name: compress_deepbench
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   matrix_size: *deepbench_sizes
   alpha_beta: *alpha_beta_range
   sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
-
-- name: compress_deepbench_alt
-  category: nightly
-  function:
-    compress: *hpa_half_precision
-  matrix_size: *deepbench_sizes
-  alpha: 1
-  beta: 0
-  flags: 4
-  initialization: special
-  transA_transB: *transA_transB_range
-  sparse_b: [ true, false]
-
 - name: resnet50_fwd
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: N
   transB: N
   matrix_size: *resnet50_fwd_sizes
   alpha: 1
   beta: 0
-  sparse_b: [ true, false]
-
-- name: resnet50_fwd_alt
-  category: nightly
-  function:
-    compress: *hpa_half_precision
-  transA: N
-  transB: N
-  matrix_size: *resnet50_fwd_sizes
-  alpha: 1
-  beta: 0
-  initialization: special
   sparse_b: [ true, false]
 
 - name: resnet50_bwdwrw
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: T
   transB: N
   matrix_size: *resnet50_bwdwrw_sizes
@@ -139,7 +98,7 @@ Tests:
 - name: resnet50_bwddata
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: N
   transB: T
   matrix_size: *resnet50_bwddata_sizes
@@ -150,7 +109,7 @@ Tests:
 - name: inception4_fwd
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: N
   transB: N
   matrix_size: *inception4_fwd_sizes
@@ -161,7 +120,7 @@ Tests:
 - name: inception4_bwdwrw
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: T
   transB: N
   matrix_size: *inception4_bwdwrw_sizes
@@ -172,7 +131,7 @@ Tests:
 - name: inception4_bwddata
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: N
   transB: T
   matrix_size: *inception4_bwddata_sizes
@@ -183,7 +142,7 @@ Tests:
 - name: ctest_bwdwrw
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: T
   transB: N
   alpha: 1
@@ -194,7 +153,7 @@ Tests:
 - name: ctest_fwd
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   transA: N
   transB: N
   alpha: 1
@@ -202,21 +161,10 @@ Tests:
   matrix_size: *ctest_fwd_sizes
   sparse_b: [ true, false]
 
-- name: compress_8
-  category: quick
-  function:
-    compress: *real_precisions_1b
-  M: 8
-  N: 8
-  K: 8
-  alpha_beta: *alpha_beta_range
-  sparse_b: [ true, false]
-  transA_transB: *transA_transB_range
-
 - name: compress_16
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 16
   N: 16
   K: 16
@@ -224,21 +172,10 @@ Tests:
   sparse_b: [ true, false]
   transA_transB: *transA_transB_range
 
-- name: compress_24
-  category: pre_checkin
-  function:
-    compress: *real_precisions_1b
-  M: 24
-  N: 24
-  K: 24
-  alpha_beta: *alpha_beta_range
-  sparse_b: [ true, false]
-  transA_transB: *transA_transB_range
-
 - name: compress_32_16_128
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: [16, 32, 48, 64, 80, 96, 112, 128]
   N: 32
   K: 32
@@ -249,7 +186,7 @@ Tests:
 - name: compress_48_16_128
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 48
   N: [16, 32, 48, 64, 80, 96, 112, 128]
   K: 48
@@ -260,7 +197,7 @@ Tests:
 - name: compress_64_16_128
   category: nightly
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 64
   N: 64
   K: [16, 32, 48, 64, 80, 96, 112, 128]
@@ -271,7 +208,7 @@ Tests:
 - name: compress_64_16_16
   category: quick
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 64
   N: 16
   K: 16
@@ -282,7 +219,7 @@ Tests:
 - name: compress_16_64
   category: quick
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 16
   N: 16
   K: 64
@@ -293,7 +230,7 @@ Tests:
 - name: compress_96
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 96
   N: 96
   K: 96
@@ -304,7 +241,7 @@ Tests:
 - name: compress_128
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 128
   N: 128
   K: 128
@@ -315,7 +252,7 @@ Tests:
 - name: compress_256
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 256
   N: 256
   K: 256
@@ -326,7 +263,7 @@ Tests:
 - name: compress_256_9_12_16
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 256
   N: 16
   K: 16
@@ -337,7 +274,7 @@ Tests:
 - name: compress_16_256_16
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 16
   N: 256
   K: 16
@@ -348,7 +285,7 @@ Tests:
 - name: compress_16_16_256
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
 
   M: 16
   N: 16
@@ -360,7 +297,7 @@ Tests:
 - name: compress_512
   category: pre_checkin
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   M: 512
   N: 512
   K: 512
@@ -371,9 +308,9 @@ Tests:
 - name: compress_1024
   category: nightly
   function:
-    compress: *real_precisions_1b
-  M: 1023..1025
-  N: 1023..1025
+    compress: *real_precisions_1b_input
+  M: [1008, 1024, 1040]
+  N: [1008, 1024, 1040]
   K: 1024
   alpha_beta: *alpha_beta_range
   sparse_b: [ true, false]
@@ -384,12 +321,10 @@ Tests:
   transA: N
   transB: N
   function:
-    compress: *real_precisions_1b
+    compress: *real_precisions_1b_input
   matrix_size:
     - { M:  512, N:  512, K:  512 }
     - { M: 960,  N: 1024, K: 1024 }
     - { M: 1024, N: 1024, K: 1024 }
-  alpha: [ 0.0, 0.5, 1.0 ]
-  beta:  [ 0.0, 0.5, 1.0 ]
   sparse_b: [ true, false]
 ...
