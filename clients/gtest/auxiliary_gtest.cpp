@@ -167,7 +167,10 @@ namespace
         {
             RocSparseLt_TestName<aux_test> name(arg.name);
 
-            name << hipsparselt_datatype_to_string(arg.a_type);
+            name << hipsparselt_datatype_to_string(arg.a_type)
+                 << hipsparselt_datatype_to_string(arg.b_type)
+                 << hipsparselt_datatype_to_string(arg.c_type)
+                 << hipsparselt_datatype_to_string(arg.d_type);
 
             return std::move(name);
         }
