@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -644,10 +644,10 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
     auto                  get_diff_datatype = [&](hipsparseLtDatatype_t type) {
         switch(type)
         {
-        case HIPSPARSELT_R_16F:
-            return HIPSPARSELT_R_16BF;
-        default:
+        case HIPSPARSELT_R_16BF:
             return HIPSPARSELT_R_16F;
+        default:
+            return HIPSPARSELT_R_16BF;
         }
     };
 
@@ -929,21 +929,20 @@ void testing_aux_matmul_set_get_bias_vector(const Arguments& arg)
     hipsparselt_init<float>(hBias_gold, M, 1, M, M, 1);
     CHECK_HIP_ERROR(dBias.transfer_from(hBias_gold));
 
-    void * _dBias = dBias;
+    void* _dBias = dBias;
 
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmulDescSetAttribute(
-            handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &_dBias, sizeof(void *)),
+            handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &_dBias, sizeof(void*)),
         HIPSPARSE_STATUS_SUCCESS);
 
-    void *dBias_r;
+    void* dBias_r;
     EXPECT_HIPSPARSE_STATUS(
         hipsparseLtMatmulDescGetAttribute(
-            handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &dBias_r, sizeof(void *)),
+            handle, matmul, HIPSPARSELT_MATMUL_BIAS_POINTER, &dBias_r, sizeof(void*)),
         HIPSPARSE_STATUS_SUCCESS);
 
-    CHECK_HIP_ERROR(
-        hipMemcpy(hBias, dBias_r, sizeof(float) * M, hipMemcpyDeviceToHost));
+    CHECK_HIP_ERROR(hipMemcpy(hBias, dBias_r, sizeof(float) * M, hipMemcpyDeviceToHost));
 
     unit_check_general<float>(M, 1, M, M, hBias_gold, hBias, 1);
 }
