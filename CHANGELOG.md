@@ -1,5 +1,11 @@
 # Change Log for hipSPARSELt
 
+## (Unreleased) hipSPARSELt 0.2.1
+
+### Changes
+
+* Refine test cases.
+
 ## (Unreleased) hipSPARSELt 0.2.0
 
 ### Additions
