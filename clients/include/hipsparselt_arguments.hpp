@@ -125,6 +125,11 @@ struct Arguments
 
     bool sparse_b;
     int  func_version;
+
+    char orderA;
+    char orderB;
+    char orderC;
+    char orderD;
     /*************************************************************************
      *                     End Of Arguments                                  *
      *************************************************************************/
@@ -187,8 +192,11 @@ struct Arguments
     OPER(search) SEP                 \
     OPER(search_iters) SEP           \
     OPER(sparse_b) SEP               \
-    OPER(func_version) SEP
-
+    OPER(func_version) SEP           \
+    OPER(orderA) SEP                 \
+    OPER(orderB) SEP                 \
+    OPER(orderC) SEP                 \
+    OPER(orderD) SEP
     // clang-format on
 
     // Validate input format.

@@ -108,6 +108,9 @@ namespace
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_'
                      << (arg.sparse_b ? arg.ldb : arg.lda);
 
+                name << '_' << (char)std::toupper(arg.orderA) << (char)std::toupper(arg.orderB)
+                     << (char)std::toupper(arg.orderC) << (char)std::toupper(arg.orderD);
+
                 if(strstr(arg.function, "_batched") != nullptr)
                     name << '_' << arg.batch_count;
 

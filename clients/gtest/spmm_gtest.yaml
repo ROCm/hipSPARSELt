@@ -146,6 +146,8 @@ Tests:
   alpha: 1
   beta: 0
   sparse_b: [true, false]
+  orderA: [C, R]
+  orderB: [C, R]
 
 - name: resnet50_fwd_alt
   category: nightly
@@ -290,7 +292,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   sparse_b: [true, false]
-  sparse_b: [true, false]
+
 
 - name: spmm_48_8_128
   category: nightly
@@ -301,7 +303,6 @@ Tests:
   K: 48
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
   sparse_b: [true, false]
 
 - name: spmm_64_8_128

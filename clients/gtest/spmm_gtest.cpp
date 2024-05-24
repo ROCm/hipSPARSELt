@@ -137,6 +137,9 @@ namespace
                      << arg.lda << '_' << arg.ldb << '_' << arg.beta << '_' << arg.ldc << '_'
                      << arg.ldd;
 
+                name << '_' << (char)std::toupper(arg.orderA) << (char)std::toupper(arg.orderB)
+                     << (char)std::toupper(arg.orderC) << (char)std::toupper(arg.orderD);
+
                 if(strstr(arg.function, "_batched") != nullptr)
                     name << '_' << arg.batch_count;
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # ########################################################################
-# Copyright (c) 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -235,21 +235,55 @@ def setdefaults(test):
         test.setdefault('ldc', 0)
         test.setdefault('ldd', 0)
     else: #catered to gemm default behaviour
-        test.setdefault('lda', (test['M'] if test['M'] != 0 else 1) if test['transA'].upper() == 'N'
-                        else test['K'] if test['K'] != 0 else 1)
-        test.setdefault('ldb', (test['K'] if test['K'] != 0 else 1) if test['transB'].upper() == 'N'
-                        else test['N'] if test['N'] != 0 else 1)
-        test.setdefault('ldc', test['M'] if test['M'] != 0 else 1)
-        test.setdefault('ldd', test['M'] if test['M'] != 0 else 1)
+        if test['orderA'].upper() == 'R':
+            test.setdefault('lda', (test['M'] if test['M'] != 0 else 1) if test['transA'].upper() == 'T'
+                            else test['K'] if test['K'] != 0 else 1)
+        else:
+            test.setdefault('lda', (test['M'] if test['M'] != 0 else 1) if test['transA'].upper() == 'N'
+                            else test['K'] if test['K'] != 0 else 1)
+        if test['orderB'].upper() == 'R':
+            test.setdefault('ldb', (test['K'] if test['K'] != 0 else 1) if test['transB'].upper() == 'T'
+                            else test['N'] if test['N'] != 0 else 1)
+        else:
+            test.setdefault('ldb', (test['K'] if test['K'] != 0 else 1) if test['transB'].upper() == 'N'
+                            else test['N'] if test['N'] != 0 else 1)
+        if test['orderC'].upper() == 'R':
+            test.setdefault('ldc', test['N'] if test['N'] != 0 else 1)
+        else:
+            test.setdefault('ldc', test['M'] if test['M'] != 0 else 1)
+
+        if test['orderD'].upper() == 'R':
+            test.setdefault('ldd', test['N'] if test['N'] != 0 else 1)
+        else:
+            test.setdefault('ldd', test['M'] if test['M'] != 0 else 1)
+
         if test['batch_count'] > 0:
-            test.setdefault('stride_a', test['lda'] *
-                            (test['K'] if test['transA'].upper() == 'N' else
-                             test['M']))
-            test.setdefault('stride_b', test['ldb'] *
-                            (test['N'] if test['transB'].upper() == 'N' else
-                             test['K']))
-            test.setdefault('stride_c', test['ldc'] * test['N'])
-            test.setdefault('stride_d', test['ldd'] * test['N'])
+            if test['orderA'].upper() == 'R':
+                test.setdefault('stride_a', test['lda'] *
+                                (test['K'] if test['transA'].upper() == 'T' else
+                                test['M']))
+            else:
+                test.setdefault('stride_a', test['lda'] *
+                                (test['K'] if test['transA'].upper() == 'N' else
+                                test['M']))
+            if test['orderA'].upper() == 'R':
+                test.setdefault('stride_b', test['ldb'] *
+                                (test['N'] if test['transB'].upper() == 'N' else
+                                test['K']))
+            else:
+                test.setdefault('stride_b', test['ldb'] *
+                                (test['N'] if test['transB'].upper() == 'T' else
+                                test['K']))
+
+            if test['orderC'].upper() == 'R':
+                test.setdefault('stride_c', test['ldc'] * test['M'])
+            else:
+                test.setdefault('stride_c', test['ldc'] * test['N'])
+
+            if test['orderD'].upper() == 'R':
+                test.setdefault('stride_d', test['ldd'] * test['M'])
+            else:
+                test.setdefault('stride_d', test['ldd'] * test['N'])
             return
 
     test.setdefault('stride_a', 0)

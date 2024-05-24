@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,9 +42,21 @@ CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipsparseOperation_t trans)
     }
 }
 
+CBLAS_ORDER HIPOrderToCBLASOrder(hipsparseOrder_t order)
+{
+    switch(order)
+    {
+    case HIPSPARSE_ORDER_COL:
+        return CblasColMajor;
+    case HIPSPARSE_ORDER_ROW:
+        return CblasRowMajor;
+    }
+}
+
 // gemm
 template <>
-void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOperation_t transA,
+void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOrder_t     order,
+                                                   hipsparseOperation_t transA,
                                                    hipsparseOperation_t transB,
                                                    int64_t              m,
                                                    int64_t              n,
@@ -52,19 +64,18 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOperation_t transA,
                                                    float                alpha,
                                                    const hip_bfloat16*  A,
                                                    int64_t              lda,
+                                                   int64_t              sizeA,
                                                    const hip_bfloat16*  B,
                                                    int64_t              ldb,
+                                                   int64_t              sizeB,
                                                    float                beta,
                                                    hip_bfloat16*        C,
                                                    int64_t              ldc,
+                                                   int64_t              sizeC,
                                                    bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
-
-    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
-    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
 
@@ -77,7 +88,7 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOperation_t transA,
 
     // just directly cast, since transA, transB are integers in the enum
     // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(CblasColMajor,
+    cblas_sgemm(HIPOrderToCBLASOrder(order),
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,
@@ -97,7 +108,8 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOperation_t transA,
 }
 
 template <>
-void cblas_gemm<hip_bfloat16, float, float>(hipsparseOperation_t transA,
+void cblas_gemm<hip_bfloat16, float, float>(hipsparseOrder_t     order,
+                                            hipsparseOperation_t transA,
                                             hipsparseOperation_t transB,
                                             int64_t              m,
                                             int64_t              n,
@@ -105,19 +117,18 @@ void cblas_gemm<hip_bfloat16, float, float>(hipsparseOperation_t transA,
                                             float                alpha,
                                             const hip_bfloat16*  A,
                                             int64_t              lda,
+                                            int64_t              sizeA,
                                             const hip_bfloat16*  B,
                                             int64_t              ldb,
+                                            int64_t              sizeB,
                                             float                beta,
                                             float*               C,
                                             int64_t              ldc,
+                                            int64_t              sizeC,
                                             bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
-
-    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
-    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
 
@@ -128,7 +139,7 @@ void cblas_gemm<hip_bfloat16, float, float>(hipsparseOperation_t transA,
 
     // just directly cast, since transA, transB are integers in the enum
     // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(CblasColMajor,
+    cblas_sgemm(HIPOrderToCBLASOrder(order),
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,
@@ -145,7 +156,8 @@ void cblas_gemm<hip_bfloat16, float, float>(hipsparseOperation_t transA,
 }
 
 template <>
-void cblas_gemm<__half, __half, float>(hipsparseOperation_t transA,
+void cblas_gemm<__half, __half, float>(hipsparseOrder_t     order,
+                                       hipsparseOperation_t transA,
                                        hipsparseOperation_t transB,
                                        int64_t              m,
                                        int64_t              n,
@@ -153,19 +165,18 @@ void cblas_gemm<__half, __half, float>(hipsparseOperation_t transA,
                                        float                alpha,
                                        const __half*        A,
                                        int64_t              lda,
+                                       int64_t              sizeA,
                                        const __half*        B,
                                        int64_t              ldb,
+                                       int64_t              sizeB,
                                        float                beta,
                                        __half*              C,
                                        int64_t              ldc,
+                                       int64_t              sizeC,
                                        bool                 alt)
 {
     // cblas does not support __half, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
-
-    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
-    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
 
@@ -190,7 +201,7 @@ void cblas_gemm<__half, __half, float>(hipsparseOperation_t transA,
 
     // just directly cast, since transA, transB are integers in the enum
     // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(CblasColMajor,
+    cblas_sgemm(HIPOrderToCBLASOrder(order),
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,
@@ -210,7 +221,8 @@ void cblas_gemm<__half, __half, float>(hipsparseOperation_t transA,
 }
 
 template <>
-void cblas_gemm<__half, float, float>(hipsparseOperation_t transA,
+void cblas_gemm<__half, float, float>(hipsparseOrder_t     order,
+                                      hipsparseOperation_t transA,
                                       hipsparseOperation_t transB,
                                       int64_t              m,
                                       int64_t              n,
@@ -218,18 +230,18 @@ void cblas_gemm<__half, float, float>(hipsparseOperation_t transA,
                                       float                alpha,
                                       const __half*        A,
                                       int64_t              lda,
+                                      int64_t              sizeA,
                                       const __half*        B,
                                       int64_t              ldb,
+                                      int64_t              sizeB,
                                       float                beta,
                                       float*               C,
                                       int64_t              ldc,
+                                      int64_t              sizeC,
                                       bool                 alt)
 {
     // cblas does not support __half, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
-
-    size_t sizeA = (transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? n : k) * size_t(ldb);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -250,7 +262,7 @@ void cblas_gemm<__half, float, float>(hipsparseOperation_t transA,
 
     // just directly cast, since transA, transB are integers in the enum
     // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(CblasColMajor,
+    cblas_sgemm(HIPOrderToCBLASOrder(order),
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,
@@ -267,7 +279,8 @@ void cblas_gemm<__half, float, float>(hipsparseOperation_t transA,
 }
 
 template <>
-void cblas_gemm<int8_t, int8_t, float>(hipsparseOperation_t transA,
+void cblas_gemm<int8_t, int8_t, float>(hipsparseOrder_t     order,
+                                       hipsparseOperation_t transA,
                                        hipsparseOperation_t transB,
                                        int64_t              m,
                                        int64_t              n,
@@ -275,11 +288,14 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseOperation_t transA,
                                        float                alpha,
                                        const int8_t*        A,
                                        int64_t              lda,
+                                       int64_t              sizeA,
                                        const int8_t*        B,
                                        int64_t              ldb,
+                                       int64_t              sizeB,
                                        float                beta,
                                        int8_t*              C,
                                        int64_t              ldc,
+                                       int64_t              sizeC,
                                        bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
@@ -287,10 +303,6 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseOperation_t transA,
     // floats, so convert to doubles and downcast result down to int32_t.
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
-
-    size_t const sizeA = ((transA == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
-    size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
     host_vector<double> B_double(sizeB);
@@ -304,7 +316,7 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseOperation_t transA,
         C_double[i] = static_cast<double>(C[i]);
 
     // just directly cast, since transA, transB are integers in the enum
-    cblas_dgemm(CblasColMajor,
+    cblas_dgemm(HIPOrderToCBLASOrder(order),
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,
@@ -330,7 +342,8 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseOperation_t transA,
 }
 
 template <>
-void cblas_gemm<int8_t, float, float>(hipsparseOperation_t transA,
+void cblas_gemm<int8_t, float, float>(hipsparseOrder_t     order,
+                                      hipsparseOperation_t transA,
                                       hipsparseOperation_t transB,
                                       int64_t              m,
                                       int64_t              n,
@@ -338,11 +351,14 @@ void cblas_gemm<int8_t, float, float>(hipsparseOperation_t transA,
                                       float                alpha,
                                       const int8_t*        A,
                                       int64_t              lda,
+                                      int64_t              sizeA,
                                       const int8_t*        B,
                                       int64_t              ldb,
+                                      int64_t              sizeB,
                                       float                beta,
                                       float*               C,
                                       int64_t              ldc,
+                                      int64_t              sizeC,
                                       bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
@@ -350,10 +366,6 @@ void cblas_gemm<int8_t, float, float>(hipsparseOperation_t transA,
     // floats, so convert to doubles and downcast result down to int32_t.
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
-
-    size_t const sizeA = ((transA == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
-    size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
     host_vector<double> B_double(sizeB);
@@ -367,7 +379,7 @@ void cblas_gemm<int8_t, float, float>(hipsparseOperation_t transA,
         C_double[i] = static_cast<double>(C[i]);
 
     // just directly cast, since transA, transB are integers in the enum
-    cblas_dgemm(CblasColMajor,
+    cblas_dgemm(HIPOrderToCBLASOrder(order),
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,
@@ -387,7 +399,8 @@ void cblas_gemm<int8_t, float, float>(hipsparseOperation_t transA,
 }
 
 template <>
-void cblas_gemm<int8_t, __half, float>(hipsparseOperation_t transA,
+void cblas_gemm<int8_t, __half, float>(hipsparseOrder_t     order,
+                                       hipsparseOperation_t transA,
                                        hipsparseOperation_t transB,
                                        int64_t              m,
                                        int64_t              n,
@@ -395,11 +408,14 @@ void cblas_gemm<int8_t, __half, float>(hipsparseOperation_t transA,
                                        float                alpha,
                                        const int8_t*        A,
                                        int64_t              lda,
+                                       int64_t              sizeA,
                                        const int8_t*        B,
                                        int64_t              ldb,
+                                       int64_t              sizeB,
                                        float                beta,
                                        __half*              C,
                                        int64_t              ldc,
+                                       int64_t              sizeC,
                                        bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
@@ -407,10 +423,6 @@ void cblas_gemm<int8_t, __half, float>(hipsparseOperation_t transA,
     // floats, so convert to doubles and downcast result down to int32_t.
     // NOTE: This will not properly account for 32-bit integer overflow, however
     //       the result should be acceptable for testing.
-
-    size_t const sizeA = ((transA == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k : m) * size_t(lda);
-    size_t const sizeB = ((transB == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n : k) * size_t(ldb);
-    size_t const sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
     host_vector<double> B_double(sizeB);
@@ -424,7 +436,7 @@ void cblas_gemm<int8_t, __half, float>(hipsparseOperation_t transA,
         C_double[i] = static_cast<double>(C[i]);
 
     // just directly cast, since transA, transB are integers in the enum
-    cblas_dgemm(CblasColMajor,
+    cblas_dgemm(HIPOrderToCBLASOrder(order),
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,
