@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -113,6 +113,9 @@ namespace
 
                 if(strstr(arg.function, "_strided_batched") != nullptr)
                     name << '_' << (arg.sparse_b ? arg.stride_b : arg.stride_a);
+
+                if(arg.func_version > 1)
+                    name << "_v" << arg.func_version;
             }
             return std::move(name);
         }

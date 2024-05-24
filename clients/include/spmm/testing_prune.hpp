@@ -440,11 +440,6 @@ template <typename Ti,
           hipsparselt_batch_type btype = hipsparselt_batch_type::none>
 void testing_prune(const Arguments& arg)
 {
-    int run_version = 1;
-
-    if(strstr(arg.name, "prune2") != nullptr)
-        run_version = 2;
-
     hipsparseLtPruneAlg_t prune_algo = hipsparseLtPruneAlg_t(arg.prune_algo);
 
     constexpr bool do_batched         = (btype == hipsparselt_batch_type::batched);
@@ -676,11 +671,11 @@ void testing_prune(const Arguments& arg)
 
     if(arg.unit_check || arg.norm_check)
     {
-        if(run_version == 1)
+        if(arg.func_version == 1)
             EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtSpMMAPrune(handle, matmul, dT, dT_pruned, prune_algo, stream),
                 HIPSPARSE_STATUS_SUCCESS);
-        else if(run_version == 2)
+        else if(arg.func_version == 2)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMAPrune2(handle,
                                                            arg.sparse_b ? matB : matA,
                                                            !arg.sparse_b,
@@ -699,11 +694,11 @@ void testing_prune(const Arguments& arg)
         device_vector<int> d_valid(1, 1, HMM);
         int                h_valid = 0;
         //check the pruned matrix is sparisty 50 or not.
-        if(run_version == 1)
+        if(arg.func_version == 1)
             EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtSpMMAPruneCheck(handle, matmul, dT_pruned, d_valid, stream),
                 HIPSPARSE_STATUS_SUCCESS);
-        else if(run_version == 2)
+        else if(arg.func_version == 2)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMAPruneCheck2(handle,
                                                                 arg.sparse_b ? matB : matA,
                                                                 !arg.sparse_b,

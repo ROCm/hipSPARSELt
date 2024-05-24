@@ -328,17 +328,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   sparse_b: [ true, false]
   transA_transB: *transA_transB_range
-
-- name: compress2_256_8_16
-  category: pre_checkin
-  function:
-    compress: *real_precisions_2b
-  M: 256
-  N: 8
-  K: 16
-  alpha_beta: *alpha_beta_range
-  sparse_b: [ true, false]
-  transA_transB: *transA_transB_range
+  func_version: [1, 2]
 
 - name: compress_16_256_8
   category: pre_checkin
@@ -350,18 +340,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   sparse_b: [ true, false]
   transA_transB: *transA_transB_range
-
-- name: compress2_16_256_8
-  category: pre_checkin
-  function:
-    compress: *real_precisions_2b
-  M: 16
-  N: 256
-  K: 8
-  alpha_beta: *alpha_beta_range
-  sparse_b: [ true, false]
-  transA_transB: *transA_transB_range
-
+  func_version: [1, 2]
 
 - name: compress_8_16_256
   category: pre_checkin
