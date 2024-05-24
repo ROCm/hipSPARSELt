@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,8 @@
 
 // gemm
 template <typename Ti, typename To, typename Tc>
-void cblas_gemm(hipsparseOperation_t   transA,
+void cblas_gemm(hipsparseOrder_t       order,
+                hipsparseOperation_t   transA,
                 hipsparseOperation_t   transB,
                 int64_t                m,
                 int64_t                n,
@@ -45,9 +46,12 @@ void cblas_gemm(hipsparseOperation_t   transA,
                 Tc                     alpha,
                 const Ti*              A,
                 int64_t                lda,
+                int64_t                sizeA,
                 const Ti*              B,
                 int64_t                ldb,
+                int64_t                sizeB,
                 Tc                     beta,
                 std::add_pointer_t<To> C,
                 int64_t                ldc,
+                int64_t                sizeC,
                 bool                   alt = false);

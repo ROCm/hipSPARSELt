@@ -154,10 +154,12 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     }
 
     // adjust dimension for GEMM routines
-    int64_t min_lda = arg.transA == 'N' ? arg.M : arg.K;
-    int64_t min_ldb = arg.transB == 'N' ? arg.K : arg.N;
-    int64_t min_ldc = arg.M;
-    int64_t min_ldd = arg.M;
+    int64_t min_lda = arg.transA == 'N' ? (arg.orderA == 'C' ? arg.M : arg.K)
+                                        : (arg.orderA == 'C' ? arg.K : arg.M);
+    int64_t min_ldb = arg.transB == 'N' ? (arg.orderB == 'C' ? arg.K : arg.N)
+                                        : (arg.orderB == 'C' ? arg.N : arg.K);
+    int64_t min_ldc = arg.orderC == 'C' ? arg.M : arg.N;
+    int64_t min_ldd = arg.orderD == 'C' ? arg.M : arg.N;
     if(arg.lda < min_lda)
     {
         hipsparselt_cout << "hipsparselt-bench INFO: lda < min_lda, set lda = " << min_lda
@@ -183,10 +185,14 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         arg.ldd = min_ldd;
     }
 
-    int64_t min_stride_a    = arg.lda * (arg.transA == 'N' ? arg.K : arg.M);
-    int64_t min_stride_b    = arg.ldb * (arg.transB == 'N' ? arg.N : arg.K);
-    int64_t min_stride_c    = arg.ldc * arg.N;
-    int64_t min_stride_d    = arg.ldd * arg.N;
+    int64_t min_stride_a = arg.lda
+                           * (arg.transA == 'N' ? (arg.orderA == 'C' ? arg.K : arg.M)
+                                                : (arg.orderA == 'C' ? arg.M : arg.K));
+    int64_t min_stride_b = arg.ldb
+                           * (arg.transB == 'N' ? (arg.orderB == 'C' ? arg.N : arg.K)
+                                                : (arg.orderB == 'C' ? arg.K : arg.N));
+    int64_t min_stride_c    = arg.ldc * (arg.orderC == 'C' ? arg.N : arg.M);
+    int64_t min_stride_d    = arg.ldd * (arg.orderD == 'C' ? arg.N : arg.M);
     int64_t min_bias_stride = arg.M;
 
     // force using min_stride when stride is -1
@@ -270,6 +276,7 @@ try
     std::string initialization;
     std::string filter;
     std::string activation_type;
+    char        order, order_a, order_b, order_c, order_d;
     int         device_id;
     int         flags             = 0;
     bool        datafile          = hipsparselt_parse_data(argc, argv);
@@ -468,6 +475,26 @@ try
          value<std::string>(&filter),
          "Simple strstr filter on function name only without wildcards")
 
+        ("order",
+         value<char>(&order)->default_value('C'),
+         "C = Column Major, R = Row Major")
+
+        ("order_a",
+         value<char>(&order_a)->default_value('C'),
+         "C = Column Major, R = Row Major")
+
+        ("order_b",
+         value<char>(&order_b)->default_value('C'),
+         "C = Column Major, R = Row Major")
+
+        ("order_c",
+         value<char>(&order_c)->default_value('C'),
+         "C = Column Major, R = Row Major")
+
+        ("order_d",
+         value<char>(&order_d)->default_value('C'),
+         "C = Column Major, R = Row Major")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");
@@ -586,6 +613,22 @@ try
     int copied = snprintf(arg.function, sizeof(arg.function), "%s", function.c_str());
     if(copied <= 0 || copied >= sizeof(arg.function))
         throw std::invalid_argument("Invalid value for --function");
+
+    if(order != 'C' && order != 'R')
+        throw std::invalid_argument("Invalid value for --order " + std::to_string(order));
+    if(order_a != 'C' && order_a != 'R')
+        throw std::invalid_argument("Invalid value for --order_a " + std::to_string(order_a));
+    if(order_b != 'C' && order_b != 'R')
+        throw std::invalid_argument("Invalid value for --order_b " + std::to_string(order_b));
+    if(order_c != 'C' && order_c != 'R')
+        throw std::invalid_argument("Invalid value for --order_c " + std::to_string(order_c));
+    if(order_c != 'C' && order_c != 'R')
+        throw std::invalid_argument("Invalid value for --order_d " + std::to_string(order_d));
+
+    arg.orderA = order != order_a ? order_a : order;
+    arg.orderB = order != order_b ? order_b : order;
+    arg.orderC = order != order_c ? order_c : order;
+    arg.orderD = order != order_d ? order_d : order;
 
     return run_bench_test(arg, filter, any_stride);
 }
