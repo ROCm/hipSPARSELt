@@ -377,14 +377,15 @@ void testing_prune_bad_arg(const Arguments& arg)
     hipsparselt_local_handle handle{arg};
     hipsparseLtHandle_t      handle_;
 
+    hipsparseOrder_t            order = HIPSPARSE_ORDER_COL;
     hipsparselt_local_mat_descr matA(
-        hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, HIPSPARSE_ORDER_COL);
+        hipsparselt_matrix_type_structured, handle, M, K, lda, arg.a_type, order);
     hipsparselt_local_mat_descr matB(
-        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, HIPSPARSE_ORDER_COL);
+        hipsparselt_matrix_type_dense, handle, K, N, ldb, arg.b_type, order);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, order);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, HIPSPARSE_ORDER_COL);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, order);
     hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
@@ -476,6 +477,11 @@ void testing_prune(const Arguments& arg)
     hipStream_t              stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
+    hipsparseOrder_t orderA = char_to_hipsparselt_order(arg.orderA);
+    hipsparseOrder_t orderB = char_to_hipsparselt_order(arg.orderB);
+    hipsparseOrder_t orderC = char_to_hipsparselt_order(arg.orderC);
+    hipsparseOrder_t orderD = char_to_hipsparselt_order(arg.orderD);
+
     int64_t A_row = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? M : K;
     int64_t A_col = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : M;
     int64_t B_row = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? K : N;
@@ -494,10 +500,26 @@ void testing_prune(const Arguments& arg)
         return true;
     };
 
-    if(!adjust_row_col(A_row, A_col, lda, transA))
-        return;
-    if(!adjust_row_col(B_row, B_col, ldb, transB))
-        return;
+    if(orderA == HIPSPARSE_ORDER_COL)
+    {
+        if(!adjust_row_col(A_row, A_col, lda, transA))
+            return;
+    }
+    else
+    {
+        if(!adjust_row_col(A_col, A_row, lda, transA))
+            return;
+    }
+    if(orderB == HIPSPARSE_ORDER_COL)
+    {
+        if(!adjust_row_col(B_row, B_col, ldb, transB))
+            return;
+    }
+    else
+    {
+        if(!adjust_row_col(B_col, B_row, ldb, transB))
+            return;
+    }
 
     int64_t stride_1_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? 1 : lda;
     int64_t stride_2_a = transA == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda : 1;
@@ -506,10 +528,18 @@ void testing_prune(const Arguments& arg)
     int64_t stride_2_b = transB == HIPSPARSE_OPERATION_NON_TRANSPOSE ? ldb : 1;
 
     int     num_batches = (do_batched || do_strided_batched ? arg.batch_count : 1);
-    int64_t stride_a    = do_strided_batched ? arg.stride_a : lda * A_col;
-    int64_t stride_b    = do_strided_batched ? arg.stride_b : ldb * B_col;
-    int64_t stride_c    = do_strided_batched ? arg.stride_c : ldc * M;
-    int64_t stride_d    = do_strided_batched ? arg.stride_d : ldd * M;
+    int64_t stride_a    = do_strided_batched              ? arg.stride_a
+                          : orderA == HIPSPARSE_ORDER_COL ? lda * A_col
+                                                          : lda * A_row;
+    int64_t stride_b    = do_strided_batched              ? arg.stride_b
+                          : orderB == HIPSPARSE_ORDER_COL ? ldb * B_col
+                                                          : ldb * B_row;
+    int64_t stride_c    = do_strided_batched              ? arg.stride_c
+                          : orderC == HIPSPARSE_ORDER_COL ? ldc * N
+                                                          : ldc * M;
+    int64_t stride_d    = do_strided_batched              ? arg.stride_d
+                          : orderD == HIPSPARSE_ORDER_COL ? ldd * N
+                                                          : ldd * M;
 
     hipsparselt_local_mat_descr matA(arg.sparse_b ? hipsparselt_matrix_type_dense
                                                   : hipsparselt_matrix_type_structured,
@@ -518,7 +548,7 @@ void testing_prune(const Arguments& arg)
                                      A_col,
                                      lda,
                                      arg.a_type,
-                                     HIPSPARSE_ORDER_COL);
+                                     orderA);
     hipsparselt_local_mat_descr matB(arg.sparse_b ? hipsparselt_matrix_type_structured
                                                   : hipsparselt_matrix_type_dense,
                                      handle,
@@ -526,31 +556,34 @@ void testing_prune(const Arguments& arg)
                                      B_col,
                                      ldb,
                                      arg.b_type,
-                                     HIPSPARSE_ORDER_COL);
+                                     orderB);
     hipsparselt_local_mat_descr matC(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, HIPSPARSE_ORDER_COL);
+        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, orderC);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldd, arg.d_type, HIPSPARSE_ORDER_COL);
+        hipsparselt_matrix_type_dense, handle, M, N, ldd, arg.d_type, orderD);
 
-    hipsparseStatus_t eStatus
-        = expected_hipsparse_status_of_matrix_size(arg.a_type, A_row, A_col, lda, !arg.sparse_b);
-    EXPECT_HIPSPARSE_STATUS(matA.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+    hipsparseStatus_t eStatusA = expected_hipsparse_status_of_matrix_size(
+        arg.a_type, A_row, A_col, lda, orderA, !arg.sparse_b);
+    EXPECT_HIPSPARSE_STATUS(matA.status(), eStatusA);
+    if(eStatusA != HIPSPARSE_STATUS_SUCCESS)
         return;
 
-    eStatus = expected_hipsparse_status_of_matrix_size(arg.b_type, B_row, B_col, ldb, arg.sparse_b);
-    EXPECT_HIPSPARSE_STATUS(matB.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+    hipsparseStatus_t eStatusB = expected_hipsparse_status_of_matrix_size(
+        arg.b_type, B_row, B_col, ldb, orderB, arg.sparse_b);
+    EXPECT_HIPSPARSE_STATUS(matB.status(), eStatusB);
+    if(eStatusB != HIPSPARSE_STATUS_SUCCESS)
         return;
 
-    eStatus = expected_hipsparse_status_of_matrix_size(arg.c_type, M, N, ldc);
-    EXPECT_HIPSPARSE_STATUS(matC.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+    hipsparseStatus_t eStatusC
+        = expected_hipsparse_status_of_matrix_size(arg.c_type, M, N, ldc, orderC);
+    EXPECT_HIPSPARSE_STATUS(matC.status(), eStatusC);
+    if(eStatusC != HIPSPARSE_STATUS_SUCCESS)
         return;
 
-    eStatus = expected_hipsparse_status_of_matrix_size(arg.d_type, M, N, ldd);
-    EXPECT_HIPSPARSE_STATUS(matD.status(), eStatus);
-    if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+    hipsparseStatus_t eStatusD
+        = expected_hipsparse_status_of_matrix_size(arg.d_type, M, N, ldd, orderD);
+    EXPECT_HIPSPARSE_STATUS(matD.status(), eStatusD);
+    if(eStatusD != HIPSPARSE_STATUS_SUCCESS)
         return;
 
     if(do_batched || do_strided_batched)
@@ -575,44 +608,48 @@ void testing_prune(const Arguments& arg)
 
     if(do_strided_batched)
     {
-        eStatus = expected_hipsparse_status_of_matrix_stride(stride_a, A_row, A_col, lda);
+        eStatusA = expected_hipsparse_status_of_matrix_stride(stride_a, A_row, A_col, lda, orderA);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
-            eStatus);
-        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            eStatusA);
+        if(eStatusA != HIPSPARSE_STATUS_SUCCESS)
             return;
-        eStatus = expected_hipsparse_status_of_matrix_stride(stride_b, B_row, B_col, ldb);
+        eStatusB = expected_hipsparse_status_of_matrix_stride(stride_b, B_row, B_col, ldb, orderB);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(int64_t)),
-            eStatus);
-        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            eStatusB);
+        if(eStatusB != HIPSPARSE_STATUS_SUCCESS)
             return;
-        eStatus = expected_hipsparse_status_of_matrix_stride(stride_c, M, N, ldc);
+        eStatusC = expected_hipsparse_status_of_matrix_stride(stride_c, M, N, ldc, orderC);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(int64_t)),
-            eStatus);
-        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            eStatusC);
+        if(eStatusC != HIPSPARSE_STATUS_SUCCESS)
             return;
-        eStatus = expected_hipsparse_status_of_matrix_stride(stride_d, M, N, ldd);
+        eStatusD = expected_hipsparse_status_of_matrix_stride(stride_d, M, N, ldd, orderD);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(int64_t)),
-            eStatus);
-        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            eStatusD);
+        if(eStatusD != HIPSPARSE_STATUS_SUCCESS)
             return;
     }
 
     hipsparselt_local_matmul_descr matmul(
         handle, transA, transB, matA, matB, matC, matD, arg.compute_type);
 
-    const size_t size_A           = stride_a == 0 ? A_col * lda : num_batches * stride_a;
+    const size_t size_A           = stride_a == 0
+                                        ? (orderA == HIPSPARSE_ORDER_COL ? A_col * lda : A_row * lda)
+                                        : num_batches * stride_a;
     const size_t size_A_copy      = arg.unit_check || arg.norm_check ? size_A : 0;
     const size_t size_A_norm_copy = prune_algo == HIPSPARSELT_PRUNE_SPMMA_TILE ? size_A_copy : 0;
 
-    const size_t size_B           = stride_b == 0 ? B_col * ldb : num_batches * stride_b;
+    const size_t size_B           = stride_b == 0
+                                        ? (orderB == HIPSPARSE_ORDER_COL ? B_col * ldb : B_row * ldb)
+                                        : num_batches * stride_b;
     const size_t size_B_copy      = arg.unit_check || arg.norm_check ? size_B : 0;
     const size_t size_B_norm_copy = prune_algo == HIPSPARSELT_PRUNE_SPMMA_TILE ? size_B_copy : 0;
 
@@ -635,15 +672,15 @@ void testing_prune(const Arguments& arg)
 
     if(!arg.sparse_b)
     {
-        T_row    = A_row;
-        T_col    = A_col;
+        T_row    = orderA == HIPSPARSE_ORDER_COL ? A_row : A_col;
+        T_col    = orderA == HIPSPARSE_ORDER_COL ? A_col : A_row;
         ldt      = lda;
         stride_t = stride_a;
     }
     else
     {
-        T_row    = B_row;
-        T_col    = B_col;
+        T_row    = orderB == HIPSPARSE_ORDER_COL ? B_row : B_col;
+        T_col    = orderB == HIPSPARSE_ORDER_COL ? B_col : B_row;
         ldt      = ldb;
         stride_t = stride_b;
     }
@@ -717,15 +754,15 @@ void testing_prune(const Arguments& arg)
         {
             row      = M;
             col      = K;
-            stride_1 = stride_1_a;
-            stride_2 = stride_2_a;
+            stride_1 = orderA == HIPSPARSE_ORDER_COL ? stride_1_a : stride_2_a;
+            stride_2 = orderA == HIPSPARSE_ORDER_COL ? stride_2_a : stride_1_a;
         }
         else
         {
             row      = N;
             col      = K;
-            stride_1 = stride_2_b;
-            stride_2 = stride_1_b;
+            stride_1 = orderB == HIPSPARSE_ORDER_COL ? stride_2_b : stride_1_b;
+            stride_2 = orderB == HIPSPARSE_ORDER_COL ? stride_1_b : stride_2_b;
         }
 
         // now we can recycle gold matrix for reference purposes

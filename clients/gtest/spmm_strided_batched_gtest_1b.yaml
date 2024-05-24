@@ -142,6 +142,8 @@ Tests:
   transB: N
   batch_count: 4
   sparse_b: [true, false]
+  orderA: [C, R]
+  orderB: [C, R]
 
 - name: spmm_strided_batched_conv_resnet50_bwddata
   category: nightly

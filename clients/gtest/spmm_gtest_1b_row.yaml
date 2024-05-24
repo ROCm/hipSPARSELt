@@ -1,7 +1,7 @@
 ---
 include: hipsparselt_common.yaml
 include: known_bugs.yaml
-include: spmm_common_16.yaml
+include: spmm_common_row.yaml
 
 Definitions:
   - &alpha_beta_range
@@ -58,7 +58,12 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
-  sparse_b: [true, false]
+  bias_vector: [false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_small
   category: quick
@@ -69,7 +74,11 @@ Tests:
   alpha_beta: *alpha_beta_range
   bias_vector: [true]
   bias_stride: [0, -1, 256]
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_medium
   category: pre_checkin
@@ -78,7 +87,11 @@ Tests:
   matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_medium_HMM
   category: HMM
@@ -90,7 +103,11 @@ Tests:
   alpha: 1
   beta: 1
   HMM: true
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_chunk
   category: pre_checkin
@@ -100,7 +117,11 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 2
   beta: 3
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 # Split *int8_half_single_precisions into *int8 and *half_single_precisions. Since int8 has flags 0,1
 
@@ -111,7 +132,11 @@ Tests:
   matrix_size: *deepbench_sizes
   alpha_beta: *deepbench_alpha_beta_range
   transA_transB: *deepbench_transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: resnet50_fwd
   category: nightly
@@ -122,9 +147,11 @@ Tests:
   matrix_size: *resnet50_fwd_sizes
   alpha: 1
   beta: 0
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
   orderA: [C, R]
   orderB: [C, R]
+  orderC: [R]
+  orderD: [R]
 
 - name: resnet50_bwdwrw
   category: nightly
@@ -135,7 +162,11 @@ Tests:
   matrix_size: *resnet50_bwdwrw_sizes
   alpha: 1
   beta: 1
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: resnet50_bwddata
   category: nightly
@@ -146,7 +177,11 @@ Tests:
   matrix_size: *resnet50_bwddata_sizes
   alpha: 1
   beta: 0
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: inception4_fwd
   category: nightly
@@ -157,7 +192,11 @@ Tests:
   matrix_size: *inception4_fwd_sizes
   alpha: 1
   beta: 0
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: inception4_bwdwrw
   category: nightly
@@ -168,7 +207,11 @@ Tests:
   matrix_size: *inception4_bwdwrw_sizes
   alpha: 1
   beta: 1
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: inception4_bwddata
   category: nightly
@@ -179,7 +222,11 @@ Tests:
   matrix_size: *inception4_bwddata_sizes
   alpha: 1
   beta: 0
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: ctest_bwdwrw
   category: nightly
@@ -190,7 +237,11 @@ Tests:
   alpha: 1
   beta: 1
   matrix_size: *ctest_bwdwrw_sizes
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: ctest_fwd
   category: nightly
@@ -201,7 +252,11 @@ Tests:
   alpha: 1
   beta: 0
   matrix_size: *ctest_fwd_sizes
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_16
   category: pre_checkin
@@ -211,7 +266,11 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_algo
   category: pre_checkin
@@ -223,7 +282,11 @@ Tests:
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
   spmm_algo: [ 0, 1 ]
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_32_16_128
   category: nightly
@@ -234,7 +297,11 @@ Tests:
   K: 32
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_48_16_128
   category: nightly
@@ -245,7 +312,11 @@ Tests:
   K: 48
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_64_16_128
   category: nightly
@@ -256,7 +327,11 @@ Tests:
   K: [16, 32, 48, 64, 80, 96, 112, 128]
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_64_16_16
   category: quick
@@ -267,7 +342,11 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_16_64
   category: quick
@@ -278,7 +357,11 @@ Tests:
   K: 64
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_96
   category: pre_checkin
@@ -289,7 +372,11 @@ Tests:
   K: 96
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_128
   category: pre_checkin
@@ -300,7 +387,11 @@ Tests:
   K: 128
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_256
   category: pre_checkin
@@ -311,7 +402,11 @@ Tests:
   K: 256
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_256_16_16
   category: pre_checkin
@@ -322,7 +417,11 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_16_256_16
   category: pre_checkin
@@ -333,7 +432,11 @@ Tests:
   K: 16
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_9_12_13_16_256
   category: pre_checkin
@@ -345,7 +448,11 @@ Tests:
   K: 256
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_512
   category: pre_checkin
@@ -356,7 +463,11 @@ Tests:
   K: 512
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_1024
   category: nightly
@@ -367,7 +478,11 @@ Tests:
   K: 1024
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_bf16
   category: quick
@@ -384,7 +499,11 @@ Tests:
     - { M: 4096, N: 4096, K: 4096 }
     - { M:  960, N: 1024, K: 1024 }
     - { M: 3840, N: 4096, K: 4096 }
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_small2
   category: pre_checkin
@@ -398,7 +517,11 @@ Tests:
     - { M: 1024, N: 1024, K: 1024 }
   alpha: [ 0.0, 0.5, 1.0 ]
   beta:  [ 0.0, 0.5, 1.0 ]
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_128_activation
   category: pre_checkin
@@ -411,7 +534,11 @@ Tests:
   transB: N
   alpha: 1
   beta: 0
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_128_activation_leakyrelu
   category: pre_checkin
@@ -426,7 +553,11 @@ Tests:
   beta: 0
   activation_type: [leakyrelu, gelu]
   activation_arg1 : [-1.0, 0.0, 0.5, 1.0]
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 
 - name: spmm_128_activation_clippedrelu
   category: pre_checkin
@@ -442,5 +573,9 @@ Tests:
   activation_type: clippedrelu
   activation_arg1 : [-1.0, 0.0, 0.5]
   activation_arg2 : [-1.0, 0.0, 0.5, 1.0, 3.0]
-  sparse_b: [true, false]
+  sparse_b: [ true, false]
+  orderA: [R]
+  orderB: [R]
+  orderC: [R]
+  orderD: [R]
 ...

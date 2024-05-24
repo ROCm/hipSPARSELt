@@ -104,13 +104,6 @@ void testing_aux_mat_init_dense_bad_arg(const Arguments& arg)
             handle_, &m_descr, row, col, ld, 17, arg.a_type, HIPSPARSE_ORDER_COL),
         HIPSPARSE_STATUS_NOT_SUPPORTED);
 #endif
-
-#ifdef __HIP_PLATFORM_AMD__
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtDenseDescriptorInit(
-            handle_, &m_descr, row, col, ld, 16, arg.a_type, HIPSPARSE_ORDER_ROW),
-        HIPSPARSE_STATUS_NOT_SUPPORTED);
-#endif
 }
 
 void testing_aux_mat_init_structured_bad_arg(const Arguments& arg)
@@ -243,19 +236,6 @@ void testing_aux_mat_init_structured_bad_arg(const Arguments& arg)
                                                                 17,
                                                                 arg.a_type,
                                                                 HIPSPARSE_ORDER_COL,
-                                                                HIPSPARSELT_SPARSITY_50_PERCENT),
-                            HIPSPARSE_STATUS_NOT_SUPPORTED);
-#endif
-
-#ifdef __HIP_PLATFORM_AMD__
-    EXPECT_HIPSPARSE_STATUS(hipsparseLtStructuredDescriptorInit(handle,
-                                                                &m_descr,
-                                                                row,
-                                                                col,
-                                                                ld,
-                                                                16,
-                                                                arg.a_type,
-                                                                HIPSPARSE_ORDER_ROW,
                                                                 HIPSPARSELT_SPARSITY_50_PERCENT),
                             HIPSPARSE_STATUS_NOT_SUPPORTED);
 #endif
