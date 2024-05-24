@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -455,6 +455,10 @@ try
         ("sparse_b",
          bool_switch(&arg.sparse_b)->default_value(false),
          "Structurted Sparsity Matrix B (A is Dense Matrix)")
+
+        ("func_version",
+         value<int32_t>(&arg.func_version)->default_value(1),
+         "Specify the API version of Prune/Compress's function")
 
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
