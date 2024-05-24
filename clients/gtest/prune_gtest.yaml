@@ -352,18 +352,7 @@ Tests:
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
   sparse_b: [ true, false]
-
-- name: prune2_256_8_16
-  category: pre_checkin
-  function:
-    prune: *real_precisions_2b
-  M: 256
-  N: 8
-  K: 16
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
-  prune_algo: [ 0, 1 ]
-  sparse_b: [ true, false]
+  func_version: [1, 2]
 
 - name: prune_16_256_8
   category: pre_checkin
@@ -376,18 +365,7 @@ Tests:
   transA_transB: *transA_transB_range
   prune_algo: [ 0, 1 ]
   sparse_b: [ true, false]
-
-- name: prune2_16_256_8
-  category: pre_checkin
-  function:
-    prune: *real_precisions_2b
-  M: 16
-  N: 256
-  K: 8
-  alpha_beta: *alpha_beta_range
-  transA_transB: *transA_transB_range
-  prune_algo: [ 0, 1 ]
-  sparse_b: [ true, false]
+  func_version: [1, 2]
 
 - name: prune_8_16_256
   category: pre_checkin

@@ -41,16 +41,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   batch_count: [ 3 ]
   sparse_b: [ true, false]
-
-- name: compress2_strided_batched_medium
-  category: pre_checkin
-  function:
-    compress_strided_batched: *real_precisions_1b_input
-  matrix_size: *strided_batched_medium_matrix_size_range
-  transA_transB: *transA_transB_range
-  alpha_beta: *alpha_beta_range
-  batch_count: [ 3 ]
-  sparse_b: [ true, false]
+  func_version: [1, 2]
 
 - name: compress_strided_batched_medium_stride_zero
   category: nightly

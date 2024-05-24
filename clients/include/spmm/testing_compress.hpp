@@ -311,10 +311,6 @@ template <typename Ti,
           hipsparselt_batch_type btype = hipsparselt_batch_type::none>
 void testing_compress(const Arguments& arg)
 {
-    int run_version = 1;
-    if(strstr(arg.name, "compress2") != nullptr)
-        run_version = 2;
-
     hipsparseOperation_t transA = char_to_hipsparselt_operation(arg.transA);
     hipsparseOperation_t transB = char_to_hipsparselt_operation(arg.transB);
 
@@ -477,13 +473,13 @@ void testing_compress(const Arguments& arg)
 
     hipsparseLtMatmulGetWorkspace(handle, plan, &workspace_size);
 
-    if(run_version == 1)
+    if(arg.func_version == 1)
     {
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtSpMMACompressedSize(handle, plan, &compressed_size, &compress_buffer_size),
             HIPSPARSE_STATUS_SUCCESS);
     }
-    else if(run_version == 2)
+    else if(arg.func_version == 2)
     {
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtSpMMACompressedSize2(
@@ -552,14 +548,14 @@ void testing_compress(const Arguments& arg)
     // copy data from CPU to device
     CHECK_HIP_ERROR(dT.transfer_from(hT));
 
-    if(run_version == 1)
+    if(arg.func_version == 1)
     {
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtSpMMAPrune(
                 handle, matmul, dT, dT, hipsparseLtPruneAlg_t(arg.prune_algo), stream),
             HIPSPARSE_STATUS_SUCCESS);
     }
-    else if(run_version == 2)
+    else if(arg.func_version == 2)
     {
         EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMAPrune2(handle,
                                                        arg.sparse_b ? matB : matA,
@@ -619,11 +615,11 @@ void testing_compress(const Arguments& arg)
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(hT_pruned.transfer_from(dT));
 
-        if(run_version == 1)
+        if(arg.func_version == 1)
             EXPECT_HIPSPARSE_STATUS(
                 hipsparseLtSpMMACompress(handle, plan, dT, dT_compressd, dT_compressBuffer, stream),
                 HIPSPARSE_STATUS_SUCCESS);
-        else if(run_version == 2)
+        else if(arg.func_version == 2)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress2(handle,
                                                               arg.sparse_b ? matB : matA,
                                                               !arg.sparse_b,
