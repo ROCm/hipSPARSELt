@@ -6,13 +6,11 @@ on:
     - develop
     - master
     - 'docs/*'
-    - 'roc**'
   pull_request:
     branches: 
     - develop
     - master
     - 'docs/*'
-    - 'roc**'
 
 jobs:
   call-workflow-passing-data:
