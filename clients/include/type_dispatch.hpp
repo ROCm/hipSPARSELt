@@ -120,6 +120,11 @@ auto hipsparselt_spmm_dispatch(const Arguments& arg)
         {
             return TEST<int8_t, __half, int32_t, float>{}(arg);
         }
+        else if(Ti == HIP_R_8I && To == HIP_R_16BF && Tc == HIPSPARSELT_COMPUTE_32I
+                && TBias == HIP_R_32F)
+        {
+            return TEST<int8_t, hip_bfloat16, int32_t, float>{}(arg);
+        }
     }
     return TEST<void>{}(arg);
 }

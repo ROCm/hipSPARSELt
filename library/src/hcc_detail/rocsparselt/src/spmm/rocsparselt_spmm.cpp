@@ -482,5 +482,7 @@ rocsparselt_status ConstructRocSparseLtProblem(const char*                      
 GENERATE_DEFINITIONS(__half, __half, float)
 GENERATE_DEFINITIONS(hip_bfloat16, hip_bfloat16, float)
 GENERATE_DEFINITIONS(int8_t, int8_t, float)
+GENERATE_DEFINITIONS(int8_t, __half, float)
+GENERATE_DEFINITIONS(int8_t, hip_bfloat16, float)
 
 #undef GENERATE_DEFINITIONS

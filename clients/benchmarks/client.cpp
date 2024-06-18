@@ -99,6 +99,8 @@ struct perf_sparse<
 #endif
         || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})
         || (std::is_same<Ti, int8_t>{} && (std::is_same<To, __half>{})
+            && std::is_same<Tc, int32_t>{})
+        || (std::is_same<Ti, int8_t>{} && (std::is_same<To, hip_bfloat16>{})
             && std::is_same<Tc, int32_t>{})>> : hipsparselt_test_valid
 {
     void operator()(const Arguments& arg)
