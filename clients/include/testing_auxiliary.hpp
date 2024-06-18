@@ -651,14 +651,17 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
         HIPSPARSE_STATUS_NOT_SUPPORTED);
 
 #ifdef __HIP_PLATFORM_AMD__
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulDescriptorInit(
-            handle, &m_descr, opA, opB, matA, matB, matC_, matD, arg.compute_type),
-        HIPSPARSE_STATUS_NOT_SUPPORTED);
-    EXPECT_HIPSPARSE_STATUS(
-        hipsparseLtMatmulDescriptorInit(
-            handle, &m_descr, opA, opB, matA, matB, matC, matD_, arg.compute_type),
-        HIPSPARSE_STATUS_NOT_SUPPORTED);
+    if(arg.a_type != HIP_R_8I)
+    {
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescriptorInit(
+                handle, &m_descr, opA, opB, matA, matB, matC_, matD, arg.compute_type),
+            HIPSPARSE_STATUS_NOT_SUPPORTED);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescriptorInit(
+                handle, &m_descr, opA, opB, matA, matB, matC, matD_, arg.compute_type),
+            HIPSPARSE_STATUS_NOT_SUPPORTED);
+    }
 #endif
 }
 

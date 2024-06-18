@@ -329,7 +329,9 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
         break;
     case HIP_R_8I:
         // I8/I8/I and I8/H/I
-        if(type_a != type_b || type_c != type_d || (type_a != type_d && type_d != HIP_R_16F))
+        if(type_a != type_b || type_c != type_d
+           || (type_a != type_d && !((type_d == HIP_R_16F) || (type_d == HIP_R_16BF))))
+
         {
             log_error(handle, __func__, "datatype of matrices are inconsistent");
             return rocsparselt_status_not_implemented;
