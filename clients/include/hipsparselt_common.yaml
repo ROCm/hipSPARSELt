@@ -53,6 +53,8 @@ Real precisions: &real_precisions
     { a_type:  i8_r, b_type:  i8_r, c_type: i8_r, d_type: i8_r, compute_type: c_i32_r }
   - &hpa_int8_half_precision
     { a_type:  i8_r, b_type:  i8_r, c_type: f16_r, d_type: f16_r, compute_type: c_i32_r }
+  - &hpa_int8_bf16_precision
+    { a_type:  i8_r, b_type:  i8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_i32_r }
 
 Real precisions 2 bytes: &real_precisions_2b
   - *hpa_half_precision
@@ -61,6 +63,7 @@ Real precisions 2 bytes: &real_precisions_2b
 Real precisions 1 bytes: &real_precisions_1b
   - *hpa_int8_precision
   - *hpa_int8_half_precision
+  - *hpa_int8_bf16_precision
 
 Real precisions 1 bytes for input: &real_precisions_1b_input
   - *hpa_int8_precision
