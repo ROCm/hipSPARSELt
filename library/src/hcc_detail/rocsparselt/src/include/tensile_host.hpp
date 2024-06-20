@@ -106,7 +106,7 @@ struct RocsparseltContractionProblem
     float                       act_arg1;
     const void*                 bias_vector;
     int64_t                     bias_stride;
-    rocsparselt_datatype        bias_type;
+    hipDataType                 bias_type;
 
     void*  workspace;
     size_t workspaceSize;
@@ -149,7 +149,7 @@ struct RocsparseltContractionProblem
                                   float                       act_arg1,
                                   const void*                 bias_vector,
                                   int64_t                     bias_stride,
-                                  rocsparselt_datatype        bias_type,
+                                  hipDataType                 bias_type,
                                   void*                       workspace,
                                   size_t                      workspaceSize,
                                   hipStream_t*                streams,
@@ -244,7 +244,7 @@ struct RocsparseltContractionProblem
                                   float                       act_arg1,
                                   const void*                 bias_vector,
                                   int64_t                     bias_stride,
-                                  rocsparselt_datatype        bias_type,
+                                  hipDataType                 bias_type,
                                   void*                       workspace,
                                   size_t                      workspaceSize,
                                   hipStream_t*                streams,
@@ -340,7 +340,7 @@ struct RocsparseltContractionProblem
                                   float                       act_arg1,
                                   const void*                 bias_vector,
                                   int64_t                     bias_stride,
-                                  rocsparselt_datatype        bias_type,
+                                  hipDataType                 bias_type,
                                   void*                       workspace,
                                   size_t                      workspaceSize,
                                   hipStream_t*                streams,
@@ -466,7 +466,7 @@ struct RocsparseltContractionProblem
                             "bias_stride",
                             prob.bias_stride,
                             "bias_type",
-                            rocsparselt_datatype_to_string(prob.bias_type)));
+                            hipDataType_to_string(prob.bias_type)));
     };
 };
 

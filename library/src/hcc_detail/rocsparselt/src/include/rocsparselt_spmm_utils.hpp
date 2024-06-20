@@ -64,24 +64,24 @@ inline rocsparselt_status getOriginalSizes(rocsparselt_operation opA,
 /*******************************************************************************
  * Get the offset of the metatdata (in bytes)
  ******************************************************************************/
-inline int64_t rocsparselt_metadata_offset_in_compressed_matrix(int64_t              num_cols,
-                                                                int64_t              ld,
-                                                                int                  num_batches,
-                                                                rocsparselt_datatype type)
+inline int64_t rocsparselt_metadata_offset_in_compressed_matrix(int64_t     num_cols,
+                                                                int64_t     ld,
+                                                                int         num_batches,
+                                                                hipDataType type)
 {
     int64_t batch_stride = ld * num_cols;
 
     auto datatype_bpe = [&] {
         switch(type)
         {
-        case rocsparselt_datatype_f32_r:
+        case HIP_R_32F:
             return 4;
-        case rocsparselt_datatype_f16_r:
-        case rocsparselt_datatype_bf16_r:
+        case HIP_R_16F:
+        case HIP_R_16BF:
             return 2;
-        case rocsparselt_datatype_f8_r:
-        case rocsparselt_datatype_bf8_r:
-        case rocsparselt_datatype_i8_r:
+        case HIP_R_8F_E4M3_FNUZ:
+        case HIP_R_8F_E5M2_FNUZ:
+        case HIP_R_8I:
             return 1;
         default:
             return 0;
@@ -155,7 +155,7 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
                                              int64_t                    num_cols,
                                              int64_t                    ld,
                                              uint32_t                   alignment,
-                                             rocsparselt_datatype       valueType,
+                                             hipDataType                valueType,
                                              rocsparselt_order          order,
                                              rocsparselt_matrix_type    matrixType)
 {
@@ -174,9 +174,9 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     int num_elements = 8;
     switch(valueType)
     {
-    case rocsparselt_datatype_i8_r:
-    case rocsparselt_datatype_f8_r:
-    case rocsparselt_datatype_bf8_r:
+    case HIP_R_8I:
+    case HIP_R_8F_E4M3_FNUZ:
+    case HIP_R_8F_E5M2_FNUZ:
         num_elements = 16;
         break;
     default:
@@ -221,13 +221,13 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
     //TODO should support other datatype in the future.
     switch(valueType)
     {
-    case rocsparselt_datatype_f16_r:
-    case rocsparselt_datatype_bf16_r:
-    case rocsparselt_datatype_i8_r:
+    case HIP_R_16F:
+    case HIP_R_16BF:
+    case HIP_R_8I:
         break;
     default:
-        hipsparselt_cerr << "datatype (" << rocsparselt_datatype_to_string(valueType)
-                         << ") is not supported" << std::endl;
+        hipsparselt_cerr << "datatype (" << hipDataType_to_string(valueType) << ") is not supported"
+                         << std::endl;
         log_error(handle, __func__, "datatype is not supported");
         return rocsparselt_status_not_implemented;
     }
@@ -252,10 +252,10 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
                                                   int64_t                    num_rows_d,
                                                   int64_t                    num_cols_d,
                                                   int64_t                    ldd,
-                                                  rocsparselt_datatype       type_a,
-                                                  rocsparselt_datatype       type_b,
-                                                  rocsparselt_datatype       type_c,
-                                                  rocsparselt_datatype       type_d,
+                                                  hipDataType                type_a,
+                                                  hipDataType                type_b,
+                                                  hipDataType                type_c,
+                                                  hipDataType                type_d,
                                                   rocsparselt_compute_type   compute_type,
                                                   rocsparselt_matrix_type    matrix_type_a,
                                                   rocsparselt_matrix_type    matrix_type_b,
@@ -312,25 +312,24 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
 
     switch(type_a)
     {
-    case rocsparselt_datatype_bf16_r:
-    case rocsparselt_datatype_f16_r:
+    case HIP_R_16BF:
+    case HIP_R_16F:
         if(!(type_a == type_b && type_a == type_c && type_a == type_d))
         {
             log_error(handle, __func__, "datatype of matrices are inconsistent");
             return rocsparselt_status_not_implemented;
         }
-    case rocsparselt_datatype_f8_r:
-    case rocsparselt_datatype_bf8_r:
+    case HIP_R_8F_E4M3_FNUZ:
+    case HIP_R_8F_E5M2_FNUZ:
         if(compute_type != rocsparselt_compute_f32)
         {
             log_error(handle, __func__, "computType must be f32");
             return rocsparselt_status_not_implemented;
         }
         break;
-    case rocsparselt_datatype_i8_r:
+    case HIP_R_8I:
         // I8/I8/I and I8/H/I
-        if(type_a != type_b || type_c != type_d
-           || (type_a != type_d && type_d != rocsparselt_datatype_f16_r))
+        if(type_a != type_b || type_c != type_d || (type_a != type_d && type_d != HIP_R_16F))
         {
             log_error(handle, __func__, "datatype of matrices are inconsistent");
             return rocsparselt_status_not_implemented;
@@ -342,11 +341,7 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
         }
         break;
     default:
-        log_error(handle,
-                  __func__,
-                  "datatype",
-                  rocsparselt_datatype_to_string(type_a),
-                  "is not supported");
+        log_error(handle, __func__, "datatype", hipDataType_to_string(type_a), "is not supported");
         return rocsparselt_status_not_implemented;
     }
 

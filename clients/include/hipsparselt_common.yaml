@@ -1,14 +1,14 @@
 # Data types are defined as either aliases to Python-recognized ctypes,
 # or enums defined with c_int base clases and attributes.
 Datatypes:
-  - hipsparseLtDatatype_t:
+  - hipDataType:
       bases: [ c_int ]
       attr:
-        none: 0
-        f16_r: 150
-        f32_r: 151
-        i8_r: 160
-        bf16_r: 168
+        default: 0
+        f16_r: 2
+        f32_r: 0
+        i8_r: 3
+        bf16_r: 14
   - hipsparseLtComputetype_t:
       bases: [ c_int ]
       attr:
@@ -98,10 +98,10 @@ Arguments:
   - algo: c_uint32
   - solution_index: c_int32
   - prune_algo: c_uint32
-  - a_type: hipsparseLtDatatype_t
-  - b_type: hipsparseLtDatatype_t
-  - c_type: hipsparseLtDatatype_t
-  - d_type: hipsparseLtDatatype_t
+  - a_type: hipDataType
+  - b_type: hipDataType
+  - c_type: hipDataType
+  - d_type: hipDataType
   - compute_type: hipsparseLtComputetype_t
   - initialization: hipsparselt_initialization
   - pad: c_uint32
@@ -118,7 +118,7 @@ Arguments:
   - activation_arg2: c_float
   - bias_vector: c_bool
   - bias_stride: c_int64
-  - bias_type: hipsparseLtDatatype_t
+  - bias_type: hipDataType
   - c_noalias_d: c_bool
   - HMM: c_bool
   - search: c_bool

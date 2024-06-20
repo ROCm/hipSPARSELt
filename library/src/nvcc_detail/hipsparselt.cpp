@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -113,20 +113,20 @@ hipsparseStatus_t hipCUSPARSEStatusToHIPStatus(cusparseStatus_t cuStatus)
 #endif
 }
 
-cudaDataType HIPDatatypeToCuSparseLtDatatype(hipsparseLtDatatype_t type)
+cudaDataType HIPDatatypeToCuSparseLtDatatype(hipDataType type)
 {
     switch(type)
     {
-    case HIPSPARSELT_R_32F:
+    case HIP_R_32F:
         return CUDA_R_32F;
 
-    case HIPSPARSELT_R_16BF:
+    case HIP_R_16BF:
         return CUDA_R_16BF;
 
-    case HIPSPARSELT_R_16F:
+    case HIP_R_16F:
         return CUDA_R_16F;
 
-    case HIPSPARSELT_R_8I:
+    case HIP_R_8I:
         return CUDA_R_8I;
 
     default:
@@ -134,21 +134,21 @@ cudaDataType HIPDatatypeToCuSparseLtDatatype(hipsparseLtDatatype_t type)
     }
 }
 
-hipsparseLtDatatype_t CuSparseLtDatatypeToHIPDatatype(cudaDataType type)
+hipDataType CuSparseLtDatatypeToHIPDatatype(cudaDataType type)
 {
     switch(type)
     {
     case CUDA_R_32F:
-        return HIPSPARSELT_R_32F;
+        return HIP_R_32F;
 
     case CUDA_R_16BF:
-        return HIPSPARSELT_R_16BF;
+        return HIP_R_16BF;
 
     case CUDA_R_16F:
-        return HIPSPARSELT_R_16F;
+        return HIP_R_16F;
 
     case CUDA_R_8I:
-        return HIPSPARSELT_R_8I;
+        return HIP_R_8I;
 
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
@@ -544,7 +544,7 @@ hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  han
                                                  int64_t                     cols,
                                                  int64_t                     ld,
                                                  uint32_t                    alignment,
-                                                 hipsparseLtDatatype_t       valueType,
+                                                 hipDataType                 valueType,
                                                  hipsparseOrder_t            order)
 {
     return hipCUSPARSEStatusToHIPStatus(
@@ -565,7 +565,7 @@ hipsparseStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*
                                                       int64_t                     cols,
                                                       int64_t                     ld,
                                                       uint32_t                    alignment,
-                                                      hipsparseLtDatatype_t       valueType,
+                                                      hipDataType                 valueType,
                                                       hipsparseOrder_t            order,
                                                       hipsparseLtSparsity_t       sparsity)
 {

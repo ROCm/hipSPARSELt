@@ -84,10 +84,10 @@ struct Arguments
     int32_t  solution_index;
     uint32_t prune_algo;
 
-    hipsparseLtDatatype_t    a_type;
-    hipsparseLtDatatype_t    b_type;
-    hipsparseLtDatatype_t    c_type;
-    hipsparseLtDatatype_t    d_type;
+    hipDataType              a_type;
+    hipDataType              b_type;
+    hipDataType              c_type;
+    hipDataType              d_type;
     hipsparseLtComputetype_t compute_type;
 
     hipsparselt_initialization initialization;
@@ -113,9 +113,9 @@ struct Arguments
     float                       activation_arg1; // threshold when activation type is relu
     float                       activation_arg2; // upperbound when activation type is relu
 
-    bool                  bias_vector;
-    int64_t               bias_stride;
-    hipsparseLtDatatype_t bias_type;
+    bool        bias_vector;
+    int64_t     bias_stride;
+    hipDataType bias_type;
 
     bool c_noalias_d;
     bool HMM;
@@ -218,9 +218,8 @@ struct Arguments
     friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
                                                     std::pair<char const*, T>     p);
 
-    friend hipsparselt_internal_ostream&
-        operator<<(hipsparselt_internal_ostream&                 os,
-                   std::pair<char const*, hipsparseLtDatatype_t> p);
+    friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream&       os,
+                                                    std::pair<char const*, hipDataType> p);
 
     friend hipsparselt_internal_ostream&
         operator<<(hipsparselt_internal_ostream&                      os,

@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -85,7 +85,7 @@ rocsparselt_status rocsparselt_destroy(const rocsparselt_handle* handle);
  *  \retval rocsparselt_status_invalid_handle \p handle is invalid.
  *  \retval rocsparselt_status_invalid_pointer \p descr pointer is invalid.
  *  \retval rocsparselt_status_invalid_size \p row, \p cols or \p ld is invalid.
- *  \retval rocsparselt_status_not_implemented \ref rocsparselt_datatype or \ref rocsparselt_order is invalid.
+ *  \retval rocsparselt_status_not_implemented \ref hipDataType or \ref rocsparselt_order is invalid.
  */
 rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle,
                                                 rocsparselt_mat_descr*    matDescr,
@@ -93,7 +93,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
                                                 int64_t                   cols,
                                                 int64_t                   ld,
                                                 uint32_t                  alignment,
-                                                rocsparselt_datatype      valueType,
+                                                hipDataType               valueType,
                                                 rocsparselt_order         order);
 
 /*! \ingroup aux_module
@@ -110,7 +110,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
  *  \retval rocsparselt_status_invalid_handle \p handle is invalid.
  *  \retval rocsparselt_status_invalid_pointer \p descr pointer is invalid.
  *  \retval rocsparselt_status_invalid_size \p row, \p cols or \p ld is invalid.
- *  \retval rocsparselt_status_not_implemented \ref rocsparselt_datatype or \ref rocsparselt_order is invalid.
+ *  \retval rocsparselt_status_not_implemented \ref hipDataType or \ref rocsparselt_order is invalid.
  */
 rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* handle,
                                                      rocsparselt_mat_descr*    matDescr,
@@ -118,7 +118,7 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
                                                      int64_t                   cols,
                                                      int64_t                   ld,
                                                      uint32_t                  alignment,
-                                                     rocsparselt_datatype      valueType,
+                                                     hipDataType               valueType,
                                                      rocsparselt_order         order,
                                                      rocsparselt_sparsity      sparsity);
 

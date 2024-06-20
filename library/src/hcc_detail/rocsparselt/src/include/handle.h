@@ -162,7 +162,7 @@ struct _rocsparselt_mat_descr
     // memory alignment in bytes
     uint32_t alignment;
     // data type of the matrix
-    rocsparselt_datatype type;
+    hipDataType type;
     // memory layout
     rocsparselt_order order;
     // matrix sparsity ratio
@@ -269,20 +269,20 @@ struct _rocsparselt_matmul_descr
     //
     rocsparselt_compute_type compute_type;
     //data of rocsparselt_matmul_descr_attribute
-    rocsparselt_matmul_descr_attribute activation   = rocsparselt_matmul_activation_none;
-    float                activation_relu_upperbound = std::numeric_limits<float>::infinity();
-    float                activation_relu_threshold  = 0.0f;
-    float                activation_leakyrelu_alpha = 1.0f;
-    float                activation_tanh_alpha      = 1.0f;
-    float                activation_tanh_beta       = 1.0f;
-    float                activation_gelu_scaling    = 1.0f;
-    float*               bias_pointer               = nullptr;
-    int64_t              bias_stride                = 0;
-    rocsparselt_datatype bias_type;
-    int64_t              m           = 0;
-    int64_t              n           = 0;
-    int64_t              k           = 0;
-    bool                 is_sparse_a = true;
+    rocsparselt_matmul_descr_attribute activation = rocsparselt_matmul_activation_none;
+    float       activation_relu_upperbound        = std::numeric_limits<float>::infinity();
+    float       activation_relu_threshold         = 0.0f;
+    float       activation_leakyrelu_alpha        = 1.0f;
+    float       activation_tanh_alpha             = 1.0f;
+    float       activation_tanh_beta              = 1.0f;
+    float       activation_gelu_scaling           = 1.0f;
+    float*      bias_pointer                      = nullptr;
+    int64_t     bias_stride                       = 0;
+    hipDataType bias_type;
+    int64_t     m           = 0;
+    int64_t     n           = 0;
+    int64_t     k           = 0;
+    bool        is_sparse_a = true;
 
     rocsparselt_operation _op_A;
     rocsparselt_operation _op_B;

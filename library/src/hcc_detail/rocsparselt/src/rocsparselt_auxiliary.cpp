@@ -122,7 +122,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
                                                 int64_t                   cols,
                                                 int64_t                   ld,
                                                 uint32_t                  alignment,
-                                                rocsparselt_datatype      valueType,
+                                                hipDataType               valueType,
                                                 rocsparselt_order         order)
 {
     // Check if matDescr is valid
@@ -185,7 +185,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
                     "alignment[in]",
                     alignment,
                     "valueType[in]",
-                    rocsparselt_datatype_to_string(valueType),
+                    hipDataType_to_string(valueType),
                     "order[in]",
                     rocsparselt_order_to_string(order));
         }
@@ -211,7 +211,7 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
                                                      int64_t                   cols,
                                                      int64_t                   ld,
                                                      uint32_t                  alignment,
-                                                     rocsparselt_datatype      valueType,
+                                                     hipDataType               valueType,
                                                      rocsparselt_order         order,
                                                      rocsparselt_sparsity      sparsity)
 
@@ -276,7 +276,7 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
                     "alignment[in]",
                     alignment,
                     "valueType[in]",
-                    rocsparselt_datatype_to_string(valueType),
+                    hipDataType_to_string(valueType),
                     "order[in]",
                     rocsparselt_order_to_string(order),
                     "sparsity[in]",
@@ -717,12 +717,12 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             _matmulDescr->k            = k;
             switch(_matA->type)
             {
-            case rocsparselt_datatype_bf16_r:
-            case rocsparselt_datatype_f16_r:
+            case HIP_R_16BF:
+            case HIP_R_16F:
                 _matmulDescr->bias_type = _matA->type;
                 break;
             default:
-                _matmulDescr->bias_type = rocsparselt_datatype_f32_r;
+                _matmulDescr->bias_type = HIP_R_32F;
                 break;
             }
 
@@ -849,7 +849,7 @@ rocsparselt_status
                     if(act_type == rocsparselt_matmul_activation_sigmoid
                        || act_type == rocsparselt_matmul_activation_tanh)
                     {
-                        if(_matmulDescr->matrix_D->type == rocsparselt_datatype_i8_r)
+                        if(_matmulDescr->matrix_D->type == HIP_R_8I)
                         {
                             hipsparselt_cerr << rocsparselt_activation_type_to_string(act_type)
                                              << " activation function is not support for int8"
@@ -1160,26 +1160,25 @@ rocsparselt_status
 
             rocsparselt_status status = rocsparselt_status_success;
 
-            if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
+            if(in_type == HIP_R_16F && out_type == HIP_R_16F
                && compute_type == rocsparselt_compute_f32)
             {
                 status = findTopConfigs<__half, __half, float>(
                     _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
             }
-            else if(in_type == rocsparselt_datatype_bf16_r
-                    && out_type == rocsparselt_datatype_bf16_r
+            else if(in_type == HIP_R_16BF && out_type == HIP_R_16BF
                     && compute_type == rocsparselt_compute_f32)
             {
                 status = findTopConfigs<hip_bfloat16, hip_bfloat16, float>(
                     _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
             }
-            else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
+            else if(in_type == HIP_R_8I && out_type == HIP_R_8I
                     && compute_type == rocsparselt_compute_i32)
             {
                 status = findTopConfigs<int8_t, int8_t, float>(
                     _matmulDescr, &(tmpAlgSelection.configs[0]), &config_max_id, requestConfigs);
             }
-            else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_f16_r
+            else if(in_type == HIP_R_8I && out_type == HIP_R_16F
                     && compute_type == rocsparselt_compute_i32)
             {
                 status = findTopConfigs<int8_t, __half, float>(
@@ -1188,16 +1187,15 @@ rocsparselt_status
             if(status != rocsparselt_status_success)
                 return status;
 #else
-            if(in_type == rocsparselt_datatype_f16_r && out_type == rocsparselt_datatype_f16_r
+            if(in_type == HIP_R_16F && out_type == HIP_R_16F
                && compute_type == rocsparselt_compute_f32)
                 initSolutions<__half, __half, float>(
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
-            else if(in_type == rocsparselt_datatype_bf16_r
-                    && out_type == rocsparselt_datatype_bf16_r
+            else if(in_type == HIP_R_16BF && out_type == HIP_R_16BF
                     && compute_type == rocsparselt_compute_f32)
                 initSolutions<hip_bfloat16, hip_bfloat16, float>(
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
-            else if(in_type == rocsparselt_datatype_i8_r && out_type == rocsparselt_datatype_i8_r
+            else if(in_type == HIP_R_8I && out_type == HIP_R_8I
                     && compute_type == rocsparselt_compute_i32)
                 initSolutions<int8_t, int8_t, float>(
                     _handle, _matmulDescr->op_A, _matmulDescr->op_B, &config_max_id);
