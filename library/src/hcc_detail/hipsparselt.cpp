@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -105,60 +105,6 @@ hipsparseStatus_t RocSparseLtStatusToHIPStatus(rocsparselt_status_ status)
         return HIPSPARSE_STATUS_INVALID_VALUE;
     case rocsparselt_status_arch_mismatch:
         return HIPSPARSE_STATUS_ARCH_MISMATCH;
-    default:
-        throw HIPSPARSE_STATUS_NOT_SUPPORTED;
-    }
-}
-
-rocsparselt_datatype_ HIPDatatypeToRocSparseLtDatatype(hipsparseLtDatatype_t type)
-{
-    switch(type)
-    {
-    case HIPSPARSELT_R_32F:
-        return rocsparselt_datatype_f32_r;
-
-    case HIPSPARSELT_R_16BF:
-        return rocsparselt_datatype_bf16_r;
-
-    case HIPSPARSELT_R_16F:
-        return rocsparselt_datatype_f16_r;
-
-    case HIPSPARSELT_R_8I:
-        return rocsparselt_datatype_i8_r;
-
-    case HIPSPARSELT_R_8F:
-        return rocsparselt_datatype_f8_r;
-
-    case HIPSPARSELT_R_8BF:
-        return rocsparselt_datatype_bf8_r;
-
-    default:
-        throw HIPSPARSE_STATUS_NOT_SUPPORTED;
-    }
-}
-
-hipsparseLtDatatype_t RocSparseLtDatatypeToHIPDatatype(rocsparselt_datatype_ type)
-{
-    switch(type)
-    {
-    case rocsparselt_datatype_f32_r:
-        return HIPSPARSELT_R_32F;
-
-    case rocsparselt_datatype_bf16_r:
-        return HIPSPARSELT_R_16BF;
-
-    case rocsparselt_datatype_f16_r:
-        return HIPSPARSELT_R_16F;
-
-    case rocsparselt_datatype_i8_r:
-        return HIPSPARSELT_R_8I;
-
-    case rocsparselt_datatype_f8_r:
-        return HIPSPARSELT_R_8F;
-
-    case rocsparselt_datatype_bf8_r:
-        return HIPSPARSELT_R_8BF;
-
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -545,7 +491,7 @@ hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  han
                                                  int64_t                     cols,
                                                  int64_t                     ld,
                                                  uint32_t                    alignment,
-                                                 hipsparseLtDatatype_t       valueType,
+                                                 hipDataType                 valueType,
                                                  hipsparseOrder_t            order)
 try
 {
@@ -556,7 +502,7 @@ try
                                      cols,
                                      ld,
                                      alignment,
-                                     HIPDatatypeToRocSparseLtDatatype(valueType),
+                                     valueType,
                                      HIPOrderToHCCOrder(order)));
 }
 catch(...)
@@ -571,7 +517,7 @@ hipsparseStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*
                                                       int64_t                     cols,
                                                       int64_t                     ld,
                                                       uint32_t                    alignment,
-                                                      hipsparseLtDatatype_t       valueType,
+                                                      hipDataType                 valueType,
                                                       hipsparseOrder_t            order,
                                                       hipsparseLtSparsity_t       sparsity)
 try
@@ -583,7 +529,7 @@ try
                                           cols,
                                           ld,
                                           alignment,
-                                          HIPDatatypeToRocSparseLtDatatype(valueType),
+                                          valueType,
                                           HIPOrderToHCCOrder(order),
                                           HIPSparsityToRocSparseLtSparsity(sparsity)));
 }

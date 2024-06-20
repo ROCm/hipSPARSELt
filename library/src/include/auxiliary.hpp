@@ -107,29 +107,30 @@ constexpr hipsparseOrder_t char_to_hipsparselt_order(char value)
     }
 }
 
-// return precision string for hipsparseLtDatatype_t
+// return precision string for hipDataType
 HIPSPARSELT_EXPORT
-constexpr const char* hipsparselt_datatype_to_string(hipsparseLtDatatype_t type)
+constexpr const char* hip_datatype_to_string(hipDataType type)
 {
     switch(type)
     {
-    case HIPSPARSELT_R_32F:
+    case HIP_R_32F:
         return "f32_r";
-    case HIPSPARSELT_R_16F:
+    case HIP_R_16F:
         return "f16_r";
-    case HIPSPARSELT_R_16BF:
+    case HIP_R_16BF:
         return "bf16_r";
-    case HIPSPARSELT_R_8I:
+    case HIP_R_8I:
         return "i8_r";
-    case HIPSPARSELT_R_8F:
+    case HIP_R_8F_E4M3_FNUZ:
         return "f8_r";
-    case HIPSPARSELT_R_8BF:
+    case HIP_R_8F_E5M2_FNUZ:
         return "bf8_r";
+    default:
+        return "invalid";
     }
-    return "invalid";
 }
 
-// return precision string for hipsparseLtDatatype_t
+// return precision string for hipDataType
 HIPSPARSELT_EXPORT
 constexpr const char* hipsparselt_computetype_to_string(hipsparseLtComputetype_t type)
 {
@@ -151,7 +152,7 @@ constexpr const char* hipsparselt_computetype_to_string(hipsparseLtComputetype_t
 
 // clang-format off
 HIPSPARSELT_EXPORT
-const hipsparseLtDatatype_t string_to_hipsparselt_datatype(const std::string& value);
+const hipDataType string_to_hip_datatype(const std::string& value);
 
 HIPSPARSELT_EXPORT
 const hipsparseLtComputetype_t string_to_hipsparselt_computetype(const std::string& value);

@@ -106,7 +106,7 @@ namespace
                 break;
             }
 
-            name << "_" << hipsparselt_datatype_to_string(arg.a_type);
+            name << "_" << hip_datatype_to_string(arg.a_type);
 
             if(strstr(arg.function, "_bad_arg") != nullptr)
             {

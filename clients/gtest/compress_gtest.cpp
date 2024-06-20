@@ -93,7 +93,7 @@ namespace
         static std::string name_suffix(const Arguments& arg)
         {
             RocSparseLt_TestName<compress_test> name(arg.name);
-            name << hipsparselt_datatype_to_string(arg.a_type);
+            name << hip_datatype_to_string(arg.a_type);
 
             if(strstr(arg.function, "_bad_arg") != nullptr)
             {

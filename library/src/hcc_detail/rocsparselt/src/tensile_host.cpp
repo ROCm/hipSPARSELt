@@ -149,17 +149,17 @@ namespace
     /******************************************************
     * Map a rocsparselt data type to a corresponding Tensile type *
     ******************************************************/
-    inline Tensile::DataType rocsparselt_datatype_to_tensile_type(rocsparselt_datatype type)
+    inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
     {
         switch(type)
         {
-        case rocsparselt_datatype_f16_r:
+        case HIP_R_16F:
             return Tensile::DataType::Half;
-        case rocsparselt_datatype_f32_r:
+        case HIP_R_32F:
             return Tensile::DataType::Float;
-        case rocsparselt_datatype_bf16_r:
+        case HIP_R_16BF:
             return Tensile::DataType::BFloat16;
-        case rocsparselt_datatype_i8_r:
+        case HIP_R_8I:
             return Tensile::DataType::Int8;
         default:
             assert(!"hipblasltDatatype_to_tensile_type: non-supported type");
@@ -354,7 +354,7 @@ namespace
         {
             int guessedUseBias = (prob.order == rocsparselt_order_row) ? 2 : 1;
             tensileProblem.setUseBias(useBias > 0 ? useBias : guessedUseBias);
-            tensileProblem.setBias(rocsparselt_datatype_to_tensile_type(prob.bias_type),
+            tensileProblem.setBias(hipDataType_to_tensile_type(prob.bias_type),
                                    prob.order == rocsparselt_order_row ? d.sizes()[1]
                                                                        : d.sizes()[0],
                                    prob.bias_stride,

@@ -71,8 +71,7 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
     auto match = map.find(arg.function);
     if(match == map.end())
         throw std::invalid_argument("Invalid combination --function "s + arg.function
-                                    + " --a_type "s + hipsparselt_datatype_to_string(arg.a_type)
-                                    + msg);
+                                    + " --a_type "s + hip_datatype_to_string(arg.a_type) + msg);
     match->second(arg);
 }
 
@@ -539,28 +538,28 @@ try
     // validate arguments
 
     std::transform(precision.begin(), precision.end(), precision.begin(), ::tolower);
-    auto prec = string_to_hipsparselt_datatype(precision);
-    if(prec == static_cast<hipsparseLtDatatype_t>(-1))
+    auto prec = string_to_hip_datatype(precision);
+    if(prec == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --precision " + precision);
 
-    arg.a_type = a_type == "" ? prec : string_to_hipsparselt_datatype(a_type);
-    if(arg.a_type == static_cast<hipsparseLtDatatype_t>(-1))
+    arg.a_type = a_type == "" ? prec : string_to_hip_datatype(a_type);
+    if(arg.a_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --a_type " + a_type);
 
-    arg.b_type = b_type == "" ? prec : string_to_hipsparselt_datatype(b_type);
-    if(arg.b_type == static_cast<hipsparseLtDatatype_t>(-1))
+    arg.b_type = b_type == "" ? prec : string_to_hip_datatype(b_type);
+    if(arg.b_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --b_type " + b_type);
 
-    arg.c_type = c_type == "" ? prec : string_to_hipsparselt_datatype(c_type);
-    if(arg.c_type == static_cast<hipsparseLtDatatype_t>(-1))
+    arg.c_type = c_type == "" ? prec : string_to_hip_datatype(c_type);
+    if(arg.c_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --c_type " + c_type);
 
-    arg.d_type = d_type == "" ? prec : string_to_hipsparselt_datatype(d_type);
-    if(arg.d_type == static_cast<hipsparseLtDatatype_t>(-1))
+    arg.d_type = d_type == "" ? prec : string_to_hip_datatype(d_type);
+    if(arg.d_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
-    bool is_f16      = arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF;
-    bool is_f32      = arg.a_type == HIPSPARSELT_R_32F;
+    bool is_f16      = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
+    bool is_f32      = arg.a_type == HIP_R_32F;
     arg.compute_type = compute_type == ""
 #ifdef __HIP_PLATFORM_AMD__
                            ? (is_f16 ? HIPSPARSELT_COMPUTE_32F : HIPSPARSELT_COMPUTE_32I)
@@ -575,18 +574,15 @@ try
 
     if(bias_type == "")
     {
-        arg.bias_type = (arg.a_type == HIPSPARSELT_R_16F || arg.a_type == HIPSPARSELT_R_16BF)
-                            ? arg.a_type
-                            : HIPSPARSELT_R_32F;
+        arg.bias_type
+            = (arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF) ? arg.a_type : HIP_R_32F;
     }
     else
     {
-        arg.bias_type = string_to_hipsparselt_datatype(bias_type);
-        if(!(arg.a_type == arg.bias_type || arg.bias_type == HIPSPARSELT_R_32F))
-            arg.bias_type = static_cast<hipsparseLtDatatype_t>(-1);
+        arg.bias_type = string_to_hip_datatype(bias_type);
+        if(!(arg.a_type == arg.bias_type || arg.bias_type == HIP_R_32F))
+            throw std::invalid_argument("Invalid value for --bias_type " + bias_type);
     }
-    if(arg.bias_type == static_cast<hipsparseLtDatatype_t>(-1))
-        throw std::invalid_argument("Invalid value for --bias_type " + bias_type);
 
     arg.initialization = string2hipsparselt_initialization(initialization);
     if(arg.initialization == static_cast<hipsparselt_initialization>(-1))

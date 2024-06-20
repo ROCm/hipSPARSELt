@@ -297,9 +297,7 @@ void testing_spmm(const Arguments& arg)
                                                                         : ldc * M;
     int64_t bias_stride = do_strided_batched ? arg.bias_stride == -1 ? M : arg.bias_stride : 0;
 
-    hipsparseLtDatatype_t bias_type
-        = arg.bias_type == 0 ? (arg.a_type == HIPSPARSELT_R_8I ? HIPSPARSELT_R_32F : arg.a_type)
-                             : arg.bias_type;
+    hipDataType bias_type = arg.bias_type;
 
     hipsparselt_local_mat_descr matA(arg.sparse_b ? hipsparselt_matrix_type_dense
                                                   : hipsparselt_matrix_type_structured,
@@ -409,9 +407,8 @@ void testing_spmm(const Arguments& arg)
         return;
     if(arg.activation_type == hipsparselt_activation_type::gelu)
     {
-        if(not(arg.a_type == HIPSPARSELT_R_8I && arg.b_type == HIPSPARSELT_R_8I
-               && arg.c_type == HIPSPARSELT_R_8I && arg.d_type == HIPSPARSELT_R_8I
-               && arg.compute_type == HIPSPARSELT_COMPUTE_32I))
+        if(not(arg.a_type == HIP_R_8I && arg.b_type == HIP_R_8I && arg.c_type == HIP_R_8I
+               && arg.d_type == HIP_R_8I && arg.compute_type == HIPSPARSELT_COMPUTE_32I))
             return;
     }
 #endif
@@ -543,12 +540,10 @@ void testing_spmm(const Arguments& arg)
                 handle, matmul, HIPSPARSELT_MATMUL_BIAS_STRIDE, &bias_stride, sizeof(int64_t)),
             HIPSPARSE_STATUS_SUCCESS);
 #ifdef __HIP_PLATFORM_AMD__
-        EXPECT_HIPSPARSE_STATUS(hipsparseLtMatmulDescSetAttribute(handle,
-                                                                  matmul,
-                                                                  HIPSPARSELT_MATMUL_BIAS_TYPE,
-                                                                  &bias_type,
-                                                                  sizeof(hipsparseLtDatatype_t)),
-                                HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescSetAttribute(
+                handle, matmul, HIPSPARSELT_MATMUL_BIAS_TYPE, &bias_type, sizeof(hipDataType)),
+            HIPSPARSE_STATUS_SUCCESS);
 #endif
     }
 

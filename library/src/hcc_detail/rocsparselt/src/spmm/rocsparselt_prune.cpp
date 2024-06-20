@@ -572,8 +572,8 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const _rocsparselt_handle*    h
                                                  hipStream_t                   stream)
 {
 
-    rocsparselt_order    order = matrix->order;
-    rocsparselt_datatype type  = matrix->type;
+    rocsparselt_order order = matrix->order;
+    hipDataType       type  = matrix->type;
 
     int     num_batches  = matrix->num_batches;
     int64_t batch_stride = matrix->batch_stride;
@@ -591,17 +591,17 @@ rocsparselt_status rocsparselt_smfmac_prune_impl(const _rocsparselt_handle*    h
 
     switch(type)
     {
-    case rocsparselt_datatype_f16_r:
+    case HIP_R_16F:
         return rocsparselt_smfmac_prune_template<__half, float>(PRUNE_PARAMS(__half));
-    case rocsparselt_datatype_bf16_r:
+    case HIP_R_16BF:
         return rocsparselt_smfmac_prune_template<hip_bfloat16, float>(PRUNE_PARAMS(hip_bfloat16));
-    case rocsparselt_datatype_i8_r:
+    case HIP_R_8I:
         return rocsparselt_smfmac_prune_template<int8_t, float>(PRUNE_PARAMS(int8_t));
     default:
         log_error(handle,
                   "rocsparselt_smfmac_prune",
                   "datatype",
-                  rocsparselt_datatype_to_string(type),
+                  hipDataType_to_string(type),
                   "is not supported");
         return rocsparselt_status_not_implemented;
     }
@@ -619,8 +619,8 @@ rocsparselt_status rocsparselt_smfmac_prune_check_impl(const _rocsparselt_handle
                                                        hipStream_t                   stream,
                                                        bool sparse_b = false)
 {
-    rocsparselt_order    order = matrix->order;
-    rocsparselt_datatype type  = matrix->type;
+    rocsparselt_order order = matrix->order;
+    hipDataType       type  = matrix->type;
 
     int     num_batches  = matrix->num_batches;
     int64_t batch_stride = matrix->batch_stride;
@@ -638,18 +638,18 @@ rocsparselt_status rocsparselt_smfmac_prune_check_impl(const _rocsparselt_handle
 
     switch(type)
     {
-    case rocsparselt_datatype_f16_r:
+    case HIP_R_16F:
         return rocsparselt_smfmac_prune_check_template<__half>(PRUNE_CHECK_PARAMS(__half));
-    case rocsparselt_datatype_bf16_r:
+    case HIP_R_16BF:
         return rocsparselt_smfmac_prune_check_template<hip_bfloat16>(
             PRUNE_CHECK_PARAMS(hip_bfloat16));
-    case rocsparselt_datatype_i8_r:
+    case HIP_R_8I:
         return rocsparselt_smfmac_prune_check_template<int8_t>(PRUNE_CHECK_PARAMS(int8_t));
     default:
         log_error(handle,
                   "rocsparselt_smfmac_prune_check",
                   "datatype",
-                  rocsparselt_datatype_to_string(type),
+                  hipDataType_to_string(type),
                   "is not supported");
         return rocsparselt_status_not_implemented;
     }

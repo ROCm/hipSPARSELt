@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -122,15 +122,15 @@ inline rocsparselt_status rocsparselt_spmm_template(const char*                 
     caller, handle, plan, alpha, beta, a, b, c, d, workspace, streams, numStreams, config_id, \
         config_max_id, search_iterations
 
-    rocsparselt_datatype     a_type       = plan->matmul_descr->matrix_A->type;
-    rocsparselt_datatype     b_type       = plan->matmul_descr->matrix_B->type;
-    rocsparselt_datatype     c_type       = plan->matmul_descr->matrix_C->type;
-    rocsparselt_datatype     d_type       = plan->matmul_descr->matrix_D->type;
+    hipDataType              a_type       = plan->matmul_descr->matrix_A->type;
+    hipDataType              b_type       = plan->matmul_descr->matrix_B->type;
+    hipDataType              c_type       = plan->matmul_descr->matrix_C->type;
+    hipDataType              d_type       = plan->matmul_descr->matrix_D->type;
     rocsparselt_compute_type compute_type = plan->matmul_descr->compute_type;
 
-    if(a_type == rocsparselt_datatype_f16_r && b_type == rocsparselt_datatype_f16_r)
+    if(a_type == HIP_R_16F && b_type == HIP_R_16F)
     {
-        if(c_type == rocsparselt_datatype_f16_r && d_type == rocsparselt_datatype_f16_r)
+        if(c_type == HIP_R_16F && d_type == HIP_R_16F)
         {
             if(compute_type == rocsparselt_compute_f32)
             {
@@ -138,9 +138,9 @@ inline rocsparselt_status rocsparselt_spmm_template(const char*                 
             }
         }
     }
-    else if(a_type == rocsparselt_datatype_bf16_r && b_type == rocsparselt_datatype_bf16_r)
+    else if(a_type == HIP_R_16BF && b_type == HIP_R_16BF)
     {
-        if(c_type == rocsparselt_datatype_bf16_r && d_type == rocsparselt_datatype_bf16_r)
+        if(c_type == HIP_R_16BF && d_type == HIP_R_16BF)
         {
             if(compute_type == rocsparselt_compute_f32)
             {
@@ -149,16 +149,16 @@ inline rocsparselt_status rocsparselt_spmm_template(const char*                 
             }
         }
     }
-    else if(a_type == rocsparselt_datatype_i8_r && b_type == rocsparselt_datatype_i8_r)
+    else if(a_type == HIP_R_8I && b_type == HIP_R_8I)
     {
-        if(c_type == rocsparselt_datatype_i8_r && d_type == rocsparselt_datatype_i8_r)
+        if(c_type == HIP_R_8I && d_type == HIP_R_8I)
         {
             if(compute_type == rocsparselt_compute_i32)
             {
                 rs_status = spmm_typecasting<int8_t, int8_t, float>(EX_TYPECASTING_PARM);
             }
         }
-        else if(c_type == rocsparselt_datatype_f16_r && d_type == rocsparselt_datatype_f16_r)
+        else if(c_type == HIP_R_16F && d_type == HIP_R_16F)
         {
             if(compute_type == rocsparselt_compute_i32)
             {

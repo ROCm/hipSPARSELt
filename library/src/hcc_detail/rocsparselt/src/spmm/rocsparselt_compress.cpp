@@ -215,8 +215,8 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
                                                     hipStream_t                   stream)
 {
 
-    rocsparselt_order    order = matrix->order;
-    rocsparselt_datatype type  = matrix->type;
+    rocsparselt_order order = matrix->order;
+    hipDataType       type  = matrix->type;
 
     int     num_batches  = matrix->num_batches;
     int64_t batch_stride = matrix->batch_stride;
@@ -238,17 +238,17 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
 
     switch(type)
     {
-    case rocsparselt_datatype_f16_r:
+    case HIP_R_16F:
         return rocsparselt_smfmac_compress_template<__half>(COMPRESS_PARAMS(__half));
-    case rocsparselt_datatype_bf16_r:
+    case HIP_R_16BF:
         return rocsparselt_smfmac_compress_template<hip_bfloat16>(COMPRESS_PARAMS(hip_bfloat16));
-    case rocsparselt_datatype_i8_r:
+    case HIP_R_8I:
         return rocsparselt_smfmac_compress_template<int8_t>(COMPRESS_PARAMS(int8_t));
     default:
         log_error(handle,
                   "rocsparselt_smfmac_compress",
                   "datatype",
-                  rocsparselt_datatype_to_string(type),
+                  hipDataType_to_string(type),
                   "is not supported");
         return rocsparselt_status_not_implemented;
     }
@@ -265,9 +265,9 @@ rocsparselt_status rocsparselt_smfmac_compressed_size_impl(_rocsparselt_mat_desc
                                                            size_t* compressBufferSize)
 {
 
-    rocsparselt_datatype type         = matrix->type;
-    int                  num_batches  = matrix->num_batches;
-    int64_t              batch_stride = matrix->batch_stride;
+    hipDataType type         = matrix->type;
+    int         num_batches  = matrix->num_batches;
+    int64_t     batch_stride = matrix->batch_stride;
 
     //set the number of batches to 1 since in the broadcast case, we only care about contents in first batch.
     if(batch_stride == 0) //boardcast case.
