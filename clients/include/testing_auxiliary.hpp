@@ -566,7 +566,7 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
         HIPSPARSE_STATUS_INVALID_VALUE);
 
 #ifdef __HIP_PLATFORM_NVIDIA__
-    if(arg.a_type == HIPSPARSELT_R_8I)
+    if(arg.a_type == HIP_R_8I)
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatmulDescriptorInit(
                 handle, &m_descr, opA, opA, matA, matB, matC, matD, arg.compute_type),
@@ -576,8 +576,8 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
     hipsparseLtComputetype_t tmpComputeType;
     switch(arg.a_type)
     {
-    case HIPSPARSELT_R_16F:
-    case HIPSPARSELT_R_16BF:
+    case HIP_R_16F:
+    case HIP_R_16BF:
         tmpComputeType = HIPSPARSELT_COMPUTE_32I;
         break;
     default:
@@ -620,14 +620,14 @@ void testing_aux_matmul_init_bad_arg(const Arguments& arg)
         HIPSPARSE_STATUS_INVALID_VALUE);
 #endif
 
-    hipsparseLtDatatype_t tmpDataType;
-    auto                  get_diff_datatype = [&](hipsparseLtDatatype_t type) {
+    hipDataType tmpDataType;
+    auto        get_diff_datatype = [&](hipDataType type) {
         switch(type)
         {
-        case HIPSPARSELT_R_16BF:
-            return HIPSPARSELT_R_16F;
+        case HIP_R_16BF:
+            return HIP_R_16F;
         default:
-            return HIPSPARSELT_R_16BF;
+            return HIP_R_16BF;
         }
     };
 

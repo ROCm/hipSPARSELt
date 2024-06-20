@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,22 +48,24 @@ std::string prefix(const char* layer, const char* caller)
     return std::string(buf.get());
 }
 
-const char* rocsparselt_datatype_to_string(rocsparselt_datatype type)
+const char* hipDataType_to_string(hipDataType type)
 {
     switch(type)
     {
-    case rocsparselt_datatype_f16_r:
+    case HIP_R_16F:
         return "f16_r";
-    case rocsparselt_datatype_f32_r:
+    case HIP_R_32F:
         return "f32_r";
-    case rocsparselt_datatype_i8_r:
+    case HIP_R_8I:
         return "i8_r";
-    case rocsparselt_datatype_bf16_r:
+    case HIP_R_16BF:
         return "bf16_r";
-    case rocsparselt_datatype_f8_r:
+    case HIP_R_8F_E4M3_FNUZ:
         return "f8_r";
-    case rocsparselt_datatype_bf8_r:
+    case HIP_R_8F_E5M2_FNUZ:
         return "bf8_r";
+    default:
+        return "Invalid";
     }
 }
 

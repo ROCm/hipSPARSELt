@@ -21,17 +21,17 @@ Data type support
       - CUDA Supports
     *
       - int8
-      - HIPSPARSELT_R_8I
+      - HIP_R_8I
       - ✅
       - ✅
     *
       - float8
-      - HIPSPARSELT_R_8F
+      - HIP_R_8F_E4M3_FNUZ
       - ❌
       - ❌
     *
       - bfloat8
-      - HIPSPARSELT_R_8BF
+      - HIP_R_8F_E5M2_FNUZ
       - ❌
       - ❌
     *
@@ -41,12 +41,12 @@ Data type support
       - ❌
     *
       - float16
-      - HIPSPARSELT_R_16F
+      - HIP_R_16F
       - ✅
       - ✅
     *
-      - bfloat16      
-      - HIPSPARSELT_R_16BF
+      - bfloat16
+      - HIP_R_16BF
       - ✅
       - ✅
     *
@@ -61,7 +61,7 @@ Data type support
       - ❌
     *
       - float32
-      - HIPSPARSELT_R_32F
+      - HIP_R_32F
       - ❌
       - ✅
     *
@@ -130,18 +130,18 @@ Data type support
       - float64
       - Not Supported
       - ❌
-      - ❌      
+      - ❌
 
 * List of supported compute types at specific input and output types:
 
   .. csv-table::
      :header: "Input", "Output", "Compute type", "Backend"
 
-     "HIPSPARSELT_R_16F", "HIPSPARSELT_R_16F", "HIPSPARSELT_COMPUTE_32F", "HIP"
-     "HIPSPARSELT_R_16BF", "HIPSPARSELT_R_16BF", "HIPSPARSELT_COMPUTE_32F", "HIP"
-     "HIPSPARSELT_R_8I", "HIPSPARSELT_R_8I", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
-     "HIPSPARSELT_R_8I", "HIPSPARSELT_R_16F", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
-     "HIPSPARSELT_R_16F", "HIPSPARSELT_R_16F", "HIPSPARSELT_COMPUTE_16F", "CUDA"
-     "HIPSPARSELT_R_16BF", "HIPSPARSELT_R_16BF", "HIPSPARSELT_COMPUTE_16F", "CUDA"
-     "HIPSPARSELT_R_32F", "HIPSPARSELT_R_32F", "HIPSPARSELT_COMPUTE_TF32", "CUDA"
-     "HIPSPARSELT_R_32F", "HIPSPARSELT_R_32F", "HIPSPARSELT_COMPUTE_TF32_FAST", "CUDA"
+     "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32F", "HIP"
+     "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_32F", "HIP"
+     "HIP_R_8I", "HIP_R_8I", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
+     "HIP_R_8I", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
+     "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_16F", "CUDA"
+     "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_16F", "CUDA"
+     "HIP_R_32F", "HIP_R_32F", "HIPSPARSELT_COMPUTE_TF32", "CUDA"
+     "HIP_R_32F", "HIP_R_32F", "HIPSPARSELT_COMPUTE_TF32_FAST", "CUDA"

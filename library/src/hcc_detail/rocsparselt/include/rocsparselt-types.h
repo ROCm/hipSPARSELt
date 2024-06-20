@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 #define _ROCSPARSELT_TYPES_H_
 
 #include <float.h>
+#include <hip/library_types.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -230,22 +231,6 @@ typedef enum rocsparselt_matrix_type_
     rocsparselt_matrix_type_dense      = 1, /**< dense matrix type. */
     rocsparselt_matrix_type_structured = 2, /**< structured matrix type. */
 } rocsparselt_matrix_type;
-
-/*! \ingroup types_module
- *  \brief List of rocsparselt data types.
- *
- *  \details
- *  Indicates the precision width of data stored in a rocsparselt type.
- */
-typedef enum rocsparselt_datatype_
-{
-    rocsparselt_datatype_f16_r  = 150, /**< 16 bit floating point, real */
-    rocsparselt_datatype_f32_r  = 151, /**< 32 bit floating point, real */
-    rocsparselt_datatype_i8_r   = 160, /**<  8 bit signed integer, real */
-    rocsparselt_datatype_bf16_r = 168, /**< 16 bit bfloat, real */
-    rocsparselt_datatype_f8_r   = 170, /**< 8 bit floating point, real */
-    rocsparselt_datatype_bf8_r  = 171, /**< 8 bit bfloat, real */
-} rocsparselt_datatype;
 
 /*! \ingroup types_module
  *  \brief Specify the compute precision modes of the matrix

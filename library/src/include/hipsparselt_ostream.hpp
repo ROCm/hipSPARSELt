@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (c) 2020-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2020-2024 Advanced Micro Devices, Inc.
  * ************************************************************************ */
 
 #pragma once
@@ -393,11 +393,10 @@ public:
         return os << s.c_str();
     }
 
-    // hipsparseLtDatatype_t output
-    friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
-                                                    hipsparseLtDatatype_t         d)
+    // hipDataType output
+    friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os, hipDataType d)
     {
-        os.m_os << hipsparselt_datatype_to_string(d);
+        os.m_os << hip_datatype_to_string(d);
         return os;
     }
 

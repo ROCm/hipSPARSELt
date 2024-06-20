@@ -156,7 +156,7 @@ public:
                                 int64_t                    row,
                                 int64_t                    col,
                                 int64_t                    ld,
-                                hipsparseLtDatatype_t      type,
+                                hipDataType                type,
                                 hipsparseOrder_t           order)
     {
         if(mtype == hipsparselt_matrix_type_structured)
@@ -530,12 +530,12 @@ void print_strided_batched(
     hipsparselt_cout << std::flush;
 }
 
-inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(hipsparseLtDatatype_t type,
-                                                                  int64_t               m,
-                                                                  int64_t               n,
-                                                                  int64_t               ld,
-                                                                  hipsparseOrder_t      order,
-                                                                  bool isSparse = false)
+inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(hipDataType      type,
+                                                                  int64_t          m,
+                                                                  int64_t          n,
+                                                                  int64_t          ld,
+                                                                  hipsparseOrder_t order,
+                                                                  bool             isSparse = false)
 {
     int row_  = 8;
     int col_  = 8;
@@ -544,16 +544,16 @@ inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(hipsparseLtDat
 #ifdef __HIP_PLATFORM_NVIDIA__
     switch(type)
     {
-    case HIPSPARSELT_R_8I:
-    case HIPSPARSELT_R_8F:
-    case HIPSPARSELT_R_8BF:
+    case HIP_R_8I:
+    case HIP_R_8F_E4M3_FNUZ:
+    case HIP_R_8F_E5M2_FNUZ:
         if(isSparse)
             row_ = col_ = ld_ = 32;
         else
             row_ = col_ = ld_ = 16;
         break;
-    case HIPSPARSELT_R_16BF:
-    case HIPSPARSELT_R_16F:
+    case HIP_R_16BF:
+    case HIP_R_16F:
         bytes = 2;
         if(isSparse)
             row_ = col_ = ld_ = 16;
@@ -566,13 +566,13 @@ inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(hipsparseLtDat
 #else
     switch(type)
     {
-    case HIPSPARSELT_R_8I:
-    case HIPSPARSELT_R_8F:
-    case HIPSPARSELT_R_8BF:
+    case HIP_R_8I:
+    case HIP_R_8F_E4M3_FNUZ:
+    case HIP_R_8F_E5M2_FNUZ:
         row_ = col_ = 16;
         break;
-    case HIPSPARSELT_R_16BF:
-    case HIPSPARSELT_R_16F:
+    case HIP_R_16BF:
+    case HIP_R_16F:
         bytes = 2;
         break;
     default:

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -68,12 +68,12 @@ void Arguments::init()
     algo           = 0;
     solution_index = 0;
 
-    a_type       = HIPSPARSELT_R_16F;
-    b_type       = HIPSPARSELT_R_16F;
-    c_type       = HIPSPARSELT_R_16F;
-    d_type       = HIPSPARSELT_R_16F;
+    a_type       = HIP_R_16F;
+    b_type       = HIP_R_16F;
+    c_type       = HIP_R_16F;
+    d_type       = HIP_R_16F;
     compute_type = HIPSPARSELT_COMPUTE_32F;
-    bias_type    = HIPSPARSELT_R_16F;
+    bias_type    = HIP_R_32F;
 
     prune_algo = HIPSPARSELT_PRUNE_SPMMA_STRIP;
 

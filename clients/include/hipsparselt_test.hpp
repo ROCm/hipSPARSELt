@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -405,12 +405,12 @@ struct hipsparselt_test_invalid
 #else
         hipsparselt_cerr << msg << std::endl;
         hipsparselt_cerr << "function: " << arg.function << " types: "
-                         << " a: " << hipsparselt_datatype_to_string(arg.a_type)
-                         << " b: " << hipsparselt_datatype_to_string(arg.b_type)
-                         << " c: " << hipsparselt_datatype_to_string(arg.c_type)
-                         << " d: " << hipsparselt_datatype_to_string(arg.d_type)
+                         << " a: " << hip_datatype_to_string(arg.a_type)
+                         << " b: " << hip_datatype_to_string(arg.b_type)
+                         << " c: " << hip_datatype_to_string(arg.c_type)
+                         << " d: " << hip_datatype_to_string(arg.d_type)
                          << " compute:" << hipsparselt_computetype_to_string(arg.compute_type)
-                         << " bias:" << hipsparselt_datatype_to_string(arg.bias_type) << std::endl;
+                         << " bias:" << hip_datatype_to_string(arg.bias_type) << std::endl;
         hipsparselt_abort();
 #endif
     }
