@@ -318,7 +318,7 @@ void testing_spmm(const Arguments& arg)
     hipsparselt_local_mat_descr matC(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, orderC);
     hipsparselt_local_mat_descr matD(
-        hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.d_type, orderD);
+        hipsparselt_matrix_type_dense, handle, M, N, ldd, arg.d_type, orderD);
 
     hipsparseStatus_t eStatus = expected_hipsparse_status_of_matrix_size(
         arg.a_type, A_row, A_col, lda, orderA, !arg.sparse_b);
