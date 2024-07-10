@@ -479,19 +479,19 @@ try
          "C = Column Major, R = Row Major")
 
         ("order_a",
-         value<char>(&order_a)->default_value('C'),
+         value<char>(&order_a)->default_value('N'),
          "C = Column Major, R = Row Major")
 
         ("order_b",
-         value<char>(&order_b)->default_value('C'),
+         value<char>(&order_b)->default_value('N'),
          "C = Column Major, R = Row Major")
 
         ("order_c",
-         value<char>(&order_c)->default_value('C'),
+         value<char>(&order_c)->default_value('N'),
          "C = Column Major, R = Row Major")
 
         ("order_d",
-         value<char>(&order_d)->default_value('C'),
+         value<char>(&order_d)->default_value('N'),
          "C = Column Major, R = Row Major")
 
         ("help,h", "produces this help message")
@@ -613,13 +613,33 @@ try
     if(order != 'C' && order != 'R')
         throw std::invalid_argument("Invalid value for --order " + std::to_string(order));
     if(order_a != 'C' && order_a != 'R')
-        throw std::invalid_argument("Invalid value for --order_a " + std::to_string(order_a));
+    {
+        if(order_a == 'N')
+            order_a = order;
+        else
+            throw std::invalid_argument("Invalid value for --order_a " + std::to_string(order_a));
+    }
     if(order_b != 'C' && order_b != 'R')
-        throw std::invalid_argument("Invalid value for --order_b " + std::to_string(order_b));
+    {
+        if(order_b == 'N')
+            order_b = order;
+        else
+            throw std::invalid_argument("Invalid value for --order_b " + std::to_string(order_b));
+    }
     if(order_c != 'C' && order_c != 'R')
-        throw std::invalid_argument("Invalid value for --order_c " + std::to_string(order_c));
-    if(order_c != 'C' && order_c != 'R')
-        throw std::invalid_argument("Invalid value for --order_d " + std::to_string(order_d));
+    {
+        if(order_c == 'N')
+            order_c = order;
+        else
+            throw std::invalid_argument("Invalid value for --order_c " + std::to_string(order_c));
+    }
+    if(order_d != 'C' && order_d != 'R')
+    {
+        if(order_d == 'N')
+            order_d = order;
+        else
+            throw std::invalid_argument("Invalid value for --order_d " + std::to_string(order_d));
+    }
 
     arg.orderA = order != order_a ? order_a : order;
     arg.orderB = order != order_b ? order_b : order;
