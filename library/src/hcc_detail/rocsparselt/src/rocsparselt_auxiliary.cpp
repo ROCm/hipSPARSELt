@@ -1038,6 +1038,11 @@ rocsparselt_status
                 }
                 break;
             }
+            case rocsparselt_matmul_alpha_vector_scaling:
+            {
+                assign_data(&_matmulDescr->alpha_vector_scaling);
+                break;
+            }
             default:
                 log_error(
                     _handle, __func__, "matmulAttribute", matmulAttribute, "is not implemented");
@@ -1193,6 +1198,11 @@ rocsparselt_status
                 }
                 else
                     retrive_data(_matmulDescr->bias_type);
+                break;
+            }
+            case rocsparselt_matmul_alpha_vector_scaling:
+            {
+                retrive_data(_matmulDescr->alpha_vector_scaling);
                 break;
             }
             default:

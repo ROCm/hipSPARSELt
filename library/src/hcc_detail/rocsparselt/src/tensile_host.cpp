@@ -172,7 +172,8 @@ namespace
      ****************************************************************/
     template <typename Ti, typename To, typename Tc>
     auto ConstructTensileProblem(const RocsparseltContractionProblem<Ti, To, Tc>& prob,
-                                 int                                              useBias = 0)
+                                 int                                              useBias          = 0,
+                                 int                                              useScaleAlphaVec = 0)
     {
         // Tensile DataTypes corresponding to rocsparselt data types
         static constexpr Tensile::DataType Tensile_Ti = tensile_datatype<Ti>;
@@ -302,8 +303,14 @@ namespace
         // If k==0, we do not need to dereference prob.alpha and can set tensileAlpha=0
         // Not positive if this is necessary here as well
         typename AlphaBeta<Ti, To, Tc>::tensile_type tensileAlpha;
+        const Tc                                     ALPHAONE = static_cast<Tc>(1);
         if(prob.k)
-            AlphaBeta<Ti, To, Tc>::copy(&tensileAlpha, prob.alpha);
+        {
+            if(prob.alpha_vector_scaling)
+                AlphaBeta<Ti, To, Tc>::copy(&tensileAlpha, &ALPHAONE);
+            else
+                AlphaBeta<Ti, To, Tc>::copy(&tensileAlpha, prob.alpha);
+        }
         else
             memset(&tensileAlpha, 0, sizeof(tensileAlpha));
         tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(tensileAlpha));
@@ -349,11 +356,13 @@ namespace
         }
         tensileProblem.setParams().setActivationEnum(tensileAct);
 
+        assert((useBias == useScaleAlphaVec) || (useBias == 0 || useScaleAlphaVec == 0));
+
+        int guessedFactorDim = (prob.order == rocsparselt_order_row) ? 2 : 1;
         // set bias mode
         if(prob.bias_vector != nullptr || useBias > 0)
         {
-            int guessedUseBias = (prob.order == rocsparselt_order_row) ? 2 : 1;
-            tensileProblem.setUseBias(useBias > 0 ? useBias : guessedUseBias);
+            tensileProblem.setUseBias(useBias > 0 ? useBias : guessedFactorDim);
             tensileProblem.setBias(hipDataType_to_tensile_type(prob.bias_type),
                                    prob.order == rocsparselt_order_row ? d.sizes()[1]
                                                                        : d.sizes()[0],
@@ -363,6 +372,16 @@ namespace
                                    prob.order == rocsparselt_order_row);
         }
 
+        if(prob.alpha_vector_scaling || useScaleAlphaVec > 0)
+        {
+
+            tensileProblem.setUseScaleAlphaVec(useScaleAlphaVec > 0 ? useScaleAlphaVec
+                                                                    : guessedFactorDim);
+            tensileProblem.setScaleAlphaVec(Tensile_Tc,
+                                            prob.order == rocsparselt_order_row ? d.sizes()[1]
+                                                                                : d.sizes()[0],
+                                            prob.order == rocsparselt_order_row);
+        }
         return tensileProblem;
     }
 
@@ -405,12 +424,19 @@ namespace
 
         // set bias vector
         inputs.bias = reinterpret_cast<const void*>(prob.bias_vector);
+        if(prob.alpha_vector_scaling)
+            inputs.scaleAlphaVec = reinterpret_cast<const void*>(prob.alpha);
 
         // alpha and beta are stored by value in Tensile::TypedContractionInputs
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
         // If k==0, we do not need to dereference prob.alpha and can set inputs.alpha=0
         if(prob.k)
-            inputs.alpha = static_cast<Tensile_Talpha_beta>((*prob.alpha));
+        {
+            if(prob.alpha_vector_scaling)
+                inputs.alpha = static_cast<Tensile_Talpha_beta>(1);
+            else
+                inputs.alpha = static_cast<Tensile_Talpha_beta>((*prob.alpha));
+        }
         else
             inputs.alpha = static_cast<Tensile_Talpha_beta>(0);
         inputs.beta = static_cast<Tensile_Talpha_beta>((*prob.beta));
@@ -766,7 +792,8 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
         }
         else
         {
-            auto tensile_prob = ConstructTensileProblem(prob, configs[*config_id].use_bias);
+            auto tensile_prob = ConstructTensileProblem(
+                prob, configs[*config_id].use_bias, configs[*config_id].use_scale_alpha_vec);
 
             auto tensile_inputs = GetTensileInputs(prob);
 
@@ -900,8 +927,8 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
     *foundConfigs = std::min((int)solutions.size(), requestConfigs);
 
     // Finding alternative solutions.
-    auto findAlternativeSolution = [&](int useBias) {
-        tensile_prob  = ConstructTensileProblem(prob, useBias);
+    auto findAlternativeSolution = [&](int useBias, int useScaleAlphaVec) {
+        tensile_prob  = ConstructTensileProblem(prob, useBias, useScaleAlphaVec);
         solutions     = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
         *foundConfigs = std::min((int)solutions.size(), requestConfigs);
     };
@@ -910,18 +937,24 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
     {
         log_info(prob.handle, __func__, "No solution founds, try to find alternative solutions");
 
-        if(tensile_prob.useBias() == 0)
+        for(int useBias = tensile_prob.useBias(); useBias < 4; useBias++)
         {
-            for(int useBias = 1; useBias < 4; useBias++)
+            for(int useScaleAlphaVec = tensile_prob.useScaleAlphaVec(); useScaleAlphaVec < 4;
+                useScaleAlphaVec++)
             {
-                findAlternativeSolution(useBias);
+                if(useBias != 0 && useScaleAlphaVec != 0 && useScaleAlphaVec != useBias)
+                    continue; //useBias and useScaleAlphaVec must in the same dimension.
+
+                if(useBias == tensile_prob.useBias()
+                   && useScaleAlphaVec == tensile_prob.useScaleAlphaVec())
+                    continue; // already try in the first time.
+
+                findAlternativeSolution(useBias, useScaleAlphaVec);
                 if(*foundConfigs != 0)
                     break;
             }
-        }
-        else if(tensile_prob.useBias() == 1 || tensile_prob.useBias() == 2)
-        {
-            findAlternativeSolution(3);
+            if(*foundConfigs != 0)
+                break;
         }
 
         if(*foundConfigs != 0)
@@ -936,6 +969,7 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
         configs[i].index               = solution->index;
         configs[i].max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
         configs[i].use_bias            = tensile_prob.useBias();
+        configs[i].use_scale_alpha_vec = tensile_prob.useScaleAlphaVec();
     }
     return rocsparselt_status_success;
 }
