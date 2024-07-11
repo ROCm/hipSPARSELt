@@ -214,6 +214,7 @@ struct _rocsparselt_matmul_descr
         , bias_pointer(rhs.bias_pointer)
         , bias_stride(rhs.bias_stride)
         , bias_type(rhs.bias_type)
+        , alpha_vector_scaling(rhs.alpha_vector_scaling)
         , m(rhs.m)
         , n(rhs.n)
         , k(rhs.k)
@@ -284,10 +285,11 @@ struct _rocsparselt_matmul_descr
     float*      bias_pointer                      = nullptr;
     int64_t     bias_stride                       = 0;
     hipDataType bias_type;
-    int64_t     m           = 0;
-    int64_t     n           = 0;
-    int64_t     k           = 0;
-    bool        is_sparse_a = true;
+    int         alpha_vector_scaling = 0;
+    int64_t     m                    = 0;
+    int64_t     n                    = 0;
+    int64_t     k                    = 0;
+    bool        is_sparse_a          = true;
 
     rocsparselt_operation _op_A;
     rocsparselt_operation _op_B;
@@ -320,6 +322,7 @@ struct __attribute__((packed, aligned(8))) _rocsparselt_matmul_config
 
     int    index;
     int    use_bias            = 0;
+    int    use_scale_alpha_vec = 0;
     size_t max_workspace_bytes = 0;
 };
 
