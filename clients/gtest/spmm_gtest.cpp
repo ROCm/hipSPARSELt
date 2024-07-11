@@ -129,6 +129,11 @@ namespace
                          << hip_datatype_to_string(arg.bias_type);
                 }
 
+                if(arg.alpha_vector_scaling)
+                {
+                    name << "_avs";
+                }
+
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.alpha << '_'

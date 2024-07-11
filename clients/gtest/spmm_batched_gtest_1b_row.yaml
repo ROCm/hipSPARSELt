@@ -55,6 +55,7 @@ Tests:
   transA_transB: *transA_transB_range
   batch_count: [ 1, 3 ]
   bias_vector: [false]
+  alpha_vector_scaling: [true, false]
   sparse_b: [ true, false]
   orderA: [R]
   orderB: [R]
@@ -71,6 +72,7 @@ Tests:
   batch_count: [ 1, 3 ]
   bias_vector: [true]
   bias_stride: [0, -1, 256]
+  alpha_vector_scaling: [true, false]
   sparse_b: [ true, false]
   orderA: [R]
   orderB: [R]

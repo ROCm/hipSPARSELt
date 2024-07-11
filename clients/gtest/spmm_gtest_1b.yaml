@@ -59,6 +59,7 @@ Tests:
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
   sparse_b: [true, false]
+  alpha_vector_scaling: [true, false]
 
 - name: spmm_small
   category: quick
@@ -70,6 +71,7 @@ Tests:
   bias_vector: [true]
   bias_stride: [0, -1, 256]
   sparse_b: [true, false]
+  alpha_vector_scaling: [true, false]
 
 - name: spmm_medium
   category: pre_checkin

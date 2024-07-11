@@ -54,4 +54,5 @@ void cblas_gemm(hipsparseOrder_t       order,
                 std::add_pointer_t<To> C,
                 int64_t                ldc,
                 int64_t                sizeC,
+                Tc*                    alphaVec,
                 bool                   alt = false);
