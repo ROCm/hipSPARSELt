@@ -60,6 +60,7 @@ Tests:
   alpha_beta: *alpha_beta_range
   bias_vector: [false]
   sparse_b: [ true, false]
+  alpha_vector_scaling: [true, false]
   orderA: [R]
   orderB: [R]
   orderC: [R]
@@ -76,6 +77,7 @@ Tests:
   bias_stride: [0, -1, 256]
   bias_type: [f32_r, f16_r]
   sparse_b: [ true, false]
+  alpha_vector_scaling: [true, false]
   orderA: [R]
   orderB: [R]
   orderC: [R]
