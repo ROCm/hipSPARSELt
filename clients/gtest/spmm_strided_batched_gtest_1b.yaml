@@ -42,6 +42,7 @@ Tests:
   transB: N
   batch_count: [ 1, 3 ]
   sparse_b: [true, false]
+  alpha_vector_scaling: [true, false]
 
 - name: spmm_strided_batched_small
   category: quick
@@ -54,6 +55,7 @@ Tests:
   bias_vector: [true]
   bias_stride: [0, -1, 256]
   sparse_b: [true, false]
+  alpha_vector_scaling: [true, false]
 
 - name: spmm_strided_batched_small_stride_zero
   category: quick
@@ -70,6 +72,7 @@ Tests:
   bias_vector: [true]
   bias_stride: [0, -1, 256]
   sparse_b: [true, false]
+  alpha_vector_scaling: [true, false]
 
 - name: spmm_strided_batched_medium
   category: pre_checkin

@@ -128,6 +128,7 @@ Arguments:
   - search_iters: c_int32
   - sparse_b: c_bool
   - func_version: c_int32
+  - alpha_vector_scaling: c_bool
   - orderA: c_char
   - orderB: c_char
   - orderC: c_char
@@ -208,6 +209,7 @@ Defaults:
   search_iters: 10
   sparse_b: false
   func_version: 1
+  alpha_vector_scaling: false
   orderA: C
   orderB: C
   orderC: C

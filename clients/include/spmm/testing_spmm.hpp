@@ -547,6 +547,26 @@ void testing_spmm(const Arguments& arg)
 #endif
     }
 
+    const size_t size_alpha_vec = arg.alpha_vector_scaling ? M : 0;
+
+    device_vector<Talpha> dAlpahVector(size_alpha_vec, 1, HMM);
+    CHECK_DEVICE_ALLOCATION(dAlpahVector.memcheck());
+    host_vector<Talpha> hAlpahVector(size_alpha_vec);
+    if(arg.alpha_vector_scaling)
+    {
+        hipsparselt_init<Talpha>(hAlpahVector, M, 1, M, size_alpha_vec, 1);
+        CHECK_HIP_ERROR(dAlpahVector.transfer_from(hAlpahVector));
+        int alpha_vector_scaling = 1;
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatmulDescSetAttribute(handle,
+                                              matmul,
+                                              HIPSPARSELT_MATMUL_ALPHA_VECTOR_SCALING,
+                                              &alpha_vector_scaling,
+                                              sizeof(int)),
+            HIPSPARSE_STATUS_SUCCESS);
+        h_alpha = static_cast<Talpha>(1);
+    }
+
     hipsparselt_local_matmul_alg_selection alg_sel(handle, matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT);
 
     size_t workspace_size = 0, compressed_size = 0, compress_buffer_size = 0;
@@ -733,16 +753,34 @@ void testing_spmm(const Arguments& arg)
 
     if(arg.search)
         EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtMatmulSearch(
-                handle, plan, &h_alpha, dA_, dB_, &h_beta, dC, dD, dWorkspace, &stream, 1),
+            hipsparseLtMatmulSearch(handle,
+                                    plan,
+                                    arg.alpha_vector_scaling ? dAlpahVector : &h_alpha,
+                                    dA_,
+                                    dB_,
+                                    &h_beta,
+                                    dC,
+                                    dD,
+                                    dWorkspace,
+                                    &stream,
+                                    1),
             HIPSPARSE_STATUS_SUCCESS);
     if(arg.unit_check || arg.norm_check)
     {
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         CHECK_HIP_ERROR(h_pruned.transfer_from(arg.sparse_b ? dB : dA));
         EXPECT_HIPSPARSE_STATUS(
-            hipsparseLtMatmul(
-                handle, plan, &h_alpha, dA_, dB_, &h_beta, dC, dD, dWorkspace, &stream, 1),
+            hipsparseLtMatmul(handle,
+                              plan,
+                              arg.alpha_vector_scaling ? dAlpahVector : &h_alpha,
+                              dA_,
+                              dB_,
+                              &h_beta,
+                              dC,
+                              dD,
+                              dWorkspace,
+                              &stream,
+                              1),
             HIPSPARSE_STATUS_SUCCESS);
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
@@ -807,6 +845,7 @@ void testing_spmm(const Arguments& arg)
                                                hD_gold_act + stride_d * i,
                                                ldd,
                                                tSizeD,
+                                               arg.alpha_vector_scaling ? hAlpahVector : nullptr,
                                                false);
 
                 auto pos = stride_d * i;
@@ -877,6 +916,7 @@ void testing_spmm(const Arguments& arg)
                                            hD_gold + stride_d * i,
                                            ldd,
                                            tSizeD,
+                                           arg.alpha_vector_scaling ? hAlpahVector : nullptr,
                                            false);
         }
 #undef activation_param
@@ -907,13 +947,17 @@ void testing_spmm(const Arguments& arg)
         }
 
         // Debug
-        //print_strided_batched("A", &hA[0], A_row_r, A_col_r, num_batches, 1, lda, stride_a);
-        //print_strided_batched("B", &hB[0], B_row_r, B_col_r, num_batches, 1, ldb, stride_b);
-        //print_strided_batched("C", &hC[0], C_row_r, C_col_r, num_batches, 1, ldc, stride_c);
-        //if(arg.bias_vector)
-        //    print_strided_batched("bias", &hBias[0], M, 1, num_batches, 1, M, bias_stride);
-        //print_strided_batched("hD_gold", &hD_gold[0], tM, tN, num_batches, 1, ldd, stride_d);
-        //print_strided_batched("hD1", &hD_1[0], tM, tN, num_batches, 1, ldd, stride_d);
+#if 0
+        print_strided_batched("A", &hA_[0], A_row_r, A_col_r, num_batches, 1, lda, stride_a);
+        print_strided_batched("B", &hB_[0], B_row_r, B_col_r, num_batches, 1, ldb, stride_b);
+        print_strided_batched("C", &hC[0], C_row_r, C_col_r, num_batches, 1, ldc, stride_c);
+        if(arg.bias_vector)
+            print_strided_batched("bias", &hBias[0], M, 1, num_batches, 1, M, bias_stride);
+        if(arg.alpha_vector_scaling)
+            print_strided_batched("alpha_vec", &hAlpahVector[0], M, 1, 1, 1, M, M);
+        print_strided_batched("hD_gold", &hD_gold[0], tM, tN, num_batches, 1, ldd, stride_d);
+        print_strided_batched("hD1", &hD_1[0], tM, tN, num_batches, 1, ldd, stride_d);
+#endif
     }
 
     if(arg.timing)
@@ -923,8 +967,17 @@ void testing_spmm(const Arguments& arg)
         for(int i = 0; i < number_cold_calls; i++)
         {
             EXPECT_HIPSPARSE_STATUS(
-                hipsparseLtMatmul(
-                    handle, plan, &h_alpha, dA_, dB_, &h_beta, dC, dD, dWorkspace, &stream, 1),
+                hipsparseLtMatmul(handle,
+                                  plan,
+                                  arg.alpha_vector_scaling ? dAlpahVector : &h_alpha,
+                                  dA_,
+                                  dB_,
+                                  &h_beta,
+                                  dC,
+                                  dD,
+                                  dWorkspace,
+                                  &stream,
+                                  1),
                 HIPSPARSE_STATUS_SUCCESS);
         }
 
@@ -933,8 +986,17 @@ void testing_spmm(const Arguments& arg)
         for(int i = 0; i < number_hot_calls; i++)
         {
             EXPECT_HIPSPARSE_STATUS(
-                hipsparseLtMatmul(
-                    handle, plan, &h_alpha, dA_, dB_, &h_beta, dC, dD, dWorkspace, &stream, 1),
+                hipsparseLtMatmul(handle,
+                                  plan,
+                                  arg.alpha_vector_scaling ? dAlpahVector : &h_alpha,
+                                  dA_,
+                                  dB_,
+                                  &h_beta,
+                                  dC,
+                                  dD,
+                                  dWorkspace,
+                                  &stream,
+                                  1),
                 HIPSPARSE_STATUS_SUCCESS);
         }
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -1317,6 +1379,7 @@ void testing_aux_plan_assign(const Arguments& arg)
                                                          hD_gold_act + stride_d * i,
                                                          ldd,
                                                          ldd * N,
+                                                         nullptr,
                                                          false);
 
                           auto pos = stride_d * i;
@@ -1341,6 +1404,7 @@ void testing_aux_plan_assign(const Arguments& arg)
                                                      hD_gold + stride_d * i,
                                                      ldd,
                                                      ldd * N,
+                                                     nullptr,
                                                      false);
                   }
 #undef activation_param

@@ -496,6 +496,10 @@ try
          value<char>(&order_d)->default_value('N'),
          "C = Column Major, R = Row Major")
 
+        ("alpha_vector_scaling",
+         bool_switch(&arg.alpha_vector_scaling)->default_value(false),
+         "Apply alpha vector scaling")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");

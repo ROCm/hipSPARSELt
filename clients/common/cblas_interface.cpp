@@ -72,6 +72,7 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOrder_t     order,
                                                    hip_bfloat16*        C,
                                                    int64_t              ldc,
                                                    int64_t              sizeC,
+                                                   float*               alphaVec,
                                                    bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -86,22 +87,52 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipsparseOrder_t     order,
     for(size_t i = 0; i < sizeC; i++)
         C_float[i] = static_cast<float>(C[i]);
 
-    // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_float,
-                lda,
-                B_float,
-                ldb,
-                beta,
-                C_float,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<float> T_float(sizeC);
+        memset(T_float, 0, sizeC);
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<float>(1),
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    static_cast<float>(0),
+                    T_float,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos   = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C_float[pos] = T_float[pos] * alphaVec[i] + C_float[pos] * beta;
+            }
+        }
+    }
+    else
+    {
+        // just directly cast, since transA, transB are integers in the enum
+        // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    beta,
+                    C_float,
+                    ldc);
+    }
 
     for(size_t i = 0; i < sizeC; i++)
         C[i] = static_cast<hip_bfloat16>(C_float[i]);
@@ -125,34 +156,65 @@ void cblas_gemm<hip_bfloat16, float, float>(hipsparseOrder_t     order,
                                             float*               C,
                                             int64_t              ldc,
                                             int64_t              sizeC,
+                                            float*               alphaVec,
                                             bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+    host_vector<float> A_float(sizeA), B_float(sizeB);
 
     for(size_t i = 0; i < sizeA; i++)
         A_float[i] = static_cast<float>(A[i]);
     for(size_t i = 0; i < sizeB; i++)
         B_float[i] = static_cast<float>(B[i]);
 
-    // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_float,
-                lda,
-                B_float,
-                ldb,
-                beta,
-                C,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<float> T_float(sizeC);
+        memset(T_float, 0, sizeC);
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<float>(1),
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    static_cast<float>(0),
+                    T_float,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C[pos]     = T_float[pos] * alphaVec[i] + C[pos] * beta;
+            }
+        }
+    }
+    else
+    {
+        // just directly cast, since transA, transB are integers in the enum
+        // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    beta,
+                    C,
+                    ldc);
+    }
 }
 
 template <>
@@ -173,6 +235,7 @@ void cblas_gemm<__half, __half, float>(hipsparseOrder_t     order,
                                        __half*              C,
                                        int64_t              ldc,
                                        int64_t              sizeC,
+                                       float*               alphaVec,
                                        bool                 alt)
 {
     // cblas does not support __half, so convert to higher precision float
@@ -199,22 +262,52 @@ void cblas_gemm<__half, __half, float>(hipsparseOrder_t     order,
             C_float[i] = C[i];
     }
 
-    // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_float,
-                lda,
-                B_float,
-                ldb,
-                beta,
-                C_float,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<float> T_float(sizeC);
+        memset(T_float, 0, sizeC);
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<float>(1),
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    static_cast<float>(0),
+                    T_float,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos   = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C_float[pos] = T_float[pos] * alphaVec[i] + C_float[pos] * beta;
+            }
+        }
+    }
+    else
+    {
+        // just directly cast, since transA, transB are integers in the enum
+        // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    beta,
+                    C_float,
+                    ldc);
+    }
 
     for(size_t i = 0; i < sizeC; i++)
         C[i] = __half(C_float[i]);
@@ -238,6 +331,7 @@ void cblas_gemm<__half, float, float>(hipsparseOrder_t     order,
                                       float*               C,
                                       int64_t              ldc,
                                       int64_t              sizeC,
+                                      float*               alphaVec,
                                       bool                 alt)
 {
     // cblas does not support __half, so convert to higher precision float
@@ -260,22 +354,53 @@ void cblas_gemm<__half, float, float>(hipsparseOrder_t     order,
             B_float[i] = B[i];
     }
 
-    // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_float,
-                lda,
-                B_float,
-                ldb,
-                beta,
-                C,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<float> T_float(sizeC);
+        memset(T_float, 0, sizeC);
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<float>(1),
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    static_cast<float>(0),
+                    T_float,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C[pos]     = T_float[pos] * alphaVec[i] + C[pos] * beta;
+            }
+        }
+    }
+    else
+    {
+
+        // just directly cast, since transA, transB are integers in the enum
+        // printf("transA: hipsparselt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+        cblas_sgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_float,
+                    lda,
+                    B_float,
+                    ldb,
+                    beta,
+                    C,
+                    ldc);
+    }
 }
 
 template <>
@@ -296,6 +421,7 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseOrder_t     order,
                                        int8_t*              C,
                                        int64_t              ldc,
                                        int64_t              sizeC,
+                                       float*               alphaVec,
                                        bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
@@ -315,21 +441,52 @@ void cblas_gemm<int8_t, int8_t, float>(hipsparseOrder_t     order,
     for(size_t i = 0; i < sizeC; i++)
         C_double[i] = static_cast<double>(C[i]);
 
-    // just directly cast, since transA, transB are integers in the enum
-    cblas_dgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_double,
-                lda,
-                B_double,
-                ldb,
-                beta,
-                C_double,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<double> T_double(sizeC);
+        memset(T_double, 0, sizeC);
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<double>(1),
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    static_cast<double>(0),
+                    T_double,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos    = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C_double[pos] = T_double[pos] * static_cast<double>(alphaVec[i])
+                                + C_double[pos] * static_cast<double>(beta);
+            }
+        }
+    }
+    else
+    {
+        // just directly cast, since transA, transB are integers in the enum
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    beta,
+                    C_double,
+                    ldc);
+    }
 
     auto saturate = [](double val) {
         val = std::nearbyint(val);
@@ -359,6 +516,7 @@ void cblas_gemm<int8_t, float, float>(hipsparseOrder_t     order,
                                       float*               C,
                                       int64_t              ldc,
                                       int64_t              sizeC,
+                                      float*               alphaVec,
                                       bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
@@ -378,21 +536,52 @@ void cblas_gemm<int8_t, float, float>(hipsparseOrder_t     order,
     for(size_t i = 0; i < sizeC; i++)
         C_double[i] = static_cast<double>(C[i]);
 
-    // just directly cast, since transA, transB are integers in the enum
-    cblas_dgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_double,
-                lda,
-                B_double,
-                ldb,
-                beta,
-                C_double,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<double> T_double(sizeC);
+        memset(T_double, 0, sizeC);
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<double>(1),
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    static_cast<double>(0),
+                    T_double,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos    = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C_double[pos] = T_double[pos] * static_cast<double>(alphaVec[i])
+                                + C_double[pos] * static_cast<double>(beta);
+            }
+        }
+    }
+    else
+    {
+        // just directly cast, since transA, transB are integers in the enum
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    beta,
+                    C_double,
+                    ldc);
+    }
 
     for(size_t i = 0; i < sizeC; i++)
         C[i] = static_cast<float>(C_double[i]);
@@ -416,6 +605,7 @@ void cblas_gemm<int8_t, __half, float>(hipsparseOrder_t     order,
                                        __half*              C,
                                        int64_t              ldc,
                                        int64_t              sizeC,
+                                       float*               alphaVec,
                                        bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
@@ -435,21 +625,52 @@ void cblas_gemm<int8_t, __half, float>(hipsparseOrder_t     order,
     for(size_t i = 0; i < sizeC; i++)
         C_double[i] = static_cast<double>(C[i]);
 
-    // just directly cast, since transA, transB are integers in the enum
-    cblas_dgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_double,
-                lda,
-                B_double,
-                ldb,
-                beta,
-                C_double,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<double> T_double(sizeC);
+        memset(T_double, 0, sizeC);
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<double>(1),
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    static_cast<double>(0),
+                    T_double,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos    = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C_double[pos] = T_double[pos] * static_cast<double>(alphaVec[i])
+                                + C_double[pos] * static_cast<double>(beta);
+            }
+        }
+    }
+    else
+    {
+        // just directly cast, since transA, transB are integers in the enum
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    beta,
+                    C_double,
+                    ldc);
+    }
 
     for(size_t i = 0; i < sizeC; i++)
         C[i] = __half(C_double[i]);
@@ -473,6 +694,7 @@ void cblas_gemm<int8_t, hip_bfloat16, float>(hipsparseOrder_t     order,
                                              hip_bfloat16*        C,
                                              int64_t              ldc,
                                              int64_t              sizeC,
+                                             float*               alphaVec,
                                              bool                 alt)
 {
     // cblas does not support int8_t input / int8_t output, however non-overflowing
@@ -492,21 +714,52 @@ void cblas_gemm<int8_t, hip_bfloat16, float>(hipsparseOrder_t     order,
     for(size_t i = 0; i < sizeC; i++)
         C_double[i] = static_cast<double>(C[i]);
 
-    // just directly cast, since transA, transB are integers in the enum
-    cblas_dgemm(HIPOrderToCBLASOrder(order),
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_double,
-                lda,
-                B_double,
-                ldb,
-                beta,
-                C_double,
-                ldc);
+    if(alphaVec != nullptr)
+    {
+        host_vector<double> T_double(sizeC);
+        memset(T_double, 0, sizeC);
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    static_cast<double>(1),
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    static_cast<double>(0),
+                    T_double,
+                    ldc);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                size_t pos    = order == HIPSPARSE_ORDER_COL ? j * ldc + i : i * ldc + j;
+                C_double[pos] = T_double[pos] * static_cast<double>(alphaVec[i])
+                                + C_double[pos] * static_cast<double>(beta);
+            }
+        }
+    }
+    else
+    {
+        // just directly cast, since transA, transB are integers in the enum
+        cblas_dgemm(HIPOrderToCBLASOrder(order),
+                    HIPOperationToCBLASTanspose(transA),
+                    HIPOperationToCBLASTanspose(transB),
+                    m,
+                    n,
+                    k,
+                    alpha,
+                    A_double,
+                    lda,
+                    B_double,
+                    ldb,
+                    beta,
+                    C_double,
+                    ldc);
+    }
 
     for(size_t i = 0; i < sizeC; i++)
         C[i] = static_cast<hip_bfloat16>(C_double[i]);
