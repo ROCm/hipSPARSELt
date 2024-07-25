@@ -5,6 +5,12 @@
 ### Changes
 
 * Refine test cases.
+* Changed default compiler to amdclang++.
+
+### Additions
+
+* Support row-major memory order (HIPSPARSE_ORDER_ROW).
+* Support new datatype combination: INT8 inputs, BF16 output and INT32 Matrix Core accumulation.
 
 ## (Unreleased) hipSPARSELt 0.2.0
 
