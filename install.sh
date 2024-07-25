@@ -41,7 +41,6 @@ function display_help()
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"
   echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
   echo "    [-k|--relwithdebinfo] -DCMAKE_BUILD_TYPE=RelWithDebInfo"
-  echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
   echo "    [--static] build static library"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
@@ -300,7 +299,7 @@ install_dependencies=false
 build_clients=false
 build_release=true
 build_cuda=false
-build_hip_clang=true
+build_amd_clang=true
 compiler=g++
 compiler_c=cc
 build_static=false
@@ -333,7 +332,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:,build_dir:, --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:,build_dir:, --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -369,14 +368,14 @@ while true; do
             shift ;;
         --cuda|--use-cuda)
             build_cuda=true
-            build_hip_clang=false
+            build_amd_clang=false
             shift ;;
         --static)
             build_static=true
             shift ;;
         --address-sanitizer)
             build_address_sanitizer=true
-            compiler=hipcc
+            compiler=amdclang++
             shift ;;
         -k|--relwithdebinfo)
             build_release=false
@@ -495,8 +494,8 @@ fi
 cmake_executable=cmake
 
 # If user provides custom ${rocm_path} path for hcc it has lesser priority,
-# but with hip-clang existing path has lesser priority to avoid use of installed clang++
-if [[ "${build_hip_clang}" == true ]]; then
+# but with amd-clang existing path has lesser priority to avoid use of installed clang++
+if [[ "${build_amd_clang}" == true ]]; then
   export PATH=${rocm_path}/bin:${rocm_path}/hip/bin:${rocm_path}/llvm/bin:${PATH}
 fi
 
@@ -593,9 +592,9 @@ pushd .
       exit 1
     fi
     cmake_common_options="{cmake_common_options} -DBUILD_SHARED_LIBS=OFF"
-    compiler="${rocm_path}/bin/hipcc" #force hipcc for static libs, g++ doesn't work
-    compiler_c="${compiler}"
-    printf "Forcing compiler to hipcc for static library.\n"
+    compiler="${rocm_path}/bin/amdclang++" #force amdclang++ for static libs, g++ doesn't work
+    compiler_c="${rocm_path}/bin/amdclang"
+    printf "Forcing compiler to amdclang++ for static library.\n"
   fi
 
   # clients
@@ -646,9 +645,9 @@ pushd .
   echo $cmake_common_options
   cmake_common_options="${cmake_common_options} ${tensile_opt}"
 
-  if [[ "${build_hip_clang}" == true ]]; then
-    compiler="${rocm_path}/bin/hipcc"
-    compiler_c="${compiler}"
+  if [[ "${build_amd_clang}" == true ]]; then
+    compiler="${rocm_path}/bin/amdclang++"
+    compiler_c="${rocm_path}/bin/amdclang"
   fi
 
   if [[ "${build_clients}" == false ]]; then
