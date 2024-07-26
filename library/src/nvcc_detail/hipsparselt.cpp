@@ -113,6 +113,28 @@ hipsparseStatus_t hipCUSPARSEStatusToHIPStatus(cusparseStatus_t cuStatus)
 #endif
 }
 
+/* @deprecated */
+cudaDataType HIPDatatypeToCuSparseLtDatatype(hipsparseLtDatatype_t type)
+{
+    switch(type)
+    {
+    case HIPSPARSELT_R_32F:
+        return CUDA_R_32F;
+
+    case HIPSPARSELT_R_16BF:
+        return CUDA_R_16BF;
+
+    case HIPSPARSELT_R_16F:
+        return CUDA_R_16F;
+
+    case HIPSPARSELT_R_8I:
+        return CUDA_R_8I;
+
+    default:
+        throw HIPSPARSE_STATUS_NOT_SUPPORTED;
+    }
+}
+
 cudaDataType HIPDatatypeToCuSparseLtDatatype(hipDataType type)
 {
     switch(type)

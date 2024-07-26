@@ -116,6 +116,7 @@ struct _rocsparselt_mat_descr
         , c_k(rhs.c_k)
         , c_ld(rhs.c_ld)
         , c_n(rhs.c_n)
+        , is_hipsparselt_datatype(rhs.is_hipsparselt_datatype)
     {
         is_init = (uintptr_t)handle;
     };
@@ -179,6 +180,9 @@ struct _rocsparselt_mat_descr
     int64_t c_ld = -1;
 
     int64_t c_n = -1;
+
+    //@TODO This is used to backward support hipsparseLtDatatype_t, should remove in the later version.
+    bool is_hipsparselt_datatype = false;
 };
 
 /********************************************************************************
@@ -223,6 +227,7 @@ struct _rocsparselt_matmul_descr
         , _ldb(rhs._ldb)
         , _is_sparse_a(rhs._is_sparse_a)
         , _swap_ab(rhs._swap_ab)
+        , bias_is_hipsparselt_datatype(rhs.bias_is_hipsparselt_datatype)
     {
         matrix_A     = rhs.matrix_A->clone();
         matrix_B     = rhs.matrix_B->clone();
@@ -293,6 +298,9 @@ struct _rocsparselt_matmul_descr
     int64_t               _ldb         = 0;
     bool                  _is_sparse_a = true;
     bool                  _swap_ab     = false;
+
+    //@TODO This is used to backward support hipsparseLtDatatype_t, should remove in the later version.
+    bool bias_is_hipsparselt_datatype = false;
 
 private:
     bool      is_reference = true;
