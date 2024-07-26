@@ -1,12 +1,24 @@
 # Change Log for hipSPARSELt
 
+## (Unreleased) hipSPARSELt 0.2.2
+
+### Changes
+
+* hipsparseLtDatatype_t is deprecated and instead by hipDataType.
+* Changed default compiler to amdclang++.
+
+### Additions
+
+* Support row-major memory order (HIPSPARSE_ORDER_ROW).
+* Support new datatype combination: INT8 inputs, BF16 output and INT32 Matrix Core accumulation.
+
 ## (Unreleased) hipSPARSELt 0.2.1
 
 ### Changes
 
 * Refine test cases.
 
-## (Unreleased) hipSPARSELt 0.2.0
+## hipSPARSELt 0.2.0
 
 ### Additions
 
