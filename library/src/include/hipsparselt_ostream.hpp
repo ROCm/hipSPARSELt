@@ -393,6 +393,17 @@ public:
         return os << s.c_str();
     }
 
+    /*
+    * @deprecated
+    * hipsparseLtDatatype_t output
+    */
+    friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os,
+                                                    hipsparseLtDatatype_t         d)
+    {
+        os.m_os << hipsparselt_datatype_to_string(d);
+        return os;
+    }
+
     // hipDataType output
     friend hipsparselt_internal_ostream& operator<<(hipsparselt_internal_ostream& os, hipDataType d)
     {
