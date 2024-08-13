@@ -125,10 +125,17 @@ if (BUILD_CUDA)
     list( APPEND HIP_INCLUDE_DIRS "${HIP_ROOT_DIR}/include" )
 
 else()
-    #Set the AMDGPU_TARGETS with backward compatiblity
-    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx940;gfx941;gfx942;"
-    )
+    if (BUILD_ADDRESS_SANITIZER)
+      #Set the AMDGPU_TARGETS for ASAN build
+      rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+          TARGETS "gfx940:xnack+;gfx941:xnack+;gfx942:xnack+;"
+      )
+    else()
+      #Set the AMDGPU_TARGETS with backward compatiblity
+      rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+          TARGETS "gfx940;gfx941;gfx942;"
+      )
+    endif()
 
     if (AMDGPU_TARGETS)
         set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
