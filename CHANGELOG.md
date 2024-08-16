@@ -1,16 +1,19 @@
 # Change Log for hipSPARSELt
 
+Full documentation for hipSPARSELt is available at [rocm.docs.amd.com/projects/hipSPARSELt](https://rocm.docs.amd.com/projects/hipSPARSELt/en/latest/index.html).
+
 ## (Unreleased) hipSPARSELt 0.2.2
 
 ### Changes
 
 * hipsparseLtDatatype_t is deprecated and instead by hipDataType.
 * Changed default compiler to amdclang++.
-
-### Additions
-
 * Support row-major memory order (HIPSPARSE_ORDER_ROW).
 * Support new datatype combination: INT8 inputs, BF16 output and INT32 Matrix Core accumulation.
+
+### Removals
+
+* hipsparseLtDatatype_t is deprecated and will be removed in the next major release of ROCm
 
 ## (Unreleased) hipSPARSELt 0.2.1
 
@@ -18,15 +21,15 @@
 
 * Refine test cases.
 
-## hipSPARSELt 0.2.0
+## hipSPARSELt 0.2.0 for ROCm 6.1
 
-### Additions
+### Changes
 
 * Support Matrix B is a Structured Sparsity Matrix.
 
-## hipSPARSELt 0.1.0
+## hipSPARSELt 0.1.0 for ROCm 6.0
 
-### Additions
+### Changes
 
 * Enabled hipSPARSELt APIs
 * Support for:
@@ -37,8 +40,7 @@
   * Bias vectors
   * cuSPARSELt v0.4 backend
 * Integrated with Tensile Lite kernel generator
-* Support for batched computation (single sparse x multiple dense and multiple sparse x
-single dense)
+* Support for batched computation (single sparse x multiple dense and multiple sparse x single dense)
 * GoogleTest: hipsparselt-test
 * `hipsparselt-bench` benchmarking tool
 * Sample apps: `example_spmm_strided_batched`, `example_prune`, `example_compress`
