@@ -92,6 +92,9 @@ if(NOT BUILD_CUDA)
     # Tensile host depends on libs build target
     add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
 
+    set_target_properties( TensileHost PROPERTIES CXX_VISIBILITY_PRESET hidden)
+    set_target_properties( TensileHost PROPERTIES C_VISIBILITY_PRESET hidden)
+
     if( ROCSPARSELT_SHARED_LIBS )
       set( BUILD_SHARED_LIBS ON )
       set_target_properties( TensileHost PROPERTIES POSITION_INDEPENDENT_CODE ON )
