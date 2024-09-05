@@ -29,6 +29,7 @@
 #include "rocsparselt.h"
 #include "status.h"
 #include "utility.hpp"
+#include "rocsparselt_spmm_utils.hpp"
 
 #include "hipsparselt_ostream.hpp"
 #include <hip/hip_runtime_api.h>
@@ -805,6 +806,8 @@ rocsparselt_status rocsparselt_smfmac_prune2(const rocsparselt_handle*    handle
         return rocsparselt_status_not_implemented;
     }
 
+    initSparseMatrixLayout(op, sparseMatDescr, isSparseA);
+
     log_api(_handle,
             __func__,
             "sparseMatDescr[in]",
@@ -960,6 +963,8 @@ rocsparselt_status rocsparselt_smfmac_prune_check2(const rocsparselt_handle*    
         log_error(_handle, __func__, "Matrix is not a structured matrix");
         return rocsparselt_status_not_implemented;
     }
+
+    initSparseMatrixLayout(op, sparseMatDescr, isSparseA);
 
     log_api(_handle,
             __func__,

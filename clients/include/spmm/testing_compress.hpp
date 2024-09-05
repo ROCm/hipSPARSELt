@@ -447,6 +447,23 @@ void testing_compress(const Arguments& arg)
                                      arg.b_type,
                                      orderB);
 
+    hipsparselt_local_mat_descr matAv2(arg.sparse_b ? hipsparselt_matrix_type_dense
+                                                    : hipsparselt_matrix_type_structured,
+                                       handle,
+                                       A_row,
+                                       A_col,
+                                       lda,
+                                       arg.a_type,
+                                       orderA);
+    hipsparselt_local_mat_descr matBv2(arg.sparse_b ? hipsparselt_matrix_type_structured
+                                                    : hipsparselt_matrix_type_dense,
+                                       handle,
+                                       B_row,
+                                       B_col,
+                                       ldb,
+                                       arg.b_type,
+                                       orderB);
+
     hipsparselt_local_mat_descr matC(
         hipsparselt_matrix_type_dense, handle, M, N, ldc, arg.c_type, orderC);
     hipsparselt_local_mat_descr matD(
@@ -486,6 +503,14 @@ void testing_compress(const Arguments& arg)
             HIPSPARSE_STATUS_SUCCESS);
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
+                handle, matAv2, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matBv2, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
+            HIPSPARSE_STATUS_SUCCESS);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatDescSetAttribute(
                 handle, matC, HIPSPARSELT_MAT_NUM_BATCHES, &num_batches, sizeof(int)),
             HIPSPARSE_STATUS_SUCCESS);
         EXPECT_HIPSPARSE_STATUS(
@@ -506,6 +531,20 @@ void testing_compress(const Arguments& arg)
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtMatDescSetAttribute(
                 handle, matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(int64_t)),
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_a, A_row, A_col, lda, orderA);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matAv2, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(int64_t)),
+            eStatus);
+        if(eStatus != HIPSPARSE_STATUS_SUCCESS)
+            return;
+        eStatus = expected_hipsparse_status_of_matrix_stride(stride_b, B_row, B_col, ldb, orderB);
+        EXPECT_HIPSPARSE_STATUS(
+            hipsparseLtMatDescSetAttribute(
+                handle, matBv2, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(int64_t)),
             eStatus);
         if(eStatus != HIPSPARSE_STATUS_SUCCESS)
             return;
@@ -545,7 +584,7 @@ void testing_compress(const Arguments& arg)
     {
         EXPECT_HIPSPARSE_STATUS(
             hipsparseLtSpMMACompressedSize2(
-                handle, arg.sparse_b ? matB : matA, &compressed_size, &compress_buffer_size),
+                handle, arg.sparse_b ? matBv2 : matAv2, &compressed_size, &compress_buffer_size),
             HIPSPARSE_STATUS_SUCCESS);
     }
     const size_t size_A             = stride_a == 0
@@ -623,7 +662,7 @@ void testing_compress(const Arguments& arg)
     else if(arg.func_version == 2)
     {
         EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMAPrune2(handle,
-                                                       arg.sparse_b ? matB : matA,
+                                                       arg.sparse_b ? matBv2 : matAv2,
                                                        !arg.sparse_b,
                                                        arg.sparse_b ? transB : transA,
                                                        dT,
@@ -717,7 +756,7 @@ void testing_compress(const Arguments& arg)
                 HIPSPARSE_STATUS_SUCCESS);
         else if(arg.func_version == 2)
             EXPECT_HIPSPARSE_STATUS(hipsparseLtSpMMACompress2(handle,
-                                                              arg.sparse_b ? matB : matA,
+                                                              arg.sparse_b ? matBv2 : matAv2,
                                                               !arg.sparse_b,
                                                               arg.sparse_b ? transB : transA,
                                                               dT,

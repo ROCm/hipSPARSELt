@@ -644,6 +644,8 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
         return rocsparselt_status_not_implemented;
     }
 
+    initSparseMatrixLayout(op, sparseMatDescr, isSparseA);
+
     log_api(_handle,
             __func__,
             "sparseMatDescr[in]",
