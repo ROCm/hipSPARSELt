@@ -61,6 +61,40 @@ inline rocsparselt_status getOriginalSizes(rocsparselt_operation opA,
     return rocsparselt_status_success;
 }
 
+inline void initSparseMatrixLayout(rocsparselt_operation          op,
+                                    const rocsparselt_mat_descr*  sparseMatDescr,
+                                    bool                          isSparseA)
+
+{
+    auto _sparseMatDescr = reinterpret_cast<_rocsparselt_mat_descr*>(
+        const_cast<rocsparselt_mat_descr*>(sparseMatDescr));
+    if(isSparseA)
+    {
+        auto m = _sparseMatDescr->m;
+        auto k = _sparseMatDescr->n;
+        if (op == rocsparselt_operation_transpose)
+            std::swap(m, k);
+        _sparseMatDescr->c_k  = k / 2;
+        _sparseMatDescr->c_ld = m;
+        _sparseMatDescr->c_n  = _sparseMatDescr->c_k;
+        if((op == rocsparselt_operation_transpose)
+           != (_sparseMatDescr->order == rocsparselt_order_row))
+            std::swap(_sparseMatDescr->c_ld, _sparseMatDescr->c_n);
+    }
+    else
+    {
+        auto k = _sparseMatDescr->m;
+        auto n = _sparseMatDescr->n;
+        if (op == rocsparselt_operation_transpose)
+            std::swap(n, k);
+        _sparseMatDescr->c_k  = k / 2;
+        _sparseMatDescr->c_ld = _sparseMatDescr->c_k;
+        _sparseMatDescr->c_n  = n;
+        if((op == rocsparselt_operation_transpose)
+           != (_sparseMatDescr->order == rocsparselt_order_row))
+            std::swap(_sparseMatDescr->c_ld, _sparseMatDescr->c_n);
+    }
+}
 /*******************************************************************************
  * Get the offset of the metatdata (in bytes)
  ******************************************************************************/
