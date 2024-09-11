@@ -967,7 +967,7 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
     {
         auto solution                  = solutions[i];
         configs[i].index               = solution->index;
-        configs[i].max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob);
+        configs[i].max_workspace_bytes = solution->requiredWorkspaceSize(tensile_prob, *hardware);
         configs[i].use_bias            = tensile_prob.useBias();
         configs[i].use_scale_alpha_vec = tensile_prob.useScaleAlphaVec();
     }
