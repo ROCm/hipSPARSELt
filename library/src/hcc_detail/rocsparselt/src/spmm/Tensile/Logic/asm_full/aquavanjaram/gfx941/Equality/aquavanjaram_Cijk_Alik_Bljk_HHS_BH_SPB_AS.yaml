@@ -73,7 +73,7 @@
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleAB: ""
-  UseScaleAlphaVec: 3
+  UseScaleAlphaVec: 0
   UseScaleCD: false
 - - 1LDSBuffer: 0
     ActivationAlt: false
@@ -286,7 +286,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -555,7 +555,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -824,7 +824,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1093,7 +1093,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1362,7 +1362,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1631,7 +1631,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1900,7 +1900,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2169,7 +2169,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2438,7 +2438,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2707,7 +2707,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2976,7 +2976,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: ""
-      UseScaleAlphaVec: 3
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
