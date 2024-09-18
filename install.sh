@@ -160,11 +160,11 @@ install_packages( )
   local library_dependencies_fedora=( "gcc-gfortran" "make" "cmake" "gcc-c++" "libcxx-devel" "rpm-build" "numactl-libs" )
   local library_dependencies_sles=( "gcc-fortran" "make" "cmake" "gcc-c++" "libcxxtools9" "rpm-build" )
 
-  local client_dependencies_ubuntu=( "python3" "python3-yaml" )
-  local client_dependencies_centos=( "python36" "python3-pip" )
+  local client_dependencies_ubuntu=( "python3" "python3-yaml" "python3-joblib" )
+  local client_dependencies_centos=( "python36" "python3-pip"  "python3-joblib" )
   local client_dependencies_centos8=( "python39" "python3-pip" )
-  local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" )
-  local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" )
+  local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip"  "python3-joblib" )
+  local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" "python3-joblib" )
 
   if [[ ( "${ID}" == "centos" ) || ( "${ID}" == "rhel" ) ]]; then
     if [[ "${VERSION_ID}" == "6" ]]; then
@@ -172,11 +172,20 @@ install_packages( )
     else
       library_dependencies_centos+=( "numactl-libs" )
     fi
-    if (( "${VERSION_ID%%.*}" >= "8" )); then
+    if (( "${VERSION_ID%%.*}" >= "9" )); then
       client_dependencies_centos8+=( "python3-pyyaml" )
     else
-      client_dependencies_centos8+=( "PyYAML" )
+      if (( "${VERSION_ID%%.*}" >= "8" )); then
+        client_dependencies_centos8+=( "python3-pyyaml" "python3-joblib" )
+      else
+        client_dependencies_centos8+=( "PyYAML" )
+      fi
     fi
+  fi
+
+  if [[ "${tensile_msgpack_backend}" == true ]]; then
+    client_dependencies_ubuntu+=("libmsgpack-dev")
+    client_dependencies_fedora+=("msgpack-devel")
   fi
 
   # wget is needed for blis
