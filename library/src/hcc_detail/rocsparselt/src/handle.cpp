@@ -106,8 +106,6 @@ void _rocsparselt_handle::init()
 #endif
 
     is_init = (uintptr_t)(this);
-
-    alg_selections = std::make_shared<std::vector<rocsparselt_matmul_alg_selection*>>();
 }
 
 void _rocsparselt_handle::destroy()
