@@ -81,9 +81,6 @@ struct _rocsparselt_handle
     std::ofstream* log_bench_ofs = nullptr;
     std::ostream*  log_trace_os  = nullptr;
     std::ostream*  log_bench_os  = nullptr;
-
-    // hold pointers to alg_selection objects for releasing algo configs inside them.
-    std::shared_ptr<std::vector<rocsparselt_matmul_alg_selection*>> alg_selections;
 };
 
 /********************************************************************************
