@@ -44,7 +44,7 @@
                 error,                            \
                 __FILE__,                         \
                 __LINE__);                        \
-        exit(EXIT_FAILURE);                       \
+        throw EXIT_FAILURE;                       \
     }
 #endif
 
@@ -64,9 +64,30 @@
         if(error == HIPSPARSE_STATUS_ARCH_MISMATCH)              \
             fprintf(stderr, "HIPSPARSE_STATUS_ARCH_MISMATCH");   \
         fprintf(stderr, "\n");                                   \
-        exit(EXIT_FAILURE);                                      \
+        throw EXIT_FAILURE;                                      \
     }
 #endif
+
+template <typename T, typename To>
+class SMART_DESTROYER
+{
+    typedef To (*destroy_func)(T*);
+
+public:
+    SMART_DESTROYER(T* ptr, destroy_func func)
+    {
+        _ptr  = ptr;
+        _func = func;
+    }
+    ~SMART_DESTROYER()
+    {
+        if(_ptr != nullptr)
+            _func(_ptr);
+    }
+
+    T*           _ptr = nullptr;
+    destroy_func _func;
+};
 
 // default sizes
 #define DIM1 127
@@ -538,464 +559,490 @@ void initialize_a_b_c(std::vector<__half>& ha,
 
 int main(int argc, char* argv[])
 {
-    // initialize parameters with default values
-    hipsparseOperation_t trans_a = HIPSPARSE_OPERATION_NON_TRANSPOSE;
-    hipsparseOperation_t trans_b = HIPSPARSE_OPERATION_TRANSPOSE;
-
-    // invalid int and float for hipsparselt spmm int and float arguments
-    int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
-    int     invalid_int   = std::numeric_limits<int>::min() + 1;
-    float   invalid_float = std::numeric_limits<float>::quiet_NaN();
-
-    // initialize to invalid value to detect if values not specified on command line
-    int64_t m = invalid_int64, lda = invalid_int64, stride_a = invalid_int64;
-    int64_t n = invalid_int64, ldb = invalid_int64, stride_b = invalid_int64;
-    int64_t k = invalid_int64, ldc = invalid_int64, stride_c = invalid_int64;
-    int64_t ldd = invalid_int64, stride_d = invalid_int64;
-
-    int batch_count = invalid_int;
-
-    float alpha = invalid_float;
-    float beta  = invalid_float;
-
-    bool sparse_b = false;
-    bool verbose  = false;
-    bool header   = false;
-
-    if(parse_arguments(argc,
-                       argv,
-                       m,
-                       n,
-                       k,
-                       lda,
-                       ldb,
-                       ldc,
-                       ldd,
-                       stride_a,
-                       stride_b,
-                       stride_c,
-                       stride_d,
-                       batch_count,
-                       alpha,
-                       beta,
-                       trans_a,
-                       trans_b,
-                       sparse_b,
-                       header,
-                       verbose))
+    try
     {
-        show_usage(argv);
-        return EXIT_FAILURE;
-    }
+        // initialize parameters with default values
+        hipsparseOperation_t trans_a = HIPSPARSE_OPERATION_NON_TRANSPOSE;
+        hipsparseOperation_t trans_b = HIPSPARSE_OPERATION_TRANSPOSE;
 
-    // when arguments not specified, set to default values
-    if(m == invalid_int64)
-        m = DIM1;
-    if(n == invalid_int64)
-        n = DIM2;
-    if(k == invalid_int64)
-        k = DIM3;
-    if(lda == invalid_int64)
-        lda = trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE ? m : k;
-    if(ldb == invalid_int64)
-        ldb = trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : n;
-    if(ldc == invalid_int64)
-        ldc = m;
-    if(ldd == invalid_int64)
-        ldd = m;
-    if(stride_a == invalid_int64)
-        stride_a = trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda * k : lda * m;
-    if(stride_b == invalid_int64)
-        stride_b = trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE ? ldb * n : ldb * k;
-    if(stride_c == invalid_int64)
-        stride_c = ldc * n;
-    if(stride_d == invalid_int64)
-        stride_d = ldd * n;
-    if(alpha != alpha)
-        alpha = ALPHA; // check for alpha == invalid_float == NaN
-    if(beta != beta)
-        beta = BETA; // check for beta == invalid_float == NaN
-    if(batch_count == invalid_int)
-        batch_count = BATCH_COUNT;
+        // invalid int and float for hipsparselt spmm int and float arguments
+        int64_t invalid_int64 = std::numeric_limits<int64_t>::min() + 1;
+        int     invalid_int   = std::numeric_limits<int>::min() + 1;
+        float   invalid_float = std::numeric_limits<float>::quiet_NaN();
 
-    if(bad_argument(trans_a,
-                    trans_b,
-                    m,
-                    n,
-                    k,
-                    lda,
-                    ldb,
-                    ldc,
-                    ldd,
-                    stride_a,
-                    stride_b,
-                    stride_c,
-                    stride_d,
-                    batch_count))
-    {
-        show_usage(argv);
-        return EXIT_FAILURE;
-    }
+        // initialize to invalid value to detect if values not specified on command line
+        int64_t m = invalid_int64, lda = invalid_int64, stride_a = invalid_int64;
+        int64_t n = invalid_int64, ldb = invalid_int64, stride_b = invalid_int64;
+        int64_t k = invalid_int64, ldc = invalid_int64, stride_c = invalid_int64;
+        int64_t ldd = invalid_int64, stride_d = invalid_int64;
 
-    if(header)
-    {
-        std::cout << "transAB,M,N,K,lda,ldb,ldc,stride_a,stride_b,stride_c,batch_count,alpha,beta,"
-                     "result,error";
-        std::cout << std::endl;
-    }
+        int batch_count = invalid_int;
 
-    int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
-    int64_t row_a, col_a, row_b, col_b, row_c, col_c;
-    int     size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
-    if(trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE)
-    {
-        std::cout << "N";
-        row_a      = m;
-        col_a      = k;
-        a_stride_1 = 1;
-        a_stride_2 = lda;
-        size_a1    = lda * k;
-    }
-    else
-    {
-        std::cout << "T";
-        row_a      = k;
-        col_a      = m;
-        a_stride_1 = lda;
-        a_stride_2 = 1;
-        size_a1    = lda * m;
-    }
-    if(trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE)
-    {
-        std::cout << "N, ";
-        row_b      = k;
-        col_b      = n;
-        b_stride_1 = 1;
-        b_stride_2 = ldb;
-        size_b1    = ldb * n;
-    }
-    else
-    {
-        std::cout << "T, ";
-        row_b      = n;
-        col_b      = k;
-        b_stride_1 = ldb;
-        b_stride_2 = 1;
-        size_b1    = ldb * k;
-    }
-    row_c = m;
-    col_c = n;
+        float alpha = invalid_float;
+        float beta  = invalid_float;
 
-    std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", " << ldc << ", "
-              << ldd << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", " << stride_d
-              << ", " << batch_count << ", " << alpha << ", " << beta << ", ";
-    int64_t stride_a_r = stride_a == 0 ? size_a1 : stride_a;
-    int64_t stride_b_r = stride_b == 0 ? size_b1 : stride_b;
-    int64_t stride_c_r = stride_c == 0 ? size_c1 : stride_c;
-    int64_t stride_d_r = stride_d == 0 ? size_d1 : stride_d;
+        bool sparse_b = false;
+        bool verbose  = false;
+        bool header   = false;
 
-    int64_t size_a = stride_a_r * (stride_a == 0 ? 1 : batch_count);
-    int64_t size_b = stride_b_r * (stride_b == 0 ? 1 : batch_count);
-    int64_t size_c = stride_c_r * (stride_c == 0 ? 1 : batch_count);
-    int64_t size_d = stride_d_r * (stride_d == 0 ? 1 : batch_count);
-    // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
-    std::vector<__half> ha(size_a);
-    std::vector<__half> h_prune(sparse_b ? size_b : size_a);
-    std::vector<__half> hb(size_b);
-    std::vector<__half> hc(size_c);
-    std::vector<__half> hd(size_d);
-    std::vector<__half> hd_gold(size_d);
+        if(parse_arguments(argc,
+                           argv,
+                           m,
+                           n,
+                           k,
+                           lda,
+                           ldb,
+                           ldc,
+                           ldd,
+                           stride_a,
+                           stride_b,
+                           stride_c,
+                           stride_d,
+                           batch_count,
+                           alpha,
+                           beta,
+                           trans_a,
+                           trans_b,
+                           sparse_b,
+                           header,
+                           verbose))
+        {
+            show_usage(argv);
+            return EXIT_FAILURE;
+        }
 
-    // initial data on host
-    initialize_a_b_c(ha, size_a, hb, size_b, hc, size_c);
+        // when arguments not specified, set to default values
+        if(m == invalid_int64)
+            m = DIM1;
+        if(n == invalid_int64)
+            n = DIM2;
+        if(k == invalid_int64)
+            k = DIM3;
+        if(lda == invalid_int64)
+            lda = trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE ? m : k;
+        if(ldb == invalid_int64)
+            ldb = trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE ? k : n;
+        if(ldc == invalid_int64)
+            ldc = m;
+        if(ldd == invalid_int64)
+            ldd = m;
+        if(stride_a == invalid_int64)
+            stride_a = trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE ? lda * k : lda * m;
+        if(stride_b == invalid_int64)
+            stride_b = trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE ? ldb * n : ldb * k;
+        if(stride_c == invalid_int64)
+            stride_c = ldc * n;
+        if(stride_d == invalid_int64)
+            stride_d = ldd * n;
+        if(alpha != alpha)
+            alpha = ALPHA; // check for alpha == invalid_float == NaN
+        if(beta != beta)
+            beta = BETA; // check for beta == invalid_float == NaN
+        if(batch_count == invalid_int)
+            batch_count = BATCH_COUNT;
 
-    if(verbose)
-    {
-        printf("\n");
+        if(bad_argument(trans_a,
+                        trans_b,
+                        m,
+                        n,
+                        k,
+                        lda,
+                        ldb,
+                        ldc,
+                        ldd,
+                        stride_a,
+                        stride_b,
+                        stride_c,
+                        stride_d,
+                        batch_count))
+        {
+            show_usage(argv);
+            return EXIT_FAILURE;
+        }
+
+        if(header)
+        {
+            std::cout
+                << "transAB,M,N,K,lda,ldb,ldc,stride_a,stride_b,stride_c,batch_count,alpha,beta,"
+                   "result,error";
+            std::cout << std::endl;
+        }
+
+        int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
+        int64_t row_a, col_a, row_b, col_b, row_c, col_c;
+        int     size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
         if(trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE)
         {
-            print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda, stride_a_r);
+            std::cout << "N";
+            row_a      = m;
+            col_a      = k;
+            a_stride_1 = 1;
+            a_stride_2 = lda;
+            size_a1    = lda * k;
         }
         else
         {
-            print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1, stride_a_r);
+            std::cout << "T";
+            row_a      = k;
+            col_a      = m;
+            a_stride_1 = lda;
+            a_stride_2 = 1;
+            size_a1    = lda * m;
         }
         if(trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE)
         {
-            print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb, stride_b_r);
+            std::cout << "N, ";
+            row_b      = k;
+            col_b      = n;
+            b_stride_1 = 1;
+            b_stride_2 = ldb;
+            size_b1    = ldb * n;
         }
         else
         {
-            print_strided_batched("hb initial", &hb[0], k, n, batch_count, ldb, 1, stride_b_r);
+            std::cout << "T, ";
+            row_b      = n;
+            col_b      = k;
+            b_stride_1 = ldb;
+            b_stride_2 = 1;
+            size_b1    = ldb * k;
         }
-        print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc, stride_c_r);
-    }
+        row_c = m;
+        col_c = n;
 
-    // allocate memory on device
-    __half *    da, *dp, *db, *dc, *dd, *d_compressed, *d_compressBuffer;
-    void*       d_workspace;
-    int         num_streams = 1;
-    hipStream_t stream      = nullptr;
-    hipStream_t streams[1]  = {stream};
+        std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", " << ldc
+                  << ", " << ldd << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
+                  << stride_d << ", " << batch_count << ", " << alpha << ", " << beta << ", ";
+        int64_t stride_a_r = stride_a == 0 ? size_a1 : stride_a;
+        int64_t stride_b_r = stride_b == 0 ? size_b1 : stride_b;
+        int64_t stride_c_r = stride_c == 0 ? size_c1 : stride_c;
+        int64_t stride_d_r = stride_d == 0 ? size_d1 : stride_d;
 
-    CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(__half)));
-    CHECK_HIP_ERROR(hipMalloc(&dp, (sparse_b ? size_b : size_a) * sizeof(__half)));
-    CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(__half)));
-    CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(__half)));
-    CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(__half)));
-    // copy matrices from host to device
-    CHECK_HIP_ERROR(hipMemcpy(da, ha.data(), sizeof(__half) * size_a, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(hipMemcpy(db, hb.data(), sizeof(__half) * size_b, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(hipMemcpy(dc, hc.data(), sizeof(__half) * size_c, hipMemcpyHostToDevice));
+        int64_t size_a = stride_a_r * (stride_a == 0 ? 1 : batch_count);
+        int64_t size_b = stride_b_r * (stride_b == 0 ? 1 : batch_count);
+        int64_t size_c = stride_c_r * (stride_c == 0 ? 1 : batch_count);
+        int64_t size_d = stride_d_r * (stride_d == 0 ? 1 : batch_count);
+        // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
+        std::vector<__half> ha(size_a);
+        std::vector<__half> h_prune(sparse_b ? size_b : size_a);
+        std::vector<__half> hb(size_b);
+        std::vector<__half> hc(size_c);
+        std::vector<__half> hd(size_d);
+        std::vector<__half> hd_gold(size_d);
 
-    hipsparseLtHandle_t             handle;
-    hipsparseLtMatDescriptor_t      matA, matB, matC, matD;
-    hipsparseLtMatmulDescriptor_t   matmul;
-    hipsparseLtMatmulAlgSelection_t alg_sel;
-    hipsparseLtMatmulPlan_t         plan;
+        // initial data on host
+        initialize_a_b_c(ha, size_a, hb, size_b, hc, size_c);
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtInit(&handle));
+        if(verbose)
+        {
+            printf("\n");
+            if(trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE)
+            {
+                print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda, stride_a_r);
+            }
+            else
+            {
+                print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1, stride_a_r);
+            }
+            if(trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE)
+            {
+                print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb, stride_b_r);
+            }
+            else
+            {
+                print_strided_batched("hb initial", &hb[0], k, n, batch_count, ldb, 1, stride_b_r);
+            }
+            print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc, stride_c_r);
+        }
 
-    if(!sparse_b)
-    {
-        CHECK_HIPSPARSELT_ERROR(
-            hipsparseLtStructuredDescriptorInit(&handle,
-                                                &matA,
-                                                row_a,
-                                                col_a,
-                                                lda,
-                                                16,
-                                                HIP_R_16F,
-                                                HIPSPARSE_ORDER_COL,
-                                                HIPSPARSELT_SPARSITY_50_PERCENT));
+        // allocate memory on device
+        __half *    da, *dp, *db, *dc, *dd, *d_compressed, *d_compressBuffer;
+        void*       d_workspace = nullptr;
+        int         num_streams = 1;
+        hipStream_t stream      = nullptr;
+        hipStream_t streams[1]  = {stream};
+
+        CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(__half)));
+        SMART_DESTROYER<void, hipError_t> sDA(da, hipFree);
+        CHECK_HIP_ERROR(hipMalloc(&dp, (sparse_b ? size_b : size_a) * sizeof(__half)));
+        SMART_DESTROYER<void, hipError_t> sDP(dp, hipFree);
+        CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(__half)));
+        SMART_DESTROYER<void, hipError_t> sDB(db, hipFree);
+        CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(__half)));
+        SMART_DESTROYER<void, hipError_t> sDC(dc, hipFree);
+        CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(__half)));
+        SMART_DESTROYER<void, hipError_t> sDD(dd, hipFree);
+        // copy matrices from host to device
+        CHECK_HIP_ERROR(hipMemcpy(da, ha.data(), sizeof(__half) * size_a, hipMemcpyHostToDevice));
+        CHECK_HIP_ERROR(hipMemcpy(db, hb.data(), sizeof(__half) * size_b, hipMemcpyHostToDevice));
+        CHECK_HIP_ERROR(hipMemcpy(dc, hc.data(), sizeof(__half) * size_c, hipMemcpyHostToDevice));
+
+        hipsparseLtHandle_t             handle;
+        hipsparseLtMatDescriptor_t      matA, matB, matC, matD;
+        hipsparseLtMatmulDescriptor_t   matmul;
+        hipsparseLtMatmulAlgSelection_t alg_sel;
+        hipsparseLtMatmulPlan_t         plan;
+
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtInit(&handle));
+        SMART_DESTROYER<const hipsparseLtHandle_t, hipsparseStatus_t> sH(&handle,
+                                                                         hipsparseLtDestroy);
+
+        if(!sparse_b)
+        {
+            CHECK_HIPSPARSELT_ERROR(
+                hipsparseLtStructuredDescriptorInit(&handle,
+                                                    &matA,
+                                                    row_a,
+                                                    col_a,
+                                                    lda,
+                                                    16,
+                                                    HIP_R_16F,
+                                                    HIPSPARSE_ORDER_COL,
+                                                    HIPSPARSELT_SPARSITY_50_PERCENT));
+        }
+        else
+        {
+            CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
+                &handle, &matA, row_a, col_a, lda, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
+        }
+        SMART_DESTROYER<const hipsparseLtMatDescriptor_t, hipsparseStatus_t> smA(
+            &matA, hipsparseLtMatDescriptorDestroy);
+
+        if(!sparse_b)
+        {
+            CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
+                &handle, &matB, row_b, col_b, ldb, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
+        }
+        else
+        {
+            CHECK_HIPSPARSELT_ERROR(
+                hipsparseLtStructuredDescriptorInit(&handle,
+                                                    &matB,
+                                                    row_b,
+                                                    col_b,
+                                                    ldb,
+                                                    16,
+                                                    HIP_R_16F,
+                                                    HIPSPARSE_ORDER_COL,
+                                                    HIPSPARSELT_SPARSITY_50_PERCENT));
+        }
+        SMART_DESTROYER<const hipsparseLtMatDescriptor_t, hipsparseStatus_t> smB(
+            &matB, hipsparseLtMatDescriptorDestroy);
+
         CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-            &handle, &matB, row_b, col_b, ldb, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
-    }
-    else
-    {
+            &handle, &matC, row_c, col_c, ldc, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
+        SMART_DESTROYER<const hipsparseLtMatDescriptor_t, hipsparseStatus_t> smC(
+            &matC, hipsparseLtMatDescriptorDestroy);
+
         CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-            &handle, &matA, row_a, col_a, lda, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
-        CHECK_HIPSPARSELT_ERROR(
-            hipsparseLtStructuredDescriptorInit(&handle,
-                                                &matB,
-                                                row_b,
-                                                col_b,
-                                                ldb,
-                                                16,
-                                                HIP_R_16F,
-                                                HIPSPARSE_ORDER_COL,
-                                                HIPSPARSELT_SPARSITY_50_PERCENT));
-    }
+            &handle, &matD, row_c, col_c, ldd, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
+        SMART_DESTROYER<const hipsparseLtMatDescriptor_t, hipsparseStatus_t> smD(
+            &matD, hipsparseLtMatDescriptorDestroy);
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matC, row_c, col_c, ldc, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtDenseDescriptorInit(
-        &handle, &matD, row_c, col_c, ldd, 16, HIP_R_16F, HIPSPARSE_ORDER_COL));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(stride_a)));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matB, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(stride_b)));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matC, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(stride_c)));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matD, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
+            &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(stride_d)));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matA, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matA, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_a, sizeof(stride_a)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matB, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matB, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_b, sizeof(stride_b)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matC, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matC, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_c, sizeof(stride_c)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matD, HIPSPARSELT_MAT_NUM_BATCHES, &batch_count, sizeof(batch_count)));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescSetAttribute(
-        &handle, &matD, HIPSPARSELT_MAT_BATCH_STRIDE, &stride_d, sizeof(stride_d)));
-
-    auto compute_type =
+        auto compute_type =
 #ifdef __HIP_PLATFORM_AMD__
-        HIPSPARSELT_COMPUTE_32F;
+            HIPSPARSELT_COMPUTE_32F;
 #else
-        HIPSPARSELT_COMPUTE_16F;
+            HIPSPARSELT_COMPUTE_16F;
 #endif
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(
-        &handle, &matmul, trans_a, trans_b, &matA, &matB, &matC, &matD, compute_type));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulDescriptorInit(
+            &handle, &matmul, trans_a, trans_b, &matA, &matB, &matC, &matD, compute_type));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulAlgSelectionInit(
-        &handle, &alg_sel, &matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulAlgSelectionInit(
+            &handle, &alg_sel, &matmul, HIPSPARSELT_MATMUL_ALG_DEFAULT));
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMAPrune(
-        &handle, &matmul, sparse_b ? db : da, dp, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMAPrune(
+            &handle, &matmul, sparse_b ? db : da, dp, HIPSPARSELT_PRUNE_SPMMA_STRIP, stream));
 
-    size_t workspace_size, compressed_size, compress_buffer_size;
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel));
+        size_t workspace_size, compressed_size, compress_buffer_size;
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanInit(&handle, &plan, &matmul, &alg_sel));
+        SMART_DESTROYER<const hipsparseLtMatmulPlan_t, hipsparseStatus_t> sP(
+            &plan, hipsparseLtMatmulPlanDestroy);
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan, &workspace_size));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulGetWorkspace(&handle, &plan, &workspace_size));
 
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtSpMMACompressedSize(&handle, &plan, &compressed_size, &compress_buffer_size));
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtSpMMACompressedSize(
+            &handle, &plan, &compressed_size, &compress_buffer_size));
 
-    CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
-    CHECK_HIP_ERROR(hipMalloc(&d_compressBuffer, compress_buffer_size));
+        CHECK_HIP_ERROR(hipMalloc(&d_compressed, compressed_size));
+        SMART_DESTROYER<void, hipError_t> sd_compressed(d_compressed, hipFree);
 
-    CHECK_HIPSPARSELT_ERROR(
-        hipsparseLtSpMMACompress(&handle, &plan, dp, d_compressed, d_compressBuffer, stream));
-    if(workspace_size > 0)
-        CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
+        CHECK_HIP_ERROR(hipMalloc(&d_compressBuffer, compress_buffer_size));
+        SMART_DESTROYER<void, hipError_t> sd_compressBuffer(d_compressBuffer, hipFree);
 
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmul(&handle,
-                                              &plan,
-                                              &alpha,
-                                              sparse_b ? da : d_compressed,
-                                              sparse_b ? d_compressed : db,
-                                              &beta,
-                                              dc,
-                                              dd,
-                                              d_workspace,
-                                              &streams[0],
-                                              num_streams));
-    hipStreamSynchronize(stream);
-    // copy output from device to CPU
-    CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(__half) * size_c, hipMemcpyDeviceToHost));
-    CHECK_HIP_ERROR(hipMemcpy(
-        h_prune.data(), dp, sizeof(__half) * (sparse_b ? size_b : size_a), hipMemcpyDeviceToHost));
-    // calculate golden or correct result
-    for(int i = 0; i < batch_count; i++)
-    {
-        __half* a_ptr = sparse_b ? &ha[i * stride_a] : &h_prune[i * stride_a];
-        __half* b_ptr = sparse_b ? &h_prune[i * stride_b] : &hb[i * stride_b];
-        __half* c_ptr = &hc[i * stride_c];
-        __half* d_ptr = &hd_gold[i * stride_d];
-        mat_mat_mult<__half, __half, float>(alpha,
-                                            beta,
-                                            m,
-                                            n,
-                                            k,
-                                            a_ptr,
-                                            a_stride_1,
-                                            a_stride_2,
-                                            b_ptr,
-                                            b_stride_1,
-                                            b_stride_2,
-                                            c_ptr,
-                                            1,
-                                            ldc,
-                                            d_ptr,
-                                            1,
-                                            ldd);
-    }
-    if(verbose)
-    {
-        std::vector<__half> h_compressed(compressed_size);
-        CHECK_HIP_ERROR(
-            hipMemcpy(&h_compressed[0], d_compressed, compressed_size, hipMemcpyDeviceToHost));
-
-        auto batch_count_c = ((sparse_b ? stride_b : stride_a) == 0) ? 1 : batch_count;
-
-        int64_t c_stride_1, c_stride_2, c_stride_b, c_stride_b_r;
-        int64_t m_stride_1, m_stride_2, m_stride_b, m_stride_b_r;
-        if(!sparse_b)
+        CHECK_HIPSPARSELT_ERROR(
+            hipsparseLtSpMMACompress(&handle, &plan, dp, d_compressed, d_compressBuffer, stream));
+        if(workspace_size > 0)
         {
-            c_stride_1   = (trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? 1 : k / 2;
-            c_stride_2   = (trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? m : 1;
-            c_stride_b_r = (trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k / 2 * c_stride_2
-                                                                          : m * c_stride_1;
+            CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
+        }
+        SMART_DESTROYER<void, hipError_t> sd_workspace(d_workspace, hipFree);
 
-            m_stride_1   = k / 8;
-            m_stride_2   = 1;
-            m_stride_b_r = m * m_stride_1;
+        CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmul(&handle,
+                                                  &plan,
+                                                  &alpha,
+                                                  sparse_b ? da : d_compressed,
+                                                  sparse_b ? d_compressed : db,
+                                                  &beta,
+                                                  dc,
+                                                  dd,
+                                                  d_workspace,
+                                                  &streams[0],
+                                                  num_streams));
+        hipStreamSynchronize(stream);
+        // copy output from device to CPU
+        CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(__half) * size_c, hipMemcpyDeviceToHost));
+        CHECK_HIP_ERROR(hipMemcpy(h_prune.data(),
+                                  dp,
+                                  sizeof(__half) * (sparse_b ? size_b : size_a),
+                                  hipMemcpyDeviceToHost));
+        // calculate golden or correct result
+        for(int i = 0; i < batch_count; i++)
+        {
+            __half* a_ptr = sparse_b ? &ha[i * stride_a] : &h_prune[i * stride_a];
+            __half* b_ptr = sparse_b ? &h_prune[i * stride_b] : &hb[i * stride_b];
+            __half* c_ptr = &hc[i * stride_c];
+            __half* d_ptr = &hd_gold[i * stride_d];
+            mat_mat_mult<__half, __half, float>(alpha,
+                                                beta,
+                                                m,
+                                                n,
+                                                k,
+                                                a_ptr,
+                                                a_stride_1,
+                                                a_stride_2,
+                                                b_ptr,
+                                                b_stride_1,
+                                                b_stride_2,
+                                                c_ptr,
+                                                1,
+                                                ldc,
+                                                d_ptr,
+                                                1,
+                                                ldd);
+        }
+        if(verbose)
+        {
+            std::vector<__half> h_compressed(compressed_size);
+            CHECK_HIP_ERROR(
+                hipMemcpy(&h_compressed[0], d_compressed, compressed_size, hipMemcpyDeviceToHost));
+
+            auto batch_count_c = ((sparse_b ? stride_b : stride_a) == 0) ? 1 : batch_count;
+
+            int64_t c_stride_1, c_stride_2, c_stride_b, c_stride_b_r;
+            int64_t m_stride_1, m_stride_2, m_stride_b, m_stride_b_r;
+            if(!sparse_b)
+            {
+                c_stride_1   = (trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? 1 : k / 2;
+                c_stride_2   = (trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? m : 1;
+                c_stride_b_r = (trans_a == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k / 2 * c_stride_2
+                                                                              : m * c_stride_1;
+
+                m_stride_1   = k / 8;
+                m_stride_2   = 1;
+                m_stride_b_r = m * m_stride_1;
+            }
+            else
+            {
+                c_stride_1   = (trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? 1 : n;
+                c_stride_2   = (trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k / 2 : 1;
+                c_stride_b_r = (trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n * c_stride_2
+                                                                              : k / 2 * c_stride_1;
+
+                m_stride_1   = 1;
+                m_stride_2   = k / 8;
+                m_stride_b_r = n * m_stride_2;
+            }
+
+            c_stride_b = (sparse_b ? stride_b : stride_a) == 0 ? 0 : c_stride_b_r;
+            m_stride_b = (sparse_b ? stride_b : stride_a) == 0 ? 0 : m_stride_b_r;
+
+            if(!sparse_b)
+            {
+                print_strided_batched("device compress calculated",
+                                      &h_compressed[0],
+                                      m,
+                                      k / 2,
+                                      batch_count_c,
+                                      c_stride_1,
+                                      c_stride_2,
+                                      c_stride_b_r);
+                print_strided_batched_meta(
+                    "device metadata calculated",
+                    reinterpret_cast<unsigned char*>(&h_compressed[c_stride_b_r * batch_count_c]),
+                    m,
+                    k / 8,
+                    batch_count_c,
+                    m_stride_1,
+                    m_stride_2,
+                    m_stride_b_r);
+            }
+            else
+            {
+                print_strided_batched("device compress calculated",
+                                      &h_compressed[0],
+                                      k / 2,
+                                      n,
+                                      batch_count_c,
+                                      c_stride_1,
+                                      c_stride_2,
+                                      c_stride_b_r);
+                print_strided_batched_meta(
+                    "device metadata calculated",
+                    reinterpret_cast<unsigned char*>(&h_compressed[c_stride_b_r * batch_count_c]),
+                    k / 8,
+                    n,
+                    batch_count_c,
+                    m_stride_1,
+                    m_stride_2,
+                    m_stride_b_r);
+            }
+            print_strided_batched(
+                "hc_gold calculated", &hd_gold[0], m, n, batch_count, 1, ldd, stride_d_r);
+            print_strided_batched("hd calculated", &hd[0], m, n, batch_count, 1, ldd, stride_d_r);
+        }
+
+        bool passed = true;
+        for(int i = 0; i < size_c; i++)
+        {
+            if(!AlmostEqual(hd_gold[i], hd[i]))
+            {
+                printf(
+                    "Err: %f vs %f\n", static_cast<float>(hd_gold[i]), static_cast<float>(hd[i]));
+                passed = false;
+            }
+        }
+        if(!passed)
+        {
+            std::cout << "FAIL" << std::endl;
         }
         else
         {
-            c_stride_1   = (trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? 1 : n;
-            c_stride_2   = (trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? k / 2 : 1;
-            c_stride_b_r = (trans_b == HIPSPARSE_OPERATION_NON_TRANSPOSE) ? n * c_stride_2
-                                                                          : k / 2 * c_stride_1;
-
-            m_stride_1   = 1;
-            m_stride_2   = k / 8;
-            m_stride_b_r = n * m_stride_2;
+            std::cout << "PASS" << std::endl;
         }
 
-        c_stride_b = (sparse_b ? stride_b : stride_a) == 0 ? 0 : c_stride_b_r;
-        m_stride_b = (sparse_b ? stride_b : stride_a) == 0 ? 0 : m_stride_b_r;
-
-        if(!sparse_b)
-        {
-            print_strided_batched("device compress calculated",
-                                  &h_compressed[0],
-                                  m,
-                                  k / 2,
-                                  batch_count_c,
-                                  c_stride_1,
-                                  c_stride_2,
-                                  c_stride_b_r);
-            print_strided_batched_meta(
-                "device metadata calculated",
-                reinterpret_cast<unsigned char*>(&h_compressed[c_stride_b_r * batch_count_c]),
-                m,
-                k / 8,
-                batch_count_c,
-                m_stride_1,
-                m_stride_2,
-                m_stride_b_r);
-        }
-        else
-        {
-            print_strided_batched("device compress calculated",
-                                  &h_compressed[0],
-                                  k / 2,
-                                  n,
-                                  batch_count_c,
-                                  c_stride_1,
-                                  c_stride_2,
-                                  c_stride_b_r);
-            print_strided_batched_meta(
-                "device metadata calculated",
-                reinterpret_cast<unsigned char*>(&h_compressed[c_stride_b_r * batch_count_c]),
-                k / 8,
-                n,
-                batch_count_c,
-                m_stride_1,
-                m_stride_2,
-                m_stride_b_r);
-        }
-        print_strided_batched(
-            "hc_gold calculated", &hd_gold[0], m, n, batch_count, 1, ldd, stride_d_r);
-        print_strided_batched("hd calculated", &hd[0], m, n, batch_count, 1, ldd, stride_d_r);
+        return EXIT_SUCCESS;
     }
-
-    bool passed = true;
-    for(int i = 0; i < size_c; i++)
+    catch(int)
     {
-        if(!AlmostEqual(hd_gold[i], hd[i]))
-        {
-            printf("Err: %f vs %f\n", static_cast<float>(hd_gold[i]), static_cast<float>(hd[i]));
-            passed = false;
-        }
+        return EXIT_FAILURE;
     }
-    if(!passed)
-    {
-        std::cout << "FAIL" << std::endl;
-    }
-    else
-    {
-        std::cout << "PASS" << std::endl;
-    }
-
-    CHECK_HIP_ERROR(hipFree(da));
-    CHECK_HIP_ERROR(hipFree(dp));
-    CHECK_HIP_ERROR(hipFree(db));
-    CHECK_HIP_ERROR(hipFree(dc));
-    CHECK_HIP_ERROR(hipFree(dd));
-    CHECK_HIP_ERROR(hipFree(d_compressed));
-    CHECK_HIP_ERROR(hipFree(d_compressBuffer));
-    if(workspace_size > 0)
-        CHECK_HIP_ERROR(hipFree(d_workspace));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatmulPlanDestroy(&plan));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matA));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matB));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matC));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtMatDescriptorDestroy(&matD));
-    CHECK_HIPSPARSELT_ERROR(hipsparseLtDestroy(&handle));
-
-    return EXIT_SUCCESS;
 }
