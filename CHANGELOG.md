@@ -4,22 +4,24 @@ Full documentation for hipSPARSELt is available at [rocm.docs.amd.com/projects/h
 
 ## (Unreleased) hipSPARSELt 0.2.2
 
-### Changes
+### Added
 
-* hipsparseLtDatatype_t is deprecated and instead by hipDataType.
-* Changed default compiler to amdclang++.
-* Support row-major memory order (HIPSPARSE_ORDER_ROW).
-* Support new datatype combination: INT8 inputs, BF16 output and INT32 Matrix Core accumulation.
+* Support for a new data type combination: INT8 inputs, BF16 output, and INT32 Matrix Core accumulation.
+* Support for row-major memory order (HIPSPARSE_ORDER_ROW).
 
-### Removals
+### Changed
 
-* hipsparseLtDatatype_t is deprecated and will be removed in the next major release of ROCm
+* Changed the default compiler to amdclang++.
+
+### Upcoming changes
+
+* hipsparseLtDatatype_t is deprecated and will be removed in the next major release of ROCm. hipDataType should be used instead.
 
 ## (Unreleased) hipSPARSELt 0.2.1
 
-### Changes
+### Changed
 
-* Refine test cases.
+* Refined test cases
 
 ## hipSPARSELt 0.2.0 for ROCm 6.1
 
