@@ -40,9 +40,9 @@
   IndicesBatch: [2]
   IndicesFree: [0, 1]
   IndicesSummation: [3]
-  MirrorDimsA: &id001 []
+  MirrorDimsA: []
   MirrorDimsB: []
-  MirrorDimsMetadata: *id001
+  MirrorDimsMetadata: []
   NumIndicesBatch: 1
   NumIndicesC: 3
   NumIndicesFree: 2
@@ -254,9 +254,9 @@
       IndicesBatch: [2]
       IndicesFree: [0, 1]
       IndicesSummation: [3]
-      MirrorDimsA: &id002 []
+      MirrorDimsA: []
       MirrorDimsB: []
-      MirrorDimsMetadata: *id002
+      MirrorDimsMetadata: []
       NumIndicesBatch: 1
       NumIndicesC: 3
       NumIndicesFree: 2
@@ -524,9 +524,9 @@
       IndicesBatch: [2]
       IndicesFree: [0, 1]
       IndicesSummation: [3]
-      MirrorDimsA: &id003 []
+      MirrorDimsA: []
       MirrorDimsB: []
-      MirrorDimsMetadata: *id003
+      MirrorDimsMetadata: []
       NumIndicesBatch: 1
       NumIndicesC: 3
       NumIndicesFree: 2
@@ -1306,9 +1306,9 @@
       IndicesBatch: [2]
       IndicesFree: [0, 1]
       IndicesSummation: [3]
-      MirrorDimsA: &id004 []
+      MirrorDimsA: []
       MirrorDimsB: []
-      MirrorDimsMetadata: *id004
+      MirrorDimsMetadata: []
       NumIndicesBatch: 1
       NumIndicesC: 3
       NumIndicesFree: 2
@@ -2344,9 +2344,9 @@
       IndicesBatch: [2]
       IndicesFree: [0, 1]
       IndicesSummation: [3]
-      MirrorDimsA: &id005 []
+      MirrorDimsA: []
       MirrorDimsB: []
-      MirrorDimsMetadata: *id005
+      MirrorDimsMetadata: []
       NumIndicesBatch: 1
       NumIndicesC: 3
       NumIndicesFree: 2
