@@ -9,7 +9,7 @@ to change, regardless of the chosen backend. Currently, hipSPARSELt supports
 as backends.
 
 > [!NOTE]
-> The published hipSPARSELt documentation is available at [hipSPARSELt](https://rocm.docs.amd.com/projects/hipsparselt/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the hipsparselt/docs folder of this repository. As with all ROCm projects, the documentation is open source. For more information, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
+> The published hipSPARSELt documentation is available at [hipSPARSELt](https://rocm.docs.amd.com/projects/hipSPARSELt/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the hipsparselt/docs folder of this repository. As with all ROCm projects, the documentation is open source. For more information, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
 
 ## Installing pre-built packages
 
