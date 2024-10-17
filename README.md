@@ -5,8 +5,11 @@ It sits between the application and a 'worker' SPARSE library, marshalling
 inputs into the backend library and marshalling results back to the
 application. hipSPARSELt exports an interface that does not require the client
 to change, regardless of the chosen backend. Currently, hipSPARSELt supports
-[rocSPARSELt](library/src/hcc_detial/rocsparselt) and [cuSPARSELt v0.4](https://docs.nvidia.com/cuda/cusparselt)
+[rocSPARSELt](library/src/hcc_detial/rocsparselt) and [NVIDIA CUDA cuSPARSELt v0.4](https://docs.nvidia.com/cuda/cusparselt)
 as backends.
+
+> [!NOTE]
+> The published hipSPARSELt documentation is available at [hipSPARSELt](https://rocm.docs.amd.com/projects/hipSPARSELt/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the hipsparselt/docs folder of this repository. As with all ROCm projects, the documentation is open source. For more information, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
 
 ## Installing pre-built packages
 
