@@ -8,7 +8,9 @@ GeLU
 Gemm
 GoogleTest
 hipSPARSELt
+html
 LeakyReLU
+myst
 NONINFRINGEMENT
 ReLU
 rocSPARSELt
