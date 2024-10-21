@@ -2,7 +2,7 @@
 
 Full documentation for hipSPARSELt is available at [rocm.docs.amd.com/projects/hipSPARSELt](https://rocm.docs.amd.com/projects/hipSPARSELt/en/latest/index.html).
 
-## (Unreleased) hipSPARSELt 0.2.2
+## (Unreleased) hipSPARSELt 0.2.2 for ROCm 6.3
 
 ### Added
 
@@ -17,7 +17,7 @@ Full documentation for hipSPARSELt is available at [rocm.docs.amd.com/projects/h
 
 * hipsparseLtDatatype_t is deprecated and will be removed in the next major release of ROCm. hipDataType should be used instead.
 
-## (Unreleased) hipSPARSELt 0.2.1
+## hipSPARSELt 0.2.1 for ROCm 6.2
 
 ### Changed
 
