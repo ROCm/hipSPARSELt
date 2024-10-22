@@ -1005,7 +1005,7 @@ catch(...)
     return exception_to_hipsparselt_status();
 }
 
-hipsparseStatus_t hipsparseLtGetPorperty(hipLibraryPropertyType propertyType, int* value)
+hipsparseStatus_t hipsparseLtGetProperty(hipLibraryPropertyType propertyType, int* value)
 try
 {
     switch(propertyType)
