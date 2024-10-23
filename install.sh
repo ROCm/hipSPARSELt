@@ -45,7 +45,7 @@ function display_help()
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--build_dir] Specify the name of the build folder"
-
+  echo "    [--keep-build-tmp] do not remove the temporary build artifacts or build_tmp"
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
@@ -329,6 +329,7 @@ tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
 build_dir_user=build
+keep_build_tmp=false
 
 if ! [ -z ${ROCM_PATH+x} ]; then
     rocm_path=${ROCM_PATH}
@@ -341,7 +342,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:,build_dir:, --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:,build_dir:,keep-build-tmp --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -438,6 +439,9 @@ while true; do
         --build_dir)
             build_dir_user=${2}
             shift 2;;
+        --keep-build-tmp)
+            keep_build_tmp=true
+            shift ;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
             exit 1
@@ -649,6 +653,10 @@ pushd .
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=msgpack"
   else
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=yaml"
+  fi
+
+  if [[ "${keep_build_tmp}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_KEEP_BUILD_TMP=ON"
   fi
 
   echo $cmake_common_options
