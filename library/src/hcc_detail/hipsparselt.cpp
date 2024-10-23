@@ -32,6 +32,7 @@
 #include <rocsparselt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "Debug.hpp"
 
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
@@ -452,8 +453,10 @@ hipsparseStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle)
 try
 {
     // Check if handle is valid
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtInit");
     if(handle == nullptr)
     {
+        rocsparselt::Debug::Instance().markerStop();
         return HIPSPARSE_STATUS_INVALID_VALUE;
     }
 
@@ -466,6 +469,7 @@ try
     {
         retval = RocSparseLtStatusToHIPStatus(rocsparselt_init((rocsparselt_handle*)handle));
     }
+    rocsparselt::Debug::Instance().markerStop();
     return retval;
 }
 catch(...)
@@ -495,7 +499,8 @@ hipsparseStatus_t hipsparseLtDenseDescriptorInit(const hipsparseLtHandle_t*  han
                                                  hipsparseOrder_t            order)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtDenseDescriptorInit");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_dense_descr_init((const rocsparselt_handle*)handle,
                                      (rocsparselt_mat_descr*)matDescr,
                                      rows,
@@ -504,6 +509,8 @@ try
                                      alignment,
                                      valueType,
                                      HIPOrderToHCCOrder(order)));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -522,7 +529,8 @@ hipsparseStatus_t hipsparseLtStructuredDescriptorInit(const hipsparseLtHandle_t*
                                                       hipsparseLtSparsity_t       sparsity)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtStructuredDescriptorInit");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_structured_descr_init((const rocsparselt_handle*)handle,
                                           (rocsparselt_mat_descr*)matDescr,
                                           rows,
@@ -532,6 +540,8 @@ try
                                           valueType,
                                           HIPOrderToHCCOrder(order),
                                           HIPSparsityToRocSparseLtSparsity(sparsity)));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -541,8 +551,11 @@ catch(...)
 hipsparseStatus_t hipsparseLtMatDescriptorDestroy(const hipsparseLtMatDescriptor_t* matDescr)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatDescriptorDestroy");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_mat_descr_destroy((const rocsparselt_mat_descr*)matDescr));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -556,12 +569,15 @@ hipsparseStatus_t hipsparseLtMatDescSetAttribute(const hipsparseLtHandle_t*    h
                                                  size_t                        dataSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_mat_descr_set_attribute(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatDescSetAttribute");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_mat_descr_set_attribute(
         (const rocsparselt_handle*)handle,
         (rocsparselt_mat_descr*)matmulDescr,
         HIPMatDescAttributeToRocSparseLtMatDescAttribute(matAttribute),
         data,
         dataSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -575,12 +591,15 @@ hipsparseStatus_t hipsparseLtMatDescGetAttribute(const hipsparseLtHandle_t*     
                                                  size_t                            dataSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_mat_descr_get_attribute(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatDescGetAttribute");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_mat_descr_get_attribute(
         (const rocsparselt_handle*)handle,
         (const rocsparselt_mat_descr*)matmulDescr,
         HIPMatDescAttributeToRocSparseLtMatDescAttribute(matAttribute),
         data,
         dataSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -599,7 +618,8 @@ hipsparseStatus_t hipsparseLtMatmulDescriptorInit(const hipsparseLtHandle_t*    
                                                   hipsparseLtComputetype_t          computeType)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulDescriptorInit");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_matmul_descr_init((const rocsparselt_handle*)handle,
                                       (rocsparselt_matmul_descr*)matmulDescr,
                                       HIPOperationToHCCOperation(opA),
@@ -609,6 +629,8 @@ try
                                       (const rocsparselt_mat_descr*)matC,
                                       (const rocsparselt_mat_descr*)matD,
                                       HIPComputetypeToRocSparseLtComputetype(computeType)));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -623,12 +645,15 @@ hipsparseStatus_t
                                       size_t                           dataSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_descr_set_attribute(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulDescSetAttribute");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_matmul_descr_set_attribute(
         (const rocsparselt_handle*)handle,
         (rocsparselt_matmul_descr*)matmulDescr,
         HIPMatmulDescAttributeToRocSparseLtMatmulDescAttribute(matmulAttribute),
         data,
         dataSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -643,12 +668,15 @@ hipsparseStatus_t
                                       size_t                               dataSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_descr_get_attribute(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulDescGetAttribute");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_matmul_descr_get_attribute(
         (const rocsparselt_handle*)handle,
         (const rocsparselt_matmul_descr*)matmulDescr,
         HIPMatmulDescAttributeToRocSparseLtMatmulDescAttribute(matmulAttribute),
         data,
         dataSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -663,11 +691,14 @@ hipsparseStatus_t
                                       hipsparseLtMatmulAlg_t               alg)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulAlgSelectionInit");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_matmul_alg_selection_init((const rocsparselt_handle*)handle,
                                               (rocsparselt_matmul_alg_selection*)algSelection,
                                               (const rocsparselt_matmul_descr*)matmulDescr,
                                               HIPMatmulAlgToRocSparseLtMatmulAlg(alg)));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -681,12 +712,15 @@ hipsparseStatus_t hipsparseLtMatmulAlgSetAttribute(const hipsparseLtHandle_t*   
                                                    size_t                           dataSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_alg_set_attribute(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulAlgSetAttribute");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_matmul_alg_set_attribute(
         (const rocsparselt_handle*)handle,
         (rocsparselt_matmul_alg_selection*)algSelection,
         HIPMatmulAlgAttributeToRocSparseLtAlgAttribute(attribute),
         data,
         dataSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -701,12 +735,15 @@ hipsparseStatus_t
                                      size_t                                 dataSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_alg_get_attribute(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulAlgGetAttribute");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_matmul_alg_get_attribute(
         (const rocsparselt_handle*)handle,
         (const rocsparselt_matmul_alg_selection*)algSelection,
         HIPMatmulAlgAttributeToRocSparseLtAlgAttribute(attribute),
         data,
         dataSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -719,8 +756,11 @@ hipsparseStatus_t hipsparseLtMatmulGetWorkspace(const hipsparseLtHandle_t*     h
                                                 size_t*                        workspaceSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_get_workspace(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulGetWorkspace");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_matmul_get_workspace(
         (const rocsparselt_handle*)handle, (const rocsparselt_matmul_plan*)plan, workspaceSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -733,11 +773,14 @@ hipsparseStatus_t hipsparseLtMatmulPlanInit(const hipsparseLtHandle_t*          
                                             const hipsparseLtMatmulAlgSelection_t* algSelection)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulPlanInit");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_matmul_plan_init((const rocsparselt_handle*)handle,
                                      (rocsparselt_matmul_plan*)plan,
                                      (const rocsparselt_matmul_descr*)matmulDescr,
                                      (const rocsparselt_matmul_alg_selection*)algSelection));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -747,8 +790,11 @@ catch(...)
 hipsparseStatus_t hipsparseLtMatmulPlanDestroy(const hipsparseLtMatmulPlan_t* plan)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulPlanDestroy");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_matmul_plan_destroy((const rocsparselt_matmul_plan*)plan));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -769,7 +815,8 @@ hipsparseStatus_t hipsparseLtMatmul(const hipsparseLtHandle_t*     handle,
                                     int32_t                        numStreams)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul((const rocsparselt_handle*)handle,
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmul");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_matmul((const rocsparselt_handle*)handle,
                                                            (const rocsparselt_matmul_plan*)plan,
                                                            alpha,
                                                            d_A,
@@ -780,6 +827,8 @@ try
                                                            workspace,
                                                            streams,
                                                            numStreams));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -799,7 +848,8 @@ hipsparseStatus_t hipsparseLtMatmulSearch(const hipsparseLtHandle_t* handle,
                                           int32_t                    numStreams)
 try
 {
-    return RocSparseLtStatusToHIPStatus(rocsparselt_matmul_search((const rocsparselt_handle*)handle,
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtMatmulSearch");
+    auto status = RocSparseLtStatusToHIPStatus(rocsparselt_matmul_search((const rocsparselt_handle*)handle,
                                                                   (rocsparselt_matmul_plan*)plan,
                                                                   alpha,
                                                                   d_A,
@@ -810,6 +860,8 @@ try
                                                                   workspace,
                                                                   streams,
                                                                   numStreams));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -826,13 +878,16 @@ hipsparseStatus_t hipsparseLtSpMMAPrune(const hipsparseLtHandle_t*           han
                                         hipStream_t                          stream)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMAPrune");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_prune((const rocsparselt_handle*)handle,
                                  (const rocsparselt_matmul_descr*)matmulDescr,
                                  d_in,
                                  d_out,
                                  HIPPruneAlgToRocSparseLtPruneAlg(pruneAlg),
                                  stream));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -846,12 +901,15 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck(const hipsparseLtHandle_t*         
                                              hipStream_t                          stream)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMAPruneCheck");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_prune_check((const rocsparselt_handle*)handle,
                                        (const rocsparselt_matmul_descr*)matmulDescr,
                                        d_in,
                                        valid,
                                        stream));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -868,7 +926,8 @@ hipsparseStatus_t hipsparseLtSpMMAPrune2(const hipsparseLtHandle_t*        handl
                                          hipStream_t                       stream)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMAPrune2");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_prune2((const rocsparselt_handle*)handle,
                                   (const rocsparselt_mat_descr*)sparseMatDescr,
                                   isSparseA,
@@ -877,6 +936,8 @@ try
                                   d_out,
                                   HIPPruneAlgToRocSparseLtPruneAlg(pruneAlg),
                                   stream));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -892,7 +953,8 @@ hipsparseStatus_t hipsparseLtSpMMAPruneCheck2(const hipsparseLtHandle_t*        
                                               hipStream_t                       stream)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMAPruneCheck2");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_prune_check2((const rocsparselt_handle*)handle,
                                         (const rocsparselt_mat_descr*)sparseMatDescr,
                                         isSparseA,
@@ -900,6 +962,8 @@ try
                                         d_in,
                                         d_valid,
                                         stream));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -913,11 +977,14 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize(const hipsparseLtHandle_t*     
                                                  size_t*                        compressBufferSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMACompressedSizes");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_compressed_size((const rocsparselt_handle*)handle,
                                            (const rocsparselt_matmul_plan*)plan,
                                            compressedSize,
                                            compressBufferSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -932,13 +999,16 @@ hipsparseStatus_t hipsparseLtSpMMACompress(const hipsparseLtHandle_t*     handle
                                            hipStream_t                    stream)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMACompress");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_compress((const rocsparselt_handle*)handle,
                                     (const rocsparselt_matmul_plan*)plan,
                                     d_dense,
                                     d_compressed,
                                     d_compressBuffer,
                                     stream));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -951,11 +1021,14 @@ hipsparseStatus_t hipsparseLtSpMMACompressedSize2(const hipsparseLtHandle_t*    
                                                   size_t* compressBufferSize)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMACompressedSize2");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_compressed_size2((const rocsparselt_handle*)handle,
                                             (const rocsparselt_mat_descr*)sparseMatDescr,
                                             compressedSize,
                                             compressBufferSize));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -972,7 +1045,8 @@ hipsparseStatus_t hipsparseLtSpMMACompress2(const hipsparseLtHandle_t*        ha
                                             hipStream_t                       stream)
 try
 {
-    return RocSparseLtStatusToHIPStatus(
+    rocsparselt::Debug::Instance().markerStart("hipsparseLtSpMMACompress2");
+    auto status = RocSparseLtStatusToHIPStatus(
         rocsparselt_smfmac_compress2((const rocsparselt_handle*)handle,
                                      (const rocsparselt_mat_descr*)sparseMatDescr,
                                      isSparseA,
@@ -981,6 +1055,8 @@ try
                                      d_compressed,
                                      d_compressBuffer,
                                      stream));
+    rocsparselt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {

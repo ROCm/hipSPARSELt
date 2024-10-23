@@ -45,6 +45,8 @@ function display_help()
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--build_dir] Specify the name of the build folder"
+  echo "    [--enable-hipsparselt-marker] build with hipsparselt marker"
+  echo "    [--enable-tensile-marker] build with tensile marker"
 
 }
 
@@ -330,6 +332,8 @@ build_tensile=true
 tensile_msgpack_backend=true
 build_dir_user=build
 tensile_no_lazy_library_loading=false
+enable_hipsparselt_marker=false
+enable_tensile_marker=false
 
 if ! [ -z ${ROCM_PATH+x} ]; then
     rocm_path=${ROCM_PATH}
@@ -342,7 +346,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:,build_dir:, --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,cuda,use-cuda,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,architecture:,cpu_ref_lib:,logic:,cov:,fork:,branch:,test_local_path:,use-custom-version:,build_dir:,enable-hipsparselt-marker,enable-tensile-marker --options hicdgrkl:o:f:b:t:nu::a: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -439,6 +443,13 @@ while true; do
         --build_dir)
             build_dir_user=${2}
             shift 2;;
+        --) shift ; break ;;
+        --enable-hipsparselt-marker)
+            enable_hipsparselt_marker=true
+            shift ;;
+        --enable-tensile-marker)
+            enable_tensile_marker=true
+            shift ;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
             exit 1
@@ -651,9 +662,16 @@ pushd .
   else
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=yaml"
   fi
-
   if [[ "${tensile_no_lazy_library_loading}" == true ]]; then
     tensile_opt="${tensile_opt} -DTensile_NO_LAZY_LIBRARY_LOADING=ON"
+  fi
+  
+  if [[ "${enable_hipsparselt_marker}" == true ]]; then
+    tensile_opt="${tensile_opt} -DHIPSPARSELT_ENABLE_MARKER=ON"
+  fi
+
+  if [[ "${enable_tensile_marker}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_ENABLE_MARKER=ON"
   fi
 
   echo $cmake_common_options

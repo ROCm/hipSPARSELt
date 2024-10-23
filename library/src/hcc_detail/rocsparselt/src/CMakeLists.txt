@@ -31,6 +31,7 @@ endif()
 # rocSPARSELt source
 set(rocsparselt_source
   src/hcc_detail/rocsparselt/src/handle.cpp
+  src/hcc_detail/rocsparselt/src/Debug.cpp
   src/hcc_detail/rocsparselt/src/status.cpp
   src/hcc_detail/rocsparselt/src/utility.cpp
   src/hcc_detail/rocsparselt/src/rocsparselt_auxiliary.cpp

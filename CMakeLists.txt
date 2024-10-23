@@ -33,6 +33,8 @@ option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 # Find CUDA if the user wants a CUDA version.
 option(BUILD_CUDA "Look for CUDA and use that as a backend if found" OFF)
+include(CMakeDependentOption)
+cmake_dependent_option(HIPSPARSELT_ENABLE_MARKER "Enable roctx marker in hipSPARSELt" ON "BUILD_SHARED_LIBS" OFF)
 
 # IF cuda backend disable clients tests.
 if(BUILD_CUDA)
@@ -232,6 +234,15 @@ include( ROCMClients )
 include (os-detection)
 get_os_id(OS_ID)
 message (STATUS "OS detected is ${OS_ID}")
+
+if(HIPSPARSELT_ENABLE_MARKER)
+  find_library(rocTracer roctx64 PATHS ${ROCM_PATH}/lib)
+  if(NOT rocTracer)
+    message(FATAL_ERROR "roctracer not found, but HIPSPARSELT_ENABLE_MARKER is enabled")
+  endif()
+  add_definitions(-DHIPSPARSELT_ENABLE_MARKER)
+  rocm_package_add_dependencies(DEPENDS "roctracer >= 1.0.0")
+endif()
 
 # Setup version
 set (VERSION_STRING "0.2.3" )

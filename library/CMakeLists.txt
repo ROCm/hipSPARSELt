@@ -145,6 +145,10 @@ else()
   target_link_libraries(hipsparselt PRIVATE /usr/lib/x86_64-linux-gnu/libcusparseLt.so ${CUDA_CUSPARSE_LIBRARY})
 endif()
 
+if(HIPSPARSELT_ENABLE_MARKER)
+  target_link_libraries(hipsparselt PRIVATE -lroctx64)
+endif()
+
 # Target properties
 rocm_set_soversion(hipsparselt ${hipsparselt_SOVERSION})
 set_target_properties(hipsparselt PROPERTIES CXX_EXTENSIONS NO)
