@@ -93,13 +93,13 @@ namespace
     template <>
     struct rocsparselt_to_tensile_type<__half>
     {
-        using tensile_type = Tensile::Half;
+        using tensile_type = TensileLite::Half;
     };
 
     template <>
     struct rocsparselt_to_tensile_type<hip_bfloat16>
     {
-        using tensile_type = Tensile::BFloat16;
+        using tensile_type = TensileLite::BFloat16;
     };
 
     // int8_t -> int8_t (supported for MI-kernel) / rocsparselt_int8x4 -> PackedInt8x4
@@ -117,16 +117,16 @@ namespace
 
     // int8_t -> int8_t (supported for MI-kernel) / rocsparselt_int8x4 -> PackedInt8x4
     template <>
-    constexpr auto tensile_datatype<int8_t> = Tensile::DataType::Int8;
+    constexpr auto tensile_datatype<int8_t> = TensileLite::DataType::Int8;
 
     template <>
-    constexpr auto tensile_datatype<__half> = Tensile::DataType::Half;
+    constexpr auto tensile_datatype<__half> = TensileLite::DataType::Half;
 
     template <>
-    constexpr auto tensile_datatype<hip_bfloat16> = Tensile::DataType::BFloat16;
+    constexpr auto tensile_datatype<hip_bfloat16> = TensileLite::DataType::BFloat16;
 
     template <>
-    constexpr auto tensile_datatype<float> = Tensile::DataType::Float;
+    constexpr auto tensile_datatype<float> = TensileLite::DataType::Float;
 
     /*************************************************************************
      * Class for converting alpha and beta between rocsparselt and Tensile types *
@@ -149,21 +149,21 @@ namespace
     /******************************************************
     * Map a rocsparselt data type to a corresponding Tensile type *
     ******************************************************/
-    inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
+    inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
     {
         switch(type)
         {
         case HIP_R_16F:
-            return Tensile::DataType::Half;
+            return TensileLite::DataType::Half;
         case HIP_R_32F:
-            return Tensile::DataType::Float;
+            return TensileLite::DataType::Float;
         case HIP_R_16BF:
-            return Tensile::DataType::BFloat16;
+            return TensileLite::DataType::BFloat16;
         case HIP_R_8I:
-            return Tensile::DataType::Int8;
+            return TensileLite::DataType::Int8;
         default:
             assert(!"hipblasltDatatype_to_tensile_type: non-supported type");
-            return Tensile::DataType::None;
+            return TensileLite::DataType::None;
         }
     }
 
@@ -176,17 +176,17 @@ namespace
                                  int                                              useScaleAlphaVec = 0)
     {
         // Tensile DataTypes corresponding to rocsparselt data types
-        static constexpr Tensile::DataType Tensile_Ti = tensile_datatype<Ti>;
-        static constexpr Tensile::DataType Tensile_To = tensile_datatype<To>;
-        static constexpr Tensile::DataType Tensile_Tc = tensile_datatype<Tc>;
+        static constexpr TensileLite::DataType Tensile_Ti = tensile_datatype<Ti>;
+        static constexpr TensileLite::DataType Tensile_To = tensile_datatype<To>;
+        static constexpr TensileLite::DataType Tensile_Tc = tensile_datatype<Tc>;
 
         // Tensor descriptors for a, b
-        Tensile::TensorDescriptor a, b;
+        TensileLite::TensorDescriptor a, b;
 
         // Tensile Indices for contraction problem
-        Tensile::ContractionProblemGemm::FreeIndices  freeIndex(2);
-        Tensile::ContractionProblemGemm::BoundIndices boundIndex(1);
-        Tensile::ContractionProblemGemm::BatchIndices batchIndex{{2, 2, 2, 2}};
+        TensileLite::ContractionProblemGemm::FreeIndices  freeIndex(2);
+        TensileLite::ContractionProblemGemm::BoundIndices boundIndex(1);
+        TensileLite::ContractionProblemGemm::BatchIndices batchIndex{{2, 2, 2, 2}};
 
         // Set up GEMM indices
         freeIndex[0].isA = true;
@@ -252,27 +252,27 @@ namespace
         // clang-format on
 
         // Descriptor for input matrix C
-        Tensile::TensorDescriptor c{"c",
+        TensileLite::TensorDescriptor c{"c",
                                     Tensile_To,
                                     {prob.m, prob.n, prob.batch_count},
                                     {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c}};
 
         // Descriptor for output matrix D
-        Tensile::TensorDescriptor d{"d",
+        TensileLite::TensorDescriptor d{"d",
                                     Tensile_To,
                                     {prob.m, prob.n, prob.batch_count},
                                     {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d}};
 
-        Tensile::TensorDescriptor e{"e"};
-        Tensile::TensorDescriptor bias{"bias"};
-        Tensile::TensorDescriptor scaleA{"scaleA"};
-        Tensile::TensorDescriptor scaleB{"scaleB"};
-        Tensile::TensorDescriptor scaleC{"scaleC"};
-        Tensile::TensorDescriptor scaleD{"scaleD"};
-        Tensile::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
+        TensileLite::TensorDescriptor e{"e"};
+        TensileLite::TensorDescriptor bias{"bias"};
+        TensileLite::TensorDescriptor scaleA{"scaleA"};
+        TensileLite::TensorDescriptor scaleB{"scaleB"};
+        TensileLite::TensorDescriptor scaleC{"scaleC"};
+        TensileLite::TensorDescriptor scaleD{"scaleD"};
+        TensileLite::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
 
         // The ContractionProblemGemm
-        Tensile::ContractionProblemGemm tensileProblem{a,
+        TensileLite::ContractionProblemGemm tensileProblem{a,
                                                        b,
                                                        c,
                                                        d,
@@ -313,7 +313,7 @@ namespace
         }
         else
             memset(&tensileAlpha, 0, sizeof(tensileAlpha));
-        tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(tensileAlpha));
+        tensileProblem.setAlphaRestriction(TensileLite::toScalarValueEnum(tensileAlpha));
 
         // Add problem predicates for CEqualsD
         tensileProblem.setCEqualsD(prob.C == prob.D);
@@ -321,35 +321,35 @@ namespace
         tensileProblem.setSparse(prob.sparseA ? 1 : 2);
 
         // set Actvation
-        tensileProblem.setActivationType(Tensile::ActivationType::All);
+        tensileProblem.setActivationType(TensileLite::ActivationType::All);
         tensileProblem.setActivationComputeType(Tensile_Tc);
-        Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
+        TensileLite::ActivationType tensileAct = TensileLite::ActivationType::None;
 
         switch(prob.act_type)
         {
         case hipsparselt_activation_type::abs:
-            tensileAct = Tensile::ActivationType::Abs;
+            tensileAct = TensileLite::ActivationType::Abs;
             break;
         case hipsparselt_activation_type::clippedrelu:
-            tensileAct = Tensile::ActivationType::Clippedrelu;
+            tensileAct = TensileLite::ActivationType::Clippedrelu;
             break;
         case hipsparselt_activation_type::gelu:
             if(prob.act_arg0 == 1.f)
-                tensileAct = Tensile::ActivationType::Gelu;
+                tensileAct = TensileLite::ActivationType::Gelu;
             else
-                tensileAct = Tensile::ActivationType::Geluscaling;
+                tensileAct = TensileLite::ActivationType::Geluscaling;
             break;
         case hipsparselt_activation_type::leakyrelu:
-            tensileAct = Tensile::ActivationType::Leakyrelu;
+            tensileAct = TensileLite::ActivationType::Leakyrelu;
             break;
         case hipsparselt_activation_type::relu:
-            tensileAct = Tensile::ActivationType::Relu;
+            tensileAct = TensileLite::ActivationType::Relu;
             break;
         case hipsparselt_activation_type::sigmoid:
-            tensileAct = Tensile::ActivationType::Sigmoid;
+            tensileAct = TensileLite::ActivationType::Sigmoid;
             break;
         case hipsparselt_activation_type::tanh:
-            tensileAct = Tensile::ActivationType::Tanh;
+            tensileAct = TensileLite::ActivationType::Tanh;
             break;
         default:
             break;
@@ -368,7 +368,7 @@ namespace
                                                                        : d.sizes()[0],
                                    prob.bias_stride,
                                    false,
-                                   Tensile::ContractionProblemGemm::TENSOR::D,
+                                   TensileLite::ContractionProblemGemm::TENSOR::D,
                                    prob.order == rocsparselt_order_row);
         }
 
@@ -406,7 +406,7 @@ namespace
                       "Tensile or rocsparselt types are not standard layout types");
 
         // Structure describing the inputs (A, B, C, D, alpha, beta)
-        Tensile::ContractionInputs inputs;
+        TensileLite::ContractionInputs inputs;
 
         // Set the A, B, C, D matrices pointers in Tensile
         inputs.a = reinterpret_cast<const void*>(prob.A);
@@ -456,14 +456,14 @@ namespace
     class TensileHost
     {
         // The library object
-        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> m_library;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> m_library;
         std::shared_ptr<hipDeviceProp_t> m_deviceProp;
 
         // The adapter object. mutable is used to allow adapters to be modified
         // even when they are stored in a const vector which is immutable in size
         struct adapter_s
         {
-            mutable std::atomic<Tensile::hip::SolutionAdapter*> adapter{nullptr};
+            mutable std::atomic<TensileLite::hip::SolutionAdapter*> adapter{nullptr};
             mutable std::mutex                                  mutex;
         };
 
@@ -534,7 +534,7 @@ namespace
          * Initialize adapter and library according to environment variables *
          * and default paths based on librocsparselt.so location and GPU         *
          *********************************************************************/
-        void initialize(Tensile::hip::SolutionAdapter& adapter, int32_t deviceId)
+        void initialize(TensileLite::hip::SolutionAdapter& adapter, int32_t deviceId)
         {
             std::string path;
 #ifndef WIN32
@@ -648,7 +648,7 @@ namespace
                     //rocsparselt_abort();
                 }
 
-                auto lib = Tensile::LoadLibraryFile<Tensile::ContractionProblemGemm>(path);
+                auto lib = TensileLite::LoadLibraryFile<TensileLite::ContractionProblemGemm>(path);
                 if(!lib)
                 {
                     hipsparselt_cerr << "\nhipsparselt_error: Could not load " << path << std::endl;
@@ -656,7 +656,7 @@ namespace
                 }
                 else
                 {
-                    using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>;
+                    using MSL = TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>;
                     m_library = std::dynamic_pointer_cast<MSL>(lib);
                 }
                 return 0;
@@ -678,7 +678,7 @@ namespace
 
     // Return the library and adapter for the current HIP device
     auto& get_library_and_adapter(
-        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>>* library
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>* library
         = nullptr,
         std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr,
         int                               device     = -1)
@@ -705,7 +705,7 @@ namespace
             if(!adapter)
             {
                 // Allocate a new adapter using the current HIP device
-                adapter = new Tensile::hip::SolutionAdapter;
+                adapter = new TensileLite::hip::SolutionAdapter;
 
                 // Initialize the adapter and possibly the library
                 host.initialize(*adapter, device);
@@ -772,17 +772,17 @@ rocsparselt_status runContractionProblem(const RocsparseltContractionProblem<Ti,
                                          const int search_iterations)
 {
     rocsparselt_status                            status = rocsparselt_status_internal_error;
-    std::shared_ptr<Tensile::ContractionSolution> solution;
+    std::shared_ptr<TensileLite::ContractionSolution> solution;
 
     try
     {
-        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
         std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-        std::shared_ptr<Tensile::Hardware>                                               hardware;
+        std::shared_ptr<TensileLite::Hardware>                                               hardware;
 
         auto& adapter = get_library_and_adapter(&library, &deviceProp, prob.handle->device);
 
-        hardware = Tensile::hip::GetDevice(*deviceProp);
+        hardware = TensileLite::hip::GetDevice(*deviceProp);
 
         if(!config_max_id || configs == nullptr)
         {
@@ -912,14 +912,14 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
                                     _rocsparselt_matmul_config*                      configs,
                                     int*                                             foundConfigs)
 {
-    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<Tensile::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::Hardware>                                               hardware;
 
     // auto &adapter =
     get_library_and_adapter(&library, &deviceProp, prob.handle->device);
 
-    hardware          = Tensile::hip::GetDevice(*deviceProp);
+    hardware          = TensileLite::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);
     // auto handle = prob.handle;
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestConfigs);
