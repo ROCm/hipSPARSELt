@@ -197,7 +197,7 @@ namespace
         // We set K=0 when alpha==0.
         // This makes alpha==0 a change in the problem, and not just a change in the inputs.
         // It optimizes all problems with alpha==0 into K=0 and alpha=(don't care)
-        auto k = prob.k && *prob.alpha ? prob.k : 0;
+        auto k = prob.k && (prob.alpha_vector_scaling || *prob.alpha) ? prob.k : 0;
 
         // clang-format off
 
