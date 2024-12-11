@@ -566,7 +566,7 @@ Tests:
   orderD: [R]
 
 - name: spmm_bf16
-  category: quick
+  category: pre_checkin
   function:
     spmm: *hpa_bf16_precision
   transA: T
