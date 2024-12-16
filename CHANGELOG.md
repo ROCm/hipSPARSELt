@@ -2,7 +2,7 @@
 
 Full documentation for hipSPARSELt is available at [rocm.docs.amd.com/projects/hipSPARSELt](https://rocm.docs.amd.com/projects/hipSPARSELt/en/latest/index.html).
 
-## (Unreleased) hipSPARSELt 0.2.2 for ROCm 6.3.0
+## hipSPARSELt 0.2.2 for ROCm 6.3.0
 
 ### Added
 
