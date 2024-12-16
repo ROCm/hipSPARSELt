@@ -234,7 +234,7 @@ get_os_id(OS_ID)
 message (STATUS "OS detected is ${OS_ID}")
 
 # Setup version
-set (VERSION_STRING "0.2.2" )
+set (VERSION_STRING "0.2.3" )
 rocm_setup_version( VERSION ${VERSION_STRING} )
 set(hipsparselt_SOVERSION 0.2)
 

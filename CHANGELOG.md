@@ -2,6 +2,12 @@
 
 Full documentation for hipSPARSELt is available at [rocm.docs.amd.com/projects/hipSPARSELt](https://rocm.docs.amd.com/projects/hipSPARSELt/en/latest/index.html).
 
+## (Unreleased) hipSPARSELt 0.2.3 for ROCm 6.4.0
+
+### Changed
+
+* Changed the check mechanism of the inputs when is using alpha vector scaling.
+
 ## hipSPARSELt 0.2.2 for ROCm 6.3.0
 
 ### Added
