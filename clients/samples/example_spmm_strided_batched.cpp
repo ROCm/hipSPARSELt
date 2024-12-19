@@ -113,16 +113,26 @@ inline bool AlmostEqual(__half a, __half b)
         _Float16 data;
     };
 
-    _HALF a_half = {__half_raw(a).x};
-    _HALF b_half = {__half_raw(b).x};
+    _HALF a_half    = {__half_raw(a).x};
+    _HALF b_half    = {__half_raw(b).x};
+    _HALF zero_half = {__half_raw(static_cast<__half>(0)).x};
+    _HALF one_half  = {__half_raw(static_cast<__half>(1)).x};
+    _HALF e_n2_half = {__half_raw(static_cast<__half>(0.01)).x};
+
     auto  a_data = a_half.data;
     auto  b_data = b_half.data;
+    auto  zero   = zero_half.data;
+    auto  one    = one_half.data;
+    auto  e_n2   = e_n2_half.data;
 #else
     auto a_data = a;
     auto b_data = b;
+    auto zero = __half(0);
+    auto one  = __half(1);
+    auto e_n2 = __half(0.01);
 #endif
-    auto absA = (a_data > 0.0) ? a_data : static_cast<decltype(a_data)>(-a_data);
-    auto absB = (b_data > 0.0) ? b_data : static_cast<decltype(b_data)>(-b_data);
+    auto absA = (a_data > zero) ? a_data : static_cast<decltype(a_data)>(-a_data);
+    auto absB = (b_data > zero) ? b_data : static_cast<decltype(b_data)>(-b_data);
     // this avoids NaN when inf is compared against inf in the alternative code
     // path
     if(static_cast<float>(absA) == std::numeric_limits<float>::infinity()
@@ -135,8 +145,8 @@ inline bool AlmostEqual(__half a, __half b)
     {
         return a_data == b_data;
     }
-    auto absDiff = (a_data - b_data > 0) ? a_data - b_data : b_data - a_data;
-    return absDiff / (absA + absB + 1) < 0.01;
+    auto absDiff = (a_data - b_data > zero) ? a_data - b_data : b_data - a_data;
+    return absDiff / (absA + absB + one) < e_n2;
 }
 
 inline void extract_metadata(unsigned metadata, int& a, int& b, int& c, int& d)

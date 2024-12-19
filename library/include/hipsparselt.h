@@ -236,6 +236,7 @@ typedef enum {
                                                             When Input's datatype is FP16 - Bias type can be FP16 or FP32. (default FP16)
                                                             When Input's datatype is BF16 - Bias type can be BF16 or FP32. (default BF16)
                                                             In other cases - Bias type is FP32.*/
+   HIPSPARSELT_MATMUL_SPARSE_MAT_POINTER = 17,         /**< Pointer to the pruned sparse matrix. */
 } hipsparseLtMatmulDescAttribute_t;
 
 /*! \ingroup types_module

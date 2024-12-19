@@ -30,6 +30,7 @@
 #include <cusparseLt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
@@ -114,7 +115,7 @@ hipsparseStatus_t hipCUSPARSEStatusToHIPStatus(cusparseStatus_t cuStatus)
 }
 
 /* @deprecated */
-cudaDataType HIPDatatypeToCuSparseLtDatatype(hipsparseLtDatatype_t type)
+cudaDataType HIPSparseLtDatatypeToCuSparseLtDatatype(hipsparseLtDatatype_t type)
 {
     switch(type)
     {
@@ -185,10 +186,8 @@ cusparseComputeType HIPComputetypeToCuSparseComputetype(hipsparseLtComputetype_t
         return CUSPARSE_COMPUTE_16F;
     case HIPSPARSELT_COMPUTE_32I:
         return CUSPARSE_COMPUTE_32I;
-    case HIPSPARSELT_COMPUTE_TF32:
-        return CUSPARSE_COMPUTE_TF32;
-    case HIPSPARSELT_COMPUTE_TF32_FAST:
-        return CUSPARSE_COMPUTE_TF32_FAST;
+    case HIPSPARSELT_COMPUTE_32F:
+        return CUSPARSE_COMPUTE_32F;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -202,10 +201,8 @@ hipsparseLtComputetype_t CuSparseLtComputetypeToHIPComputetype(cusparseComputeTy
         return HIPSPARSELT_COMPUTE_16F;
     case CUSPARSE_COMPUTE_32I:
         return HIPSPARSELT_COMPUTE_32I;
-    case CUSPARSE_COMPUTE_TF32:
-        return HIPSPARSELT_COMPUTE_TF32;
-    case CUSPARSE_COMPUTE_TF32_FAST:
-        return HIPSPARSELT_COMPUTE_TF32_FAST;
+    case CUSPARSE_COMPUTE_32F:
+        return HIPSPARSELT_COMPUTE_32F;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -312,6 +309,8 @@ cusparseLtMatmulDescAttribute_t
         return CUSPARSELT_MATMUL_BIAS_STRIDE;
     case HIPSPARSELT_MATMUL_BIAS_POINTER:
         return CUSPARSELT_MATMUL_BIAS_POINTER;
+    case HIPSPARSELT_MATMUL_SPARSE_MAT_POINTER:
+        return CUSPARSELT_MATMUL_SPARSE_MAT_POINTER;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -340,6 +339,8 @@ hipsparseLtMatmulDescAttribute_t
         return HIPSPARSELT_MATMUL_BIAS_STRIDE;
     case CUSPARSELT_MATMUL_BIAS_POINTER:
         return HIPSPARSELT_MATMUL_BIAS_POINTER;
+    case CUSPARSELT_MATMUL_SPARSE_MAT_POINTER:
+        return HIPSPARSELT_MATMUL_SPARSE_MAT_POINTER;
     default:
         throw HIPSPARSE_STATUS_NOT_SUPPORTED;
     }
@@ -531,7 +532,9 @@ hipsparseStatus_t hipsparseLtInit(hipsparseLtHandle_t* handle)
     if((log_env = getenv("HIPSPARSELT_LOG_MASK")) != NULL)
     {
         int mask = strtol(log_env, nullptr, 0);
-        setenv("CUSPARSELT_LOG_MASK", std::to_string(mask).c_str(), 0);
+        char mask_str[11];
+        snprintf(mask_str, 11, "%d",mask);
+        setenv("CUSPARSELT_LOG_MASK", mask_str, 0);
     }
     if((log_env = getenv("HIPSPARSELT_LOG_FILE")) != NULL)
     {
@@ -967,10 +970,8 @@ catch(...)
 hipsparseStatus_t hipsparseLtGetArchName(char** archName)
 try
 {
-    *archName        = nullptr;
-    std::string arch = "cuda";
-    *archName        = (char*)malloc(arch.size() * sizeof(char));
-    strncpy(*archName, arch.c_str(), arch.size());
+    *archName = (char*)malloc(5);
+    snprintf(*archName, 5, "cuda\0");
     return HIPSPARSE_STATUS_SUCCESS;
 }
 catch(...)

@@ -845,7 +845,7 @@ void testing_spmm(const Arguments& arg)
                                                hD_gold_act + stride_d * i,
                                                ldd,
                                                tSizeD,
-                                               arg.alpha_vector_scaling ? hAlpahVector : nullptr,
+                                               arg.alpha_vector_scaling ? hAlpahVector : (float*)nullptr,
                                                false);
 
                 auto pos = stride_d * i;
@@ -916,7 +916,7 @@ void testing_spmm(const Arguments& arg)
                                            hD_gold + stride_d * i,
                                            ldd,
                                            tSizeD,
-                                           arg.alpha_vector_scaling ? hAlpahVector : nullptr,
+                                           arg.alpha_vector_scaling ? hAlpahVector : (float*)nullptr,
                                            false);
         }
 #undef activation_param

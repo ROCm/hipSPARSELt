@@ -144,9 +144,15 @@ constexpr const char* hip_datatype_to_string(hipDataType type)
         return "bf16_r";
     case HIP_R_8I:
         return "i8_r";
+#ifdef __HIP_PLATFORM_AMD__
     case HIP_R_8F_E4M3_FNUZ:
+#endif
+    case HIP_R_8F_E4M3:
         return "f8_r";
+#ifdef __HIP_PLATFORM_AMD__
     case HIP_R_8F_E5M2_FNUZ:
+#endif
+    case HIP_R_8F_E5M2:
         return "bf8_r";
     default:
         return "invalid";
@@ -165,10 +171,6 @@ constexpr const char* hipsparselt_computetype_to_string(hipsparseLtComputetype_t
         return "i32_r";
     case HIPSPARSELT_COMPUTE_32F:
         return "f32_r";
-    case HIPSPARSELT_COMPUTE_TF32:
-        return "tf32_r";
-    case HIPSPARSELT_COMPUTE_TF32_FAST:
-        return "tf32f_r";
     }
     return "invalid";
 }
@@ -222,6 +224,13 @@ __host__ __device__ inline bool hipsparselt_isnan(__half arg)
     __half_raw x = __half_raw(arg);
     return (~x.x & 0x7c00) == 0 && (x.x & 0x3ff) != 0;
 }
+
+#ifdef __HIP_PLATFORM_NVIDIA__
+__host__ __device__ inline bool hipsparselt_isnan(__nv_bfloat16 arg)
+{
+    return __hisnan(arg);
+}
+#endif
 
 /*******************************************************************************
 * \brief  returns true if arg is Infinity

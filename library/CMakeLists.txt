@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -142,7 +142,8 @@ if(NOT BUILD_CUDA)
 # Target link libraries
   target_link_libraries(hipsparselt PRIVATE hip::device ${DL_LIB})
 else()
-  target_link_libraries(hipsparselt PRIVATE /usr/lib/x86_64-linux-gnu/libcusparseLt.so ${CUDA_CUSPARSE_LIBRARY})
+  find_library(CUDA_CUSPARSELT_LIBRARY NAMES cusparseLt PATHS /usr/lib/x86_64-linux-gnu /usr/local/cuda/lib64 REQUIRED)
+  target_link_libraries(hipsparselt PRIVATE ${CUDA_CUSPARSELT_LIBRARY} ${CUDA_CUSPARSE_LIBRARY})
 endif()
 
 if(HIPSPARSELT_ENABLE_MARKER)

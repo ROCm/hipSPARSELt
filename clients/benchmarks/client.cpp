@@ -89,14 +89,8 @@ struct perf_sparse<
     Tc,
     TBias,
     std::enable_if_t<
-#ifdef __HIP_PLATFORM_AMD__
         (std::is_same<Ti, To>{} && (std::is_same<Ti, __half>{} || std::is_same<Ti, hip_bfloat16>{})
          && std::is_same<Tc, float>{})
-#else
-        (std::is_same<Ti, To>{}
-         && ((std::is_same<Ti, __half>{} && std::is_same<Tc, __half>{})
-             || (std::is_same<Ti, hip_bfloat16>{} && std::is_same<Tc, hip_bfloat16>{})))
-#endif
         || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})
         || (std::is_same<Ti, int8_t>{} && (std::is_same<To, __half>{})
             && std::is_same<Tc, int32_t>{})

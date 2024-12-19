@@ -545,8 +545,8 @@ inline hipsparseStatus_t expected_hipsparse_status_of_matrix_size(hipDataType   
     switch(type)
     {
     case HIP_R_8I:
-    case HIP_R_8F_E4M3_FNUZ:
-    case HIP_R_8F_E5M2_FNUZ:
+    case HIP_R_8F_E4M3:
+    case HIP_R_8F_E5M2:
         if(isSparse)
             row_ = col_ = ld_ = 32;
         else
