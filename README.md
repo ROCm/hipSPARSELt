@@ -5,7 +5,7 @@ It sits between the application and a 'worker' SPARSE library, marshalling
 inputs into the backend library and marshalling results back to the
 application. hipSPARSELt exports an interface that does not require the client
 to change, regardless of the chosen backend. Currently, hipSPARSELt supports
-[rocSPARSELt](library/src/hcc_detial/rocsparselt) and [NVIDIA CUDA cuSPARSELt v0.4](https://docs.nvidia.com/cuda/cusparselt)
+[rocSPARSELt](library/src/hcc_detial/rocsparselt) and [NVIDIA CUDA cuSPARSELt v0.6.3](https://docs.nvidia.com/cuda/cusparselt)
 as backends.
 
 > [!NOTE]
@@ -100,7 +100,7 @@ To set these options during the build process, use the following CMake command:
       * Add kernel selection and genroator, used to provide the appropriate
         solution for the specific problem.
 * CUDA
-  * Support cusparseLt v0.4
+  * Support cusparseLt v0.6.3
 
 ## Documentation
 

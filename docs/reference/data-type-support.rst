@@ -26,14 +26,14 @@ Data type support
       - ✅
     *
       - float8
-      - HIP_R_8F_E4M3_FNUZ
+      - HIP_R_8F_E4M3
       - ❌
-      - ❌
+      - ✅
     *
       - bfloat8
-      - HIP_R_8F_E5M2_FNUZ
+      - HIP_R_8F_E5M2
       - ❌
-      - ❌
+      - ✅
     *
       - int16
       - Not Supported
@@ -51,9 +51,9 @@ Data type support
       - ✅
     *
       - int32
-      - Not Supported
+      - HIP_R_32I
       - ❌
-      - ❌
+      - ✅
     *
       - tensorfloat32
       - Not Supported
@@ -120,12 +120,12 @@ Data type support
       - tensorfloat32
       - Not Supported
       - ❌
-      - ✅
+      - ❌
     *
       - float32
       - HIPSPARSELT_COMPUTE_32F
       - ✅
-      - ❌
+      - ✅
     *
       - float64
       - Not Supported
@@ -135,14 +135,23 @@ Data type support
 * List of supported compute types at specific input and output types:
 
   .. csv-table::
-     :header: "Input", "Output", "Compute type", "Backend"
+     :header: "Input A/B", "Input C", "Output D", "Compute type", "Backend"
 
-     "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32F", "HIP"
-     "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_32F", "HIP"
-     "HIP_R_8I", "HIP_R_8I", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
-     "HIP_R_8I", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
-     "HIP_R_8I", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
-     "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_16F", "CUDA"
-     "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_16F", "CUDA"
-     "HIP_R_32F", "HIP_R_32F", "HIPSPARSELT_COMPUTE_TF32", "CUDA"
-     "HIP_R_32F", "HIP_R_32F", "HIPSPARSELT_COMPUTE_TF32_FAST", "CUDA"
+     "HIP_R_32F", "HIP_R_32F", "HIP_R_32F", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_16F", "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32F", "HIP / CUDA"
+     "HIP_R_16F", "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_16F", "CUDA"
+     "HIP_R_16BF", "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_32F", "HIP / CUDA"
+     "HIP_R_8I", "HIP_R_8I", "HIP_R_8I", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
+     "HIP_R_8I", "HIP_R_32I", "HIP_R_32I", "HIPSPARSELT_COMPUTE_32I", "CUDA"
+     "HIP_R_8I", "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
+     "HIP_R_8I", "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_32I", "HIP / CUDA"
+     "HIP_R_8F_E4M3", "HIP_R_16F", "HIP_R_8F_E4M3", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E4M3", "HIP_R_16BF", "HIP_R_8F_E4M3", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E4M3", "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E4M3", "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E4M3", "HIP_R_32F", "HIP_R_32F", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E5M2", "HIP_R_16F", "HIP_R_8F_E5M2", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E5M2", "HIP_R_16BF", "HIP_R_8F_E5M2", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E5M2", "HIP_R_16F", "HIP_R_16F", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E5M2", "HIP_R_16BF", "HIP_R_16BF", "HIPSPARSELT_COMPUTE_32F", "CUDA"
+     "HIP_R_8F_E5M2", "HIP_R_32F", "HIP_R_32F", "HIPSPARSELT_COMPUTE_32F", "CUDA"

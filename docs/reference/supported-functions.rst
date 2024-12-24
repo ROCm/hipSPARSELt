@@ -48,4 +48,4 @@ ROCm & CUDA supported functions
 
 * CUDA
 
-  * Support cuSPARSELt v0.4
+  * Support cuSPARSELt v0.6.3
