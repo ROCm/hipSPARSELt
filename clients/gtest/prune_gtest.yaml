@@ -404,7 +404,7 @@ Tests:
   sparse_b: [ true, false]
 
 - name: prune_bf16
-  category: quick
+  category: pre_checkin
   function:
     prune: *hpa_bf16_precision
   transA: T

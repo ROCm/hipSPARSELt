@@ -376,7 +376,7 @@ Tests:
   transA_transB: *transA_transB_range
 
 - name: compress_bf16
-  category: quick
+  category: pre_checkin
   function:
     compress: *hpa_bf16_precision
   transA: T

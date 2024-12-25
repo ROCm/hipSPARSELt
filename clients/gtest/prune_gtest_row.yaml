@@ -532,7 +532,7 @@ Tests:
   orderD: [R]
 
 - name: prune_bf16
-  category: quick
+  category: pre_checkin
   function:
     prune: *hpa_bf16_precision
   transA: T
