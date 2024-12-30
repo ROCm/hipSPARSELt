@@ -56,6 +56,19 @@ so it may prompt you for a password.
 ./install.sh -dc
 ```
 
+## Build options
+
+hipSPARSELt provides several build options to customize its behavior:
+
+* `TENSILE_ENABLE_MARKER` (default: OFF): Enables or disables the Tensile marker functionality.
+* `HIPSPARSELT_ENABLE_MARKER` (default: ON): Enables or disables the hipSPARSELt marker functionality.
+
+To set these options during the build process, use the following CMake command:
+
+```bash
+./install.sh --enable-hipsparselt-marker --enable-tensile-marker
+```
+
 ## Functions supported
 
 * ROCm
