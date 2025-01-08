@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -145,7 +145,7 @@ rocsparselt_status rocsparselt_destroy(const rocsparselt_handle* handle)
     }
 
     auto _handle = reinterpret_cast<_rocsparselt_handle*>(const_cast<rocsparselt_handle*>(handle));
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -188,7 +188,7 @@ rocsparselt_status rocsparselt_dense_descr_init(const rocsparselt_handle* handle
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -290,7 +290,7 @@ rocsparselt_status rocsparselt_structured_descr_init(const rocsparselt_handle* h
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -392,7 +392,7 @@ rocsparselt_status rocsparselt_mat_descr_destroy(const rocsparselt_mat_descr* ma
     auto _matDescr
         = reinterpret_cast<_rocsparselt_mat_descr*>(const_cast<rocsparselt_mat_descr*>(matDescr));
 
-    if(!_matDescr->isInit())
+    if(!check_is_init_mat_descr(_matDescr))
     {
         hipsparselt_cerr << "matDescr=" << matDescr << " did not initialized or already destroyed"
                          << std::endl;
@@ -430,7 +430,7 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -454,7 +454,7 @@ rocsparselt_status rocsparselt_mat_descr_set_attribute(const rocsparselt_handle*
 
             auto _matDescr = reinterpret_cast<_rocsparselt_mat_descr*>(matDescr);
 
-            if(!_matDescr->isInit())
+            if(!check_is_init_mat_descr(_matDescr))
             {
                 log_error(_handle, __func__, "matDescr did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
@@ -552,7 +552,7 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -573,7 +573,7 @@ rocsparselt_status rocsparselt_mat_descr_get_attribute(const rocsparselt_handle*
         {
             auto _matDescr = reinterpret_cast<const _rocsparselt_mat_descr*>(matDescr);
 
-            if(!_matDescr->isInit())
+            if(!check_is_init_mat_descr(_matDescr))
             {
                 log_error(_handle, __func__, "matDescr did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
@@ -648,7 +648,7 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -686,7 +686,7 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
         {
             auto _matA = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matA));
-            if(!_matA->isInit())
+            if(!check_is_init_mat_descr(_matA))
             {
                 log_error(_handle, __func__, "matA did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
@@ -694,7 +694,7 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
 
             auto _matB = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matB));
-            if(!_matB->isInit())
+            if(!check_is_init_mat_descr(_matB))
             {
                 log_error(_handle, __func__, "matB did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
@@ -702,7 +702,7 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
 
             auto _matC = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matC));
-            if(!_matC->isInit())
+            if(!check_is_init_mat_descr(_matC))
             {
                 log_error(_handle, __func__, "matC did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
@@ -710,7 +710,7 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
 
             auto _matD = reinterpret_cast<_rocsparselt_mat_descr*>(
                 const_cast<rocsparselt_mat_descr*>(matD));
-            if(!_matD->isInit())
+            if(!check_is_init_mat_descr(_matD))
             {
                 log_error(_handle, __func__, "matD did not initialized or already destroyed");
                 return rocsparselt_status_invalid_handle;
@@ -882,7 +882,7 @@ rocsparselt_status
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -906,7 +906,7 @@ rocsparselt_status
         {
             auto _matmulDescr = reinterpret_cast<_rocsparselt_matmul_descr*>(matmulDescr);
 
-            if(!_matmulDescr->isInit())
+            if(!check_is_init_matmul_descr(_matmulDescr))
             {
                 log_error(
                     _handle, __func__, "matmulDescr did not initialized or already destroyed");
@@ -1090,7 +1090,7 @@ rocsparselt_status
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -1112,7 +1112,7 @@ rocsparselt_status
         try
         {
             auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
-            if(!_matmulDescr->isInit())
+            if(!check_is_init_matmul_descr(_matmulDescr))
             {
                 log_error(
                     _handle, __func__, "matmulDescr did not initialized or already destroyed");
@@ -1248,7 +1248,7 @@ rocsparselt_status
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<_rocsparselt_handle*>(const_cast<rocsparselt_handle*>(handle));
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -1271,7 +1271,7 @@ rocsparselt_status
         {
 
             auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
-            if(!_matmulDescr->isInit())
+            if(!check_is_init_matmul_descr(_matmulDescr))
             {
                 log_error(
                     _handle, __func__, "matmulDescr did not initialized or already destroyed");
@@ -1386,7 +1386,7 @@ rocsparselt_status
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -1408,7 +1408,7 @@ rocsparselt_status
         try
         {
             auto _algSelection = reinterpret_cast<_rocsparselt_matmul_alg_selection*>(algSelection);
-            if(!_algSelection->isInit())
+            if(!check_is_init_matmul_alg_selection(_algSelection))
             {
                 log_error(
                     _handle, __func__, "algSelection did not initialized or already destroyed");
@@ -1506,7 +1506,7 @@ rocsparselt_status
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -1528,7 +1528,7 @@ rocsparselt_status
         {
             auto _algSelection
                 = reinterpret_cast<const _rocsparselt_matmul_alg_selection*>(algSelection);
-            if(!_algSelection->isInit())
+            if(!check_is_init_matmul_alg_selection(_algSelection))
             {
                 log_error(
                     _handle, __func__, "algSelection did not initialized or already destroyed");
@@ -1594,7 +1594,7 @@ rocsparselt_status
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -1617,7 +1617,7 @@ rocsparselt_status
     }
 
     auto _matmulDescr = reinterpret_cast<const _rocsparselt_matmul_descr*>(matmulDescr);
-    if(!_matmulDescr->isInit())
+    if(!check_is_init_matmul_descr(_matmulDescr))
     {
         log_error(_handle, __func__, "matmulDescr did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
@@ -1625,7 +1625,7 @@ rocsparselt_status
 
     const _rocsparselt_matmul_alg_selection* _algSelection
         = reinterpret_cast<const _rocsparselt_matmul_alg_selection*>(algSelection);
-    if(!_algSelection->isInit())
+    if(!check_is_init_matmul_alg_selection(_algSelection))
     {
         log_error(_handle, __func__, "algSelection did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
@@ -1683,7 +1683,7 @@ rocsparselt_status rocsparselt_matmul_plan_destroy(const rocsparselt_matmul_plan
 
     auto _plan
         = reinterpret_cast<_rocsparselt_matmul_plan*>(const_cast<rocsparselt_matmul_plan*>(plan));
-    if(!_plan->isInit())
+    if(!check_is_init_plan(_plan))
     {
         hipsparselt_cerr << "plan did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;

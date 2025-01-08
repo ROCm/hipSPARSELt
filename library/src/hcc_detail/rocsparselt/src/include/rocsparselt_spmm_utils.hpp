@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -61,9 +61,9 @@ inline rocsparselt_status getOriginalSizes(rocsparselt_operation opA,
     return rocsparselt_status_success;
 }
 
-inline void initSparseMatrixLayout(rocsparselt_operation          op,
-                                    const rocsparselt_mat_descr*  sparseMatDescr,
-                                    bool                          isSparseA)
+inline void initSparseMatrixLayout(rocsparselt_operation        op,
+                                   const rocsparselt_mat_descr* sparseMatDescr,
+                                   bool                         isSparseA)
 
 {
     auto _sparseMatDescr = reinterpret_cast<_rocsparselt_mat_descr*>(
@@ -72,7 +72,7 @@ inline void initSparseMatrixLayout(rocsparselt_operation          op,
     {
         auto m = _sparseMatDescr->m;
         auto k = _sparseMatDescr->n;
-        if (op == rocsparselt_operation_transpose)
+        if(op == rocsparselt_operation_transpose)
             std::swap(m, k);
         _sparseMatDescr->c_k  = k / 2;
         _sparseMatDescr->c_ld = m;
@@ -85,7 +85,7 @@ inline void initSparseMatrixLayout(rocsparselt_operation          op,
     {
         auto k = _sparseMatDescr->m;
         auto n = _sparseMatDescr->n;
-        if (op == rocsparselt_operation_transpose)
+        if(op == rocsparselt_operation_transpose)
             std::swap(n, k);
         _sparseMatDescr->c_k  = k / 2;
         _sparseMatDescr->c_ld = _sparseMatDescr->c_k;
@@ -194,7 +194,7 @@ inline rocsparselt_status validateMatrixArgs(const _rocsparselt_handle* handle,
                                              rocsparselt_matrix_type    matrixType)
 {
     // handle must be valid
-    if(handle == nullptr || !handle->isInit())
+    if(!check_is_init_handle(handle))
         return rocsparselt_status_invalid_handle;
 
     if(num_rows == 0 || num_cols == 0)
@@ -299,7 +299,7 @@ inline rocsparselt_status validateMatmulDescrArgs(const _rocsparselt_handle* han
                                                   rocsparselt_order          order_d)
 {
     // handle must be valid
-    if(handle == nullptr || !handle->isInit())
+    if(!check_is_init_handle(handle))
         return rocsparselt_status_invalid_handle;
 
     auto is_op_valid = [](rocsparselt_operation op) {

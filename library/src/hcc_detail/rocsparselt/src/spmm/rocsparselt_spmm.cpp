@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +51,7 @@ rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*   
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -63,7 +63,7 @@ rocsparselt_status rocsparselt_matmul_get_workspace(const rocsparselt_handle*   
         return rocsparselt_status_invalid_handle;
     }
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
-    if(!_plan->isInit())
+    if(!check_is_init_plan(_plan))
     {
         log_error(_handle, __func__, "plan did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;
@@ -110,7 +110,7 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
         return rocsparselt_status_invalid_handle;
     }
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
-    if(!_handle->isInit())
+    if(!check_is_init_handle(_handle))
     {
         hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
@@ -122,7 +122,7 @@ rocsparselt_status rocsparselt_matmul_impl(const char*                    caller
         return rocsparselt_status_invalid_handle;
     }
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
-    if(!_plan->isInit())
+    if(!check_is_init_plan(_plan))
     {
         log_error(_handle, caller, "plan did not initialized or already destroyed");
         return rocsparselt_status_invalid_handle;

@@ -1,6 +1,6 @@
 /*! \file */
 /* ************************************************************************
- * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,11 +50,6 @@ struct _rocsparselt_handle
 
     void init();
     void destroy();
-
-    bool isInit() const
-    {
-        return is_init != 0 && is_init == (uintptr_t)(this);
-    };
 
     // device id
     int device;
@@ -134,15 +129,6 @@ struct _rocsparselt_mat_descr
         m_type  = rocsparselt_matrix_type_unknown;
         is_init = 0;
     }
-
-    bool isInit() const
-    {
-        if(is_init != 0 && is_init == (uintptr_t)handle)
-        {
-            return m_type == rocsparselt_matrix_type_unknown ? false : true;
-        }
-        return false;
-    };
 
     friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_mat_descr& t);
 
@@ -248,11 +234,6 @@ struct _rocsparselt_matmul_descr
         is_init = 0;
     };
 
-    bool isInit() const
-    {
-        return is_init != 0 && is_init == (uintptr_t)handle;
-    }
-
     friend std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_descr& t);
 
     const _rocsparselt_handle* handle = nullptr;
@@ -299,11 +280,11 @@ struct _rocsparselt_matmul_descr
     bool                  _swap_ab     = false;
 
     //@TODO This is used to backward support hipsparseLtDatatype_t, should remove in the later version.
-    bool bias_is_hipsparselt_datatype = false;
+    bool      bias_is_hipsparselt_datatype = false;
+    uintptr_t is_init                      = 0;
 
 private:
-    bool      is_reference = true;
-    uintptr_t is_init      = 0;
+    bool is_reference = true;
 };
 
 struct __attribute__((packed, aligned(8))) _rocsparselt_matmul_config
@@ -343,11 +324,6 @@ struct _rocsparselt_matmul_alg_selection
         is_init = 0;
     };
 
-    bool isInit() const
-    {
-        return is_init != 0 && is_init == (uintptr_t)handle;
-    }
-
     friend std::ostream& operator<<(std::ostream&                            stream,
                                     const _rocsparselt_matmul_alg_selection& t);
 
@@ -384,13 +360,6 @@ struct _rocsparselt_matmul_plan
         clear();
     };
 
-    bool isInit() const
-    {
-        if(is_init != 0 && is_init == (uintptr_t)handle)
-            return (matmul_descr == nullptr || alg_selection == nullptr) ? false : true;
-        return false;
-    }
-
     void clear()
     {
         delete matmul_descr;
@@ -410,5 +379,11 @@ struct _rocsparselt_matmul_plan
     //
     uintptr_t is_init = 0;
 };
+
+bool check_is_init_handle(const _rocsparselt_handle* handle);
+bool check_is_init_mat_descr(const _rocsparselt_mat_descr* mat);
+bool check_is_init_matmul_descr(const _rocsparselt_matmul_descr* matmul);
+bool check_is_init_matmul_alg_selection(const _rocsparselt_matmul_alg_selection* alg_selection);
+bool check_is_init_plan(const _rocsparselt_matmul_plan* plan);
 
 #endif // HANDLE_H

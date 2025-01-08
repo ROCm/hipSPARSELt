@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -179,4 +179,35 @@ std::ostream& operator<<(std::ostream& stream, const _rocsparselt_matmul_plan& t
            << "ptr=" << (&t) << ", matmul=" << *(t.matmul_descr)
            << ", alg_selection=" << *(t.alg_selection) << "}";
     return stream;
+}
+
+bool check_is_init_handle(const _rocsparselt_handle* handle)
+{
+    return handle != nullptr && handle->is_init != 0 && handle->is_init == (uintptr_t)handle;
+}
+
+bool check_is_init_mat_descr(const _rocsparselt_mat_descr* mat)
+{
+    if(mat != nullptr && mat->is_init != 0 && mat->is_init == (uintptr_t)mat->handle)
+        return mat->m_type == rocsparselt_matrix_type_unknown ? false : true;
+    return false;
+}
+
+bool check_is_init_matmul_descr(const _rocsparselt_matmul_descr* matmul)
+{
+    return matmul != nullptr && matmul->is_init != 0
+           && matmul->is_init == (uintptr_t)matmul->handle;
+}
+
+bool check_is_init_matmul_alg_selection(const _rocsparselt_matmul_alg_selection* alg_selection)
+{
+    return alg_selection->is_init != 0
+           && alg_selection->is_init == (uintptr_t)alg_selection->handle;
+}
+
+bool check_is_init_plan(const _rocsparselt_matmul_plan* plan)
+{
+    if(plan != nullptr && plan->is_init != 0 && plan->is_init == (uintptr_t)plan->handle)
+        return (plan->matmul_descr == nullptr || plan->alg_selection == nullptr) ? false : true;
+    return false;
 }
