@@ -320,7 +320,7 @@ build_relocatable=false
 build_address_sanitizer=false
 gpu_architecture=all
 cpu_ref_lib=blis
-tensile_cov=
+tensile_cov=4
 tensile_fork=
 tensile_merge_files=
 tensile_tag=
@@ -446,7 +446,7 @@ while true; do
 done
 
 if [[ -z $tensile_cov ]]; then
-  tensile_cov=default
+  tensile_cov=4
 fi
 
 if [[ "${cpu_ref_lib}" == blis ]]; then
