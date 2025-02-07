@@ -320,7 +320,7 @@ build_relocatable=false
 build_address_sanitizer=false
 gpu_architecture=all
 cpu_ref_lib=blis
-tensile_cov=
+tensile_cov=4
 tensile_fork=
 tensile_merge_files=
 tensile_tag=
@@ -329,6 +329,7 @@ tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
 build_dir_user=build
+tensile_no_lazy_library_loading=false
 
 if ! [ -z ${ROCM_PATH+x} ]; then
     rocm_path=${ROCM_PATH}
@@ -446,7 +447,7 @@ while true; do
 done
 
 if [[ -z $tensile_cov ]]; then
-  tensile_cov=default
+  tensile_cov=4
 fi
 
 if [[ "${cpu_ref_lib}" == blis ]]; then
@@ -649,6 +650,10 @@ pushd .
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=msgpack"
   else
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=yaml"
+  fi
+
+  if [[ "${tensile_no_lazy_library_loading}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_NO_LAZY_LIBRARY_LOADING=ON"
   fi
 
   echo $cmake_common_options
