@@ -46,7 +46,7 @@ instructions.
     * `hipSPARSE <https://github.com/ROCm/hipSPARSE>`_
     * `git <https://git-scm.com/>`_
     * `CMake <https://cmake.org/>`_ 3.5 or later
-    * `AMD ROCm <https://github.com/RadeonOpenCompute/ROCm>`_
+    * `AMD ROCm <https://github.com/ROCm/ROCm>`_
     * (Optional, for clients) `GoogleTest <https://github.com/google/googletest>`_
 
 Download hipSPARSELt

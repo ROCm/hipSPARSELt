@@ -365,7 +365,7 @@ set( HIPSPARSELTS_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute Structured Sparsity Matrix Multiplication marshalling library"
+    DESCRIPTION "ROCm Structured Sparsity Matrix Multiplication marshalling library"
     MAINTAINER "hipSPARSELt Maintainer <hipsparselt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPSPARSELTS_CONFIG_DIR}
