@@ -41,6 +41,7 @@
 #include <Tensile/Contractions.hpp>
 #include <Tensile/EmbeddedLibrary.hpp>
 #include <Tensile/MasterSolutionLibrary.hpp>
+#include <Tensile/PlaceholderLibrary.hpp>
 #include <Tensile/Tensile.hpp>
 #include <Tensile/TensorDescriptor.hpp>
 #include <Tensile/Utils.hpp>
@@ -450,6 +451,85 @@ namespace
         return inputs;
     }
 
+    TensileLite::LazyLoadingInit getLazyLoadingArch(int deviceID)
+    {
+        hipDeviceProp_t deviceProperties;
+        HIP_CHECK_EXC(hipGetDeviceProperties(&deviceProperties, deviceID));
+        // strip out xnack/ecc from name
+        std::string deviceFullString(deviceProperties.gcnArchName);
+        std::string deviceString = deviceFullString.substr(0, deviceFullString.find(":"));
+
+        if(deviceString.find("gfx803") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx803;
+        }
+        else if(deviceString.find("gfx900") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx900;
+        }
+        else if(deviceString.find("gfx906") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx906;
+        }
+        else if(deviceString.find("gfx908") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx908;
+        }
+        else if(deviceString.find("gfx90a") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx90a;
+        }
+        else if(deviceString.find("gfx940") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx940;
+        }
+        else if(deviceString.find("gfx941") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx941;
+        }
+        else if(deviceString.find("gfx942") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx942;
+        }
+        else if(deviceString.find("gfx1010") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1010;
+        }
+        else if(deviceString.find("gfx1011") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1011;
+        }
+        else if(deviceString.find("gfx1012") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1012;
+        }
+        else if(deviceString.find("gfx1030") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1030;
+        }
+        else if(deviceString.find("gfx1100") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1100;
+        }
+        else if(deviceString.find("gfx1101") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1101;
+        }
+        else if(deviceString.find("gfx1102") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1102;
+        }
+        else if(deviceString.find("gfx1200") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1200;
+        }
+        else if(deviceString.find("gfx1201") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1201;
+        }
+        return TensileLite::LazyLoadingInit::None;
+    }
+
     /**************************************************
      * The TensileHost struct interfaces with Tensile *
      **************************************************/
@@ -457,7 +537,8 @@ namespace
     {
         // The library object
         std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> m_library;
-        std::shared_ptr<hipDeviceProp_t> m_deviceProp;
+        std::unordered_set<TensileLite::LazyLoadingInit>                  m_deviceSet;
+        std::unordered_map<std::string, std::shared_ptr<hipDeviceProp_t>> m_devicePropMap;
 
         // The adapter object. mutable is used to allow adapters to be modified
         // even when they are stored in a const vector which is immutable in size
@@ -508,9 +589,9 @@ namespace
             return m_library;
         }
 
-        auto& get_device_property() const
+        auto& get_device_property(const std::string& deviceName) const
         {
-            return m_deviceProp;
+            return m_devicePropMap.at(deviceName);
         }
 
         auto& get_adapters() const
@@ -576,7 +657,7 @@ namespace
 
             // only load modules for the current architecture
             auto dir = path + "/*" + processor + "*co";
-
+#if ROCSPARSELT_TENSILE_LAZY_LOAD == 0
             bool no_match = false;
 #ifdef WIN32
             std::replace(dir.begin(), dir.end(), '/', '\\');
@@ -630,28 +711,59 @@ namespace
                       << std::endl;
                 (void)once;
             }
-
+#endif // ROCSPARSELT_TENSILE_LAZY_LOAD == 0
             // We initialize a local static variable with a lambda function call to avoid
             // race conditions when multiple threads with different device IDs try to
             // initialize library. This ensures that only one thread initializes library,
             // and other threads trying to initialize library wait for it to complete.
             static int once = [&] {
+                // Determine library path
+                std::string tensileLibPath;
+#if ROCSPARSELT_TENSILE_LAZY_LOAD
 #ifdef TENSILE_YAML
-                path += "/TensileLibrary.yaml";
+                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".yaml";
 #else
-                path += "/TensileLibrary.dat";
+                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".dat";
 #endif
-                if(!TestPath(path))
+#else
+#ifdef TENSILE_YAML
+                tensileLibPath = path + "/TensileLibrary_" + processor + ".yaml";
+#else
+                tensileLibPath = path + "/TensileLibrary_" + processor + ".dat";
+#endif
+#endif
+                if(!TestPath(tensileLibPath))
                 {
-                    hipsparselt_cerr << "\nhipsparselt_error: Cannot read " << path << ": "
+                    hipsparselt_cerr << "\nhipsparselt_error: Cannot read " << tensileLibPath << ": "
                                      << strerror(errno) << std::endl;
                     //rocsparselt_abort();
                 }
 
-                auto lib = TensileLite::LoadLibraryFile<TensileLite::ContractionProblemGemm>(path);
+                // Get devices
+                hipDeviceProp_t prop;
+                int             count;
+                HIP_CHECK_EXC(hipGetDeviceCount(&count));
+                for(int devId = 0; devId < count; devId++)
+                {
+                    auto deviceArch = getLazyLoadingArch(devId);
+                    if(m_deviceSet.find(deviceArch) == m_deviceSet.end())
+                    {
+                        // populate the arch list for lazy loading
+                        m_deviceSet.insert(deviceArch);
+                        // populate device property map, used in finding solutions based on arch
+                        HIP_CHECK_EXC(hipGetDeviceProperties(&prop, devId));
+                        // strip out xnack/ecc from name
+                        std::string deviceFullString(prop.gcnArchName);
+                        std::string deviceString
+                            = deviceFullString.substr(0, deviceFullString.find(":"));
+                        m_devicePropMap[deviceString] = std::make_shared<hipDeviceProp_t>(prop);
+                    }
+                }
+
+                auto lib = TensileLite::LoadLibraryFile<TensileLite::ContractionProblemGemm>(tensileLibPath);
                 if(!lib)
                 {
-                    hipsparselt_cerr << "\nhipsparselt_error: Could not load " << path << std::endl;
+                    hipsparselt_cerr << "\nhipsparselt_error: Could not load " << tensileLibPath << std::endl;
                     return -1;
                 }
                 else
@@ -662,17 +774,15 @@ namespace
                 return 0;
             }();
 
+            static_cast<void>(adapter.initializeLazyLoading(processor, path));
+
+
             if(!m_library && once != 0)
             {
                 hipsparselt_cerr << "\nhipsparselt_error: Could not initialize Tensile library"
                                  << std::endl;
                 //rocsparselt_abort();
             }
-
-            hipDeviceProp_t prop;
-            THROW_IF_HIP_ERROR(hipGetDeviceProperties(&prop, deviceId));
-
-            m_deviceProp = std::make_shared<hipDeviceProp_t>(prop);
         }
     };
 
@@ -719,7 +829,7 @@ namespace
         if(library)
             *library = host.get_library();
         if(deviceProp)
-            *deviceProp = host.get_device_property();
+            *deviceProp = host.get_device_property(rocsparselt_internal_get_arch_name());
 
         return *adapter;
     }
@@ -918,6 +1028,11 @@ rocsparselt_status getBestSolutions(const RocsparseltContractionProblem<Ti, To, 
 
     // auto &adapter =
     get_library_and_adapter(&library, &deviceProp, prob.handle->device);
+
+    if(!library)
+    {
+        return rocsparselt_status_invalid_pointer;
+    }
 
     hardware          = TensileLite::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);

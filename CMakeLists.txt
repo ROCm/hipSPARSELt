@@ -33,6 +33,8 @@ option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 # Find CUDA if the user wants a CUDA version.
 option(BUILD_CUDA "Look for CUDA and use that as a backend if found" OFF)
+option(Tensile_SEPARATE_ARCHITECTURES "Tensile to use GPU architecture specific files?" ON)
+option(Tensile_LAZY_LIBRARY_LOADING "Tensile to load kernels on demand?" ON)
 
 # IF cuda backend disable clients tests.
 if(BUILD_CUDA)
@@ -241,6 +243,16 @@ set(hipsparselt_SOVERSION 0.2)
 # setup rocsparselt defines used for both the library and clients
 if( BUILD_WITH_TENSILE )
     list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
+    if(Tensile_SEPARATE_ARCHITECTURES)
+      list(APPEND TENSILE_DEFINES ROCSPARSELT_TENSILE_SEPARATE_ARCH=1)
+    else()
+      list(APPEND TENSILE_DEFINES ROCSPARSELT_TENSILE_SEPARATE_ARCH=0)
+    endif()
+    if(Tensile_LAZY_LIBRARY_LOADING)
+      list(APPEND TENSILE_DEFINES ROCSPARSELT_TENSILE_LAZY_LOAD=1)
+    else()
+      list(APPEND TENSILE_DEFINES ROCSPARSELT_TENSILE_LAZY_LOAD=0)
+    endif()
 else()
     list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
 endif()
@@ -349,7 +361,7 @@ set( HIPSPARSELTS_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute Structured Sparsity Matrix Multiplication marshalling library"
+    DESCRIPTION "ROCm Structured Sparsity Matrix Multiplication marshalling library"
     MAINTAINER "hipSPARSELt Maintainer <hipsparselt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPSPARSELTS_CONFIG_DIR}
