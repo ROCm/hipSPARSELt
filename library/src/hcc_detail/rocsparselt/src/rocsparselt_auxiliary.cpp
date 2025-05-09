@@ -35,6 +35,7 @@
 #include "rocsparselt_spmm_utils.hpp"
 #include "status.h"
 #include "utility.hpp"
+#include "kernel_options.hpp"
 
 #include <hip/hip_runtime_api.h>
 
@@ -679,6 +680,12 @@ rocsparselt_status rocsparselt_matmul_descr_init(const rocsparselt_handle*    ha
             bool    isSparseA         = _matA->m_type == rocsparselt_matrix_type_structured;
             _matmulDescr->is_sparse_a = isSparseA;
             getOriginalSizes(opA, opB, _matA->m, _matA->n, _matB->m, _matB->n, m, n, k);
+
+            if(isSparseA)
+                _matmulDescr->kernel_options = get_kernel_options(m, k, isSparseA, opA, _matA->order);
+            else
+                _matmulDescr->kernel_options = get_kernel_options(k, n, isSparseA, opB, _matB->order);
+
             if(isSparseA)
             {
                 _matA->c_k  = k / 2;

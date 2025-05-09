@@ -27,6 +27,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "hipsparselt_ostream.hpp"
+#include "kernel_options.hpp"
 #include "rocsparselt.h"
 #include "rocsparselt_spmm_utils.hpp"
 #include "utility.hpp"
@@ -34,7 +35,7 @@
 #include <hip/hip_fp8.h>
 #include <hip/hip_runtime_api.h>
 
-template <typename Ti, int SG0I, int SG1J, int TT0I, int TT1J>
+template <typename Ti>
 __global__ void compress_kernel(const Ti*      in,
                                 Ti*            out,
                                 unsigned char* metadata,
@@ -52,17 +53,24 @@ __global__ void compress_kernel(const Ti*      in,
                                 int            num_batches,
                                 int64_t        sizes,
                                 int64_t        c_sizes,
-                                int64_t        m_sizes)
+                                int64_t        m_sizes,
+                                int            SG0I,
+                                int            SG1J,
+                                int            TT0I,
+                                int            TT1J)
 {
-    constexpr int    metadata_tiles_y = 8;
-    constexpr int    tiles_y          = 4;
+    constexpr int metadata_tiles_y = 8;
+    constexpr int tiles_y          = 4;
 
-    using c_type = std::conditional_t<std::is_same<__hip_fp8_e4m3, Ti>::value || std::is_same<__hip_fp8_e5m2, Ti>::value, float, Ti>;
+    using c_type        = std::conditional_t<std::is_same<__hip_fp8_e4m3, Ti>::value
+                                          || std::is_same<__hip_fp8_e5m2, Ti>::value,
+                                      float,
+                                      Ti>;
     const c_type ZERO_C = static_cast<c_type>(0.0f);
     const Ti     ZERO   = static_cast<Ti>(0.0f);
 
-    constexpr unsigned int MT0I = SG0I * TT0I;
-    constexpr unsigned int MT1J = SG1J * TT1J;
+    const unsigned int MT0I = SG0I * TT0I;
+    const unsigned int MT1J = SG1J * TT1J;
 
     unsigned int serial = hc_get_workitem_id(0);
     unsigned int sg0I   = serial % SG0I;
@@ -144,35 +152,37 @@ __global__ void compress_kernel(const Ti*      in,
 }
 
 template <typename Ti>
-rocsparselt_status rocsparselt_smfmac_compress_template(const _rocsparselt_handle* handle,
-                                                        int64_t                    m,
-                                                        int64_t                    n,
-                                                        int64_t                    stride0,
-                                                        int64_t                    stride1,
-                                                        int64_t                    batch_stride,
-                                                        int64_t                    c_stride0,
-                                                        int64_t                    c_stride1,
-                                                        int64_t                    c_batch_stride,
-                                                        int64_t                    m_stride0,
-                                                        int64_t                    m_stride1,
-                                                        int64_t                    m_batch_stride,
-                                                        int                        num_batches,
-                                                        rocsparselt_order          order,
-                                                        const Ti*                  d_in,
-                                                        Ti*                        d_out,
-                                                        unsigned char*             d_metadata,
-                                                        hipStream_t                stream)
+rocsparselt_status rocsparselt_smfmac_compress_template(const _rocsparselt_handle*  handle,
+                                                        int64_t                     m,
+                                                        int64_t                     n,
+                                                        int64_t                     stride0,
+                                                        int64_t                     stride1,
+                                                        int64_t                     batch_stride,
+                                                        int64_t                     c_stride0,
+                                                        int64_t                     c_stride1,
+                                                        int64_t                     c_batch_stride,
+                                                        int64_t                     m_stride0,
+                                                        int64_t                     m_stride1,
+                                                        int64_t                     m_batch_stride,
+                                                        int                         num_batches,
+                                                        rocsparselt_order           order,
+                                                        const Ti*                   d_in,
+                                                        Ti*                         d_out,
+                                                        unsigned char*              d_metadata,
+                                                        hipStream_t                 stream,
+                                                        _rocsparselt_kernel_options kernel_options)
 {
-    constexpr int SG0I = 16;
-    constexpr int SG1J = 2;
-    constexpr int TT0I = 1;
-    constexpr int TT1J = 8; //must be the multiplication of 8.
-    constexpr int MT0I = SG0I * TT0I;
-    constexpr int MT1J = SG1J * TT1J;
+    int SG0I = kernel_options.sg0i;
+    int SG1J = kernel_options.sg1j;
+    int TT0I = kernel_options.tt0i;
+    int TT1J = kernel_options.tt1j;
+
+    const int MT0I = SG0I * TT0I;
+    const int MT1J = SG1J * TT1J;
 
     int block_x = m / MT0I + (m % MT0I > 0 ? 1 : 0);
     int block_y = n / MT1J + (n % MT1J > 0 ? 1 : 0);
-    hipLaunchKernelGGL((compress_kernel<Ti, SG0I, SG1J, TT0I, TT1J>), /* compute kernel*/
+    hipLaunchKernelGGL((compress_kernel<Ti>), /* compute kernel*/
                        dim3(block_x, block_y, num_batches),
                        dim3(SG0I * SG1J),
                        0 /*dynamic shared*/,
@@ -194,7 +204,11 @@ rocsparselt_status rocsparselt_smfmac_compress_template(const _rocsparselt_handl
                        num_batches,
                        num_batches * batch_stride,
                        num_batches * c_batch_stride,
-                       num_batches * m_batch_stride);
+                       num_batches * m_batch_stride,
+                       SG0I,
+                       SG1J,
+                       TT0I,
+                       TT1J);
     return rocsparselt_status_success;
 }
 
@@ -214,7 +228,8 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
                                                     const void*                   d_in,
                                                     void*                         d_out,
                                                     void*                         d_ws,
-                                                    hipStream_t                   stream)
+                                                    hipStream_t                   stream,
+                                                    _rocsparselt_kernel_options   kernel_options)
 {
 
     rocsparselt_order order = matrix->order;
@@ -236,7 +251,7 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
 #define COMPRESS_PARAMS(T)                                                                         \
     handle, m, n, stride0, stride1, batch_stride, c_stride0, c_stride1, c_batch_stride, m_stride0, \
         m_stride1, m_batch_stride, num_batches, order, reinterpret_cast<const T*>(d_in),           \
-        reinterpret_cast<T*>(d_out), d_metadata, stream
+        reinterpret_cast<T*>(d_out), d_metadata, stream, kernel_options
 
     switch(type)
     {
@@ -262,6 +277,132 @@ rocsparselt_status rocsparselt_smfmac_compress_impl(const _rocsparselt_handle*  
                   "is not supported");
         return rocsparselt_status_not_implemented;
     }
+}
+/*******************************************************************************
+ * Heuristics for selecting optimal (SG0I, SG1J) and tile sizes
+ * based on matrix dimensions and sparsity properties to maximize performance.
+ *******************************************************************************/
+static constexpr int    validSizes[]{2, 4, 8, 16, 32, 64, 128, 256, 512};
+static constexpr size_t numValid = sizeof(validSizes) / sizeof(validSizes[0]);
+
+// Threshold for matrix width (n direction)
+static constexpr int64_t WideWidthThreshold   = 4096;
+static constexpr int64_t MediumWidthThreshold = 1024;
+static constexpr int     MinSGForMediumMatrix = 8;
+
+// Matrix size categories
+static constexpr int64_t SmallSize  = 32 * 32;
+static constexpr int64_t MediumSize = 64 * 64;
+static constexpr int64_t LargeSize  = 768 * 768;
+
+// The min and max of the number of theads
+static constexpr int64_t MinNumOfThreads = 64;
+static constexpr int64_t MaxNumOfThreads = 1024;
+
+// The number of elements per macro tile
+static constexpr int MediumElementsPerMacroTile = 512;
+static constexpr int LargeElementsPerMacroTile  = 4096;
+
+/* Calculate optimal SG and TT configuration based on matrix shape */
+_rocsparselt_kernel_options get_kernel_options(int64_t               m,
+                                               int64_t               n,
+                                               bool                  isSparseA,
+                                               rocsparselt_operation op,
+                                               rocsparselt_order     order,
+                                               int                   tt0i,
+                                               int                   tt1j)
+{
+    assert(m > 0 && n > 0 && tt0i > 0 && tt1j > 0);
+
+    _rocsparselt_kernel_options config{0, 0, tt0i, tt1j};
+
+    // Calculate SG1J based on matrix width (n)
+    if(n > WideWidthThreshold)
+    {
+        // Extra-wide matrices - pick maximum size
+        config.sg1j = validSizes[numValid - 1];
+    }
+    else
+    {
+        int  best_size        = validSizes[0];
+        bool found_valid_size = false;
+
+        for(int i = numValid - 1; i >= 0; --i)
+        {
+            int64_t size = validSizes[i];
+            int64_t tile = size * tt1j;
+
+            // Perfect Match
+            if(tile == n)
+            {
+                best_size = size;
+                break;
+            }
+            // Divisible case
+            if(n <= MediumWidthThreshold && size >= MinSGForMediumMatrix && n % tile == 0)
+            {
+                best_size = size;
+                break;
+            }
+            // Largest tile < n
+            if(tile < n && !found_valid_size)
+            {
+                best_size        = size;
+                found_valid_size = true;
+            }
+        }
+        config.sg1j = best_size;
+    }
+
+    // Choose SG0I
+    const int64_t total = m * n;
+    if(total <= SmallSize)
+        config.sg0i = (MinNumOfThreads / config.sg1j > 0) ? (MinNumOfThreads / config.sg1j) : 1;
+    else if(total <= MediumSize)
+        config.sg0i = (MediumElementsPerMacroTile / (config.sg1j * tt0i * tt1j) > 2)
+                          ? (MediumElementsPerMacroTile / (config.sg1j * tt0i * tt1j))
+                          : 2; // 512 elements per macrotile
+    else if(total < LargeSize)
+        config.sg0i = (LargeElementsPerMacroTile / (config.sg1j * tt0i * tt1j) > 2)
+                          ? (LargeElementsPerMacroTile / (config.sg1j * tt0i * tt1j))
+                          : 2; // 4096 elements per macrotile
+    else
+        config.sg0i = MaxNumOfThreads / config.sg1j;
+
+    // Round down to the nearest valid size for safety
+    for(int i = numValid - 1; i >= 0; --i)
+    {
+        if(config.sg0i >= validSizes[i])
+        {
+            config.sg0i = validSizes[i];
+            break;
+        }
+    }
+
+    // Adjust SG0I and SG1J based on operation and order
+    // Swap SG0I and SG1J if needed based on operation and order
+    bool should_swap = false;
+
+    if(isSparseA)
+    {
+        // For sparse A: swap when transpose+row order or none+column order
+        should_swap = (op == rocsparselt_operation_transpose && order == rocsparselt_order_row)
+                      || (op == rocsparselt_operation_none && order == rocsparselt_order_column);
+    }
+    else
+    {
+        // For sparse B: swap when none+row order  or transpose+column order
+        should_swap
+            = (op == rocsparselt_operation_none && order == rocsparselt_order_row)
+              || (op == rocsparselt_operation_transpose && order == rocsparselt_order_column);
+    }
+
+    if(should_swap)
+    {
+        std::swap(config.sg0i, config.sg1j);
+    }
+
+    return config;
 }
 
 #ifdef __cplusplus
@@ -586,7 +727,8 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
                                             d_dense,
                                             d_compressed,
                                             d_compressBuffer,
-                                            stream);
+                                            stream,
+                                            _plan->matmul_descr->kernel_options);
 }
 
 /********************************************************************************
@@ -680,6 +822,9 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
     get_compress_matrix_size(
         isSparseA, op, _sparseMatDescr, m, n, stride0, stride1, c_stride0, c_stride1);
 
+    _rocsparselt_kernel_options kernel_options
+        = get_kernel_options(m, n, isSparseA, op, _sparseMatDescr->order);
+
     return rocsparselt_smfmac_compress_impl(_handle,
                                             _sparseMatDescr,
                                             m,
@@ -696,7 +841,8 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
                                             d_dense,
                                             d_compressed,
                                             d_compressBuffer,
-                                            stream);
+                                            stream,
+                                            kernel_options);
 }
 
 #ifdef __cplusplus

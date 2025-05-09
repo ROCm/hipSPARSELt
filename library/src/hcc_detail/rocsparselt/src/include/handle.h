@@ -166,6 +166,14 @@ struct _rocsparselt_mat_descr
     int64_t c_n = -1;
 };
 
+struct _rocsparselt_kernel_options
+{
+    int sg0i = 16;
+    int sg1j = 2;
+    int tt0i = 1;
+    int tt1j = 8;
+};
+
 /********************************************************************************
  * \brief rocsparse_matmul_descr holds the description of the matrix multiplication operation.
  * It is initialized and destroyed with rocsparselt_matmul_descr_init()
@@ -209,6 +217,7 @@ struct _rocsparselt_matmul_descr
         , _ldb(rhs._ldb)
         , _is_sparse_a(rhs._is_sparse_a)
         , _swap_ab(rhs._swap_ab)
+        , kernel_options(rhs.kernel_options)
     {
         matrix_A     = rhs.matrix_A->clone();
         matrix_B     = rhs.matrix_B->clone();
@@ -277,6 +286,8 @@ struct _rocsparselt_matmul_descr
     bool                  _swap_ab     = false;
 
     uintptr_t is_init                  = 0;
+
+    _rocsparselt_kernel_options kernel_options;
 
 private:
     bool is_reference = true;
