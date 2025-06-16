@@ -9,7 +9,7 @@
 HIP device and stream management
 *******************************************
 
-``hipSetDevice`` and ``hipGetDevice`` are HIP device management APIs. They are **not** part of the
+``hipSetDevice`` and ``hipGetDevice`` are HIP device management APIs. They are not part of the
 hipSPARSELt API.
 
 Device management
@@ -23,7 +23,7 @@ default.
 
 After setting a device, you can create a handle using ``hipsparselt_init``. Subsequent hipSPARSELt
 routines take this handle as an input parameter. hipSPARSELt only queries the
-device  (using ``hipGetDevice``), it doesn't set the device. If hipSPARSELt doesn't recognize a valid device,
+device  (using ``hipGetDevice``). It doesn't set the device. If hipSPARSELt doesn't recognize a valid device,
 it returns an error message.
 To ensure device safety, it's your responsibility to provide hipSPARSELt with a valid device.
 
@@ -35,7 +35,7 @@ Stream management
 
 HIP kernels are always launched in a queue (also known as a stream).
 
-If you don't explicitly specify a stream, the system provides a default stream that maintained by the
+If you don't explicitly specify a stream, the system provides a default stream that is maintained by the
 system. You can't create or destroy the default stream. However, you can create new streams
 using ``hipStreamCreate`` and bind them to hipSPARSELt operations, such as ``hipsparselt_spmma_prune``
 and ``hipsparselt_matmul``. HIP kernels are invoked in hipSPARSELt routines

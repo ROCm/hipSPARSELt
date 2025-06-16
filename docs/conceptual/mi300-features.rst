@@ -5,11 +5,11 @@
 .. _mi300-features:
 
 **********************************************************************
-MI300 features
+hipSPARSELt features for the Instinct MI300 series
 **********************************************************************
 
 hipSPARSELt provides hardware acceleration support for sparse matrix multiplication operations
-on AMD MI300 devices using SMFMA (Sparse Matrix Fused Multiply Add) matrix instructions.
+on AMD Instinct™ MI300 series accelerators using SMFMA (Sparse Matrix Fused Multiply Add) matrix instructions.
 
 For hardware-accelerated sparse-dense matrix operations, the following conditions apply:
 
@@ -22,7 +22,7 @@ For hardware-accelerated sparse-dense matrix operations, the following condition
 Data types and precision
 ========================
 
-While the MI300 hardware supports multiple data types for hardware-accelerated sparse matrix operations,
+While the Instinct MI300 series supports multiple data types for hardware-accelerated sparse matrix operations,
 the hipSPARSELt library currently enables hardware acceleration for a subset of these types:
 
 .. list-table::
@@ -46,7 +46,7 @@ the hipSPARSELt library currently enables hardware acceleration for a subset of 
 
 .. note::
 
-   While the MI300 hardware supports additional formats like ``FP8`` (E4M3 and E5M2) and ``BF8``, these are not currently
+   While the Instinct MI300 series supports additional formats such as ``FP8`` (E4M3 and E5M2) and ``BF8``, these are not currently
    enabled at the library level for hardware acceleration.
    All floating-point operations accumulate in ``float32``, while integer operations accumulate in ``int32``.
 
