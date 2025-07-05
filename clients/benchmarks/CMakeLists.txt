@@ -79,9 +79,9 @@ if (NOT WIN32)
   endif()
   list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-    list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
+    list( APPEND COMMON_LINK_LIBS "") # for lapack
   else()
-    list( APPEND COMMON_LINK_LIBS "-lFortranRuntime -lFortranDecimal") # for lapack
+    list( APPEND COMMON_LINK_LIBS "") # for lapack
   endif()
 else()
   list( APPEND COMMON_LINK_LIBS "libomp")
