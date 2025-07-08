@@ -5,86 +5,34 @@
 # Create hipSPARSELt library target
 # ============================================================================
 
-# Use component-level shared/static switch (don't modify BUILD_SHARED_LIBS)
+set(_CMAKE_CURRENT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../library")
+
 if(HIPSPARSELT_BUILD_SHARED_LIBS)
     add_library(hipsparselt SHARED)
 else()
     add_library(hipsparselt STATIC)
+    target_compile_definitions(hipsparselt PRIVATE HIPSPARSELT_STATIC_LIB)
 endif()
 
-# Set library properties
 rocm_set_soversion(hipsparselt ${hipsparselt_SOVERSION})
-
-# Create alias for consistent usage
 add_library(roc::hipsparselt ALIAS hipsparselt)
 
-# ============================================================================
-# Configure version header
-# ============================================================================
-
-# Configure version header
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/../library/include/hipsparselt-version.h.in"
-    "${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt-version.h"
-    @ONLY
-)
-
-# Copy public header
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/../library/include/hipsparselt.h"
-    "${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt.h"
-    COPYONLY
-)
-
-# ============================================================================
-# Set target properties first
-# ============================================================================
-
-# Set C++ standard and features at target level
 target_compile_features(hipsparselt PRIVATE cxx_std_17)
-
-# Set target properties
-set_target_properties(hipsparselt PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
-    CXX_VISIBILITY_PRESET "hidden"
-    VISIBILITY_INLINES_HIDDEN ON
-    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
-    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
-    ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
-)
-
-# Set debug postfix
-set_target_properties(hipsparselt PROPERTIES DEBUG_POSTFIX "-d")
-
-# Set library naming for static builds
-if(NOT HIPSPARSELT_BUILD_SHARED_LIBS)
-    set_target_properties(hipsparselt PROPERTIES PREFIX "lib")
-endif()
-
-# ============================================================================
-# Platform-specific compile definitions
-# ============================================================================
-
 if(HIPSPARSELT_ENABLE_CUDA)
-    target_compile_definitions(hipsparselt 
-        PRIVATE 
-            __HIP_PLATFORM_NVIDIA__
-    )
+    target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_NVIDIA__)
 else()
-    target_compile_definitions(hipsparselt 
-        PRIVATE 
-            __HIP_PLATFORM_AMD__
-            ROCM_USE_FLOAT16
-    )
+    target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_AMD__ ROCM_USE_FLOAT16)
+    # target_compile_options(hipsparselt PRIVATE 
+    #     -Wall
+    #     -Wno-unused-command-line-argument
+    # )
+    # target_compile_options(hipsparselt PRIVATE
+    #     $<$<CONFIG:Debug>:-O1>
+    #     $<$<CONFIG:Debug>:-g>
+    #     $<$<CONFIG:Release>:-O3>
+    # )
 endif()
 
-# ============================================================================
-# Conditional compile definitions
-# ============================================================================
-
-# Address sanitizer
 if(HIPSPARSELT_ENABLE_ASAN)
     target_compile_options(hipsparselt PRIVATE 
         -fsanitize=address 
@@ -97,7 +45,7 @@ if(HIPSPARSELT_ENABLE_ASAN)
     )
 endif()
 
-# Code coverage
+# TODO: Move this all to the end of the top-level CMakeLists.txt
 if(HIPSPARSELT_BUILD_COVERAGE)
     target_compile_options(hipsparselt PRIVATE 
         -fprofile-arcs 
@@ -109,38 +57,27 @@ if(HIPSPARSELT_BUILD_COVERAGE)
     )
 endif()
 
-# Marker support
 if(HIPSPARSELT_ENABLE_MARKER)
     target_compile_definitions(hipsparselt PRIVATE HIPSPARSELT_ENABLE_MARKER)
-    target_link_libraries(hipsparselt PRIVATE PkgConfig::ROCTX)
+    target_link_libraries(hipsparselt PRIVATE ${ROCTX64_LIBRARY})
 endif()
 
-# Static library flag
-if(NOT HIPSPARSELT_BUILD_SHARED_LIBS)
-    target_compile_definitions(hipsparselt PRIVATE HIPSPARSELT_STATIC_LIB)
-endif()
+set_target_properties(hipsparselt PROPERTIES
+    CXX_EXTENSIONS OFF
+    VISIBILITY_INLINES_HIDDEN ON
+    CXX_VISIBILITY_PRESET "hidden"
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
+    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
+    ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
+)
 
-# ============================================================================
-# Compiler-specific options
-# ============================================================================
+# # Set debug postfix
+# set_target_properties(hipsparselt PROPERTIES DEBUG_POSTFIX "-d")
 
-if(NOT HIPSPARSELT_ENABLE_CUDA)
-    target_compile_options(hipsparselt PRIVATE 
-        -Wall
-        -Wno-unused-command-line-argument
-    )
-    
-    # Build-type specific flags
-    target_compile_options(hipsparselt PRIVATE
-        $<$<CONFIG:Debug>:-O1>
-        $<$<CONFIG:Debug>:-g>
-        $<$<CONFIG:Release>:-O3>
-    )
-endif()
-
-# ============================================================================
-# Include directories
-# ============================================================================
+# # Set library naming for static builds
+# if(NOT HIPSPARSELT_BUILD_SHARED_LIBS)
+#     set_target_properties(hipsparselt PROPERTIES PREFIX "lib")
+# endif()
 
 target_include_directories(hipsparselt
     PRIVATE
@@ -153,20 +90,9 @@ target_include_directories(hipsparselt
         $<INSTALL_INTERFACE:include>
 )
 
-# ============================================================================
-# Add source directory
-# ============================================================================
-
-add_subdirectory(src)
-
-# ============================================================================
-# Link libraries
-# ============================================================================
-
-# Always link with HIP
 target_link_libraries(hipsparselt PRIVATE hip::device)
 
-# Platform-specific linking
+# TODO: Review this section for correctness
 if(HIPSPARSELT_ENABLE_CUDA)
     target_link_libraries(hipsparselt PRIVATE 
         ${CUDA_CUSPARSELT_LIBRARY}
@@ -176,13 +102,8 @@ else()
     target_link_libraries(hipsparselt PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
-# ============================================================================
-# Generate export header
-# ============================================================================
-
-generate_export_header(hipsparselt 
-    EXPORT_FILE_NAME "${PROJECT_BINARY_DIR}/include/hipsparselt/hipsparselt-export.h"
-)
+add_subdirectory(include)
+add_subdirectory(src)
 
 # ============================================================================
 # Installation

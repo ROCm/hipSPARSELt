@@ -28,14 +28,11 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.md")
 include(FetchROCmCMake)
 include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
-include(GenerateExportHeader)
 include(GNUInstallDirs)
 
 rocm_setup_version(VERSION ${PROJECT_VERSION})
 set(hipsparselt_SOVERSION ${PROJECT_VERSION_MAJOR})
 
-# Use standard CMAKE_INSTALL_PREFIX handling (no hardcoded paths)
-# Only set a default if not already set
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   if(WIN32)
     set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path prefix." FORCE)
@@ -52,26 +49,23 @@ option(HIPSPARSELT_ENABLE_CLIENT "Build hipSPARSELt clients." ON)
 option(HIPSPARSELT_ENABLE_CUDA "Build hipSPARSELt with CUDA backend." OFF)
 option(HIPSPARSELT_ENABLE_TENSILELITE "Build hipSPARSELt with tensilelite backend." ON)
 
-# Component-level shared/static switch (following rocBLAS pattern)
 option(HIPSPARSELT_BUILD_SHARED_LIBS "Build the hipSPARSELt shared library." ON)
+option(HIPSPARSELT_BUILD_TESTING "Build test client." ON)
+option(HIPSPARSELT_BUILD_COVERAGE "Build tests with coverage enabled." OFF)
 
 if(HIPSPARSELT_ENABLE_CLIENT)
   option(HIPSPARSELT_ENABLE_BENCHMARKS "Build benchmark client." ON)
   option(HIPSPARSELT_ENABLE_SAMPLES "Build client samples." ON)
-  option(HIPSPARSELT_ENABLE_TESTS "Build test client." ON)
   option(HIPSPARSELT_ENABLE_FORTRAN "Build Fortran clients." OFF)
   option(HIPSPARSELT_ENABLE_BLIS "Enable BLIS support for reference implementations." ON)
   # rocm-smi is not presently available on Windows
   cmake_dependent_option(HIPSPARSELT_ENABLE_ROCM_SMI "Require rocm_smi." ON "NOT WIN32" OFF)
 endif()
 
-# Development options
-option(HIPSPARSELT_BUILD_COVERAGE "Build tests with coverage enabled." OFF)
 option(HIPSPARSELT_ENABLE_MARKER "Enable rocTracer marker support." OFF)
 option(HIPSPARSELT_ENABLE_ASAN "Build with address sanitizer enabled." OFF)
 option(HIPSPARSELT_ENABLE_VERBOSE "Output additional build information." OFF)
 
-# Set coverage GTest filter
 set(HIPSPARSELT_COVERAGE_GTEST_FILTER "*quick*:*pre_checkin*:*ILP64*-*known_bug*" 
     CACHE STRING "GTest filter for coverage tests.")
 
@@ -79,7 +73,6 @@ set(HIPSPARSELT_COVERAGE_GTEST_FILTER "*quick*:*pre_checkin*:*ILP64*-*known_bug*
 # Validation and Setup
 # ============================================================================
 
-# Validate incompatible options
 if(HIPSPARSELT_ENABLE_FORTRAN AND HIPSPARSELT_ENABLE_ASAN)
     message(FATAL_ERROR "Cannot enable fortran clients and address sanitizers.")
 endif()
@@ -92,7 +85,6 @@ if(HIPSPARSELT_BUILD_COVERAGE)
     endif()
 endif()
 
-# Enable languages as needed
 if(HIPSPARSELT_ENABLE_FORTRAN)
     enable_language(Fortran)
 endif()
@@ -101,21 +93,19 @@ endif()
 # Dependency Setup
 # ============================================================================
 
-# Find Python for build scripts
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
-# Required dependencies
 find_package(hip REQUIRED)
+# TODO: This should be located through an out of source add_subdirectory in a superbuild context
 find_package(hipsparse REQUIRED)
 
-# Optional dependencies
 if(HIPSPARSELT_ENABLE_ROCM_SMI)
     find_package(rocm_smi REQUIRED)
 endif()
 
 if(HIPSPARSELT_ENABLE_MARKER)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(ROCTX REQUIRED IMPORTED_TARGET roctx64)
+  find_library(ROCTX64_LIBRARY REQUIRED NAMES roctx64 libroctx64)
+else()
+    target_compile_definitions(hipsparselt-helper PRIVATE DISABLE_ROCTX)
 endif()
 
 # CUDA-specific dependencies
@@ -125,10 +115,11 @@ if(HIPSPARSELT_ENABLE_CUDA)
     find_library(CUDA_CUSPARSELT_LIBRARY 
         NAMES cusparseLt
         PATHS 
-            ${CUDAToolkit_LIBRARY_ROOT}/lib64
-            ${CUDAToolkit_LIBRARY_ROOT}/lib
-            /usr/lib/x86_64-linux-gnu
-            /usr/local/cuda/lib64
+            ${CUDAToolkit_LIBRARY_ROOT}
+            ${CUDAToolkit_LIBRARY_ROOT}
+        HINTS
+            lib64
+            lib
         REQUIRED
     )
     if(HIPSPARSELT_ENABLE_VERBOSE)
