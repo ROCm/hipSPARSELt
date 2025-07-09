@@ -9,49 +9,25 @@ target_sources(hipsparselt PRIVATE
 )
 
 if(HIPSPARSELT_ENABLE_CUDA)
-    add_subdirectory(nvcc_detail)
-else()
-    add_subdirectory(hcc_detail)
-
-endif()
-
-# ============================================================================
-# Platform-specific include directories
-# ============================================================================
-
-if(HIPSPARSELT_ENABLE_CUDA)
     target_include_directories(hipsparselt PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/../library/src/nvcc_detail"
     )
-else()
+    add_subdirectory(nvcc_detail)
+elseif(HIPSPARSELT_ENABLE_TENSILELITE)
     target_include_directories(hipsparselt PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/../library/src/hcc_detail"
     )
+    add_subdirectory(hcc_detail)
+else()
+    message(FATAL_ERROR "Unsupported backend, either HIPSPARSELT_ENABLE_CUDA or HIPSPARSELT_ENABLE_TENSILELITE must be set to ON")
 endif()
-
-# ============================================================================
-# Compile definitions for internal API
-# ============================================================================
 
 target_compile_definitions(hipsparselt PRIVATE
     HIPSPARSELT_INTERNAL_API
 )
 
-# ============================================================================
-# Compiler-specific optimizations
-# ============================================================================
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(hipsparselt PRIVATE
-        -mf16c  # Enable F16C intrinsics
-    )
-endif()
-
-# ============================================================================
-# Debug information for development builds
-# ============================================================================
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # TODO: What do these do when should they be used?
     target_compile_options(hipsparselt PRIVATE
         -gsplit-dwarf
         -ggdb

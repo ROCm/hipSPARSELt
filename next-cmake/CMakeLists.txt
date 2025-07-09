@@ -41,13 +41,13 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   endif()
 endif()
 
-# ============================================================================
 # Build Options
-# ============================================================================
+# =============
 
 option(HIPSPARSELT_ENABLE_CLIENT "Build hipSPARSELt clients." ON)
 option(HIPSPARSELT_ENABLE_CUDA "Build hipSPARSELt with CUDA backend." OFF)
-option(HIPSPARSELT_ENABLE_TENSILELITE "Build hipSPARSELt with tensilelite backend." ON)
+# TODO: Perhaps this should be called HIPSPARSELT_ENABLE_ROCM?
+option(HIPSPARSELT_ENABLE_TENSILELITE "Build hipSPARSELt with TensileLite backend." ON)
 
 option(HIPSPARSELT_BUILD_SHARED_LIBS "Build the hipSPARSELt shared library." ON)
 option(HIPSPARSELT_BUILD_TESTING "Build test client." ON)
@@ -66,13 +66,12 @@ option(HIPSPARSELT_ENABLE_MARKER "Enable rocTracer marker support." OFF)
 option(HIPSPARSELT_ENABLE_ASAN "Build with address sanitizer enabled." OFF)
 option(HIPSPARSELT_ENABLE_VERBOSE "Output additional build information." OFF)
 
+set(HIPSPARSELT_TENSILELITE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../hipblaslt/tensilelite" CACHE PATH "Path to tensilelite directory.")
 set(HIPSPARSELT_COVERAGE_GTEST_FILTER "*quick*:*pre_checkin*:*ILP64*-*known_bug*" 
     CACHE STRING "GTest filter for coverage tests.")
 
-# ============================================================================
 # Validation and Setup
-# ============================================================================
-
+# ====================
 if(HIPSPARSELT_ENABLE_FORTRAN AND HIPSPARSELT_ENABLE_ASAN)
     message(FATAL_ERROR "Cannot enable fortran clients and address sanitizers.")
 endif()
@@ -89,14 +88,16 @@ if(HIPSPARSELT_ENABLE_FORTRAN)
     enable_language(Fortran)
 endif()
 
-# ============================================================================
 # Dependency Setup
-# ============================================================================
+# ================
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(hip REQUIRED)
-# TODO: This should be located through an out of source add_subdirectory in a superbuild context
-find_package(hipsparse REQUIRED)
+
+if(HIPSPARSELT_ENABLE_TENSILELITE)
+    # TODO: This should be located through an out of source add_subdirectory in a superbuild context
+    find_package(hipsparse REQUIRED)
+endif()
 
 if(HIPSPARSELT_ENABLE_ROCM_SMI)
     find_package(rocm_smi REQUIRED)
@@ -108,34 +109,26 @@ else()
     target_compile_definitions(hipsparselt-helper PRIVATE DISABLE_ROCTX)
 endif()
 
-# CUDA-specific dependencies
 if(HIPSPARSELT_ENABLE_CUDA)
     find_package(CUDAToolkit REQUIRED)
-    # Find cuSPARSELt properly
-    find_library(CUDA_CUSPARSELT_LIBRARY 
+    find_library(CUSPARSELT_LIBRARY 
         NAMES cusparseLt
         PATHS 
-            ${CUDAToolkit_LIBRARY_ROOT}
             ${CUDAToolkit_LIBRARY_ROOT}
         HINTS
             lib64
             lib
         REQUIRED
     )
-    if(HIPSPARSELT_ENABLE_VERBOSE)
-        message(STATUS "Found cuSPARSELt: ${CUDA_CUSPARSELT_LIBRARY}")
-    endif()
+    message(STATUS "Found cuSPARSELt: ${CUSPARSELT_LIBRARY}")
 endif()
 
-# TensileLite setup - use add_subdirectory instead of virtual environment
 if(HIPSPARSELT_ENABLE_TENSILELITE AND NOT HIPSPARSELT_ENABLE_CUDA)
-    # Check for hipblaslt/tensilelite directory
-    set(TENSILELITE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../deps/hipblaslt/tensilelite")
+    set(TENSILELITE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../hipblaslt/tensilelite")
     if(NOT EXISTS "${TENSILELITE_PATH}")
         message(FATAL_ERROR "TensileLite not found at ${TENSILELITE_PATH}. Please ensure hipblaslt/tensilelite is available.")
     endif()
     
-    # Add TensileLite as subdirectory
     add_subdirectory("${TENSILELITE_PATH}" tensilelite EXCLUDE_FROM_ALL)
 endif()
 
@@ -143,20 +136,18 @@ endif()
 # Global Setup
 # ============================================================================
 
-# Set default build type if not specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Setting build type to 'Release' as none was specified.")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
+# TODO: Is this good practice? Set default build type if not specified
+# if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+#     message(STATUS "Setting build type to 'Release' as none was specified.")
+#     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+#     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+# endif()
 
 # Force library install directory to lib
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL "Installation directory for libraries" FORCE)
 
-# ============================================================================
 # GPU Architecture Setup
-# ============================================================================
-
+# ======================
 if(NOT HIPSPARSELT_ENABLE_CUDA)
     # Set default GPU targets for ROCm
     if(HIPSPARSELT_ENABLE_ASAN)
@@ -199,23 +190,38 @@ endif()
 # Package Configuration
 # ============================================================================
 
-# Set package name based on backend
-if(HIPSPARSELT_ENABLE_CUDA)
-    set(PACKAGE_NAME "hipsparselt-cuda")
-else()
-    set(PACKAGE_NAME "hipsparselt")
-endif()
+# # Set package name based on backend
+# if(HIPSPARSELT_ENABLE_CUDA)
+#     set(PACKAGE_NAME "hipsparselt-cuda")
+# else()
+#     set(PACKAGE_NAME "hipsparselt")
+# endif()
 
-# Package dependencies
-if(NOT HIPSPARSELT_ENABLE_CUDA)
-    rocm_package_add_dependencies(DEPENDS "hipsparse >= 2.1.0")
-endif()
+# # Package dependencies
+# if(NOT HIPSPARSELT_ENABLE_CUDA)
+#     rocm_package_add_dependencies(DEPENDS "hipsparse >= 2.1.0")
+# endif()
 
-# Configure package
-rocm_create_package(
-    NAME ${PACKAGE_NAME}
-    DESCRIPTION "ROCm Structured Sparsity Matrix Multiplication marshalling library"
-    MAINTAINER "hipSPARSELt Maintainer <hipsparselt-maintainer@amd.com>"
-    LDCONFIG
-    LDCONFIG_DIR ${CMAKE_INSTALL_FULL_LIBDIR}
-)
+# # Configure package
+# rocm_create_package(
+#     NAME ${PACKAGE_NAME}
+#     DESCRIPTION "ROCm Structured Sparsity Matrix Multiplication marshalling library"
+#     MAINTAINER "hipSPARSELt Maintainer <hipsparselt-maintainer@amd.com>"
+#     LDCONFIG
+#     LDCONFIG_DIR ${CMAKE_INSTALL_FULL_LIBDIR}
+# )
+
+# ============================================================================
+# Coverage Setup
+# ============================================================================
+
+if(HIPSPARSELT_BUILD_COVERAGE)
+    target_compile_options(hipsparselt PRIVATE 
+        -fprofile-arcs 
+        -ftest-coverage
+    )
+    target_link_libraries(hipsparselt PRIVATE 
+        --coverage 
+        -lgcov
+    )
+endif()

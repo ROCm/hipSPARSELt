@@ -5,22 +5,15 @@
 # Client Configuration
 # ============================================================================
 
-# Find required dependencies for clients
 find_package(Threads REQUIRED)
-
-# OpenMP is used for reference computations (optional)
 find_package(OpenMP)
 
-# Set up common link libraries for clients
 set(CLIENT_COMMON_LIBRARIES)
 
 if(TARGET OpenMP::OpenMP_CXX)
     list(APPEND CLIENT_COMMON_LIBRARIES OpenMP::OpenMP_CXX)
 endif()
-
-if(TARGET Threads::Threads)
-    list(APPEND CLIENT_COMMON_LIBRARIES Threads::Threads)
-endif()
+list(APPEND CLIENT_COMMON_LIBRARIES Threads::Threads)
 
 # ============================================================================
 # Client build helpers
