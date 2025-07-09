@@ -41,12 +41,12 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   endif()
 endif()
 
-# Build Options
-# =============
+# Build Options and Validation
+# ============================================================================
 
 option(HIPSPARSELT_ENABLE_CLIENT "Build hipSPARSELt clients." ON)
 option(HIPSPARSELT_ENABLE_CUDA "Build hipSPARSELt with CUDA backend." OFF)
-# TODO: Perhaps this should be called HIPSPARSELT_ENABLE_ROCM?
+option(HIPSPARSELT_ENABLE_HIP "Build hipSPARSELt with HIP backend." ON)
 option(HIPSPARSELT_ENABLE_TENSILELITE "Build hipSPARSELt with TensileLite backend." ON)
 
 option(HIPSPARSELT_BUILD_SHARED_LIBS "Build the hipSPARSELt shared library." ON)
@@ -70,8 +70,6 @@ set(HIPSPARSELT_TENSILELITE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../hipblaslt/te
 set(HIPSPARSELT_COVERAGE_GTEST_FILTER "*quick*:*pre_checkin*:*ILP64*-*known_bug*" 
     CACHE STRING "GTest filter for coverage tests.")
 
-# Validation and Setup
-# ====================
 if(HIPSPARSELT_ENABLE_FORTRAN AND HIPSPARSELT_ENABLE_ASAN)
     message(FATAL_ERROR "Cannot enable fortran clients and address sanitizers.")
 endif()
@@ -89,13 +87,13 @@ if(HIPSPARSELT_ENABLE_FORTRAN)
 endif()
 
 # Dependency Setup
-# ================
-
+# ============================================================================
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(hip REQUIRED)
 
-if(HIPSPARSELT_ENABLE_TENSILELITE)
-    # TODO: This should be located through an out of source add_subdirectory in a superbuild context
+if(HIPSPARSELT_ENABLE_HIP)
+    # TODO: This should be located through an out of
+    # source add_subdirectory in a superbuild context
     find_package(hipsparse REQUIRED)
 endif()
 
@@ -105,8 +103,6 @@ endif()
 
 if(HIPSPARSELT_ENABLE_MARKER)
   find_library(ROCTX64_LIBRARY REQUIRED NAMES roctx64 libroctx64)
-else()
-    target_compile_definitions(hipsparselt-helper PRIVATE DISABLE_ROCTX)
 endif()
 
 if(HIPSPARSELT_ENABLE_CUDA)
@@ -123,31 +119,8 @@ if(HIPSPARSELT_ENABLE_CUDA)
     message(STATUS "Found cuSPARSELt: ${CUSPARSELT_LIBRARY}")
 endif()
 
-if(HIPSPARSELT_ENABLE_TENSILELITE AND NOT HIPSPARSELT_ENABLE_CUDA)
-    set(TENSILELITE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../hipblaslt/tensilelite")
-    if(NOT EXISTS "${TENSILELITE_PATH}")
-        message(FATAL_ERROR "TensileLite not found at ${TENSILELITE_PATH}. Please ensure hipblaslt/tensilelite is available.")
-    endif()
-    
-    add_subdirectory("${TENSILELITE_PATH}" tensilelite EXCLUDE_FROM_ALL)
-endif()
-
-# ============================================================================
-# Global Setup
-# ============================================================================
-
-# TODO: Is this good practice? Set default build type if not specified
-# if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-#     message(STATUS "Setting build type to 'Release' as none was specified.")
-#     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-#     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-# endif()
-
-# Force library install directory to lib
-set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL "Installation directory for libraries" FORCE)
-
 # GPU Architecture Setup
-# ======================
+# ============================================================================
 if(NOT HIPSPARSELT_ENABLE_CUDA)
     # Set default GPU targets for ROCm
     if(HIPSPARSELT_ENABLE_ASAN)
@@ -176,9 +149,17 @@ if(NOT HIPSPARSELT_ENABLE_CUDA)
     endif()
 endif()
 
-# ============================================================================
 # Add Subdirectories
 # ============================================================================
+if(HIPSPARSELT_ENABLE_TENSILELITE)
+    set(TENSILELITE_PATH "${HIPSPARSELT_TENSILELITE_PATH}")
+    if(NOT EXISTS "${TENSILELITE_PATH}")
+        message(FATAL_ERROR "TensileLite not found at ${TENSILELITE_PATH}. Please ensure hipblaslt/tensilelite is available.")
+    endif()
+    
+    # Exposes targets for tensile-host and library
+    add_subdirectory("${TENSILELITE_PATH}" Tensilelite EXCLUDE_FROM_ALL)
+endif()
 
 add_subdirectory(library)
 

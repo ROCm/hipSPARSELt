@@ -18,7 +18,9 @@ target_compile_features(hipsparselt PRIVATE cxx_nullptr)
 
 if(HIPSPARSELT_ENABLE_CUDA)
     target_compile_definitions(hipsparselt PRIVATE __HIP_PLATFORM_NVIDIA__)
-else()
+endif()
+
+if(HIPSPARSELT_ENABLE_HIP)
     target_compile_definitions(hipsparselt
         PRIVATE 
             __HIP_PLATFORM_AMD__ 
@@ -47,6 +49,8 @@ endif()
 if(HIPSPARSELT_ENABLE_MARKER)
     target_compile_definitions(hipsparselt PRIVATE HIPSPARSELT_ENABLE_MARKER)
     target_link_libraries(hipsparselt PRIVATE ${ROCTX64_LIBRARY})
+else()
+    target_compile_definitions(hipsparselt PRIVATE DISABLE_ROCTX)
 endif()
 
 set_target_properties(hipsparselt PROPERTIES
@@ -67,36 +71,33 @@ set_target_properties(hipsparselt PROPERTIES
 # endif()
 
 target_include_directories(hipsparselt
-                           PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
-                                   $<BUILD_INTERFACE:${Tensile_INC}>
-                           PUBLIC  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
-                                   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
-                                   $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
-                                   $<BUILD_INTERFACE:${HIPSPARSE_INCLUDE_DIRS}>
-                                   $<INSTALL_INTERFACE:include>
+                        PUBLIC
+                            $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/include>
+                            $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 if(HIPSPARSELT_ENABLE_CUDA)
-    target_include_directories(hipsparselt PUBLIC $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>)
-elseif(HIPSPARSELT_ENABLE_TENSILELITE)
-    target_include_directories(hipsparselt
-        PRIVATE 
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/hcc_detail/rocsparselt/src/include>
-    )
-endif()
-
-target_link_libraries(hipsparselt PRIVATE hip::device)
-
-# TODO: Review this section for correctness
-if(HIPSPARSELT_ENABLE_CUDA)
+    target_include_directories(hipsparselt PRIVATE $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>)
     target_link_libraries(hipsparselt PRIVATE 
         ${CUSPARSELT_LIBRARY}
         CUDA::cusparse
     )
+endif()
+    
+if(HIPSPARSELT_ENABLE_HIP)
+    target_include_directories(hipsparselt 
+        PUBLIC
+            $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}> # Needed?
+            $<BUILD_INTERFACE:${HIPSPARSE_INCLUDE_DIRS}> # Needed?
+    )
+    target_link_libraries(hipsparselt PRIVATE hip::device)
+endif()
+
+if(HIPSPARSELT_ENABLE_TENSILELITE)
+    target_compile_definitions(hipsparselt PRIVATE BUILD_WITH_TENSILE=1)
 else()
-    # TODO: what is this?
-    target_link_libraries(hipsparselt PRIVATE ${CMAKE_DL_LIBS})
+    target_compile_definitions(hipsparselt PRIVATE BUILD_WITH_TENSILE=0)
 endif()
 
 add_subdirectory(include)
