@@ -1,4 +1,6 @@
 # hipSPARSELt
+> [!CAUTION]
+> The hipSPARSELt repository is retired, please use the [ROCm/rocm-libraries](https://github.com/ROCm/rocm-libraries) repository
 
 hipSPARSELt is a SPARSE marshalling library, with multiple supported backends.
 It sits between the application and a 'worker' SPARSE library, marshalling
