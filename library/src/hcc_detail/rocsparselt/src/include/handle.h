@@ -319,6 +319,12 @@ struct _rocsparselt_matmul_alg_selection
     // destructor
     ~_rocsparselt_matmul_alg_selection()
     {
+        clear();
+    }
+
+    void clear()
+    {
+        handle = nullptr;
         is_init = 0;
     };
 

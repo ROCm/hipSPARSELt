@@ -347,7 +347,7 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!check_is_init_handle(_handle))
     {
-        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        hipsparselt_cerr << "handle was not initialized or has already been destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
@@ -359,7 +359,7 @@ rocsparselt_status rocsparselt_smfmac_compressed_size(const rocsparselt_handle* 
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
     if(!check_is_init_plan(_plan))
     {
-        log_error(_handle, __func__, "plan did not initialized or already destroyed");
+        log_error(_handle, __func__, "plan was not initialized or has already been destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
@@ -414,7 +414,7 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!check_is_init_handle(_handle))
     {
-        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        hipsparselt_cerr << "handle was not initialized or has already been destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
@@ -427,7 +427,7 @@ rocsparselt_status rocsparselt_smfmac_compressed_size2(const rocsparselt_handle*
         const_cast<rocsparselt_mat_descr*>(sparseMatDescr));
     if(!check_is_init_mat_descr(_sparseMatDescr))
     {
-        log_error(_handle, __func__, "sparseMatDescr did not initialized or already destroyed");
+        log_error(_handle, __func__, "sparseMatDescr was not initialized or has already been destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
@@ -509,7 +509,7 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!check_is_init_handle(_handle))
     {
-        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        hipsparselt_cerr << "handle was not initialized or has already been destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
@@ -521,7 +521,7 @@ rocsparselt_status rocsparselt_smfmac_compress(const rocsparselt_handle*      ha
     auto _plan = reinterpret_cast<const _rocsparselt_matmul_plan*>(plan);
     if(!check_is_init_plan(_plan))
     {
-        log_error(_handle, __func__, "plan did not initialized or already destroyed");
+        log_error(_handle, __func__, "plan was not initialized or has already been destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
@@ -611,7 +611,7 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
     auto _handle = reinterpret_cast<const _rocsparselt_handle*>(handle);
     if(!check_is_init_handle(_handle))
     {
-        hipsparselt_cerr << "handle did not initialized or already destroyed" << std::endl;
+        hipsparselt_cerr << "handle was not initialized or has already been destroyed" << std::endl;
         return rocsparselt_status_invalid_handle;
     }
 
@@ -624,7 +624,7 @@ rocsparselt_status rocsparselt_smfmac_compress2(const rocsparselt_handle*    han
         const_cast<rocsparselt_mat_descr*>(sparseMatDescr));
     if(!check_is_init_mat_descr(_sparseMatDescr))
     {
-        log_error(_handle, __func__, "sparseMatDescr did not initialized or already destroyed");
+        log_error(_handle, __func__, "sparseMatDescr was not initialized or has already been destroyed");
         return rocsparselt_status_invalid_handle;
     }
 
